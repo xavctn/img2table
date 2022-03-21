@@ -6,3 +6,4 @@ data
 certs
 venv
 *.cfg
+*.ipynb

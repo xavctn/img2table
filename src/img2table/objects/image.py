@@ -50,8 +50,8 @@ class Image(object):
     def v_lines(self) -> List[Line]:
         return copy.deepcopy(self._v_lines)
 
-    def _identify_horizontal_lines(self, rho: float = 0.5, theta: float = np.pi / 180, threshold: int = 50,
-                                   minLinLength: int = 200, maxLineGap: int = 6):
+    def _identify_lines(self, rho: float = 0.5, theta: float = np.pi / 180, threshold: int = 10,
+                                   minLinLength: int = 10, maxLineGap: int = 20):
         """
         Identify horizontal lines in image
         :param rho: rho parameter for Hough line transform
@@ -60,34 +60,15 @@ class Image(object):
         :param minLinLength: minLinLength parameter for Hough line transform
         :param maxLineGap: maxLineGap parameter for Hough line transform
         """
-        horizontal_lines, _ = detect_lines(image=self.img,
-                                           rho=rho,
-                                           theta=theta,
-                                           threshold=threshold,
-                                           minLinLength=minLinLength,
-                                           maxLineGap=maxLineGap)
+        horizontal_lines, vertical_lines = detect_lines(image=self.img,
+                                                        rho=rho,
+                                                        theta=theta,
+                                                        threshold=threshold,
+                                                        minLinLength=minLinLength,
+                                                        maxLineGap=maxLineGap)
 
-        # Set _h_lines attribute
+        # Set _h_lines and _v_lines attributes
         self._h_lines = horizontal_lines
-
-    def _identify_vertical_lines(self, rho: float = 0.5, theta: float = np.pi / 180, threshold: int = 5,
-                                 minLinLength: int = 20, maxLineGap: int = 1):
-        """
-        Identify vertical lines in image
-        :param rho: rho parameter for Hough line transform
-        :param theta: theta parameter for Hough line transform
-        :param threshold: threshold parameter for Hough line transform
-        :param minLinLength: minLinLength parameter for Hough line transform
-        :param maxLineGap: maxLineGap parameter for Hough line transform
-        """
-        _, vertical_lines = detect_lines(image=self.img,
-                                         rho=rho,
-                                         theta=theta,
-                                         threshold=threshold,
-                                         minLinLength=minLinLength,
-                                         maxLineGap=maxLineGap)
-
-        # Set _h_lines attribute
         self._v_lines = vertical_lines
 
     def _detect_tables_from_lines(self):
@@ -96,8 +77,7 @@ class Image(object):
         :return:
         """
         # Identify horizontal and vertical lines
-        self._identify_horizontal_lines()
-        self._identify_vertical_lines()
+        self._identify_lines()
 
         # Get tables from horizontal and vertical lines
         self._tables = get_tables(horizontal_lines=self._h_lines,
@@ -201,10 +181,16 @@ if __name__ == '__main__':
     img = cv2.imread(r"C:\Users\xavca\Pictures\achat_blouson.png")
 
     image_object = Image(img)
-    tables = image_object.extract_tables(header_detection=True, implicit_rows=True)
-    image_object._create_img_colored_borders(color=(128, 145, 226))
+    tables = image_object.extract_tables(header_detection=True,
+                                         implicit_rows=True,
+                                         implicit_columns=True)
+    # image_object._create_img_colored_borders(color=(128, 145, 226))
+    # display_img = image_object.white_img
+    display_img = image_object.img
+    for line in image_object.h_lines + image_object.v_lines:
+        cv2.rectangle(display_img, (line.x1, line.y1), (line.x2, line.y2), (128, 145, 226), 3)
 
-    PILImage.fromarray(image_object.white_img).convert('RGB').show()
+    PILImage.fromarray(display_img).convert('RGB').show()
 
     output_tables = [{"title": table.title,
                       "bbox": table.bbox(),
