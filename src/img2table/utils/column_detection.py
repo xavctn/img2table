@@ -62,13 +62,14 @@ def get_delimiter_min_width(table: Table, delimiters: List[int], min_width_colum
 
 
 def get_columns_delimiters(img: np.ndarray, table: Table, vertical_lines: List[Line],
-                           min_width_column: int = 15) -> List[int]:
+                           min_width_column: int = 15, implicit_columns: bool = False) -> List[int]:
     """
     Identify column delimiters
     :param img: image array
     :param table: Table object
     :param vertical_lines: vertical lines
     :param min_width_column: minimal width of a column
+    :param implicit_columns: boolean indicating if implicit columns should be detected
     :return: list of horizontal position of columns
     """
     # Get column delimiters based on vertical lines
@@ -76,6 +77,9 @@ def get_columns_delimiters(img: np.ndarray, table: Table, vertical_lines: List[L
     # If some delimiters have been found from vertical lines, return those
     if columns_from_line:
         return columns_from_line
+
+    if not implicit_columns:
+        return []
 
     # Otherwise, add contours for each row of the table
     table_cnts = get_bounding_area_text(img=img,
@@ -121,13 +125,15 @@ def get_columns_delimiters(img: np.ndarray, table: Table, vertical_lines: List[L
     return filtered_delims
 
 
-def get_columns_table(img: np.ndarray, table: Table, vertical_lines: List[Line], min_width_column: int = 15) -> Table:
+def get_columns_table(img: np.ndarray, table: Table, vertical_lines: List[Line], min_width_column: int = 15,
+                      implicit_columns: bool = False) -> Table:
     """
     Identify and create columns in table
     :param img: image array
     :param table: Table object
     :param vertical_lines: vertical lines
     :param min_width_column: minimal width of a column
+    :param implicit_columns: boolean indicating if implicit columns should be detected
     :return: table splitted with columns
     """
     # If table already has columns, do not process it
@@ -138,7 +144,8 @@ def get_columns_table(img: np.ndarray, table: Table, vertical_lines: List[Line],
     col_delimiters = get_columns_delimiters(img=img,
                                             table=table,
                                             vertical_lines=vertical_lines,
-                                            min_width_column=min_width_column)
+                                            min_width_column=min_width_column,
+                                            implicit_columns=implicit_columns)
 
     # If table has only one row and one column, remove it
     if len(col_delimiters) == 0 and table.nb_rows <= 1:

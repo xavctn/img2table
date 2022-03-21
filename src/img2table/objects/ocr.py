@@ -211,7 +211,7 @@ class OCRPage(OCRObject):
         :return: OCRPage object
         """
         # Instantiate HTML parser
-        soup = BeautifulSoup(hocr_html, features='html')
+        soup = BeautifulSoup(hocr_html, features='html.parser')
 
         # Instantiate OCR page
         for html_page in soup.find_all("div", {"class": "ocr_page"}):

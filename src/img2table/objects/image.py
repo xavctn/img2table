@@ -123,14 +123,16 @@ class Image(object):
         # Set _white_img attribute
         self._white_img = white_img
 
-    def _detect_columns(self):
+    def _detect_columns(self, implicit_columns: bool = False):
         """
         Detect columns in image tables
+        :param implicit_columns: boolean indicating if implicit columns should be detected
         :return:
         """
         tables_with_columns = [get_columns_table(img=self.img,
                                                  table=table,
-                                                 vertical_lines=self.v_lines)
+                                                 vertical_lines=self.v_lines,
+                                                 implicit_columns=implicit_columns)
                                for table in self._tables]
 
         # Set _tables attribute
@@ -147,17 +149,18 @@ class Image(object):
         self._tables = handle_implicit_rows(white_img=self.white_img,
                                             tables=self.tables)
 
-    def identify_image_tables(self, implicit_rows: bool = True) -> List[Table]:
+    def identify_image_tables(self, implicit_rows: bool = True, implicit_columns: bool = False) -> List[Table]:
         """
         Identify tables in image
         :param implicit_rows: boolean indicating if implicit rows are detected
+        :param implicit_columns: boolean indicating if implicit columns should be detected
         :return: list of Table objects
         """
         # Detect tables from lines
         self._detect_tables_from_lines()
 
         # Identify columns in tables
-        self._detect_columns()
+        self._detect_columns(implicit_columns=implicit_columns)
 
         if implicit_rows:
             self._detect_implicit_rows()
@@ -176,14 +179,17 @@ class Image(object):
 
         return self.tables
 
-    def extract_tables(self, implicit_rows: bool = True, header_detection: bool = True) -> List[Table]:
+    def extract_tables(self, implicit_rows: bool = True, implicit_columns: bool = False,
+                       header_detection: bool = True) -> List[Table]:
         """
         Extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are detected
         :param header_detection: boolean indicating if header detection is performed
+        :param implicit_columns: boolean indicating if implicit columns should be detected
         :return: list of extracted tables
         """
-        self.identify_image_tables(implicit_rows=implicit_rows)
+        self.identify_image_tables(implicit_rows=implicit_rows,
+                                   implicit_columns=implicit_columns)
 
         extracted_tables = self.parse_tables_content(header_detection=header_detection)
 
