@@ -114,15 +114,20 @@ class Cell(TableObject):
         self.x1, self.x2, self.y1, self.y2 = x1, x2, y1, y2
 
     @classmethod
-    def from_lines(cls, line_1: Line, line_2: Line):
+    def from_h_lines(cls, line_1: Line, line_2: Line, minimal: bool = False):
         """
         Generate cell from two lines
         :param line_1: first line
         :param line_2: second line
+        :param minimal: boolean indicating if cell should be as the larger intersection of both lines
         :return: Cell object
         """
-        _x1 = min(line_1.x1, line_2.x1)
-        _x2 = max(line_1.x2, line_2.x2)
+        if minimal:
+            _x1 = max(line_1.x1, line_2.x1)
+            _x2 = min(line_1.x2, line_2.x2)
+        else:
+            _x1 = min(line_1.x1, line_2.x1)
+            _x2 = max(line_1.x2, line_2.x2)
         _y1 = min(line_1.y1, line_2.y1)
         _y2 = max(line_1.y2, line_2.y2)
 
@@ -208,7 +213,7 @@ class Row(TableObject):
         :return: Row object
         """
         # Create new cell and instantiate new row
-        cell = Cell.from_lines(line_1=line_1, line_2=line_2)
+        cell = Cell.from_h_lines(line_1=line_1, line_2=line_2)
         return cls(cells=cell)
 
     def split_in_columns(self, column_delimiters: List[int]):
