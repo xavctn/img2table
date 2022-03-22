@@ -5,8 +5,8 @@ from typing import List
 import numpy as np
 from cv2 import cv2
 
-from img2table.objects.tables import Table, Line
-from img2table.utils.column_detection import get_columns_table
+from img2table.objects.tables import Table, Line, Cell
+from img2table.utils.cell_detection import get_cells
 from img2table.utils.implicit_rows import handle_implicit_rows
 from img2table.utils.line_detection import detect_lines
 from img2table.utils.rotation import rotate_img
@@ -71,6 +71,10 @@ class Image(object):
         self._h_lines = horizontal_lines
         self._v_lines = vertical_lines
 
+    def _identify_cells(self) -> List[Cell]:
+        return get_cells(horizontal_lines=self.h_lines,
+                         vertical_lines=self.v_lines)
+
     def _detect_tables_from_lines(self):
         """
         Identify tables using vertical and horizontal lines in image
@@ -79,9 +83,11 @@ class Image(object):
         # Identify horizontal and vertical lines
         self._identify_lines()
 
+        # Identify cells
+        cells = self._identify_cells()
+
         # Get tables from horizontal and vertical lines
-        self._tables = get_tables(horizontal_lines=self._h_lines,
-                                  vertical_lines=self.v_lines)
+        self._tables = get_tables(cells=cells)
 
     def _create_img_colored_borders(self, color: tuple = (255, 255, 255), margin: int = 1):
         """
@@ -103,24 +109,6 @@ class Image(object):
         # Set _white_img attribute
         self._white_img = white_img
 
-    def _detect_columns(self, implicit_columns: bool = False):
-        """
-        Detect columns in image tables
-        :param implicit_columns: boolean indicating if implicit columns should be detected
-        :return:
-        """
-        tables_with_columns = [get_columns_table(img=self.img,
-                                                 table=table,
-                                                 vertical_lines=self.v_lines,
-                                                 implicit_columns=implicit_columns)
-                               for table in self._tables]
-
-        # Set _tables attribute
-        self._tables = tables_with_columns
-
-        # Create image with white table borders
-        self._create_img_colored_borders(margin=1)
-
     def _detect_implicit_rows(self):
         """
         Detect implicit rows in tables
@@ -129,18 +117,17 @@ class Image(object):
         self._tables = handle_implicit_rows(white_img=self.white_img,
                                             tables=self.tables)
 
-    def identify_image_tables(self, implicit_rows: bool = True, implicit_columns: bool = False) -> List[Table]:
+    def identify_image_tables(self, implicit_rows: bool = True) -> List[Table]:
         """
         Identify tables in image
         :param implicit_rows: boolean indicating if implicit rows are detected
-        :param implicit_columns: boolean indicating if implicit columns should be detected
         :return: list of Table objects
         """
         # Detect tables from lines
         self._detect_tables_from_lines()
 
-        # Identify columns in tables
-        self._detect_columns(implicit_columns=implicit_columns)
+        # Color table in white
+        self._create_img_colored_borders(margin=0)
 
         if implicit_rows:
             self._detect_implicit_rows()
@@ -159,17 +146,14 @@ class Image(object):
 
         return self.tables
 
-    def extract_tables(self, implicit_rows: bool = True, implicit_columns: bool = False,
-                       header_detection: bool = True) -> List[Table]:
+    def extract_tables(self, implicit_rows: bool = True, header_detection: bool = True) -> List[Table]:
         """
         Extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are detected
         :param header_detection: boolean indicating if header detection is performed
-        :param implicit_columns: boolean indicating if implicit columns should be detected
         :return: list of extracted tables
         """
-        self.identify_image_tables(implicit_rows=implicit_rows,
-                                   implicit_columns=implicit_columns)
+        self.identify_image_tables(implicit_rows=implicit_rows)
 
         extracted_tables = self.parse_tables_content(header_detection=header_detection)
 
@@ -182,15 +166,12 @@ if __name__ == '__main__':
 
     image_object = Image(img)
     tables = image_object.extract_tables(header_detection=True,
-                                         implicit_rows=True,
-                                         implicit_columns=True)
-    # image_object._create_img_colored_borders(color=(128, 145, 226))
-    # display_img = image_object.white_img
-    display_img = image_object.img
-    for line in image_object.h_lines + image_object.v_lines:
-        cv2.rectangle(display_img, (line.x1, line.y1), (line.x2, line.y2), (128, 145, 226), 3)
+                                         implicit_rows=True)
 
-    PILImage.fromarray(display_img).convert('RGB').show()
+    image_object._create_img_colored_borders(color=(128, 145, 226))
+    display_img = image_object.white_img
+
+    PILImage.fromarray(display_img).show()
 
     output_tables = [{"title": table.title,
                       "bbox": table.bbox(),
@@ -200,4 +181,5 @@ if __name__ == '__main__':
     for table in output_tables:
         print(table.get('title'))
         print(table.get('bbox'))
+        print()
 

@@ -25,8 +25,8 @@ def handle_implicit_rows_table(white_img: np.ndarray, table: Table) -> Table:
     list_splitted_rows = list()
     # Check if each row can be splitted
     for row in table_cnts.items:
-        # If row has no or one contour, it is not relevant to split it
-        if len(row.contours) <= 1:
+        # If row has no or one contour / row is not vertically consistent, it is not relevant to split it
+        if len(row.contours) <= 1 or not row.v_consistent:
             list_splitted_rows.append(row)
             continue
 

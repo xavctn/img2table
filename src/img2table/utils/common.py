@@ -1,38 +1,10 @@
 # coding: utf_8
-from typing import Union, List
+from typing import List
 
 import numpy as np
 from cv2 import cv2
 
-from img2table.objects.tables import Row, Cell, Line, Table
-
-
-def intersection_bbox_line(row: Union[Row, Cell], line: Line, without_border: bool = True,
-                           horizontal_margin: int = 0) -> bool:
-    """
-    Determine if a line is intersecting a bounding box
-    :param row: Row or Cell object
-    :param line: Line object
-    :param without_border: boolean indicating if lines on the border of the bbox are relevant
-    :param horizontal_margin: horizontal margin around row used to detect intersecting vertical lines
-    :return: boolean indicating if there is an intersection between the bounding box and the line
-    """
-    # Check horizontal correspondence
-    if not row.x1 - horizontal_margin <= line.x1 <= row.x2 + horizontal_margin:
-        return False
-
-    if without_border:
-        # Check if line is not on a border of the table
-        if abs((row.x1 - line.x1) / row.width) <= 0.02:
-            return False
-        if abs((row.x2 - line.x2) / row.width) <= 0.02:
-            return False
-
-    # Check vertical correspondence
-    overlapping_pixels = len(list(set(list(range(row.y1, row.y2))) & set(list(range(line.y1, line.y2)))))
-
-    # Return intersection if the line intersects on at least 25% of the bounding box
-    return overlapping_pixels / row.height > 0.25
+from img2table.objects.tables import Cell, Table
 
 
 def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:

@@ -172,6 +172,23 @@ class Row(TableObject):
     def y2(self) -> int:
         return max([item.y2 for item in self.items])
 
+    @property
+    def v_consistent(self) -> bool:
+        return len([cell for cell in self.items if cell.y1 != self.y1 or cell.y2 != self.y2]) == 0
+
+    def add_cells(self, cells: Union[Cell, List[Cell]]):
+        """
+        Add cells to existing row items
+        :param cells: Cell object or list
+        :return:
+        """
+        if isinstance(cells, Cell):
+            self._items += [cells]
+        else:
+            self._items += cells
+
+        return self
+
     def add_contours(self, contours: Union[Cell, List[Cell]], replace: bool = False):
         """
         Add contours to Row object

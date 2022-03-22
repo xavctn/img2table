@@ -133,7 +133,7 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
             horizontal_lines.append(line)
 
     # Compute merged lines
-    # horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=maxLineGap)
-    # vertical_lines = overlapping_filter(lines=vertical_lines, horizontal=False, max_gap=maxLineGap)
+    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=maxLineGap)
+    vertical_lines = overlapping_filter(lines=vertical_lines, horizontal=False, max_gap=maxLineGap)
 
     return horizontal_lines, vertical_lines
