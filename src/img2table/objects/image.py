@@ -23,7 +23,7 @@ class Image(object):
         self._img = rotate_img(img=copy.deepcopy(image))
 
         # Get hOCR from image
-        hocr_text = pytesseract.image_to_pdf_or_hocr(self.img,
+        hocr_text = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY),
                                                      extension="hocr",
                                                      config="--psm 1",
                                                      lang='fra+eng').decode('utf-8')
@@ -179,7 +179,7 @@ class Image(object):
 
 if __name__ == '__main__':
     from PIL import Image as PILImage
-    img = cv2.imread(r"C:\Users\xavca\Pictures\achat_blouson.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_2.png")
 
     image_object = Image(img)
     tables = image_object.extract_tables(header_detection=True,

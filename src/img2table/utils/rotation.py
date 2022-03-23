@@ -104,7 +104,7 @@ def get_orientation_image(img: np.ndarray) -> int:
     cv2.imwrite(tmpfp, img)
 
     # Get orientation
-    osd = pytesseract.image_to_osd(tmpfp)
+    osd = pytesseract.image_to_osd(tmpfp, lang="fra+eng")
 
     # Delete temporary dir
     shutil.rmtree(dirpath)

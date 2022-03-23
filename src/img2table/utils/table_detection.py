@@ -155,7 +155,7 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
         else:
             _col = list()
             for delim in v_delimiters:
-                closest_cell = sorted(col, key=lambda c: abs(c.y2 - delim))[0]
+                closest_cell = sorted(col, key=lambda c: abs(c.y1 - delim) + abs(c.y2 - delim))[0]
                 _col.append(closest_cell)
             new_cols.append(_col)
 
@@ -184,7 +184,7 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
         else:
             _cells = list()
             for delim in average_delimiters:
-                closest_cell = sorted(row.items, key=lambda c: abs(c.x2 - delim))[0]
+                closest_cell = sorted(row.items, key=lambda c: abs(c.x1 - delim) + abs(c.x2 - delim))[0]
                 _cells.append(closest_cell)
             new_rows.append(Row(cells=_cells))
 
