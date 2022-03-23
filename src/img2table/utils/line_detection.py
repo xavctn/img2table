@@ -44,7 +44,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[0], sec_dim_1)
             # If the difference is too large, add curr_cluster to list clusters and set new cluster with the current
             # line
-            if diff_index > max_gap:
+            if diff_index > 5:
                 line_clusters.append(curr_cluster)
                 curr_cluster = [line]
             # Otherwise, set line coordinates to coherent cluster values and append line to current cluster
@@ -63,7 +63,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             if idx == 0:
                 sub_cluster = [line]
             else:
-                # If lines are vertically close, merge line with curr_line
+                # If lines are close, merge line with curr_line
                 if getattr(line, main_dim_1) <= getattr(sub_cluster[-1], main_dim_2) + max_gap:
                     sub_cluster.append(line)
                 # If the difference in vertical coordinates is too large, add curr_line to list of filtered lines and
@@ -90,7 +90,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     return final_lines
 
 
-def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 2) -> bool:
+def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 0) -> bool:
     """
     Assess if the line is generated from text in image
     :param line: Line object
@@ -102,17 +102,41 @@ def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 2) -> bool:
     if ocr_page is None:
         return False
 
-    # Get all OCRLine objects
-    ocr_lines = [ocr_line for ocr_area in ocr_page.items
+    # Get all OCRWords objects
+    ocr_words = [ocr_word for ocr_area in ocr_page.items
                  for ocr_paragraph in ocr_area.items
-                 for ocr_line in ocr_paragraph.items]
+                 for ocr_line in ocr_paragraph.items
+                 for ocr_word in ocr_line.items]
 
-    # Loop over all OCR lines to check if the line is contained in the bounding box of the OCR line
-    for ocr_line in ocr_lines:
-        bbox = ocr_line.bbox
-        if line.x1 >= bbox[0] - margin and line.x2 <= bbox[2] + margin and line.y1 >= bbox[1] - margin \
-                and line.y2 <= bbox[3] + margin:
+    # Process horizontal line
+    if line.horizontal:
+        overlap = 0
+        # Loop over all OCR lines to check if the line is contained in the bounding box of the OCR line
+        for ocr_word in ocr_words:
+            bbox = ocr_word.bbox
+            # Check vertical correspondence
+            if bbox[1] - margin <= line.y1 <= bbox[3] + margin:
+                # Check horizontal overlap and if it centered with word
+                is_centered = int(((line.x2 - line.x1) / 2 - (bbox[2] - bbox[0]) / 2) / line.length <= 0.2)
+                overlap += max(0, min(line.x2, bbox[2]) - max(line.x1, bbox[0])) * (1 + is_centered * 0.5)
+        # If overlap is big enough, return True
+        if overlap / line.length >= 0.75:
             return True
+
+    # Process vertical lines
+    if line.vertical:
+        overlap = 0
+        # Loop over all OCR lines to check if the line is contained in the bounding box of the OCR line
+        for ocr_word in ocr_words:
+            bbox = ocr_word.bbox
+            # Check vertical correspondence
+            if bbox[0] - margin <= line.x1 <= bbox[2] + margin:
+                # Check horizontal overlap
+                overlap += max(0, min(line.y2, bbox[3]) - max(line.y1, bbox[1]))
+        # If overlap is big enough, return True
+        if overlap / line.length >= 0.25:
+            return True
+
     return False
 
 
