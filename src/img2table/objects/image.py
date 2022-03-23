@@ -3,8 +3,10 @@ import copy
 from typing import List
 
 import numpy as np
+import pytesseract
 from cv2 import cv2
 
+from img2table.objects.ocr import OCRPage
 from img2table.objects.tables import Table, Line, Cell
 from img2table.utils.cell_detection import get_cells
 from img2table.utils.implicit_rows import handle_implicit_rows
@@ -19,6 +21,15 @@ class Image(object):
         self._original_img = image
         # Rotate image to proper orientation
         self._img = rotate_img(img=copy.deepcopy(image))
+
+        # Get hOCR from image
+        hocr_text = pytesseract.image_to_pdf_or_hocr(self.img,
+                                                     extension="hocr",
+                                                     config="--psm 1",
+                                                     lang='fra+eng').decode('utf-8')
+
+        # Parse to OCRPage object
+        self._ocr_page = OCRPage.parse_hocr(hocr_text)
 
         # Initialize attributes
         self._h_lines = []
@@ -37,6 +48,10 @@ class Image(object):
     @property
     def white_img(self) -> np.ndarray:
         return copy.deepcopy(self._white_img)
+
+    @property
+    def ocr_page(self) -> OCRPage:
+        return self._ocr_page
 
     @property
     def tables(self) -> List[Table]:
@@ -61,6 +76,7 @@ class Image(object):
         :param maxLineGap: maxLineGap parameter for Hough line transform
         """
         horizontal_lines, vertical_lines = detect_lines(image=self.img,
+                                                        ocr_page=self.ocr_page,
                                                         rho=rho,
                                                         theta=theta,
                                                         threshold=threshold,
@@ -141,6 +157,7 @@ class Image(object):
         :return: list of parsed Table objects
         """
         self._tables = get_text_tables(img=self.white_img,
+                                       ocr_page=self.ocr_page,
                                        tables=self.tables,
                                        header_detection=header_detection)
 

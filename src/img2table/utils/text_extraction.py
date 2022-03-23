@@ -57,23 +57,16 @@ def get_title_tables(img: np.ndarray, tables: List[Table], ocr_page: OCRPage, ma
     return tables
 
 
-def get_text_tables(img: np.ndarray, tables: List[Table], header_detection: bool = True) -> List[Table]:
+def get_text_tables(img: np.ndarray, ocr_page: OCRPage, tables: List[Table],
+                    header_detection: bool = True) -> List[Table]:
     """
     Extract text from cell areas
     :param img: image array
+    :param ocr_page: OCRPage object
     :param tables: list of Table objects
     :param header_detection: boolean indicating if header detection is performed
     :return: list of Table objects with parsed titles and dataframes
     """
-    # Get HOCR
-    hocr_text = pytesseract.image_to_pdf_or_hocr(img,
-                                                 extension="hocr",
-                                                 config="--psm 1",
-                                                 lang='fra+eng').decode('utf-8')
-
-    # Parse to OCRPage object
-    ocr_page = OCRPage.parse_hocr(hocr_text)
-
     # Get title of tables
     title_tables = get_title_tables(img=img,
                                     tables=tables,

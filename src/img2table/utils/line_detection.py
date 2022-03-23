@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 from cv2 import cv2
 
+from img2table.objects.ocr import OCRPage
 from img2table.objects.tables import Line
 
 
@@ -89,11 +90,38 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     return final_lines
 
 
-def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
+def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 2) -> bool:
+    """
+    Assess if the line is generated from text in image
+    :param line: Line object
+    :param ocr_page: OCRPage object
+    :param margin: margin used around OCRLine objects
+    :return: boolean indicating if the line is generated from text in image
+    """
+    # Check if ocr_page exists
+    if ocr_page is None:
+        return False
+
+    # Get all OCRLine objects
+    ocr_lines = [ocr_line for ocr_area in ocr_page.items
+                 for ocr_paragraph in ocr_area.items
+                 for ocr_line in ocr_paragraph.items]
+
+    # Loop over all OCR lines to check if the line is contained in the bounding box of the OCR line
+    for ocr_line in ocr_lines:
+        bbox = ocr_line.bbox
+        if line.x1 >= bbox[0] - margin and line.x2 <= bbox[2] + margin and line.y1 >= bbox[1] - margin \
+                and line.y2 <= bbox[3] + margin:
+            return True
+    return False
+
+
+def detect_lines(image: np.ndarray, ocr_page: OCRPage, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
                  minLinLength: int = 290, maxLineGap: int = 6, classify: bool = True) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
+    :param ocr_page: OCRPage object
     :param rho: rho parameter for Hough line transform
     :param theta: theta parameter for Hough line transform
     :param threshold: threshold parameter for Hough line transform
@@ -127,10 +155,11 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
         # Reprocess line
         line.reprocess()
 
-        if line.vertical:
-            vertical_lines.append(line)
-        elif line.horizontal:
-            horizontal_lines.append(line)
+        if not is_word_line(line=line, ocr_page=ocr_page):
+            if line.vertical:
+                vertical_lines.append(line)
+            elif line.horizontal:
+                horizontal_lines.append(line)
 
     # Compute merged lines
     horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=maxLineGap)
