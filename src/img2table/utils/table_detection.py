@@ -145,7 +145,7 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
 
     # Compute number of implicit rows in row and determine vertical delimiters
     nb_rows = max([len(col) for col in cols])
-    v_delimiters = [cell.y2 for cell in [col for col in cols if len(col) == nb_rows][0]]
+    v_delimiters = [(cell.y1 + cell.y2) / 2 for cell in [col for col in cols if len(col) == nb_rows][0]]
 
     # Recompute each column by splitting/duplicating into rows
     new_cols = list()
@@ -155,7 +155,7 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
         else:
             _col = list()
             for delim in v_delimiters:
-                closest_cell = sorted(col, key=lambda c: abs(c.y1 - delim) + abs(c.y2 - delim))[0]
+                closest_cell = sorted(col, key=lambda c: abs((c.y1 + c.y2) / 2 - delim))[0]
                 _col.append(closest_cell)
             new_cols.append(_col)
 
@@ -173,7 +173,7 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
     """
     # Compute number of columns and get delimiters
     nb_cols = max([row.nb_columns for row in table.items])
-    list_delimiters = [[cell.x2 for cell in row.items] for row in table.items if row.nb_columns == nb_cols]
+    list_delimiters = [[(cell.x1 + cell.x2) / 2 for cell in row.items] for row in table.items if row.nb_columns == nb_cols]
     average_delimiters = [statistics.mean([delim[idx] for delim in list_delimiters]) for idx in range(nb_cols)]
 
     # Check if rows have the right number of columns, else duplicate cells
@@ -184,7 +184,7 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
         else:
             _cells = list()
             for delim in average_delimiters:
-                closest_cell = sorted(row.items, key=lambda c: abs(c.x1 - delim) + abs(c.x2 - delim))[0]
+                closest_cell = sorted(row.items, key=lambda c: abs((c.x1 + c.x2) / 2 - delim))[0]
                 _cells.append(closest_cell)
             new_rows.append(Row(cells=_cells))
 
