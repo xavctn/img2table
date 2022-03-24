@@ -65,7 +65,7 @@ class Image(object):
     def v_lines(self) -> List[Line]:
         return copy.deepcopy(self._v_lines)
 
-    def _identify_lines(self, rho: float = 0.5, theta: float = np.pi / 180, threshold: int = 10,
+    def _identify_lines(self, rho: float = 0.3, theta: float = np.pi / 180, threshold: int = 10,
                                    minLinLength: int = 10, maxLineGap: int = 20):
         """
         Identify horizontal lines in image

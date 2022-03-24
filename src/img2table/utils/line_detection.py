@@ -90,7 +90,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     return final_lines
 
 
-def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 0) -> bool:
+def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 1) -> bool:
     """
     Assess if the line is generated from text in image
     :param line: Line object
