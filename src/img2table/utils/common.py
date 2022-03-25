@@ -15,7 +15,7 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
     :return: merged contours
     """
     # If contours is empty, return empty list
-    if len(contours) == 0:
+    if len(contours) == 0 or vertically is None:
         return contours
 
     # Define dimensions used to merge contours

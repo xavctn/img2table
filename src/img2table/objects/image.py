@@ -10,6 +10,7 @@ from img2table.objects.ocr import OCRPage
 from img2table.objects.tables import Table, Line, Cell
 from img2table.utils.cell_detection import get_cells
 from img2table.utils.implicit_rows import handle_implicit_rows
+from img2table.utils.implicit_tables import detect_implicit_tables
 from img2table.utils.line_detection import detect_lines
 from img2table.utils.rotation import rotate_img
 from img2table.utils.table_detection import get_tables
@@ -35,6 +36,7 @@ class Image(object):
         self._h_lines = []
         self._v_lines = []
         self._tables = []
+        self._implicit_tables = []
         self._white_img = None
 
     @property
@@ -58,6 +60,14 @@ class Image(object):
         return [table for table in self._tables if table is not None]
 
     @property
+    def implicit_tables(self) -> List[Table]:
+        return [table for table in self._implicit_tables if table is not None]
+
+    @property
+    def total_tables(self) -> List[Table]:
+        return self.tables + self.implicit_tables
+
+    @property
     def h_lines(self) -> List[Line]:
         return copy.deepcopy(self._h_lines)
 
@@ -66,7 +76,7 @@ class Image(object):
         return copy.deepcopy(self._v_lines)
 
     def _identify_lines(self, rho: float = 0.3, theta: float = np.pi / 180, threshold: int = 10,
-                                   minLinLength: int = 10, maxLineGap: int = 20):
+                        minLinLength: int = 10, maxLineGap: int = 20):
         """
         Identify horizontal lines in image
         :param rho: rho parameter for Hough line transform
@@ -116,7 +126,7 @@ class Image(object):
         white_img = self.img
 
         # Draw white lines on cells borders
-        for cell in [cell for table in self.tables for row in table.items for cell in row.items]:
+        for cell in [cell for table in self.total_tables for row in table.items for cell in row.items]:
             cv2.rectangle(white_img, (cell.x1, cell.y1 - margin), (cell.x2, cell.y1 + margin), color, 3)
             cv2.rectangle(white_img, (cell.x1, cell.y2 - margin), (cell.x2, cell.y2 + margin), color, 3)
             cv2.rectangle(white_img, (cell.x1 - margin, cell.y1), (cell.x1 + margin, cell.y2), color, 3)
@@ -133,10 +143,11 @@ class Image(object):
         self._tables = handle_implicit_rows(white_img=self.white_img,
                                             tables=self.tables)
 
-    def identify_image_tables(self, implicit_rows: bool = True) -> List[Table]:
+    def identify_image_tables(self, implicit_rows: bool = True, implicit_tables: bool = True) -> List[Table]:
         """
         Identify tables in image
         :param implicit_rows: boolean indicating if implicit rows are detected
+        :param implicit_tables: boolean indicating if implicit tables are detected
         :return: list of Table objects
         """
         # Detect tables from lines
@@ -148,7 +159,11 @@ class Image(object):
         if implicit_rows:
             self._detect_implicit_rows()
 
-        return self.tables
+        if implicit_tables:
+            self._implicit_tables = detect_implicit_tables(white_img=self.white_img,
+                                                           tables=self.tables)
+
+        return self.total_tables
 
     def parse_tables_content(self, header_detection: bool = True) -> List[Table]:
         """
@@ -161,16 +176,24 @@ class Image(object):
                                        tables=self.tables,
                                        header_detection=header_detection)
 
-        return self.tables
+        self._implicit_tables = get_text_tables(img=self.white_img,
+                                                ocr_page=self.ocr_page,
+                                                tables=self._implicit_tables,
+                                                header_detection=header_detection)
 
-    def extract_tables(self, implicit_rows: bool = True, header_detection: bool = True) -> List[Table]:
+        return self.total_tables
+
+    def extract_tables(self, implicit_rows: bool = True, implicit_tables: bool = False,
+                       header_detection: bool = True) -> List[Table]:
         """
         Extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are detected
+        :param implicit_tables: boolean indicating if implicit tables are detected
         :param header_detection: boolean indicating if header detection is performed
         :return: list of extracted tables
         """
-        self.identify_image_tables(implicit_rows=implicit_rows)
+        self.identify_image_tables(implicit_rows=implicit_rows,
+                                   implicit_tables=implicit_tables)
 
         extracted_tables = self.parse_tables_content(header_detection=header_detection)
 
@@ -179,6 +202,7 @@ class Image(object):
 
 if __name__ == '__main__':
     from PIL import Image as PILImage
+
     img = cv2.imread(r"C:\Users\xavca\Pictures\test_2.png")
 
     image_object = Image(img)
@@ -199,4 +223,3 @@ if __name__ == '__main__':
         print(table.get('title'))
         print(table.get('bbox'))
         print()
-
