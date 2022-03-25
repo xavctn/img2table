@@ -135,6 +135,21 @@ class Image(object):
         # Set _white_img attribute
         self._white_img = white_img
 
+    def _white_lines(self, color: tuple = (255, 255, 255)) -> np.ndarray:
+        """
+        Draw white lines on identified lines
+        :param color: RGB color code
+        :return: image
+        """
+        # Initialize image
+        _img = self.img
+
+        # Draw white lines on cells borders
+        for line in self.h_lines + self.v_lines:
+            cv2.rectangle(_img, (line.x1, line.y1), (line.x2, line.y2), color, 3)
+
+        return _img
+
     def _detect_implicit_rows(self):
         """
         Detect implicit rows in tables
@@ -160,7 +175,7 @@ class Image(object):
             self._detect_implicit_rows()
 
         if implicit_tables:
-            self._implicit_tables = detect_implicit_tables(white_img=self.white_img,
+            self._implicit_tables = detect_implicit_tables(white_img=self._white_lines(),
                                                            tables=self.tables)
 
         return self.total_tables
