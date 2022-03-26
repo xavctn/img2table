@@ -39,6 +39,6 @@ def detect_implicit_tables(white_img: np.ndarray, tables: List[Table]) -> List[T
     cluster_groups = group_clusters(clusters=clusters)
 
     # Convert cluster groups to tables
-    tables = [cluster_group_to_table(cluster_group=cluster_group) for cluster_group in cluster_groups]
+    implicit_tables = [cluster_group_to_table(cluster_group=cluster_group) for cluster_group in cluster_groups]
 
-    return tables
+    return implicit_tables
