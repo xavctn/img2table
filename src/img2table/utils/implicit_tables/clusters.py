@@ -30,7 +30,7 @@ def is_contained_table(cell: Cell, table: Table) -> bool:
     return iou >= 0.9
 
 
-def vertically_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
+def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
     """
     Split cluster into vertically coherent sub clusters
     :param cluster: cluster of cells
@@ -43,25 +43,35 @@ def vertically_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
     clusters = list()
     for idx, cell in enumerate(sorted_cluster):
         if idx == 0:
-            # Set cluster and its vertical difference between cells
+            # Set cluster, vertical difference between cells, average cell height and width
+            cluster = [cell]
+            avg_vertical_diff = None
+            avg_cell_height = cell.y2 - cell.y1
+            avg_cell_length = cell.x2 - cell.x1
+        else:
+            # Compute vertical difference between the cell and the last element of the cluster, cell height and length
+            v_diff = (cell.y2 + cell.y1 - cluster[-1].y2 - cluster[-1].y1) / 2
+            cell_height = cell.y2 - cell.y1
+            cell_length = cell.x2 - cell.x1
+            # Check if vertical difference is coherent with cluster
+            if avg_vertical_diff is None or 0.5 * avg_vertical_diff < v_diff < 2 * avg_vertical_diff:
+                # Check if cell length is coherent with cluster
+                if 0.2 * avg_cell_length <= cell_length <= 5 * avg_cell_length:
+                    avg_cell_height = (avg_cell_height * len(cluster) + cell_height) / (len(cluster) + 1)
+                    avg_cell_length = (avg_cell_length * len(cluster) + cell_length) / (len(cluster) + 1)
+                    avg_vertical_diff = ((avg_vertical_diff or v_diff) * (len(cluster) - 1) + v_diff) / len(cluster)
+                    # Check if vertical difference is coherent with cell height
+                    if avg_vertical_diff / avg_cell_height <= 3:
+                        cluster.append(cell)
+                        continue
+
+            # If the vertical difference is not coherent with the cluster, post the cluster and open a new one
+            if len(cluster) > 1:
+                clusters.append(cluster)
             cluster = [cell]
             vertical_diff = None
-        else:
-            # Compute vertical difference between the cell and the last element of the cluster
-            _v_diff = (cell.y2 + cell.y1 - cluster[-1].y2 - cluster[-1].y1) / 2
-            if vertical_diff is None:
-                # Corresponds to the case when only one cell is present in cluster.
-                # Set vertical difference between cells in the cluster and add cell to cluster
-                vertical_diff = _v_diff
-                cluster.append(cell)
-            elif 0.5 * vertical_diff < _v_diff < 2 * vertical_diff:
-                # If the vertical difference is coherent with the cluster, add cell to cluster
-                cluster.append(cell)
-            else:
-                # If the vertical difference is not coherent with the cluster, post the cluster and open a new one
-                clusters.append(cluster)
-                cluster = [cell]
-                vertical_diff = None
+            avg_cell_height = cell.y2 - cell.y1
+            avg_cell_length = cell.x2 - cell.x1
 
     if len(cluster) > 1:
         clusters.append(cluster)
@@ -134,4 +144,4 @@ def cluster_contours(contours: List[Cell], tables: List[Table], max_cluster_diff
             clusters.append(cluster)
 
     # Split clusters into vertically coherent clusters
-    return [v_cluster for cluster in clusters for v_cluster in vertically_coherent_cluster(cluster=cluster)]
+    return [v_cluster for cluster in clusters for v_cluster in make_coherent_cluster(cluster=cluster)]
