@@ -3,6 +3,21 @@ import statistics
 from typing import List
 
 from img2table.objects.tables import Cell
+from img2table.utils.common import merge_contours
+
+
+def merged_clusters(clusters: List[List[Cell]]) -> List[List[Cell]]:
+    """
+    From list of clusters, merge clusters that have common cells
+    :param clusters: list of clusters
+    :return: list of clusters wth disjoints cells
+    """
+    for i, v in enumerate(clusters):
+        for j, k in enumerate(clusters[i + 1:], i + 1):
+            if v & k:
+                clusters[i] = v.union(clusters.pop(j))
+                return merged_clusters(clusters)
+    return clusters
 
 
 def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
@@ -67,26 +82,11 @@ def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
     for cluster_group in cluster_groups:
         # For each group, check if some of the clusters contained in it intersect.
         # If it is the case, the intersecting clusters are merged into a larger one
-        dedup_cluster_group = list()
-        _idx = list(range(len(cluster_group)))
-        for idx in iter(_idx):
-            # Check if some clusters intersect the current one
-            common_clusters = [i for i, cluster in enumerate(cluster_group)
-                               if len(set(cluster_group[idx]).intersection(cluster_group[i])) > 0
-                               and i > idx]
-            if common_clusters:
-                # Create a new cluster by merging all intersecting clusters
-                _cluster = list(set([cell for j, cluster in enumerate(cluster_group) for cell in cluster
-                                     if j in [idx] + common_clusters]))
-                dedup_cluster_group.append(sorted(_cluster, key=lambda c: c.y1))
-                # Remove merged clusters from the list
-                for j in common_clusters:
-                    _idx.remove(j)
-            else:
-                dedup_cluster_group.append(cluster_group[idx])
+        dedup_cluster_group = [merge_contours(contours=list(cl), vertically=True)
+                               for cl in merged_clusters(clusters=list(map(set, cluster_group)))]
 
         # Append deduplicated group to the list
-        dedup_cluster_groups.append(dedup_cluster_group)
+        dedup_cluster_groups.append([sorted(cl, key=lambda c: c.y1) for cl in dedup_cluster_group])
 
     # Filter on cluster tables that have at least 2 clusters
     dedup_cluster_groups = [cluster_group for cluster_group in dedup_cluster_groups if len(cluster_group) > 1]
