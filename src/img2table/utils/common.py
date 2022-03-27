@@ -1,4 +1,5 @@
 # coding: utf_8
+import copy
 from typing import List
 
 import numpy as np
@@ -38,7 +39,7 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
     # Loop over contours and merge overlapping contours
     for idx, cnt in enumerate(sorted_cnts):
         if idx == 0:
-            curr_cnt = cnt
+            curr_cnt = copy.deepcopy(cnt)
         else:
             # If contours overlap, update current contour
             if getattr(cnt, idx_1) <= getattr(curr_cnt, idx_2):
@@ -49,7 +50,7 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
             # Else, add current contour and open a new one
             else:
                 list_cnts.append(curr_cnt)
-                curr_cnt = cnt
+                curr_cnt = copy.deepcopy(cnt)
 
     list_cnts.append(curr_cnt)
 
