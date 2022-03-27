@@ -218,11 +218,12 @@ class Image(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\test_2.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\achat_blouson.png")
 
     image_object = Image(img)
     tables = image_object.extract_tables(header_detection=True,
-                                         implicit_rows=True)
+                                         implicit_rows=True,
+                                         implicit_tables=True)
 
     image_object._create_img_colored_borders(color=(128, 145, 226))
     display_img = image_object.white_img
@@ -237,4 +238,3 @@ if __name__ == '__main__':
     for table in output_tables:
         print(table.get('title'))
         print(table.get('bbox'))
-        print()

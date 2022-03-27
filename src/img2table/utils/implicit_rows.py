@@ -14,6 +14,10 @@ def handle_implicit_rows_table(white_img: np.ndarray, table: Table) -> Table:
     :param table: Table object
     :return: reprocessed table with implicit rows
     """
+    # If table is a single cell, do not search for implicit rows
+    if table.nb_columns * table.nb_rows <= 1:
+        return table
+
     # Compute contours on each row and merge them
     table_cnts = get_bounding_area_text(img=white_img,
                                         table=table,
