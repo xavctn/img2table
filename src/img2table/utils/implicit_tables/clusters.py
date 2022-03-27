@@ -41,13 +41,16 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
 
     # Loop over cells in the cluster and check vertical coherency
     clusters = list()
-    for idx, cell in enumerate(sorted_cluster):
+    idx = 0
+    while idx < len(sorted_cluster):
+        cell = sorted_cluster[idx]
         if idx == 0:
             # Set cluster, vertical difference between cells, average cell height and width
             cluster = [cell]
             avg_vertical_diff = None
             avg_cell_height = cell.y2 - cell.y1
             avg_cell_length = cell.x2 - cell.x1
+            idx += 1
         else:
             # Compute vertical difference between the cell and the last element of the cluster, cell height and length
             v_diff = (cell.y2 + cell.y1 - cluster[-1].y2 - cluster[-1].y1) / 2
@@ -63,15 +66,18 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
                     # Check if vertical difference is coherent with cell height
                     if avg_vertical_diff / avg_cell_height <= 3:
                         cluster.append(cell)
+                        idx += 1
                         continue
 
             # If the vertical difference is not coherent with the cluster, post the cluster and open a new one
             if len(cluster) > 1:
                 clusters.append(cluster)
-            cluster = [cell]
-            vertical_diff = None
-            avg_cell_height = cell.y2 - cell.y1
-            avg_cell_length = cell.x2 - cell.x1
+                cluster = [cluster[-1]]
+            else:
+                cluster = [cell]
+            avg_vertical_diff = None
+            avg_cell_height = cluster[0].y2 - cluster[0].y1
+            avg_cell_length = cluster[0].x2 - cluster[0].x1
 
     if len(cluster) > 1:
         clusters.append(cluster)
