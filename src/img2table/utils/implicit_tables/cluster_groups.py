@@ -64,7 +64,6 @@ def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
                 if spacing_corresponds and y_corresponds:
                     cluster_groups[i].append(cluster)
                     matched = True
-                    continue
 
             # If the cluster has not been matched with any groups, create a new group from it
             if not matched:
