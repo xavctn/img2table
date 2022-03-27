@@ -43,15 +43,9 @@ def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
                 y1_cg = min([cell.y1 for cl in cluster_group for cell in cl])
                 y2_cg = max([cell.y2 for cl in cluster_group for cell in cl])
 
-                # Find if y1 and y2 corresponds
-                y1_corresponds = abs(y1_cluster - y1_cg) / (y2_cg - y1_cg) <= 0.05
-                y2_corresponds = abs(y2_cluster - y2_cg) / (y2_cg - y1_cg) <= 0.05
-
-                # If corresponds, append to cluster
-                if y1_corresponds and y2_corresponds:
-                    cluster_groups[i].append(cluster)
-                    matched = True
-                    continue
+                # Overlapping y and determine if vertical coordinates corresponds
+                overlapping_y = len(list(set(list(range(y1_cluster, y2_cluster))) & set(list(range(y1_cg, y2_cg)))))
+                y_corresponds = min(overlapping_y / (y2_cluster - y1_cluster), overlapping_y / (y2_cg - y1_cg)) >= 0.5
 
                 # Compute average space between elements of cluster
                 spacing_cl = [(cluster[idx + 1].y1 - cluster[idx].y1 + cluster[idx + 1].y2 - cluster[idx].y2) / 2
@@ -63,12 +57,11 @@ def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
                                                   for cl in cluster_group
                                                   for idx in range(len(cl) - 1)])
 
-                # Compute if average spacing and height corresponds
+                # Compute if average spacing corresponds
                 spacing_corresponds = abs(avg_spacing_cl / avg_spacing_cg - 1) <= 0.2
-                height_corresponds = abs((y2_cluster - y1_cluster) / (y2_cg - y1_cg) - 1) <= 0.5
 
-                # If one the vertical ends, spacing anf height corresponds, append cluster to group
-                if (y1_corresponds or y2_corresponds) and spacing_corresponds and height_corresponds:
+                # If spacing and height corresponds, append cluster to group
+                if spacing_corresponds and y_corresponds:
                     cluster_groups[i].append(cluster)
                     matched = True
                     continue
