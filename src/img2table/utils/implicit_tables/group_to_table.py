@@ -1,7 +1,6 @@
 # coding: utf-8
 import copy
 import statistics
-from collections import Counter
 from typing import List
 
 from img2table.objects.tables import Cell, Row, Table
@@ -65,7 +64,7 @@ def cluster_group_to_table(cluster_group: List[List[Cell]]) -> Table:
     :return: Table object
     """
     # Compute merged contours and assert number of rows and their vertical centers
-    merged_contours = merge_contours(contours=[cell for cluster in copy.deepcopy(cluster_group) for cell in cluster],
+    merged_contours = merge_contours(contours=[cell for cluster in cluster_group for cell in cluster],
                                      vertically=True)
     nb_rows = len(merged_contours)
     vertical_centers = [(cnt.y1 + cnt.y2) / 2 for cnt in sorted(merged_contours, key=lambda c: c.y1)]
