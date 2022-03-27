@@ -5,6 +5,7 @@ from collections import Counter
 from typing import List
 
 from img2table.objects.tables import Cell, Row, Table
+from img2table.utils.common import merge_contours
 
 
 def columns_to_table(columns: List[List[Cell]], margin: int = 5) -> Table:
@@ -63,14 +64,11 @@ def cluster_group_to_table(cluster_group: List[List[Cell]]) -> Table:
     :param cluster_group: group of cell clusters that each corresponds to a table
     :return: Table object
     """
-    # Get most likely number of rows
-    cnt_len_cluster = Counter([len(cluster) for cluster in cluster_group])
-    nb_rows = sorted([k for k, v in cnt_len_cluster.items() if v == max(cnt_len_cluster.values())])[-1]
-
-    # Determine vertical values
-    vertical_values = [[(cluster[idx].y1 + cluster[idx].y2) / 2 for cluster in cluster_group if len(cluster) == nb_rows]
-                       for idx in range(nb_rows)]
-    vertical_values = [statistics.mean(val) for val in vertical_values]
+    # Compute merged contours and assert number of rows and their vertical centers
+    merged_contours = merge_contours(contours=[cell for cluster in copy.deepcopy(cluster_group) for cell in cluster],
+                                     vertically=True)
+    nb_rows = len(merged_contours)
+    vertical_centers = [(cnt.y1 + cnt.y2) / 2 for cnt in sorted(merged_contours, key=lambda c: c.y1)]
 
     # For each cluster, assign a cell to a row in order to create a column
     columns = list()
@@ -82,15 +80,15 @@ def cluster_group_to_table(cluster_group: List[List[Cell]]) -> Table:
             # If the cluster has missing cells, determine for each cell the most likely row based on vertical position
             column = [None] * nb_rows
             for cell in cluster:
-                most_likely_val = sorted(vertical_values,
+                most_likely_val = sorted(vertical_centers,
                                          key=lambda v: abs((cell.y1 + cell.y2) / 2 - v))[0]
-                column[vertical_values.index(most_likely_val)] = cell
+                column[vertical_centers.index(most_likely_val)] = cell
             columns.append(column)
         else:
             # If the cluster has too many cells, for each row, determine the most likely cell based on vertical position
             column = [None] * nb_rows
             _cells = copy.deepcopy(cluster)
-            for idx, value in enumerate(vertical_values):
+            for idx, value in enumerate(vertical_centers):
                 most_likely_cell = sorted(_cells,
                                           key=lambda x: abs((x.y1 + x.y2) / 2 - value))[0]
                 column[idx] = most_likely_cell
@@ -100,3 +98,4 @@ def cluster_group_to_table(cluster_group: List[List[Cell]]) -> Table:
 
     # Create table from columns
     return columns_to_table(columns=columns)
+
