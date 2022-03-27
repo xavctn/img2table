@@ -75,6 +75,7 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
                 cluster = [cluster[-1]]
             else:
                 cluster = [cell]
+                idx += 1
             avg_vertical_diff = None
             avg_cell_height = cluster[0].y2 - cluster[0].y1
             avg_cell_length = cluster[0].x2 - cluster[0].x1
