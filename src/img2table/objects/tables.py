@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from img2table.objects.ocr import OCRPage
-from img2table.utils.data_processing import split_lines, remove_empty_rows, remove_empty_columns
+from img2table.utils.data_processing import remove_empty_rows, remove_empty_columns
 from img2table.utils.header import detect_header
 
 
@@ -406,9 +406,6 @@ class Table(TableObject):
         """
         if self.data is None:
             return None
-
-        # Split lines if needed
-        self._data = split_lines(self._data)
 
         # Remove empty rows and columns
         self._data = remove_empty_rows(self._data)
