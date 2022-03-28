@@ -29,7 +29,7 @@ def intersection_bbox_line(row: Union[Row, Cell], line: Line, without_border: bo
     overlapping_pixels = len(list(set(list(range(row.y1, row.y2))) & set(list(range(line.y1, line.y2)))))
 
     # Return intersection if the line intersects on at least 80% of the bounding box
-    return overlapping_pixels / row.height > 0.5
+    return overlapping_pixels / row.height > 0.80
 
 
 def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
