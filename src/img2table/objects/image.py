@@ -23,16 +23,8 @@ class Image(object):
         # Rotate image to proper orientation
         self._img = rotate_img(img=copy.deepcopy(image))
 
-        # Get hOCR from image
-        hocr_text = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY),
-                                                     extension="hocr",
-                                                     config="--psm 1",
-                                                     lang='fra+eng').decode('utf-8')
-
-        # Parse to OCRPage object
-        self._ocr_page = OCRPage.parse_hocr(hocr_text)
-
         # Initialize attributes
+        self._ocr_page = None
         self._h_lines = []
         self._v_lines = []
         self._tables = []
@@ -76,7 +68,7 @@ class Image(object):
         return copy.deepcopy(self._v_lines)
 
     def _identify_lines(self, rho: float = 0.3, theta: float = np.pi / 180, threshold: int = 10,
-                        minLinLength: int = 10, maxLineGap: int = 20):
+                        minLinLength: int = 10, maxLineGap: int = 10):
         """
         Identify horizontal lines in image
         :param rho: rho parameter for Hough line transform
@@ -86,7 +78,6 @@ class Image(object):
         :param maxLineGap: maxLineGap parameter for Hough line transform
         """
         horizontal_lines, vertical_lines = detect_lines(image=self.img,
-                                                        ocr_page=self.ocr_page,
                                                         rho=rho,
                                                         theta=theta,
                                                         threshold=threshold,
@@ -186,15 +177,28 @@ class Image(object):
         :param header_detection: boolean indicating if header detection is performed
         :return: list of parsed Table objects
         """
-        self._tables = get_text_tables(img=self.white_img,
-                                       ocr_page=self.ocr_page,
-                                       tables=self.tables,
-                                       header_detection=header_detection)
+        # Remove tables that have only one cell
+        self._tables = [table for table in self.tables if table.nb_rows * table.nb_columns > 1]
 
-        self._implicit_tables = get_text_tables(img=self.white_img,
-                                                ocr_page=self.ocr_page,
-                                                tables=self._implicit_tables,
-                                                header_detection=header_detection)
+        if self.total_tables:
+            # Get hOCR from image
+            hocr_text = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(self.white_img, cv2.COLOR_BGR2GRAY),
+                                                         extension="hocr",
+                                                         config="--psm 1",
+                                                         lang='fra+eng').decode('utf-8')
+
+            # Parse to OCRPage object
+            self._ocr_page = OCRPage.parse_hocr(hocr_text)
+
+            self._tables = get_text_tables(img=self.white_img,
+                                           ocr_page=self.ocr_page,
+                                           tables=self.tables,
+                                           header_detection=header_detection)
+
+            self._implicit_tables = get_text_tables(img=self.white_img,
+                                                    ocr_page=self.ocr_page,
+                                                    tables=self._implicit_tables,
+                                                    header_detection=header_detection)
 
         return self.total_tables
 

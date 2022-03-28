@@ -68,10 +68,9 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     """
     # Get Hough Lines
     lines = detect_lines(image=copy.deepcopy(image),
-                         ocr_page=None,
                          rho=0.5,
                          minLinLength=20,
-                         maxLineGap=20,
+                         maxLineGap=10,
                          threshold=5,
                          classify=False)
 
