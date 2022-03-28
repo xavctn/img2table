@@ -204,23 +204,6 @@ class Row(TableObject):
         else:
             self._contours += contours
 
-    def normalize(self, x1: int = None, x2: int = None):
-        """
-        Normalize left and right bounds of each cell in the row
-        :param x1: left bound
-        :param x2: right bound
-        :return: Row object
-        """
-        _x1 = x1 or self.x1
-        _x2 = x2 or self.x2
-        # Normalize left and right borders of cells
-        _cells = list()
-        for cell in self.items:
-            _cell = Cell(x1=_x1, x2=_x2, y1=cell.y1, y2=cell.y2)
-            _cells.append(_cell)
-        self._items = _cells
-        return self
-
     @classmethod
     def from_horizontal_lines(cls, line_1: Line, line_2: Line):
         """
@@ -232,40 +215,6 @@ class Row(TableObject):
         # Create new cell and instantiate new row
         cell = Cell.from_h_lines(line_1=line_1, line_2=line_2)
         return cls(cells=cell)
-
-    def split_in_columns(self, column_delimiters: List[int]):
-        """
-        Split row cell into multiple columns using column delimiters values
-        :param column_delimiters: list of column delimiters values
-        :return: Row object with splitted columns
-        """
-        if len(column_delimiters) == 0:
-            return self
-
-        # Check if column delimiters are relevant
-        if not min([self.x1 <= delimiter <= self.x2 for delimiter in column_delimiters]):
-            raise ValueError("Column delimiters are outside of the row bounding box")
-
-        # Check if columns already exists (i.e multiple cells in row)
-        if self.nb_columns > 1:
-            raise ValueError("Already existing columns in row")
-
-        # Sort column delimiters
-        column_delimiters = sorted(column_delimiters)
-
-        # Create list of tuples for column boundaries
-        col_delimiters = [self.x1] + column_delimiters + [self.x2]
-        col_boundaries = [(i, j) for i, j in zip(col_delimiters, col_delimiters[1:])]
-
-        # Create new cells splitted with boundaries
-        new_cells = list()
-        for boundary in col_boundaries:
-            cell = Cell(x1=boundary[0], x2=boundary[1], y1=self.y1, y2=self.y2)
-            new_cells.append(cell)
-
-        self._items = new_cells
-
-        return self
 
     def split_in_rows(self, vertical_delimiters: List[int]):
         """
@@ -354,47 +303,6 @@ class Table(TableObject):
             self._items += [rows]
         else:
             self._items += rows
-
-        return self
-
-    @classmethod
-    def from_horizontal_lines(cls, line_1: Line, line_2: Line):
-        """
-        Generate table from horizontal lines
-        :param line_1: first horizontal line
-        :param line_2: second horizontal line
-        :return: Table object with one Row object between horizontal lines
-        """
-        # Create new cell and instantiate new row
-        row = Row.from_horizontal_lines(line_1=line_1, line_2=line_2)
-        return cls(rows=row)
-
-    def normalize(self):
-        """
-        Normalize boundaries of rows in table
-        :return: Table object with normalized rows
-        """
-        # Remove empty rows
-        self._items = [row for row in self.items if row.height > 0]
-
-        # Normalize left and right borders of rows
-        _rows = [row.normalize(x1=self.x1, x2=self.x2) for row in self.items]
-        self._items = _rows
-
-        return self
-
-    def split_in_columns(self, column_delimiters: List[int]):
-        """
-        Split table rows into multiple columns using column delimiters values
-        :param column_delimiters: list of column delimiters values
-        :return: Table object with rows splitted into columns
-        """
-        if len(column_delimiters) == 0:
-            return self
-
-        _rows = [row.split_in_columns(column_delimiters=column_delimiters) for row in self.items]
-
-        self._items = _rows
 
         return self
 

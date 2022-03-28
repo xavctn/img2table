@@ -62,13 +62,12 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
     for h_line in matching_lines:
         # Create a cell from line and h_line
         h_line_cell = Cell.from_h_lines(line_1=line, line_2=h_line, minimal=True)
-        length = h_line_cell.x2 - h_line_cell.x1
         # Get vertical lines that crosses the cell
         crossing_v_lines = [v_line for v_line in vertical_lines
                             if intersection_bbox_line(row=h_line_cell,
                                                       line=v_line,
                                                       without_border=False,
-                                                      horizontal_margin=max(round(0.05 * length), 5))
+                                                      horizontal_margin=max(round(0.05 * h_line_cell.width), 5))
                             ]
 
         # If there are some crossing lines, create cells based on those lines
