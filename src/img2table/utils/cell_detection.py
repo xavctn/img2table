@@ -45,7 +45,7 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
 
     # Find horizontal lines below the current line which position matches with the line
     matching_lines = list()
-    for h_line in [h_line for h_line in horizontal_lines if h_line.y1 > line.y1 + 20]:
+    for h_line in [h_line for h_line in horizontal_lines if h_line.y1 > line.y1 + 10]:
         # Compute if right or left ends correspond in both lines
         l_corresponds = abs((line.x1 - h_line.x1) / line.width) <= 0.02
         r_corresponds = abs((line.x2 - h_line.x2) / line.width) <= 0.02
@@ -80,7 +80,7 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
                 cell = Cell(x1=boundary[0], x2=boundary[1], y1=h_line_cell.y1, y2=h_line_cell.y2)
                 output_cells.append(cell)
 
-    output_cells = [c for c in output_cells if c.width >= 20 and c.height >= 20]
+    output_cells = [c for c in output_cells if c.width >= 20]
 
     return output_cells
 
