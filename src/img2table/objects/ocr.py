@@ -45,6 +45,11 @@ class OCRObject(object):
             self._items += [item]
 
     def get_items(self, soup: BeautifulSoup):
+        """
+        Create items from BeautifulSoup parser
+        :param soup: BeautifulSoup parser
+        :return:
+        """
         list_items = list()
         for html_element in soup.find_all(self.item_class.html_tag, {"class": self.item_class.html_classes}):
             item = self.item_class(html_title=html_element.get('title'))
@@ -108,9 +113,24 @@ class OCRObject(object):
         return intersection_area / bb1_area >= 0.75
 
     def get_bbox_items(self, bbox: tuple):
+        """
+        Get items and sub items that intersects the bounding box
+        :param bbox: bounding box
+        :return: list of sub items that intersects the bounding box
+        """
         # Get items that are intersecting with bounding box
         intersecting_items = sort_ocr_objects([item for item in self.items if item.intersect_bbox(bbox=bbox)])
         return [sub_item for item in intersecting_items for sub_item in item.get_bbox_items(bbox=bbox) if sub_item]
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            try:
+                assert self.items == other.items
+                assert self.bbox == other.bbox
+                return True
+            except AssertionError:
+                return False
+        return False
 
 
 def sort_ocr_objects(ocr_objects: List[OCRObject], vertically: bool = True) -> List[OCRObject]:
@@ -136,17 +156,29 @@ class OCRWord(OCRObject):
     item_class = None
 
     def __init__(self, html_title: str, value: str = None, items: List = None):
-        super().__init__(html_title=html_title, items=items)
+        super(OCRWord, self).__init__(html_title=html_title, items=items)
         self._value = value
 
     @property
     def value(self):
-        if re.search(r"^(—|L|=|\!|_|\||\[|\]|I|l|\.)*$", self._value) is None:
+        if re.search(r"^(—|L|=|\!|_|\||\[|\]|I|l|\.|\s)*$", self._value) is None:
             return self._value
         return None
 
     def get_items(self, soup: BeautifulSoup):
         self._value = soup.string
+
+    def __eq__(self, other):
+        parent_equality = super(OCRWord, self).__eq__(other)
+        if not parent_equality:
+            return False
+        if isinstance(other, self.__class__):
+            try:
+                assert self.value == other.value
+                return True
+            except AssertionError:
+                return False
+        return False
 
 
 class OCRLine(OCRObject):
@@ -155,7 +187,7 @@ class OCRLine(OCRObject):
     item_class = OCRWord
 
     def __init__(self, html_title: str, items: List = None):
-        super().__init__(html_title=html_title, items=items)
+        super(OCRLine, self).__init__(html_title=html_title, items=items)
         self._x_size = self.x_size_from_title()
 
     @property
@@ -168,6 +200,20 @@ class OCRLine(OCRObject):
         :return: x_size
         """
         return round(float(re.findall(r"(x_size )([\d\.]+)", self._title)[0][1]))
+
+    def get_items(self, soup: BeautifulSoup):
+        """
+        Create items from BeautifulSoup parser
+        :param soup: BeautifulSoup parser
+        :return:
+        """
+        list_items = list()
+        for html_element in soup.find_all(self.item_class.html_tag, {"class": self.item_class.html_classes}):
+            item = self.item_class(html_title=html_element.get('title'))
+            item.get_items(soup=html_element)
+            if item.value:
+                list_items.append(item)
+        self.add_items(item=list_items)
 
     def get_bbox_items(self, bbox: tuple) -> List[Tuple[List[OCRObject], int]]:
         """
@@ -184,6 +230,18 @@ class OCRLine(OCRObject):
         intersecting_words = [word_line for word_line in intersecting_words if word_line]
 
         return [(intersecting_words, self._x_size)]
+
+    def __eq__(self, other):
+        parent_equality = super(OCRLine, self).__eq__(other)
+        if not parent_equality:
+            return False
+        if isinstance(other, self.__class__):
+            try:
+                assert self.x_size == other.x_size
+                return True
+            except AssertionError:
+                return False
+        return False
 
 
 class OCRParagraph(OCRObject):
@@ -258,3 +316,4 @@ class OCRPage(OCRObject):
         word_sizes = [x_size for line, x_size in cell_word_lines for word in line]
 
         return word_sizes
+

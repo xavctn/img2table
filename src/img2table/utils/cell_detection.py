@@ -29,7 +29,7 @@ def intersection_bbox_line(row: Union[Row, Cell], line: Line, without_border: bo
     overlapping_pixels = len(list(set(list(range(row.y1, row.y2))) & set(list(range(line.y1, line.y2)))))
 
     # Return intersection if the line intersects on at least 80% of the bounding box
-    return overlapping_pixels / row.height > 0.8
+    return overlapping_pixels / row.height > 0.5
 
 
 def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
@@ -45,7 +45,7 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
 
     # Find horizontal lines below the current line which position matches with the line
     matching_lines = list()
-    for h_line in [h_line for h_line in horizontal_lines if h_line.y1 > line.y1]:
+    for h_line in [h_line for h_line in horizontal_lines if h_line.y1 > line.y1 + 20]:
         # Compute if right or left ends correspond in both lines
         l_corresponds = abs((line.x1 - h_line.x1) / line.width) <= 0.02
         r_corresponds = abs((line.x2 - h_line.x2) / line.width) <= 0.02
@@ -62,36 +62,25 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
     for h_line in matching_lines:
         # Create a cell from line and h_line
         h_line_cell = Cell.from_h_lines(line_1=line, line_2=h_line, minimal=True)
+        length = h_line_cell.x2 - h_line_cell.x1
         # Get vertical lines that crosses the cell
         crossing_v_lines = [v_line for v_line in vertical_lines
                             if intersection_bbox_line(row=h_line_cell,
                                                       line=v_line,
                                                       without_border=False,
-                                                      horizontal_margin=5)
+                                                      horizontal_margin=max(round(0.02 * length), 5))
                             ]
 
         # If there are some crossing lines, create cells based on those lines
         if len(crossing_v_lines) > 1:
-            # Get position of vertical delimiters
-            v_delimiters = sorted([v_line.x1 for v_line in crossing_v_lines])
+            line_values = sorted([line.x1 for line in crossing_v_lines])
+            boundaries = [bound for bound in zip(line_values, line_values[1:])]
 
-            # Process line ends to corresponds to actual cell
-            # Process left end
-            if abs(h_line_cell.x1 - v_delimiters[0]) / h_line_cell.width >= 0.05:
-                v_delimiters = [h_line_cell.x1] + v_delimiters
-            else:
-                v_delimiters[0] = h_line_cell.x1
-            # Process right end
-            if abs(h_line_cell.x2 - v_delimiters[-1]) / h_line_cell.width >= 0.05:
-                v_delimiters = v_delimiters + [h_line_cell.x2]
-            else:
-                v_delimiters[-1] = h_line_cell.x2
-
-            # Create columns boundaries and split in multiple cells
-            col_boundaries = [(i, j) for i, j in zip(v_delimiters, v_delimiters[1:])]
-            for boundary in col_boundaries:
+            for boundary in boundaries:
                 cell = Cell(x1=boundary[0], x2=boundary[1], y1=h_line_cell.y1, y2=h_line_cell.y2)
                 output_cells.append(cell)
+
+    output_cells = [c for c in output_cells if c.width >= 20 and c.height >= 20]
 
     return output_cells
 

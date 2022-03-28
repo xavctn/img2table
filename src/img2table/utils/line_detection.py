@@ -41,7 +41,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             curr_cluster = [line]
         else:
             # Compute vertical difference between consecutive lines
-            diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[0], sec_dim_1)
+            diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[-1], sec_dim_1)
             # If the difference is too large, add curr_cluster to list clusters and set new cluster with the current
             # line
             if diff_index > 5:
@@ -63,25 +63,34 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             if idx == 0:
                 sub_cluster = [line]
             else:
-                # If lines are close, merge line with curr_line
-                if getattr(line, main_dim_1) <= getattr(sub_cluster[-1], main_dim_2) + max_gap:
+                # If lines are vertically close, merge line with curr_line
+                dim_1_sub_clust = min([getattr(sub_cluster[idx], main_dim_1) for idx in range(len(sub_cluster))])
+                dim_2_sub_clust = max([getattr(sub_cluster[idx], main_dim_2) for idx in range(len(sub_cluster))])
+                overlapping = max(min(getattr(line, main_dim_2), dim_2_sub_clust) - max(getattr(line, main_dim_1), dim_1_sub_clust),
+                                  0) > 0
+                if getattr(line, main_dim_1) <= getattr(sub_cluster[-1], main_dim_2) + max_gap or overlapping:
                     sub_cluster.append(line)
                 # If the difference in vertical coordinates is too large, add curr_line to list of filtered lines and
                 # set curr_line with the current line
                 else:
                     new_line = Line((0, 0, 0, 0))
+                    sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
+                    sec_dim = round(
+                        sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
                     setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
                     setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-                    setattr(new_line, sec_dim_1, statistics.mean([getattr(l, sec_dim_1) for l in sub_cluster]))
-                    setattr(new_line, sec_dim_2, statistics.mean([getattr(l, sec_dim_2) for l in sub_cluster]))
+                    setattr(new_line, sec_dim_1, sec_dim)
+                    setattr(new_line, sec_dim_2, sec_dim)
                     final_lines.append(new_line)
                     sub_cluster = [line]
 
         new_line = Line((0, 0, 0, 0))
+        sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
+        sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
         setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
         setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-        setattr(new_line, sec_dim_1, statistics.mean([getattr(l, sec_dim_1) for l in sub_cluster]))
-        setattr(new_line, sec_dim_2, statistics.mean([getattr(l, sec_dim_2) for l in sub_cluster]))
+        setattr(new_line, sec_dim_1, sec_dim)
+        setattr(new_line, sec_dim_2, sec_dim)
         final_lines.append(new_line)
 
     # Remove "point" lines
@@ -90,12 +99,13 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     return final_lines
 
 
-def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 1) -> bool:
+def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 1, percentage: float = None) -> bool:
     """
     Assess if the line is generated from text in image
     :param line: Line object
     :param ocr_page: OCRPage object
     :param margin: margin used around OCRLine objects
+    :param percentage: percentage of overlap with words needed
     :return: boolean indicating if the line is generated from text in image
     """
     # Check if ocr_page exists
@@ -116,11 +126,10 @@ def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 1) -> bool:
             bbox = ocr_word.bbox
             # Check vertical correspondence
             if bbox[1] - margin <= line.y1 <= bbox[3] + margin:
-                # Check horizontal overlap and if it centered with word
+                # Check horizontal overlap
                 is_centered = int(((line.x2 - line.x1) / 2 - (bbox[2] - bbox[0]) / 2) / line.length <= 0.2)
                 overlap += max(0, min(line.x2, bbox[2]) - max(line.x1, bbox[0])) * (1 + is_centered * 0.5)
-        # If overlap is big enough, return True
-        if overlap / line.length >= 0.75:
+        if overlap / line.length >= (percentage or 0.75):
             return True
 
     # Process vertical lines
@@ -133,8 +142,8 @@ def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 1) -> bool:
             if bbox[0] - margin <= line.x1 <= bbox[2] + margin:
                 # Check horizontal overlap
                 overlap += max(0, min(line.y2, bbox[3]) - max(line.y1, bbox[1]))
-        # If overlap is big enough, return True
-        if overlap / line.length >= 0.25:
+
+        if overlap / line.length >= (percentage or 0.25):
             return True
 
     return False
@@ -186,7 +195,7 @@ def detect_lines(image: np.ndarray, ocr_page: OCRPage, rho: float = 1, theta: fl
                 horizontal_lines.append(line)
 
     # Compute merged lines
-    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=maxLineGap)
+    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=2 * maxLineGap)
     vertical_lines = overlapping_filter(lines=vertical_lines, horizontal=False, max_gap=maxLineGap)
 
     return horizontal_lines, vertical_lines
