@@ -42,7 +42,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[-1], sec_dim_1)
             # If the difference is too large, add curr_cluster to list clusters and set new cluster with the current
             # line
-            if diff_index > 5:
+            if diff_index > 2:
                 line_clusters.append(curr_cluster)
                 curr_cluster = [line]
             # Otherwise, set line coordinates to coherent cluster values and append line to current cluster

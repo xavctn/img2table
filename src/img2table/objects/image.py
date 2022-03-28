@@ -222,12 +222,12 @@ class Image(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\achat_blouson.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\data_2.jpg")
 
     image_object = Image(img)
     tables = image_object.extract_tables(header_detection=True,
                                          implicit_rows=True,
-                                         implicit_tables=True)
+                                         implicit_tables=False)
 
     image_object._create_img_colored_borders(color=(128, 145, 226))
     display_img = image_object.white_img

@@ -68,7 +68,7 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
                             if intersection_bbox_line(row=h_line_cell,
                                                       line=v_line,
                                                       without_border=False,
-                                                      horizontal_margin=max(round(0.02 * length), 5))
+                                                      horizontal_margin=max(round(0.05 * length), 5))
                             ]
 
         # If there are some crossing lines, create cells based on those lines
