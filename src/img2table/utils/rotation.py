@@ -128,7 +128,7 @@ def rotate_img(img: np.ndarray, lang: str = "fra+eng") -> np.ndarray:
                                   lang=lang)
 
     # Rotate image if needed
-    if angle % 360 != 0:
+    if angle % 360 == 180:
         img_rotated = rotate(horizontal_img, angle=angle, background=(0, 0, 0))
     else:
         img_rotated = horizontal_img
