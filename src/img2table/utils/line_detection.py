@@ -98,7 +98,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
 
 
 def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
-                 minLinLength: int = 290, maxLineGap: int = 6, classify: bool = True) -> (List[Line], List[Line]):
+                 minLinLength: int = 290, maxLineGap: int = 6) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
@@ -107,7 +107,6 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     :param threshold: threshold parameter for Hough line transform
     :param minLinLength: minLinLength parameter for Hough line transform
     :param maxLineGap: maxLineGap parameter for Hough line transform
-    :param classify: boolean indicating if lines are classified into vertical and horizontal lines
     :return: horizontal and vertical lines
     """
     # Create copy of image
@@ -136,10 +135,6 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
 
     # Merge lines
     lines = h_lines + v_lines
-
-    # If lines are not classified, return lines
-    if not classify:
-        return lines
 
     # Identify horizontal and vertical lines
     horizontal_lines = []

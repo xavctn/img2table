@@ -1,5 +1,4 @@
 # coding: utf-8
-import copy
 import math
 import os
 import re
@@ -12,7 +11,6 @@ import pytesseract
 from cv2 import cv2
 
 from img2table.objects.tables import Line
-from img2table.utils.line_detection import detect_lines
 
 
 def rotate(image: np.ndarray, angle: float, background) -> np.ndarray:
@@ -66,13 +64,13 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     :param image: image array
     :return: image with horizontal text (can be flipped upside down)
     """
-    # Get Hough Lines
-    lines = detect_lines(image=copy.deepcopy(image),
-                         rho=0.5,
-                         minLinLength=20,
-                         maxLineGap=10,
-                         threshold=5,
-                         classify=False)
+    # Image to gray and canny
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    dst = cv2.Canny(gray, 50, 200, None, 3)
+
+    # Compute Hough lines on image
+    lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 5, None, 20, 10)
+    lines = [Line(line=line[0]) for line in lines]
 
     # Get image angle
     max_length = 0
