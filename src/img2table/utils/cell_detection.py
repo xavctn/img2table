@@ -2,15 +2,14 @@
 from typing import Union, List
 
 from img2table.objects.tables import Row, Cell, Line
+from img2table.utils.common import is_contained_cell
 
 
-def intersection_bbox_line(row: Union[Row, Cell], line: Line, without_border: bool = True,
-                           horizontal_margin: int = 0) -> bool:
+def intersection_bbox_line(row: Union[Row, Cell], line: Line, horizontal_margin: int = 0) -> bool:
     """
     Determine if a line is intersecting a bounding box
     :param row: Row or Cell object
     :param line: Line object
-    :param without_border: boolean indicating if lines on the border of the bbox are relevant
     :param horizontal_margin: horizontal margin around row used to detect intersecting vertical lines
     :return: boolean indicating if there is an intersection between the bounding box and the line
     """
@@ -18,18 +17,11 @@ def intersection_bbox_line(row: Union[Row, Cell], line: Line, without_border: bo
     if not row.x1 - horizontal_margin <= line.x1 <= row.x2 + horizontal_margin:
         return False
 
-    if without_border:
-        # Check if line is not on a border of the table
-        if abs((row.x1 - line.x1) / row.width) <= 0.02:
-            return False
-        if abs((row.x2 - line.x2) / row.width) <= 0.02:
-            return False
-
     # Check vertical correspondence
-    overlapping_pixels = len(list(set(list(range(row.y1, row.y2))) & set(list(range(line.y1, line.y2)))))
+    overlapping_pixels = max(0, min(row.y2, line.y2) - max(row.y1, line.y1))
 
     # Return intersection if the line intersects on at least 80% of the bounding box
-    return overlapping_pixels / row.height > 0.80
+    return overlapping_pixels / row.height > 0.8
 
 
 def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
@@ -66,7 +58,6 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
         crossing_v_lines = [v_line for v_line in vertical_lines
                             if intersection_bbox_line(row=h_line_cell,
                                                       line=v_line,
-                                                      without_border=False,
                                                       horizontal_margin=max(round(0.05 * h_line_cell.width), 5))
                             ]
 
@@ -119,23 +110,10 @@ def is_redundant(cell_1: Cell, cell_2: Cell) -> bool:
     :param cell_2: second cell object
     :return: boolean indicating if the second cell is redundant with the first one
     """
-    # Compute common coordinates
-    x_left = max(cell_1.x1, cell_2.x1)
-    y_top = max(cell_1.y1, cell_2.y1)
-    x_right = min(cell_1.x2, cell_2.x2)
-    y_bottom = min(cell_1.y2, cell_2.y2)
-
-    if x_right < x_left or y_bottom < y_top:
-        return False
-
-    # Compute intersection area as well as cell_1 area
-    intersection_area = (x_right - x_left) * (y_bottom - y_top)
-    bb1_area = cell_1.height * cell_1.width
-
-    # Compute percentage of intersection with cell_1 area
-    iou = intersection_area / bb1_area
     # cell_2 is deemed as redundant if it covers at least 90% of cell_1 area and is adjacent to it
-    return iou >= 0.9 and adjacent_cells(cell_1=cell_1, cell_2=cell_2)
+    contains = is_contained_cell(inner_cell=cell_1, outer_cell=cell_2, percentage=0.9)
+    is_adjacent = adjacent_cells(cell_1=cell_1, cell_2=cell_2)
+    return contains and is_adjacent
 
 
 def deduplicate_cells(cells: List[Cell]) -> List[Cell]:

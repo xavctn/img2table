@@ -44,7 +44,7 @@ def group_clusters(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
                 y2_cg = max([cell.y2 for cl in cluster_group for cell in cl])
 
                 # Overlapping y and determine if vertical coordinates corresponds
-                overlapping_y = len(list(set(list(range(y1_cluster, y2_cluster))) & set(list(range(y1_cg, y2_cg)))))
+                overlapping_y = max(0, min(y2_cluster, y2_cg) - max(y1_cluster, y1_cg))
                 y_corresponds = min(overlapping_y / (y2_cluster - y1_cluster), overlapping_y / (y2_cg - y1_cg)) >= 0.5
 
                 # Compute average space between elements of cluster

@@ -10,7 +10,6 @@ import pandas as pd
 
 from img2table.objects.ocr import OCRPage
 from img2table.utils.data_processing import remove_empty_rows, remove_empty_columns
-from img2table.utils.header import detect_header
 
 
 class TableObject(object):
@@ -293,23 +292,9 @@ class Table(TableObject):
     def y2(self) -> int:
         return max([item.y2 for item in self.items])
 
-    def add_row(self, rows: Union[Row, List[Row]]):
-        """
-        Add row to existing table items
-        :param rows: Row object or list
-        :return:
-        """
-        if isinstance(rows, Row):
-            self._items += [rows]
-        else:
-            self._items += rows
-
-        return self
-
-    def process_data(self, with_header: bool = False):
+    def process_data(self):
         """
         Process dataframe from OCR
-        :param with_header: indicate if the first row of the dataframe is a header
         :return:
         """
         if self.data is None:
@@ -323,29 +308,12 @@ class Table(TableObject):
         if len(self._data) == 0 or (len(self._data) == 1 and self._data.shape[1] == 1):
             self._data = None
 
-        if with_header and self._data is not None:
-            # Create new dataframe with first row as header
-            first_row = self._data.iloc[0].values
-            cols = list(OrderedDict.fromkeys(first_row))
-
-            new_table = self._data.iloc[1:, :len(cols)]
-            new_table.columns = cols
-
-            self._data = new_table
-
-    def get_text_ocr(self, ocr_page: OCRPage, img: np.ndarray, header_detection: bool = True):
+    def get_text_ocr(self, ocr_page: OCRPage):
         """
         Retrieve text from OCRPage object and set data attribute with dataframe corresponding to table
         :param ocr_page: OCRPage object
-        :param img: image array
-        :param header_detection: boolean indicating if header detection is performed
         :return: Table object with data attribute containing dataframe
         """
-        with_header = False
-        if header_detection:
-            # Detect if table has header
-            with_header = detect_header(img=img, ocr_page=ocr_page, table=self)
-
         # Parse OCR page for each cell of each row
         text_values = [[ocr_page.get_text_cell(cell) for cell in row.items]
                        for row in self.items]
@@ -355,18 +323,6 @@ class Table(TableObject):
         self._data = df_pd
 
         # Process dataframe
-        self.process_data(with_header=with_header)
+        self.process_data()
 
         return self
-
-    def get_text_size(self, ocr_page: OCRPage) -> float:
-        """
-        Get average text size in the table
-        :param ocr_page: OCRPage object
-        :return: average text size in the table
-        """
-        # Get list of text sizes
-        text_sizes = ocr_page.get_text_sizes(cell=self)
-
-        # Compute average text size
-        return statistics.mean(text_sizes) if text_sizes else None

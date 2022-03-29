@@ -74,8 +74,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
                 else:
                     new_line = Line((0, 0, 0, 0))
                     sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
-                    sec_dim = round(
-                        sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
+                    sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
                     setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
                     setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
                     setattr(new_line, sec_dim_1, sec_dim)
@@ -127,14 +126,16 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 20))
     vertical_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
 
-    # Combine masks and remove lines
-    table_mask = cv2.bitwise_or(horizontal_mask, vertical_mask)
+    # Compute Hough lines on horizontal image and get lines
+    linesH = cv2.HoughLinesP(horizontal_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+    h_lines = [Line(line=line[0]) for line in linesH]
 
-    # Compute Hough lines on image
-    linesP = cv2.HoughLinesP(table_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+    # Compute Hough lines on vertical image and get lines
+    linesV = cv2.HoughLinesP(vertical_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+    v_lines = [Line(line=line[0]) for line in linesV]
 
-    # Parse lines to Line object
-    lines = [Line(line=line[0]) for line in linesP]
+    # Merge lines
+    lines = h_lines + v_lines
 
     # If lines are not classified, return lines
     if not classify:

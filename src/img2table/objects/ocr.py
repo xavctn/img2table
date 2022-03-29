@@ -63,30 +63,8 @@ class OCRObject(object):
         :param bbox: tuple representing a bounding box
         :return: boolean indicating if the bounding box intersects the object
         """
-        # determine the coordinates of the intersection rectangle
-        x_left = max(self.bbox[0], bbox[0])
-        y_top = max(self.bbox[1], bbox[1])
-        x_right = min(self.bbox[2], bbox[2])
-        y_bottom = min(self.bbox[3], bbox[3])
-
-        if x_right < x_left or y_bottom < y_top:
-            return False
-
-        # The intersection of two axis-aligned bounding boxes is always an
-        # axis-aligned bounding box
-        intersection_area = (x_right - x_left) * (y_bottom - y_top)
-
-        # compute the area of both AABBs
-        bb1_area = (self.bbox[2] - self.bbox[0]) * (self.bbox[3] - self.bbox[1])
-        bb2_area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
-
-        # compute the intersection over union by taking the intersection
-        # area and dividing it by the sum of prediction + ground-truth
-        # areas - the intersection area
-        iou = intersection_area / float(bb1_area + bb2_area - intersection_area)
-        assert iou >= 0.0
-        assert iou <= 1.0
-        return iou > 0
+        from img2table.utils.common import is_contained_cell
+        return is_contained_cell(inner_cell=self.bbox, outer_cell=bbox, percentage=0.01)
 
     def is_contained_in_bbox(self, bbox: tuple):
         """
@@ -94,23 +72,8 @@ class OCRObject(object):
         :param bbox: tuple representing a bounding box
         :return: boolean indicating if the object is contained in the bounding box
         """
-        # determine the coordinates of the intersection rectangle
-        x_left = max(self.bbox[0], bbox[0])
-        y_top = max(self.bbox[1], bbox[1])
-        x_right = min(self.bbox[2], bbox[2])
-        y_bottom = min(self.bbox[3], bbox[3])
-
-        if x_right < x_left or y_bottom < y_top:
-            return False
-
-        # The intersection of two axis-aligned bounding boxes is always an
-        # axis-aligned bounding box
-        intersection_area = (x_right - x_left) * (y_bottom - y_top)
-
-        # compute the area of both AABBs
-        bb1_area = (self.bbox[2] - self.bbox[0]) * (self.bbox[3] - self.bbox[1])
-
-        return intersection_area / bb1_area >= 0.75
+        from img2table.utils.common import is_contained_cell
+        return is_contained_cell(inner_cell=self.bbox, outer_cell=bbox, percentage=0.75)
 
     def get_bbox_items(self, bbox: tuple):
         """
@@ -199,7 +162,7 @@ class OCRLine(OCRObject):
         Extract x_size from HOCR html title
         :return: x_size
         """
-        return round(float(re.findall(r"(x_size )([\d\.]+)", self._title)[0][1]))
+        return round(float(re.findall(r"(x_f?size )([\d\.]+)", self._title)[0][1]))
 
     def get_items(self, soup: BeautifulSoup):
         """
@@ -298,22 +261,4 @@ class OCRPage(OCRObject):
         final_string = "\n".join(line_strings)
 
         return final_string.strip() or None
-
-    def get_text_sizes(self, cell, margin: int = 0) -> List[int]:
-        """
-        Get text sized corresponding to cell
-        :param cell: cell in document
-        :param margin: margin to take around cell
-        :return: list of text sizes contained in cell
-        """
-        # Define relevant bounding box
-        bbox = cell.bbox(margin=margin)
-
-        # Get word lines corresponding to bounding box
-        cell_word_lines = self.get_bbox_items(bbox=bbox)
-
-        # Create list of all word sizes
-        word_sizes = [x_size for line, x_size in cell_word_lines for word in line]
-
-        return word_sizes
 

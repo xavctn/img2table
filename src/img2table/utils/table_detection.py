@@ -133,7 +133,7 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
         if idx == 0:
             curr_col = [cell]
             curr_x = cell.x1
-        elif abs(curr_x - cell.x1) / row.width >= 0.05:
+        elif abs(curr_x - cell.x1) / row.width >= 0.02:
             if curr_col not in cols:
                 cols.append(curr_col)
             curr_col = [cell]
@@ -155,7 +155,12 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
         else:
             _col = list()
             for delim in v_delimiters:
-                closest_cell = sorted(col, key=lambda c: abs((c.y1 + c.y2) / 2 - delim))[0]
+                intersecting_cells = [cell for cell in col
+                                      if cell.y1 <= delim <= cell.y2]
+                if intersecting_cells:
+                    closest_cell = intersecting_cells[0]
+                else:
+                    closest_cell = Cell(x1=col[0].x1, x2=col[0].x1, y1=col[0].y1, y2=col[0].y1)
                 _col.append(closest_cell)
             new_cols.append(_col)
 
@@ -173,7 +178,8 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
     """
     # Compute number of columns and get delimiters
     nb_cols = max([row.nb_columns for row in table.items])
-    list_delimiters = [[(cell.x1 + cell.x2) / 2 for cell in row.items] for row in table.items if row.nb_columns == nb_cols]
+    list_delimiters = [[(cell.x1 + cell.x2) / 2 for cell in row.items] for row in table.items
+                       if row.nb_columns == nb_cols]
     average_delimiters = [statistics.mean([delim[idx] for delim in list_delimiters]) for idx in range(nb_cols)]
 
     # Check if rows have the right number of columns, else duplicate cells
@@ -184,7 +190,12 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
         else:
             _cells = list()
             for delim in average_delimiters:
-                closest_cell = sorted(row.items, key=lambda c: abs((c.x1 + c.x2) / 2 - delim))[0]
+                intersecting_cells = [cell for cell in row.items
+                                      if cell.x1 <= delim <= cell.x2]
+                if intersecting_cells:
+                    closest_cell = intersecting_cells[0]
+                else:
+                    closest_cell = Cell(x1=row.items[0].x1, x2=row.items[0].x1, y1=row.items[0].y1, y2=row.items[0].y1)
                 _cells.append(closest_cell)
             new_rows.append(Row(cells=_cells))
 

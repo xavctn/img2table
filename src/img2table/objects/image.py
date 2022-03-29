@@ -18,10 +18,12 @@ from img2table.utils.text_extraction import get_text_tables
 
 
 class Image(object):
-    def __init__(self, image: np.ndarray):
+    def __init__(self, image: np.ndarray, lang: str = "fra+eng"):
         self._original_img = image
+        self._lang = lang
         # Rotate image to proper orientation
-        self._img = rotate_img(img=copy.deepcopy(image))
+        self._img = rotate_img(img=self.original_img,
+                               lang=self.lang)
 
         # Initialize attributes
         self._ocr_page = None
@@ -42,6 +44,10 @@ class Image(object):
     @property
     def white_img(self) -> np.ndarray:
         return copy.deepcopy(self._white_img)
+
+    @property
+    def lang(self) -> str:
+        return self._lang
 
     @property
     def ocr_page(self) -> OCRPage:
@@ -77,16 +83,13 @@ class Image(object):
         :param minLinLength: minLinLength parameter for Hough line transform
         :param maxLineGap: maxLineGap parameter for Hough line transform
         """
-        horizontal_lines, vertical_lines = detect_lines(image=self.img,
-                                                        rho=rho,
-                                                        theta=theta,
-                                                        threshold=threshold,
-                                                        minLinLength=minLinLength,
-                                                        maxLineGap=maxLineGap)
-
         # Set _h_lines and _v_lines attributes
-        self._h_lines = horizontal_lines
-        self._v_lines = vertical_lines
+        self._h_lines, self._v_lines = detect_lines(image=self.img,
+                                                    rho=rho,
+                                                    theta=theta,
+                                                    threshold=threshold,
+                                                    minLinLength=minLinLength,
+                                                    maxLineGap=maxLineGap)
 
     def _identify_cells(self) -> List[Cell]:
         return get_cells(horizontal_lines=self.h_lines,
@@ -114,17 +117,14 @@ class Image(object):
         :return:
         """
         # Initialize image
-        white_img = self.img
+        self._white_img = self.img
 
         # Draw white lines on cells borders
         for cell in [cell for table in self.total_tables for row in table.items for cell in row.items]:
-            cv2.rectangle(white_img, (cell.x1, cell.y1 - margin), (cell.x2, cell.y1 + margin), color, 3)
-            cv2.rectangle(white_img, (cell.x1, cell.y2 - margin), (cell.x2, cell.y2 + margin), color, 3)
-            cv2.rectangle(white_img, (cell.x1 - margin, cell.y1), (cell.x1 + margin, cell.y2), color, 3)
-            cv2.rectangle(white_img, (cell.x2 - margin, cell.y1), (cell.x2 + margin, cell.y2), color, 3)
-
-        # Set _white_img attribute
-        self._white_img = white_img
+            cv2.rectangle(self._white_img, (cell.x1, cell.y1 - margin), (cell.x2, cell.y1 + margin), color, 3)
+            cv2.rectangle(self._white_img, (cell.x1, cell.y2 - margin), (cell.x2, cell.y2 + margin), color, 3)
+            cv2.rectangle(self._white_img, (cell.x1 - margin, cell.y1), (cell.x1 + margin, cell.y2), color, 3)
+            cv2.rectangle(self._white_img, (cell.x2 - margin, cell.y1), (cell.x2 + margin, cell.y2), color, 3)
 
     def _white_lines(self, color: tuple = (255, 255, 255)) -> np.ndarray:
         """
@@ -171,10 +171,9 @@ class Image(object):
 
         return self.total_tables
 
-    def parse_tables_content(self, header_detection: bool = True) -> List[Table]:
+    def parse_tables_content(self) -> List[Table]:
         """
         Parse table to pandas DataFrames and set titles
-        :param header_detection: boolean indicating if header detection is performed
         :return: list of parsed Table objects
         """
         # Remove tables that have only one cell
@@ -185,36 +184,32 @@ class Image(object):
             hocr_text = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(self.white_img, cv2.COLOR_BGR2GRAY),
                                                          extension="hocr",
                                                          config="--psm 1",
-                                                         lang='fra+eng').decode('utf-8')
+                                                         lang=self.lang).decode('utf-8')
 
             # Parse to OCRPage object
             self._ocr_page = OCRPage.parse_hocr(hocr_text)
 
             self._tables = get_text_tables(img=self.white_img,
                                            ocr_page=self.ocr_page,
-                                           tables=self.tables,
-                                           header_detection=header_detection)
+                                           tables=self.tables)
 
             self._implicit_tables = get_text_tables(img=self.white_img,
                                                     ocr_page=self.ocr_page,
-                                                    tables=self._implicit_tables,
-                                                    header_detection=header_detection)
+                                                    tables=self._implicit_tables)
 
         return self.total_tables
 
-    def extract_tables(self, implicit_rows: bool = True, implicit_tables: bool = False,
-                       header_detection: bool = True) -> List[Table]:
+    def extract_tables(self, implicit_rows: bool = True, implicit_tables: bool = False) -> List[Table]:
         """
         Extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are detected
         :param implicit_tables: boolean indicating if implicit tables are detected
-        :param header_detection: boolean indicating if header detection is performed
         :return: list of extracted tables
         """
         self.identify_image_tables(implicit_rows=implicit_rows,
                                    implicit_tables=implicit_tables)
 
-        extracted_tables = self.parse_tables_content(header_detection=header_detection)
+        extracted_tables = self.parse_tables_content()
 
         return extracted_tables
 
@@ -222,12 +217,11 @@ class Image(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\data_2.jpg")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_3.png")
 
     image_object = Image(img)
-    tables = image_object.extract_tables(header_detection=True,
-                                         implicit_rows=True,
-                                         implicit_tables=False)
+    tables = image_object.extract_tables(implicit_rows=True,
+                                         implicit_tables=True)
 
     image_object._create_img_colored_borders(color=(128, 145, 226))
     display_img = image_object.white_img

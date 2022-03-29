@@ -1,10 +1,11 @@
 # coding:utf-8
+import copy
 from typing import List
 
 import numpy as np
 
 from img2table.objects.tables import Table
-from img2table.utils.common import get_bounding_area_text
+from img2table.utils.common import get_contours_cell
 
 
 def handle_implicit_rows_table(white_img: np.ndarray, table: Table) -> Table:
@@ -18,24 +19,29 @@ def handle_implicit_rows_table(white_img: np.ndarray, table: Table) -> Table:
     if table.nb_columns * table.nb_rows <= 1:
         return table
 
-    # Compute contours on each row and merge them
-    table_cnts = get_bounding_area_text(img=white_img,
-                                        table=table,
-                                        margin=-5,
-                                        blur_size=5,
-                                        kernel_size=5,
-                                        merge_vertically=True)
-
     list_splitted_rows = list()
     # Check if each row can be splitted
-    for row in table_cnts.items:
-        # If row has no or one contour / row is not vertically consistent, it is not relevant to split it
-        if len(row.contours) <= 1 or not row.v_consistent:
+    for row in table.items:
+        # If row is not vertically consistent, it is not relevant to split it
+        if not row.v_consistent:
+            list_splitted_rows.append(row)
+            continue
+            
+        # Compute contours
+        contours = get_contours_cell(img=copy.deepcopy(white_img),
+                                     cell=row,
+                                     margin=-5,
+                                     blur_size=5,
+                                     kernel_size=5,
+                                     merge_vertically=True)
+
+        # If row has no or one contour, it is not relevant to split it
+        if len(contours) <= 1:
             list_splitted_rows.append(row)
             continue
 
         # Otherwise, compute vertical delimiters
-        vertical_delimiters = [round((cnt_1.y2 + cnt_2.y1) / 2) for cnt_1, cnt_2 in zip(row.contours, row.contours[1:])]
+        vertical_delimiters = [round((cnt_1.y2 + cnt_2.y1) / 2) for cnt_1, cnt_2 in zip(contours, contours[1:])]
         vertical_delimiters = sorted(vertical_delimiters)
 
         # Split row into multiple rows from vertical delimiters
