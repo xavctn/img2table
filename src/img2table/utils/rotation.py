@@ -64,8 +64,9 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     :param image: image array
     :return: image with horizontal text (can be flipped upside down)
     """
+    img = image.copy()
     # Image to gray and canny
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     dst = cv2.Canny(gray, 50, 200, None, 3)
 
     # Compute Hough lines on image
