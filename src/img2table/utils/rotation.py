@@ -90,11 +90,10 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def get_orientation_image(img: np.ndarray, lang: str = "fra+eng") -> int:
+def get_orientation_image(img: np.ndarray) -> int:
     """
     Detect orientation angle of an image
     :param img: image
-    :param lang: Tesseract lang parameter
     :return: orientation angle of the image
     """
     # Create temporary path and write image
@@ -103,7 +102,7 @@ def get_orientation_image(img: np.ndarray, lang: str = "fra+eng") -> int:
     cv2.imwrite(tmpfp, img)
 
     # Get orientation
-    osd = pytesseract.image_to_osd(tmpfp, lang=lang)
+    osd = pytesseract.image_to_osd(tmpfp)
 
     # Delete temporary dir
     shutil.rmtree(dirpath)
@@ -114,19 +113,17 @@ def get_orientation_image(img: np.ndarray, lang: str = "fra+eng") -> int:
     return angle
 
 
-def rotate_img(img: np.ndarray, lang: str = "fra+eng") -> np.ndarray:
+def rotate_img(img: np.ndarray) -> np.ndarray:
     """
     Correction on image rotation
     :param img: image array
-    :param lang: Tesseract lang parameter
     :return: image array with correct orientation
     """
     # Rotate image in order to get horizontal text lines
     horizontal_img = img_to_horizontal_lines(image=img)
 
     # Detect text orientation angle
-    angle = get_orientation_image(horizontal_img,
-                                  lang=lang)
+    angle = get_orientation_image(horizontal_img)
 
     # Rotate image if needed
     if angle % 360 == 180:

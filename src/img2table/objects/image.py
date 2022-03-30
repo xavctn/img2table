@@ -22,8 +22,7 @@ class Image(object):
         self._original_img = image
         self._lang = lang
         # Rotate image to proper orientation
-        self._img = rotate_img(img=self.original_img,
-                               lang=self.lang)
+        self._img = rotate_img(img=self.original_img)
 
         # Initialize attributes
         self._ocr_page = None
@@ -217,13 +216,13 @@ class Image(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\test_3.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_img2table.png")
 
     image_object = Image(img)
     tables = image_object.extract_tables(implicit_rows=True,
                                          implicit_tables=True)
 
-    image_object._create_img_colored_borders(color=(128, 145, 226))
+    image_object._create_img_colored_borders(color=(128, 145, 226), margin=0)
     display_img = image_object.white_img
 
     PILImage.fromarray(display_img).show()
