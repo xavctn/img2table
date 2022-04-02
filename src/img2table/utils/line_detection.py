@@ -67,7 +67,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
                 overlapping = max(
                     min(getattr(line, main_dim_2), dim_2_sub_clust) - max(getattr(line, main_dim_1), dim_1_sub_clust),
                     0) > 0
-                if getattr(line, main_dim_1) <= getattr(sub_cluster[-1], main_dim_2) + max_gap or overlapping:
+                if getattr(line, main_dim_1) <= dim_2_sub_clust + max_gap or overlapping:
                     sub_cluster.append(line)
                 # If the difference in vertical coordinates is too large, add curr_line to list of filtered lines and
                 # set curr_line with the current line

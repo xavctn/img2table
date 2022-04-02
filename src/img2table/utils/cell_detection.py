@@ -51,6 +51,7 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
             matching_lines.append(h_line)
 
     # Loop over matching lines to check if there are vertical lines between it and the line in order to create a cell
+    used_boundaries = list()
     for h_line in matching_lines:
         # Create a cell from line and h_line
         h_line_cell = Cell.from_h_lines(line_1=line, line_2=h_line, minimal=True)
@@ -66,9 +67,11 @@ def get_cells_h_line(line: Line, horizontal_lines: List[Line], vertical_lines: L
             line_values = sorted([line.x1 for line in crossing_v_lines])
             boundaries = [bound for bound in zip(line_values, line_values[1:])]
 
-            for boundary in boundaries:
-                cell = Cell(x1=boundary[0], x2=boundary[1], y1=h_line_cell.y1, y2=h_line_cell.y2)
-                output_cells.append(cell)
+            if boundaries not in used_boundaries:
+                used_boundaries.append(boundaries)
+                for boundary in boundaries:
+                    cell = Cell(x1=boundary[0], x2=boundary[1], y1=h_line_cell.y1, y2=h_line_cell.y2)
+                    output_cells.append(cell)
 
     output_cells = [c for c in output_cells if c.width >= 20]
 

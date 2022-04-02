@@ -13,12 +13,12 @@ from cv2 import cv2
 from img2table.objects.tables import Line
 
 
-def rotate(image: np.ndarray, angle: float, background) -> np.ndarray:
+def rotate(image: np.ndarray, angle: float, background: tuple = (255, 255, 255)) -> np.ndarray:
     """
     Rotate image
     :param image: image
     :param angle: angle
-    :param background:
+    :param background: background color for rotated image
     :return: rotated image
     """
     old_width, old_height = image.shape[:2]
@@ -36,9 +36,9 @@ def rotate(image: np.ndarray, angle: float, background) -> np.ndarray:
 def line_cluster(lines: List[Line], angle_delta: float = 1.0) -> Iterable[List[Line]]:
     """
     Create iterable of line clusters based on line angle
-    :param lines:
-    :param angle_delta:
-    :return:
+    :param lines: list of Line object
+    :param angle_delta: maximum angle difference between consecutive lines
+    :return: iterable of list of lines
     """
     # Order lines by angle
     lines = sorted(lines, key=lambda line: line.angle)
@@ -70,7 +70,7 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     dst = cv2.Canny(gray, 50, 200, None, 3)
 
     # Compute Hough lines on image
-    lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 5, None, 20, 10)
+    lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
     lines = [Line(line=line[0]) for line in lines]
 
     # Get image angle
@@ -85,7 +85,7 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     # Rotate image according to the angle
     if angle is not None:
         if abs(angle) > 1:
-            return rotate(image, angle, (255, 255, 255))
+            return rotate(image=image, angle=angle)
 
     return image
 
@@ -127,7 +127,7 @@ def rotate_img(img: np.ndarray) -> np.ndarray:
 
     # Rotate image if needed
     if angle % 360 == 180:
-        img_rotated = rotate(horizontal_img, angle=angle, background=(0, 0, 0))
+        img_rotated = rotate(horizontal_img, angle=angle)
     else:
         img_rotated = horizontal_img
 

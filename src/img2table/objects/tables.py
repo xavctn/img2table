@@ -1,8 +1,6 @@
 # coding: utf-8
 import copy
 import math
-import statistics
-from collections import OrderedDict
 from typing import Union, List
 
 import numpy as np
@@ -103,9 +101,11 @@ class Line(TableObject):
 
         # Correct "almost" horizontal or vertical lines
         if abs(self.angle) <= 5:
-            self.y2 = self.y1
+            y_val = round((self.y1 + self.y2) / 2)
+            self.y2 = self.y1 = y_val
         elif abs(self.angle - 90) <= 5:
-            self.x2 = self.x1
+            x_val = round((self.x1 + self.x2) / 2)
+            self.x2 = self.x1 = x_val
 
 
 class Cell(TableObject):
