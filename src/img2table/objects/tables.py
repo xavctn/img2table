@@ -287,12 +287,8 @@ class Table(TableObject):
         :param ocr_page: OCRPage object
         :return: Table object with data attribute containing dataframe
         """
-        # Parse OCR page for each cell of each row
-        text_values = [[ocr_page.get_text_cell(cell) for cell in row.items]
-                       for row in self.items]
-
-        # Create dataframe from values and assign to _data attribute
-        df_pd = pd.DataFrame(text_values)
+        # Create dataframe with text values and assign to _data attribute
+        df_pd = ocr_page.get_text_table(table=self)
         self._data = df_pd
 
         # Process dataframe

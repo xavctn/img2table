@@ -3,7 +3,6 @@ import copy
 from typing import List
 
 import numpy as np
-import pytesseract
 from cv2 import cv2
 
 from img2table.objects.ocr import OCRPage
@@ -179,14 +178,8 @@ class TableImage(object):
         self._tables = [table for table in self.tables if table.nb_rows * table.nb_columns > 1]
 
         if self.total_tables:
-            # Get hOCR from image
-            hocr_text = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(self.white_img, cv2.COLOR_BGR2GRAY),
-                                                         extension="hocr",
-                                                         config="--psm 1",
-                                                         lang=self.lang).decode('utf-8')
-
-            # Parse to OCRPage object
-            self._ocr_page = OCRPage.parse_hocr(hocr_text)
+            # Create OCRPage object
+            self._ocr_page = OCRPage.of(image=self.white_img, lang=self.lang)
 
             self._tables = get_text_tables(img=self.white_img,
                                            ocr_page=self.ocr_page,

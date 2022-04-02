@@ -1,246 +1,57 @@
 # coding: utf-8
 import re
-from typing import List, Tuple
 
+import numpy as np
+import pandas as pd
+import pytesseract
 from bs4 import BeautifulSoup
+from cv2 import cv2
 
 
-class OCRObject(object):
-    html_tag: str
-    html_classes: List
-    item_class = None
-
-    def __init__(self, html_title: str, items: List = None):
-        self._items = items or []
-        self._title = html_title
-        self._bbox = self.bbox_from_title()
+class OCRPage(object):
+    def __init__(self, hocr_html: str):
+        self._hocr_html = hocr_html
+        self._df = self.parse_hocr()
 
     @property
-    def items(self) -> List:
-        return self._items
+    def hocr_html(self) -> str:
+        return self._hocr_html
 
     @property
-    def bbox(self):
-        return self._bbox
+    def df(self) -> pd.DataFrame:
+        return self._df
 
-    def bbox_from_title(self) -> tuple:
-        """
-        Extract bounding box from HOCR html title
-        :return: bounding box
-        """
-        # Extract bbox part
-        bbox_string = re.findall(r"bbox \d{1,4} \d{1,4} \d{1,4} \d{1,4}", self._title)[0]
-
-        return tuple(int(element) for element in re.sub(r"^bbox\s", "", bbox_string).split())
-
-    def add_items(self, item):
-        """
-        Add word to line
-        :param item: OCRObject object or list
-        :return:
-        """
-        if isinstance(item, list):
-            self._items += item
-        else:
-            self._items += [item]
-
-    def get_items(self, soup: BeautifulSoup):
-        """
-        Create items from BeautifulSoup parser
-        :param soup: BeautifulSoup parser
-        :return:
-        """
-        list_items = list()
-        for html_element in soup.find_all(self.item_class.html_tag, {"class": self.item_class.html_classes}):
-            item = self.item_class(html_title=html_element.get('title'))
-            item.get_items(soup=html_element)
-            list_items.append(item)
-        self.add_items(item=list_items)
-
-    def intersect_bbox(self, bbox: tuple) -> bool:
-        """
-        Assess if a bounding box intersects the object
-        :param bbox: tuple representing a bounding box
-        :return: boolean indicating if the bounding box intersects the object
-        """
-        from img2table.utils.common import is_contained_cell
-        return is_contained_cell(inner_cell=self.bbox, outer_cell=bbox, percentage=0.01)
-
-    def is_contained_in_bbox(self, bbox: tuple):
-        """
-        Assess if the object is contained in a bounding box
-        :param bbox: tuple representing a bounding box
-        :return: boolean indicating if the object is contained in the bounding box
-        """
-        from img2table.utils.common import is_contained_cell
-        return is_contained_cell(inner_cell=self.bbox, outer_cell=bbox, percentage=0.75)
-
-    def get_bbox_items(self, bbox: tuple):
-        """
-        Get items and sub items that intersects the bounding box
-        :param bbox: bounding box
-        :return: list of sub items that intersects the bounding box
-        """
-        # Get items that are intersecting with bounding box
-        intersecting_items = sort_ocr_objects([item for item in self.items if item.intersect_bbox(bbox=bbox)])
-        return [sub_item for item in intersecting_items for sub_item in item.get_bbox_items(bbox=bbox) if sub_item]
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            try:
-                assert self.items == other.items
-                assert self.bbox == other.bbox
-                return True
-            except AssertionError:
-                return False
-        return False
-
-
-def sort_ocr_objects(ocr_objects: List[OCRObject], vertically: bool = True) -> List[OCRObject]:
-    """
-    Sort OCR objects list vertically and horizontally
-    :param ocr_objects: list of OCR objects
-    :param vertically: boolean to sort vertically, if false, list will be sorted horizontally
-    :return: sorted OCR objects list
-    """
-    if vertically:
-        sorted_objects = sorted(ocr_objects,
-                                key=lambda el: (el.bbox[1], el.bbox[3], el.bbox[0], el.bbox[2]))
-    else:
-        sorted_objects = sorted(ocr_objects,
-                                key=lambda el: (el.bbox[0], el.bbox[2], el.bbox[1], el.bbox[3]))
-
-    return sorted_objects
-
-
-class OCRWord(OCRObject):
-    html_tag = "span"
-    html_classes = ["ocrx_word"]
-    item_class = None
-
-    def __init__(self, html_title: str, value: str = None, items: List = None):
-        super(OCRWord, self).__init__(html_title=html_title, items=items)
-        self._value = value
-
-    @property
-    def value(self):
-        if re.search(r"^(—|L|=|\!|_|\||\[|\]|I|l|\.|\s)*$", self._value) is None:
-            return self._value
-        return None
-
-    def get_items(self, soup: BeautifulSoup):
-        self._value = soup.string
-
-    def __eq__(self, other):
-        parent_equality = super(OCRWord, self).__eq__(other)
-        if not parent_equality:
-            return False
-        if isinstance(other, self.__class__):
-            try:
-                assert self.value == other.value
-                return True
-            except AssertionError:
-                return False
-        return False
-
-
-class OCRLine(OCRObject):
-    html_tag = "span"
-    html_classes = ["ocr_line", "ocr_caption", "ocr_header", "ocr_textfloat"]
-    item_class = OCRWord
-
-    def __init__(self, html_title: str, items: List = None):
-        super(OCRLine, self).__init__(html_title=html_title, items=items)
-        self._x_size = self.x_size_from_title()
-
-    @property
-    def x_size(self):
-        return self._x_size
-
-    def x_size_from_title(self) -> int:
-        """
-        Extract x_size from HOCR html title
-        :return: x_size
-        """
-        return round(float(re.findall(r"(x_f?size )([\d\.]+)", self._title)[0][1]))
-
-    def get_items(self, soup: BeautifulSoup):
-        """
-        Create items from BeautifulSoup parser
-        :param soup: BeautifulSoup parser
-        :return:
-        """
-        list_items = list()
-        for html_element in soup.find_all(self.item_class.html_tag, {"class": self.item_class.html_classes}):
-            item = self.item_class(html_title=html_element.get('title'))
-            item.get_items(soup=html_element)
-            if item.value:
-                list_items.append(item)
-        self.add_items(item=list_items)
-
-    def get_bbox_items(self, bbox: tuple) -> List[Tuple[List[OCRObject], int]]:
-        """
-        Get list of words that are contained in the bounding box, as well as line height
-        :param bbox: bounding box
-        :return:
-        """
-        # Get items that are intersecting with bounding box
-        intersecting_words = sort_ocr_objects([word for word in self.items
-                                               if word.is_contained_in_bbox(bbox=bbox)
-                                               and word.value is not None],
-                                              vertically=False)
-        # Keep only non empty lines
-        intersecting_words = [word_line for word_line in intersecting_words if word_line]
-
-        return [(intersecting_words, self._x_size)]
-
-    def __eq__(self, other):
-        parent_equality = super(OCRLine, self).__eq__(other)
-        if not parent_equality:
-            return False
-        if isinstance(other, self.__class__):
-            try:
-                assert self.x_size == other.x_size
-                return True
-            except AssertionError:
-                return False
-        return False
-
-
-class OCRParagraph(OCRObject):
-    html_tag = "p"
-    html_classes = ["ocr_par"]
-    item_class = OCRLine
-
-
-class OCRArea(OCRObject):
-    html_tag = "div"
-    html_classes = ["ocr_carea"]
-    item_class = OCRParagraph
-
-
-class OCRPage(OCRObject):
-    html_tag = "div"
-    html_classes = ["ocr_page"]
-    item_class = OCRArea
-
-    @classmethod
-    def parse_hocr(cls, hocr_html: str):
-        """
-        Parse HOCR html to OCRPage object
-        :param hocr_html: HOCR html
-        :return: OCRPage object
-        """
+    def parse_hocr(self) -> pd.DataFrame:
         # Instantiate HTML parser
-        soup = BeautifulSoup(hocr_html, features='html.parser')
+        soup = BeautifulSoup(self.hocr_html, features='html.parser')
 
-        # Instantiate OCR page
-        for html_page in soup.find_all("div", {"class": "ocr_page"}):
-            html_title = html_page.get('title')
-        ocr_page = cls(html_title=html_title)
-        ocr_page.get_items(soup=html_page)
+        # Parse all HTML elements
+        list_elements = list()
+        for element in soup.find_all(class_=True):
+            # Get element properties
+            d_el = {
+                "class": element["class"][0],
+                "id": element["id"],
+                "parent": element.parent.get('id'),
+                "value": element.string or None
+            }
 
-        return ocr_page
+            # Get word confidence
+            str_conf = re.findall(r"x_wconf \d{1,2}", element["title"])
+            if str_conf:
+                d_el["confidence"] = int(str_conf[0].split()[1])
+            else:
+                d_el["confidence"] = np.nan
+
+            # Get bbox
+            bbox = re.findall(r"bbox \d{1,4} \d{1,4} \d{1,4} \d{1,4}", element["title"])[0]
+            d_el["x1"], d_el["y1"], d_el["x2"], d_el["y2"] = tuple(
+                int(element) for element in re.sub(r"^bbox\s", "", bbox).split())
+
+            list_elements.append(d_el)
+
+        # Create dataframe
+        return pd.DataFrame(list_elements)
 
     def get_text_cell(self, cell, margin: int = 0) -> str:
         """
@@ -252,13 +63,107 @@ class OCRPage(OCRObject):
         # Define relevant bounding box
         bbox = cell.bbox(margin=margin)
 
-        # Get word lines corresponding to bounding box
-        cell_word_lines = self.get_bbox_items(bbox=bbox)
-        word_values = [[word.value for word in line] for line, x_size in cell_word_lines]
+        # Filter dataframe on non empty words
+        df_words = self.df[self.df["class"] == "ocrx_word"]
+        df_words = df_words[df_words["value"].notnull()]
 
-        # Create strings at line level and general string
-        line_strings = [" ".join(line) for line in word_values]
-        final_string = "\n".join(line_strings)
+        # Compute coordinates of intersection
+        df_words = df_words.assign(**{"x1_bbox": bbox[0],
+                                      "y1_bbox": bbox[1],
+                                      "x2_bbox": bbox[2],
+                                      "y2_bbox": bbox[3]})
+        df_words["x_left"] = df_words[["x1", "x1_bbox"]].max(axis=1)
+        df_words["y_top"] = df_words[["y1", "y1_bbox"]].max(axis=1)
+        df_words["x_right"] = df_words[["x2", "x2_bbox"]].min(axis=1)
+        df_words["y_bottom"] = df_words[["y2", "y2_bbox"]].min(axis=1)
 
-        return final_string.strip() or None
+        # Filter where intersection is not empty
+        df_words = df_words[df_words["x_right"] > df_words["x_left"]]
+        df_words = df_words[df_words["y_bottom"] > df_words["y_top"]]
 
+        # Compute area of word bbox and intersection
+        df_words["w_area"] = (df_words["x2"] - df_words["x1"]) * (df_words["y2"] - df_words["y1"])
+        df_words["int_area"] = (df_words["x_right"] - df_words["x_left"]) * (df_words["y_bottom"] - df_words["y_top"])
+
+        # Filter on words where its bbox is contained in area
+        df_words_contained = df_words[df_words["int_area"] / df_words["w_area"] >= 0.75]
+
+        # Group text by parent
+        df_text_parent = (df_words_contained.groupby('parent')
+                          .agg(x1=("x1", np.min),
+                               x2=("x2", np.max),
+                               y1=("y1", np.min),
+                               y2=("y2", np.max),
+                               value=("value", lambda x: ' '.join(x)))
+                          .sort_values(by=["y1", "x1"])
+                          )
+
+        # Concatenate all lines
+        return df_text_parent["value"].str.cat(sep="\n") or None
+
+    def get_text_table(self, table) -> pd.DataFrame:
+        # Get table cells
+        table_cells = [[cell for cell in row.items] for row in table.items]
+
+        # Filter dataframe on non empty words
+        df_words = self.df[self.df["class"] == "ocrx_word"]
+        df_words = df_words[df_words["value"].notnull()]
+
+        # Create dataframe containing all coordinates of Cell objects
+        list_cells = list()
+        for id_row, row in enumerate(table_cells):
+            for id_col, cell in enumerate(row):
+                element = {"row": id_row, "col": id_col,
+                           "x1_w": cell.x1, "x2_w": cell.x2,
+                           "y1_w": cell.y1, "y2_w": cell.y2}
+                list_cells.append(element)
+        df_cells = pd.DataFrame(list_cells)
+
+        # Cartesian product between two dataframes
+        df_word_cells = df_words.merge(df_cells, how="cross")
+
+        # Compute coordinates of intersection
+        df_word_cells["x_left"] = df_word_cells[["x1", "x1_w"]].max(axis=1)
+        df_word_cells["y_top"] = df_word_cells[["y1", "y1_w"]].max(axis=1)
+        df_word_cells["x_right"] = df_word_cells[["x2", "x2_w"]].min(axis=1)
+        df_word_cells["y_bottom"] = df_word_cells[["y2", "y2_w"]].min(axis=1)
+
+        # Filter where intersection is not empty
+        df_word_cells = df_word_cells[df_word_cells["x_right"] > df_word_cells["x_left"]]
+        df_word_cells = df_word_cells[df_word_cells["y_bottom"] > df_word_cells["y_top"]]
+
+        # Compute area of word bbox and intersection
+        df_word_cells["w_area"] = (df_word_cells["x2"] - df_word_cells["x1"]) * (df_word_cells["y2"] - df_word_cells["y1"])
+        df_word_cells["int_area"] = (df_word_cells["x_right"] - df_word_cells["x_left"]) * (df_word_cells["y_bottom"] - df_word_cells["y_top"])
+
+        # Filter on words where its bbox is contained in area
+        df_words_contained = df_word_cells[df_word_cells["int_area"] / df_word_cells["w_area"] >= 0.75]
+
+        # Group text by parent
+        df_text_parent = (df_words_contained.groupby(['row', 'col', 'parent'])
+                          .agg(x1=("x1", np.min),
+                               x2=("x2", np.max),
+                               y1=("y1", np.min),
+                               y2=("y2", np.max),
+                               value=("value", lambda x: ' '.join(x)))
+                          .sort_values(by=["row", "col", "y1", "x1"])
+                          .groupby(["row", "col"])
+                          .agg(text=("value", lambda x: "\n".join(x) or None))
+                          .reset_index()
+                          )
+
+        # Recreate dataframe from values
+        values = [[None] * table.nb_columns for _ in range(table.nb_rows)]
+        for rec in df_text_parent.to_dict(orient='records'):
+            values[rec.get('row')][rec.get('col')] = rec.get('text')
+
+        return pd.DataFrame(values)
+
+    @classmethod
+    def of(cls, image: np.ndarray, lang: str) -> "OCRPage":
+        hocr_html = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY),
+                                                     extension="hocr",
+                                                     config="--psm 1",
+                                                     lang=lang).decode('utf-8')
+
+        return cls(hocr_html=hocr_html)
