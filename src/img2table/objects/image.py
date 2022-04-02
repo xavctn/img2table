@@ -17,7 +17,7 @@ from img2table.utils.table_detection import get_tables
 from img2table.utils.text_extraction import get_text_tables
 
 
-class Image(object):
+class TableImage(object):
     def __init__(self, image: np.ndarray, lang: str = "fra+eng"):
         self._original_img = image
         self._lang = lang
@@ -218,7 +218,7 @@ if __name__ == '__main__':
 
     img = cv2.imread(r"C:\Users\xavca\Pictures\test_img2table.png")
 
-    image_object = Image(img)
+    image_object = TableImage(img)
     tables = image_object.extract_tables(implicit_rows=True,
                                          implicit_tables=True)
 

@@ -50,11 +50,11 @@ class TableObject(object):
         return self.x2, self.y1, self.x2, self.y2
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self.y2 - self.y1
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self.x2 - self.x1
 
 
@@ -113,7 +113,7 @@ class Cell(TableObject):
         self.x1, self.x2, self.y1, self.y2 = x1, x2, y1, y2
 
     @classmethod
-    def from_h_lines(cls, line_1: Line, line_2: Line, minimal: bool = False):
+    def from_h_lines(cls, line_1: Line, line_2: Line, minimal: bool = False) -> "Cell":
         """
         Generate cell from two lines
         :param line_1: first line
@@ -175,7 +175,7 @@ class Row(TableObject):
     def v_consistent(self) -> bool:
         return len([cell for cell in self.items if cell.y1 != self.y1 or cell.y2 != self.y2]) == 0
 
-    def add_cells(self, cells: Union[Cell, List[Cell]]):
+    def add_cells(self, cells: Union[Cell, List[Cell]]) -> "Row":
         """
         Add cells to existing row items
         :param cells: Cell object or list
@@ -188,34 +188,7 @@ class Row(TableObject):
 
         return self
 
-    def add_contours(self, contours: Union[Cell, List[Cell]], replace: bool = False):
-        """
-        Add contours to Row object
-        :param contours: contours as Cell objects
-        :param replace: boolean indicating to replace existing contours
-        :return:
-        """
-        if replace:
-            self._contours = []
-
-        if isinstance(contours, Cell):
-            self._contours += [contours]
-        else:
-            self._contours += contours
-
-    @classmethod
-    def from_horizontal_lines(cls, line_1: Line, line_2: Line):
-        """
-        Generate row from horizontal lines
-        :param line_1: first horizontal line
-        :param line_2: second horizontal line
-        :return: Row object
-        """
-        # Create new cell and instantiate new row
-        cell = Cell.from_h_lines(line_1=line_1, line_2=line_2)
-        return cls(cells=cell)
-
-    def split_in_rows(self, vertical_delimiters: List[int]):
+    def split_in_rows(self, vertical_delimiters: List[int]) -> List["Row"]:
         """
         Split Row object into multiple objects based on vertical delimiters values
         :param vertical_delimiters: list of vertical delimiters values
@@ -308,7 +281,7 @@ class Table(TableObject):
         if len(self._data) == 0 or (len(self._data) == 1 and self._data.shape[1] == 1):
             self._data = None
 
-    def get_text_ocr(self, ocr_page: OCRPage):
+    def get_text_ocr(self, ocr_page: OCRPage) -> "Table":
         """
         Retrieve text from OCRPage object and set data attribute with dataframe corresponding to table
         :param ocr_page: OCRPage object
