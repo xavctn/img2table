@@ -1,11 +1,9 @@
 # coding: utf-8
-import statistics
 from typing import List
 
 import numpy as np
 from cv2 import cv2
 
-from img2table.objects.ocr import OCRPage
 from img2table.objects.tables import Line
 
 
@@ -41,10 +39,10 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
             curr_cluster = [line]
         else:
             # Compute vertical difference between consecutive lines
-            diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[0], sec_dim_1)
+            diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[-1], sec_dim_1)
             # If the difference is too large, add curr_cluster to list clusters and set new cluster with the current
             # line
-            if diff_index > max_gap:
+            if diff_index > 2:
                 line_clusters.append(curr_cluster)
                 curr_cluster = [line]
             # Otherwise, set line coordinates to coherent cluster values and append line to current cluster
@@ -64,24 +62,33 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
                 sub_cluster = [line]
             else:
                 # If lines are vertically close, merge line with curr_line
-                if getattr(line, main_dim_1) <= getattr(sub_cluster[-1], main_dim_2) + max_gap:
+                dim_1_sub_clust = min([getattr(sub_cluster[idx], main_dim_1) for idx in range(len(sub_cluster))])
+                dim_2_sub_clust = max([getattr(sub_cluster[idx], main_dim_2) for idx in range(len(sub_cluster))])
+                overlapping = max(
+                    min(getattr(line, main_dim_2), dim_2_sub_clust) - max(getattr(line, main_dim_1), dim_1_sub_clust),
+                    0) > 0
+                if getattr(line, main_dim_1) <= dim_2_sub_clust + max_gap or overlapping:
                     sub_cluster.append(line)
                 # If the difference in vertical coordinates is too large, add curr_line to list of filtered lines and
                 # set curr_line with the current line
                 else:
                     new_line = Line((0, 0, 0, 0))
+                    sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
+                    sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
                     setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
                     setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-                    setattr(new_line, sec_dim_1, statistics.mean([getattr(l, sec_dim_1) for l in sub_cluster]))
-                    setattr(new_line, sec_dim_2, statistics.mean([getattr(l, sec_dim_2) for l in sub_cluster]))
+                    setattr(new_line, sec_dim_1, sec_dim)
+                    setattr(new_line, sec_dim_2, sec_dim)
                     final_lines.append(new_line)
                     sub_cluster = [line]
 
         new_line = Line((0, 0, 0, 0))
+        sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
+        sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
         setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
         setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-        setattr(new_line, sec_dim_1, statistics.mean([getattr(l, sec_dim_1) for l in sub_cluster]))
-        setattr(new_line, sec_dim_2, statistics.mean([getattr(l, sec_dim_2) for l in sub_cluster]))
+        setattr(new_line, sec_dim_1, sec_dim)
+        setattr(new_line, sec_dim_2, sec_dim)
         final_lines.append(new_line)
 
     # Remove "point" lines
@@ -90,44 +97,16 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     return final_lines
 
 
-def is_word_line(line: Line, ocr_page: OCRPage, margin: int = 2) -> bool:
-    """
-    Assess if the line is generated from text in image
-    :param line: Line object
-    :param ocr_page: OCRPage object
-    :param margin: margin used around OCRLine objects
-    :return: boolean indicating if the line is generated from text in image
-    """
-    # Check if ocr_page exists
-    if ocr_page is None:
-        return False
-
-    # Get all OCRLine objects
-    ocr_lines = [ocr_line for ocr_area in ocr_page.items
-                 for ocr_paragraph in ocr_area.items
-                 for ocr_line in ocr_paragraph.items]
-
-    # Loop over all OCR lines to check if the line is contained in the bounding box of the OCR line
-    for ocr_line in ocr_lines:
-        bbox = ocr_line.bbox
-        if line.x1 >= bbox[0] - margin and line.x2 <= bbox[2] + margin and line.y1 >= bbox[1] - margin \
-                and line.y2 <= bbox[3] + margin:
-            return True
-    return False
-
-
-def detect_lines(image: np.ndarray, ocr_page: OCRPage, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
-                 minLinLength: int = 290, maxLineGap: int = 6, classify: bool = True) -> (List[Line], List[Line]):
+def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
+                 minLinLength: int = 290, maxLineGap: int = 6) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
-    :param ocr_page: OCRPage object
     :param rho: rho parameter for Hough line transform
     :param theta: theta parameter for Hough line transform
     :param threshold: threshold parameter for Hough line transform
     :param minLinLength: minLinLength parameter for Hough line transform
     :param maxLineGap: maxLineGap parameter for Hough line transform
-    :param classify: boolean indicating if lines are classified into vertical and horizontal lines
     :return: horizontal and vertical lines
     """
     # Create copy of image
@@ -135,17 +114,27 @@ def detect_lines(image: np.ndarray, ocr_page: OCRPage, rho: float = 1, theta: fl
 
     # Image to gray and canny
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    dst = cv2.Canny(gray, 50, 200, None, 3)
+    blur = cv2.GaussianBlur(gray, (3, 3), 0)
+    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
-    # Compute Hough lines on image
-    linesP = cv2.HoughLinesP(dst, rho, theta, threshold, None, minLinLength, maxLineGap)
+    # Detect horizontal lines
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
+    horizontal_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
 
-    # Parse lines to Line object
-    lines = [Line(line=line[0]) for line in linesP]
+    # Detect vertical lines
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 20))
+    vertical_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
 
-    # If lines are not classified, return lines
-    if not classify:
-        return lines
+    # Compute Hough lines on horizontal image and get lines
+    linesH = cv2.HoughLinesP(horizontal_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+    h_lines = [Line(line=line[0]) for line in linesH]
+
+    # Compute Hough lines on vertical image and get lines
+    linesV = cv2.HoughLinesP(vertical_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+    v_lines = [Line(line=line[0]) for line in linesV]
+
+    # Merge lines
+    lines = h_lines + v_lines
 
     # Identify horizontal and vertical lines
     horizontal_lines = []
@@ -155,14 +144,13 @@ def detect_lines(image: np.ndarray, ocr_page: OCRPage, rho: float = 1, theta: fl
         # Reprocess line
         line.reprocess()
 
-        if not is_word_line(line=line, ocr_page=ocr_page):
-            if line.vertical:
-                vertical_lines.append(line)
-            elif line.horizontal:
-                horizontal_lines.append(line)
+        if line.vertical:
+            vertical_lines.append(line)
+        elif line.horizontal:
+            horizontal_lines.append(line)
 
     # Compute merged lines
-    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=maxLineGap)
+    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=2 * maxLineGap)
     vertical_lines = overlapping_filter(lines=vertical_lines, horizontal=False, max_gap=maxLineGap)
 
     return horizontal_lines, vertical_lines

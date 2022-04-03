@@ -1,7 +1,6 @@
 pandas
 numpy
 pdf2image
-opencv-python
-Pillow
+opencv-python-headless
 pytesseract
 bs4

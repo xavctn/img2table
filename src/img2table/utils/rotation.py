@@ -1,5 +1,4 @@
 # coding: utf-8
-import copy
 import math
 import os
 import re
@@ -12,15 +11,14 @@ import pytesseract
 from cv2 import cv2
 
 from img2table.objects.tables import Line
-from img2table.utils.line_detection import detect_lines
 
 
-def rotate(image: np.ndarray, angle: float, background) -> np.ndarray:
+def rotate(image: np.ndarray, angle: float, background: tuple = (255, 255, 255)) -> np.ndarray:
     """
     Rotate image
     :param image: image
     :param angle: angle
-    :param background:
+    :param background: background color for rotated image
     :return: rotated image
     """
     old_width, old_height = image.shape[:2]
@@ -38,9 +36,9 @@ def rotate(image: np.ndarray, angle: float, background) -> np.ndarray:
 def line_cluster(lines: List[Line], angle_delta: float = 1.0) -> Iterable[List[Line]]:
     """
     Create iterable of line clusters based on line angle
-    :param lines:
-    :param angle_delta:
-    :return:
+    :param lines: list of Line object
+    :param angle_delta: maximum angle difference between consecutive lines
+    :return: iterable of list of lines
     """
     # Order lines by angle
     lines = sorted(lines, key=lambda line: line.angle)
@@ -66,14 +64,14 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     :param image: image array
     :return: image with horizontal text (can be flipped upside down)
     """
-    # Get Hough Lines
-    lines = detect_lines(image=copy.deepcopy(image),
-                         ocr_page=None,
-                         rho=0.5,
-                         minLinLength=20,
-                         maxLineGap=20,
-                         threshold=5,
-                         classify=False)
+    img = image.copy()
+    # Image to gray and canny
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    dst = cv2.Canny(gray, 50, 200, None, 3)
+
+    # Compute Hough lines on image
+    lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
+    lines = [Line(line=line[0]) for line in lines]
 
     # Get image angle
     max_length = 0
@@ -87,7 +85,7 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     # Rotate image according to the angle
     if angle is not None:
         if abs(angle) > 1:
-            return rotate(image, angle, (255, 255, 255))
+            return rotate(image=image, angle=angle)
 
     return image
 
@@ -104,7 +102,7 @@ def get_orientation_image(img: np.ndarray) -> int:
     cv2.imwrite(tmpfp, img)
 
     # Get orientation
-    osd = pytesseract.image_to_osd(tmpfp, lang="fra+eng")
+    osd = pytesseract.image_to_osd(tmpfp)
 
     # Delete temporary dir
     shutil.rmtree(dirpath)
@@ -128,8 +126,8 @@ def rotate_img(img: np.ndarray) -> np.ndarray:
     angle = get_orientation_image(horizontal_img)
 
     # Rotate image if needed
-    if angle % 360 != 0:
-        img_rotated = rotate(horizontal_img, angle=angle, background=(0, 0, 0))
+    if angle % 360 == 180:
+        img_rotated = rotate(horizontal_img, angle=angle)
     else:
         img_rotated = horizontal_img
 
