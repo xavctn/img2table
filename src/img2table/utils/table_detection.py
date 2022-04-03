@@ -3,7 +3,34 @@ import statistics
 from typing import List
 
 from img2table.objects.tables import Table, Row, Cell
-from img2table.utils.cell_detection import adjacent_cells
+
+
+def adjacent_cells(cell_1: Cell, cell_2: Cell) -> bool:
+    """
+    Compute if two cells are adjacent
+    :param cell_1: first cell object
+    :param cell_2: second cell object
+    :return: boolean indicating if cells are adjacent
+    """
+    # Check correspondence on vertical borders
+    overlapping_y = max(0, min(cell_1.y2, cell_2.y2) - max(cell_1.y1, cell_2.y1))
+    diff_x = min(abs(cell_1.x2 - cell_2.x1),
+                 abs(cell_1.x1 - cell_2.x2),
+                 abs(cell_1.x1 - cell_2.x1),
+                 abs(cell_1.x2 - cell_2.x2))
+    if overlapping_y > 5 and diff_x / max(cell_1.width, cell_2.width) <= 0.05:
+        return True
+
+    # Check correspondence on horizontal borders
+    overlapping_x = max(0, min(cell_1.x2, cell_2.x2) - max(cell_1.x1, cell_2.x1))
+    diff_y = min(abs(cell_1.y2 - cell_2.y1),
+                 abs(cell_1.y1 - cell_2.y2),
+                 abs(cell_1.y1 - cell_2.y1),
+                 abs(cell_1.y2 - cell_2.y2))
+    if overlapping_x > 5 and diff_y / max(cell_1.height, cell_2.height) <= 0.05:
+        return True
+
+    return False
 
 
 def group_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:

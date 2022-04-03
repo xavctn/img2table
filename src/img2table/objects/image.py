@@ -209,7 +209,7 @@ class TableImage(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\test_img2table.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_1.png")
 
     image_object = TableImage(img)
     tables = image_object.extract_tables(implicit_rows=True,
@@ -228,3 +228,4 @@ if __name__ == '__main__':
     for table in output_tables:
         print(table.get('title'))
         print(table.get('bbox'))
+        print(table.get('data').head(20))
