@@ -3,11 +3,10 @@ import copy
 from typing import List
 
 import numpy as np
-import pytesseract
 
 from img2table.objects.ocr import OCRPage
-from img2table.objects.tables import Table, Line, Row
-from img2table.utils.common import get_bounding_area_text
+from img2table.objects.tables import Table, Cell
+from img2table.utils.common import get_contours_cell
 
 
 def get_title_tables(img: np.ndarray, tables: List[Table], ocr_page: OCRPage, margin: int = 5) -> List[Table]:
@@ -20,51 +19,69 @@ def get_title_tables(img: np.ndarray, tables: List[Table], ocr_page: OCRPage, ma
     :return: Title corresponding to the cell area
     """
     height, width, _ = img.shape
-
-    # Loop over cell area
-    for idx in range(len(tables)):
-        # Retrieve Table object representing the "title area" above the cell area
-        try:
-            if idx == 0:
-                upper_line = Line(line=(0, 0, width, 0))
-                lower_line = Line(line=tables[idx].upper_bound)
-            else:
-                upper_line = Line(line=tables[idx - 1].lower_bound)
-                lower_line = Line(line=tables[idx].upper_bound)
-            title_tb = Table(rows=Row.from_horizontal_lines(line_1=upper_line, line_2=lower_line))
-        except IndexError:
-            tables[idx].set_title(title=None)
-            continue
-
-        # Get contours in title area
-        tb_title_cnts = get_bounding_area_text(img=img,
-                                               table=title_tb,
-                                               margin=0,
-                                               blur_size=5,
-                                               kernel_size=9)
-
-        if tb_title_cnts.items[0].contours:
-            # Get lowest contour
-            lowest_cnt = tb_title_cnts.items[0].contours[-1]
-
-            # Get text from OCR
-            title = ocr_page.get_text_cell(cell=lowest_cnt, margin=margin)
+    
+    if len(tables) == 0:
+        return []
+    
+    # Sort tables
+    sorted_tables = sorted(tables, key=lambda tb: (tb.y1, tb.x1, tb.x2))
+    
+    # Cluster table vertically
+    tb_cl = list()
+    for idx, tb in enumerate(sorted_tables):
+        if idx == 0:
+            cl = [tb]
+        elif tb.y1 <= cl[-1].y2:
+            cl.append(tb)
         else:
-            title = None
+            tb_cl.append(cl)
+            cl = [tb]
+    tb_cl.append(cl)
+    
+    # Identify relative zones for each title corresponding to each cluster
+    final_tables = list()
+    for id_cl, cluster in enumerate(tb_cl):
+        # Compute horizontal boundaries of title
+        x_delimiters = [10] + [round((tb_1.x2 + tb_2.x1) / 2) for tb_1, tb_2 in zip(cluster, cluster[1:])] + [width - 10]
+        x_bounds = [(del_1, del_2) for del_1, del_2 in zip(x_delimiters, x_delimiters[1:])]
 
-        tables[idx].set_title(title=title)
+        # Compute vertical boundaries of title
+        if id_cl == 0:
+            y_bounds = (0, min([tb.y1 for tb in cluster]))
+        else:
+            y_bounds = (max([tb.y2 for tb in tb_cl[id_cl - 1]]), min([tb.y1 for tb in cluster]))
+        
+        # Fetch title for each table
+        for id_tb, table in enumerate(cluster):
+            # Get contours in title area
+            cell_title = Cell(x1=x_bounds[id_tb][0], x2=x_bounds[id_tb][1], y1=y_bounds[0], y2=y_bounds[1])
+            contours = get_contours_cell(img=copy.deepcopy(img),
+                                         cell=cell_title,
+                                         margin=0,
+                                         blur_size=5,
+                                         kernel_size=9)
+            
+            if contours:
+                # Get lowest contour
+                lowest_cnt = contours[-1]
 
-    return tables
+                # Get text from OCR
+                title = ocr_page.get_text_cell(cell=lowest_cnt, margin=margin)
+            else:
+                title = None
+
+            table.set_title(title=title)
+            final_tables.append(table)
+
+    return final_tables
 
 
-def get_text_tables(img: np.ndarray, ocr_page: OCRPage, tables: List[Table],
-                    header_detection: bool = True) -> List[Table]:
+def get_text_tables(img: np.ndarray, ocr_page: OCRPage, tables: List[Table]) -> List[Table]:
     """
     Extract text from cell areas
     :param img: image array
     :param ocr_page: OCRPage object
     :param tables: list of Table objects
-    :param header_detection: boolean indicating if header detection is performed
     :return: list of Table objects with parsed titles and dataframes
     """
     # Get title of tables
@@ -73,9 +90,7 @@ def get_text_tables(img: np.ndarray, ocr_page: OCRPage, tables: List[Table],
                                     ocr_page=ocr_page)
 
     # Get text corresponding to each cell of the cell areas
-    data_tables = [table.get_text_ocr(ocr_page=ocr_page,
-                                      img=copy.deepcopy(img),
-                                      header_detection=header_detection)
+    data_tables = [table.get_text_ocr(ocr_page=ocr_page)
                    for table in title_tables]
 
     # Filter on non empty tables

@@ -2,6 +2,7 @@
 from typing import List
 
 from img2table.objects.tables import Cell, Table
+from img2table.utils.common import is_contained_cell
 
 
 def is_contained_table(cell: Cell, table: Table) -> bool:
@@ -11,23 +12,7 @@ def is_contained_table(cell: Cell, table: Table) -> bool:
     :param table: Table object
     :return: boolean indicating if the cell is contained in the table
     """
-    # Compute common coordinates
-    x_left = max(cell.x1, table.x1)
-    y_top = max(cell.y1, table.y1)
-    x_right = min(cell.x2, table.x2)
-    y_bottom = min(cell.y2, table.y2)
-
-    if x_right < x_left or y_bottom < y_top:
-        return False
-
-    # Compute intersection area as well as cell area
-    intersection_area = (x_right - x_left) * (y_bottom - y_top)
-    cell_area = cell.height * cell.width
-
-    # Compute percentage of intersection with cell area
-    iou = intersection_area / cell_area
-
-    return iou >= 0.9
+    return is_contained_cell(inner_cell=cell, outer_cell=table.bbox(), percentage=0.9)
 
 
 def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
@@ -48,8 +33,8 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
             # Set cluster, vertical difference between cells, average cell height and width
             cluster = [cell]
             avg_vertical_diff = None
-            avg_cell_height = cell.y2 - cell.y1
-            avg_cell_length = cell.x2 - cell.x1
+            avg_cell_height = cell.height
+            avg_cell_width = cell.width
             idx += 1
         else:
             # Compute vertical difference between the cell and the last element of the cluster, cell height and length
@@ -59,9 +44,9 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
             # Check if vertical difference is coherent with cluster
             if avg_vertical_diff is None or 0.5 * avg_vertical_diff < v_diff < 2 * avg_vertical_diff:
                 # Check if cell length is coherent with cluster
-                if 0.2 * avg_cell_length <= cell_length <= 5 * avg_cell_length:
-                    avg_cell_height = (avg_cell_height * len(cluster) + cell_height) / (len(cluster) + 1)
-                    avg_cell_length = (avg_cell_length * len(cluster) + cell_length) / (len(cluster) + 1)
+                if 0.2 * avg_cell_width <= cell_length <= 5 * avg_cell_width:
+                    avg_cell_height = (avg_cell_height * len(cluster) + cell.height) / (len(cluster) + 1)
+                    avg_cell_width = (avg_cell_width * len(cluster) + cell.width) / (len(cluster) + 1)
                     avg_vertical_diff = ((avg_vertical_diff or v_diff) * (len(cluster) - 1) + v_diff) / len(cluster)
                     # Check if vertical difference is coherent with cell height
                     if avg_vertical_diff / avg_cell_height <= 3:
@@ -77,8 +62,8 @@ def make_coherent_cluster(cluster: List[Cell]) -> List[List[Cell]]:
                 cluster = [cell]
                 idx += 1
             avg_vertical_diff = None
-            avg_cell_height = cluster[0].y2 - cluster[0].y1
-            avg_cell_length = cluster[0].x2 - cluster[0].x1
+            avg_cell_height = cluster[0].height
+            avg_cell_width = cluster[0].width
 
     if len(cluster) > 1:
         clusters.append(cluster)

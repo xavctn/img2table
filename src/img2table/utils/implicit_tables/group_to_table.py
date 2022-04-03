@@ -97,4 +97,3 @@ def cluster_group_to_table(cluster_group: List[List[Cell]]) -> Table:
 
     # Create table from columns
     return columns_to_table(columns=columns)
-
