@@ -4,9 +4,9 @@ import os
 import re
 import shutil
 import tempfile
-from typing import List, Iterable
 
 import numpy as np
+import pandas as pd
 import pytesseract
 from cv2 import cv2
 
@@ -33,31 +33,6 @@ def rotate(image: np.ndarray, angle: float, background: tuple = (255, 255, 255))
     return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 
-def line_cluster(lines: List[Line], angle_delta: float = 1.0) -> Iterable[List[Line]]:
-    """
-    Create iterable of line clusters based on line angle
-    :param lines: list of Line object
-    :param angle_delta: maximum angle difference between consecutive lines
-    :return: iterable of list of lines
-    """
-    # Order lines by angle
-    lines = sorted(lines, key=lambda line: line.angle)
-
-    # Create clusters of line angles
-    group = list()
-    for idx, line in enumerate(lines):
-        if idx == 0:
-            group = [line]
-        elif line.angle - group[-1].angle <= angle_delta:
-            group.append(line)
-        else:
-            yield group
-            group = [line]
-
-    if group:
-        yield group
-
-
 def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     """
     Detect if the image is tilted by 90° and correct it if needed
@@ -73,14 +48,20 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
     lines = [Line(line=line[0]) for line in lines]
 
-    # Get image angle
-    max_length = 0
-    angle = None
-    for cluster in line_cluster(lines):
-        group_length = sum([line.length for line in cluster])
-        if group_length > max_length:
-            max_length = group_length
-            angle = sum([line.angle * line.length for line in cluster]) / group_length
+    # Create clusters of lines
+    df_lines = pd.DataFrame([{"angle": line.angle, "length": line.length, "angle_length": line.angle * line.length}
+                             for line in lines])
+    df_lines = df_lines.sort_values(by=['angle'])
+    df_lines["cluster"] = (df_lines["angle"] - df_lines["angle"].shift() >= 0.5).astype(int).cumsum()
+
+    # Get angle of the most represented cluster
+    df_clusters_angle = (df_lines.groupby('cluster')
+                         .agg(length=('length', np.sum),
+                              angle_length=('angle_length', np.sum))
+                         )
+    df_clusters_angle["angle"] = df_clusters_angle['angle_length'] / df_clusters_angle['length']
+
+    angle = df_clusters_angle.sort_values('length', ascending=False).iloc[0, 2]
 
     # Rotate image according to the angle
     if angle is not None:
