@@ -7,6 +7,12 @@ from img2table.objects.tables import Cell, Line
 
 
 def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pd.DataFrame:
+    """
+    Create dataframe of all possible cells from horizontal and vertical lines
+    :param horizontal_lines: list of horizontal lines
+    :param vertical_lines: list of vertical lines
+    :return: dataframe containing all cells
+    """
     # Create dataframe from horizontal and vertical lines
     h_lines_values = [{"x1": line.x1, "x2": line.x2, "y1": line.y1,
                        "y2": line.y2, "width": line.width, "height": line.height}
@@ -84,7 +90,36 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     return df_cells.reset_index()
 
 
+def deduplicate_vertical_cells(df_cells: pd.DataFrame) -> pd.DataFrame:
+    """
+    Deduplicate cells that have a common upper or lower bound
+    :param df_cells: dataframe containing cells
+    :return: dataframe with deduplicated cells that have a common upper or lower bound
+    """
+    # Get original columns
+    orig_cols = df_cells.columns
+
+    # Deduplicate on upper bound
+    df_cells = df_cells.sort_values(by=["x1", "x2", "y1", "y2"])
+    df_cells["cell_rk"] = df_cells.groupby(["x1", "x2", "y1"]).cumcount()
+    df_cells = df_cells[df_cells["cell_rk"] == 0]
+
+    # Deduplicate on lower bound
+    df_cells = df_cells.sort_values(by=["x1", "x2", "y2", "y1"], ascending=[True, True, True, False])
+    df_cells["cell_rk"] = df_cells.groupby(["x1", "x2", "y2"]).cumcount()
+    df_cells = df_cells[df_cells["cell_rk"] == 0]
+
+    return df_cells[orig_cols]
+
+
 def deduplicate_cells(df_cells: pd.DataFrame) -> pd.DataFrame:
+    """
+    Deduplicate cells dataframe
+    :param df_cells: dataframe containing cells
+    :return: dataframe with deduplicated cells
+    """
+    df_cells = deduplicate_vertical_cells(df_cells=df_cells)
+
     # Create columns corresponding to cell characteristics
     df_cells["width"] = df_cells["x2"] - df_cells["x1"]
     df_cells["height"] = df_cells["y2"] - df_cells["y1"]
@@ -146,12 +181,6 @@ def deduplicate_cells(df_cells: pd.DataFrame) -> pd.DataFrame:
     df_final_cells = df_cells.drop(labels=redundant_cells)
 
     return df_final_cells
-
-
-def get_cells_v2(h_lines, v_lines):
-    df_cells = get_cells_dataframe(h_lines, v_lines)
-    dedup_cells = deduplicate_cells(df_cells)
-    return dedup_cells
 
 
 def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:

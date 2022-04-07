@@ -209,7 +209,7 @@ class TableImage(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\test_1.png")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\data_3.jpeg")
 
     image_object = TableImage(img)
     tables = image_object.extract_tables(implicit_rows=True,

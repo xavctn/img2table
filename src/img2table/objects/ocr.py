@@ -33,7 +33,7 @@ class OCRPage(object):
                 "class": element["class"][0],
                 "id": element["id"],
                 "parent": element.parent.get('id'),
-                "value": element.string or None
+                "value": re.sub(r"^(\s|\||L|_|;|\*)*$", '', element.string).strip() or None if element.string else None
             }
 
             # Get word confidence
@@ -161,7 +161,10 @@ class OCRPage(object):
 
     @classmethod
     def of(cls, image: np.ndarray, lang: str) -> "OCRPage":
-        hocr_html = pytesseract.image_to_pdf_or_hocr(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY),
+        # Preprocess for OCR
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        hocr_html = pytesseract.image_to_pdf_or_hocr(gray,
                                                      extension="hocr",
                                                      config="--psm 1",
                                                      lang=lang).decode('utf-8')

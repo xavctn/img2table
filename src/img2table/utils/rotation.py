@@ -48,6 +48,10 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
     lines = [Line(line=line[0]) for line in lines]
 
+    # If no lines found, return image
+    if len(lines) == 0:
+        return image
+
     # Create clusters of lines
     df_lines = pd.DataFrame([{"angle": line.angle, "length": line.length, "angle_length": line.angle * line.length}
                              for line in lines])
