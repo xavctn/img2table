@@ -18,7 +18,7 @@ def get_title_tables(img: np.ndarray, tables: List[Table], ocr_page: OCRPage, ma
     :param margin: margin used
     :return: Title corresponding to the cell area
     """
-    height, width, _ = img.shape
+    height, width = img.shape[:2]
     
     if len(tables) == 0:
         return []

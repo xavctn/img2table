@@ -5,7 +5,7 @@ from typing import List, Union
 import numpy as np
 from cv2 import cv2
 
-from img2table.objects.tables import Cell, Table
+from img2table.objects.tables import Cell
 
 
 def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tuple], percentage: float = 0.9) -> bool:
@@ -100,19 +100,20 @@ def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: i
     :param merge_vertically: boolean indicating if contours are merged according to the vertical or horizontal axis
     :return: list of contours contained in cell
     """
-    height, width, _ = img.shape
+    height, width = img.shape[:2]
     # Get cropped image
     cropped_img = img[max(cell.y1 - margin, 0):min(cell.y2 + margin, height),
                   max(cell.x1 - margin, 0):min(cell.x2 + margin, width)]
 
     # If cropped image is empty, do not do anything
-    height_cropped, width_cropped, _ = cropped_img.shape
+    height_cropped, width_cropped = cropped_img.shape[:2]
     if height_cropped <= 0 or width_cropped <= 0:
         return []
 
     # Reprocess images
-    gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (blur_size, blur_size), 0)
+    if len(cropped_img.shape) == 3:
+        cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(cropped_img, (blur_size, blur_size), 0)
     thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 30)
 
     # Dilate to combine adjacent text contours

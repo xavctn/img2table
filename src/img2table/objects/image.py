@@ -209,11 +209,11 @@ class TableImage(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\data_3.jpeg")
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_1.PNG", 2)
 
     image_object = TableImage(img)
     tables = image_object.extract_tables(implicit_rows=True,
-                                         implicit_tables=True)
+                                         implicit_tables=False)
 
     image_object._create_img_colored_borders(color=(128, 145, 226), margin=0)
     display_img = image_object.white_img

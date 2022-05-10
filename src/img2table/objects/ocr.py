@@ -162,11 +162,12 @@ class OCRPage(object):
     @classmethod
     def of(cls, image: np.ndarray, lang: str) -> "OCRPage":
         # Preprocess for OCR
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        if len(image.shape) == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        hocr_html = pytesseract.image_to_pdf_or_hocr(gray,
+        hocr_html = pytesseract.image_to_pdf_or_hocr(image,
                                                      extension="hocr",
-                                                     config="--psm 1",
+                                                     config="--psm 11",
                                                      lang=lang).decode('utf-8')
 
         return cls(hocr_html=hocr_html)

@@ -41,8 +41,9 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
     """
     img = image.copy()
     # Image to gray and canny
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    dst = cv2.Canny(gray, 50, 200, None, 3)
+    if len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    dst = cv2.Canny(img, 50, 200, None, 3)
 
     # Compute Hough lines on image
     lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
