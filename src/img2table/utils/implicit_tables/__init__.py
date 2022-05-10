@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 from img2table.objects.tables import Cell, Table
-from img2table.utils.common import get_contours_cell
+from img2table.utils.common import get_contours_cell, is_contained_cell
 from img2table.utils.implicit_tables.cluster_groups import group_clusters
 from img2table.utils.implicit_tables.clusters import cluster_contours
 from img2table.utils.implicit_tables.group_to_table import cluster_group_to_table
@@ -38,4 +38,14 @@ def detect_implicit_tables(white_img: np.ndarray, tables: List[Table]) -> List[T
     # Convert cluster groups to tables
     implicit_tables = [cluster_group_to_table(cluster_group=cluster_group) for cluster_group in cluster_groups]
 
-    return implicit_tables
+    # Deduplicate tables
+    implicit_tables = sorted(implicit_tables, key=lambda tb: tb.height * tb.width, reverse=True)
+    final_tables = list()
+    for idx, tb in enumerate(implicit_tables):
+        if idx == 0:
+            final_tables.append(tb)
+        else:
+            if not max([is_contained_cell(tb.bbox(), tt.bbox(), 0.9) for tt in final_tables]):
+                final_tables.append(tb)
+
+    return final_tables
