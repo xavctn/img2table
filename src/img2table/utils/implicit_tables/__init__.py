@@ -18,7 +18,7 @@ def detect_implicit_tables(white_img: np.ndarray, tables: List[Table]) -> List[T
     :return: list of Table objects corresponding to implicit tables
     """
     # Create cell that represents the entire image
-    height, width, _ = white_img.shape
+    height, width = white_img.shape[:2]
     cell = Cell(0, 0, width, height)
 
     # Get bounding boxes / contours in cell
