@@ -51,16 +51,10 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
         return contours
 
     # Define dimensions used to merge contours
-    if vertically:
-        idx_1 = "y1"
-        idx_2 = "y2"
-        sort_idx_1 = "x1"
-        sort_idx_2 = "x2"
-    else:
-        idx_1 = "x1"
-        idx_2 = "x2"
-        sort_idx_1 = "y1"
-        sort_idx_2 = "y2"
+    idx_1 = "y1" if vertically else "x1"
+    idx_2 = "y2" if vertically else "x2"
+    sort_idx_1 = "x1" if vertically else "y1"
+    sort_idx_2 = "x2" if vertically else "y2"
 
     # Sort contours
     sorted_cnts = sorted(contours,
