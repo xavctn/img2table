@@ -3,4 +3,5 @@ numpy
 pdf2image
 opencv-python-headless
 pytesseract
+tesserocr
 bs4
