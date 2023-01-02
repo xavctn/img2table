@@ -60,30 +60,24 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
     sorted_cnts = sorted(contours,
                          key=lambda cnt: (getattr(cnt, idx_1), getattr(cnt, idx_2), getattr(cnt, sort_idx_1)))
 
-    list_cnts = list()
     # Loop over contours and merge overlapping contours
-    for idx, cnt in enumerate(sorted_cnts):
-        if idx == 0:
-            curr_cnt = copy.deepcopy(cnt)
+    seq = iter(sorted_cnts)
+    list_cnts = [copy.deepcopy(next(seq))]
+    for cnt in seq:
+        # If contours overlap, update current contour
+        if getattr(cnt, idx_1) <= getattr(list_cnts[-1], idx_2):
+            # Update current contour coordinates
+            setattr(list_cnts[-1], idx_2, max(getattr(list_cnts[-1], idx_2), getattr(cnt, idx_2)))
+            setattr(list_cnts[-1], sort_idx_1, min(getattr(list_cnts[-1], sort_idx_1), getattr(cnt, sort_idx_1)))
+            setattr(list_cnts[-1], sort_idx_2, max(getattr(list_cnts[-1], sort_idx_2), getattr(cnt, sort_idx_2)))
         else:
-            # If contours overlap, update current contour
-            if getattr(cnt, idx_1) <= getattr(curr_cnt, idx_2):
-                # Update current contour coordinates
-                setattr(curr_cnt, idx_2, max(getattr(curr_cnt, idx_2), getattr(cnt, idx_2)))
-                setattr(curr_cnt, sort_idx_1, min(getattr(curr_cnt, sort_idx_1), getattr(cnt, sort_idx_1)))
-                setattr(curr_cnt, sort_idx_2, max(getattr(curr_cnt, sort_idx_2), getattr(cnt, sort_idx_2)))
-            # Else, add current contour and open a new one
-            else:
-                list_cnts.append(curr_cnt)
-                curr_cnt = copy.deepcopy(cnt)
-
-    list_cnts.append(curr_cnt)
+            list_cnts.append(copy.deepcopy(cnt))
 
     return list_cnts
 
 
-def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: int = 9,
-                           kernel_size: int = 15, merge_vertically: bool = True) -> List[Cell]:
+def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: int = 9, kernel_size: int = 15,
+                      merge_vertically: bool = True) -> List[Cell]:
     """
     Get list of contours contained in cell
     :param img: image array
@@ -97,7 +91,7 @@ def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: i
     height, width = img.shape[:2]
     # Get cropped image
     cropped_img = img[max(cell.y1 - margin, 0):min(cell.y2 + margin, height),
-                  max(cell.x1 - margin, 0):min(cell.x2 + margin, width)]
+                      max(cell.x1 - margin, 0):min(cell.x2 + margin, width)]
 
     # If cropped image is empty, do not do anything
     height_cropped, width_cropped = cropped_img.shape[:2]

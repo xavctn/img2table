@@ -15,40 +15,29 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
     :param max_gap: maximum gap used to merge lines
     :return: list of filtered lines
     """
-    if horizontal:
-        main_dim_1 = "x1"
-        main_dim_2 = "x2"
-        sec_dim_1 = "y1"
-        sec_dim_2 = "y2"
-    else:
-        main_dim_1 = "y1"
-        main_dim_2 = "y2"
-        sec_dim_1 = "x1"
-        sec_dim_2 = "x2"
-
     if len(lines) == 0:
         return []
+
+    # Define axis of analysis
+    main_dim_1 = "x1" if horizontal else "y1"
+    main_dim_2 = "x2" if horizontal else "y2"
+    sec_dim_1 = "y1" if horizontal else "x1"
+    sec_dim_2 = "y2" if horizontal else "x2"
 
     # Sort lines by secondary dimension
     lines = sorted(lines, key=lambda l: (getattr(l, sec_dim_1), getattr(l, main_dim_1)))
 
     # Create clusters of lines based on "similar" secondary dimension
-    line_clusters = list()
-    for idx, line in enumerate(lines):
-        if idx == 0:
-            curr_cluster = [line]
-        else:
-            # Compute vertical difference between consecutive lines
-            diff_index = getattr(line, sec_dim_1) - getattr(curr_cluster[-1], sec_dim_1)
-            # If the difference is too large, add curr_cluster to list clusters and set new cluster with the current
-            # line
-            if diff_index > 2:
-                line_clusters.append(curr_cluster)
-                curr_cluster = [line]
-            # Otherwise, set line coordinates to coherent cluster values and append line to current cluster
-            else:
-                curr_cluster += [line]
-    line_clusters.append(curr_cluster)
+    previous_sequence, current_sequence = iter(lines), iter(lines)
+    line_clusters = [[next(current_sequence)]]
+    for previous, line in zip(previous_sequence, current_sequence):
+        # If the vertical difference between consecutive lines is too large, create a new cluster
+        if getattr(line, sec_dim_1) - getattr(previous, sec_dim_1) > 2:
+            # Large gap, we create a new empty sublist
+            line_clusters.append([])
+
+        # Append to last cluster
+        line_clusters[-1].append(line)
 
     # Create final lines by "merging" lines within a cluster
     final_lines = list()
@@ -57,42 +46,31 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
         cluster = sorted(cluster, key=lambda l: min(getattr(l, main_dim_1), getattr(l, main_dim_2)))
 
         # Loop over lines in the cluster to merge relevant lines together
-        for idx, line in enumerate(cluster):
-            if idx == 0:
-                sub_cluster = [line]
+        seq = iter(cluster)
+        sub_clusters = [[next(seq)]]
+        for line in seq:
+            # If lines are vertically close, merge line with curr_line
+            dim_2_sub_clust = max(map(lambda l: getattr(l, main_dim_2), sub_clusters[-1]))
+            if dim_2_sub_clust - getattr(line, main_dim_1) <= max_gap:
+                sub_clusters[-1].append(line)
+            # If the difference in vertical coordinates is too large, create a new sub cluster
             else:
-                # If lines are vertically close, merge line with curr_line
-                dim_1_sub_clust = min([getattr(sub_cluster[idx], main_dim_1) for idx in range(len(sub_cluster))])
-                dim_2_sub_clust = max([getattr(sub_cluster[idx], main_dim_2) for idx in range(len(sub_cluster))])
-                overlapping = max(
-                    min(getattr(line, main_dim_2), dim_2_sub_clust) - max(getattr(line, main_dim_1), dim_1_sub_clust),
-                    0) > 0
-                if getattr(line, main_dim_1) <= dim_2_sub_clust + max_gap or overlapping:
-                    sub_cluster.append(line)
-                # If the difference in vertical coordinates is too large, add curr_line to list of filtered lines and
-                # set curr_line with the current line
-                else:
-                    new_line = Line((0, 0, 0, 0))
-                    sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
-                    sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
-                    setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
-                    setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-                    setattr(new_line, sec_dim_1, sec_dim)
-                    setattr(new_line, sec_dim_2, sec_dim)
-                    final_lines.append(new_line)
-                    sub_cluster = [line]
+                sub_clusters.append([line])
 
-        new_line = Line((0, 0, 0, 0))
-        sum_main_dim = sum([max(l.width, l.height) for l in sub_cluster])
-        sec_dim = round(sum([max(l.width, l.height) * getattr(l, sec_dim_1) for l in sub_cluster]) / sum_main_dim)
-        setattr(new_line, main_dim_1, min([getattr(l, main_dim_1) for l in sub_cluster]))
-        setattr(new_line, main_dim_2, max([getattr(l, main_dim_2) for l in sub_cluster]))
-        setattr(new_line, sec_dim_1, sec_dim)
-        setattr(new_line, sec_dim_2, sec_dim)
-        final_lines.append(new_line)
+        # Create lines from sub clusters
+        for sub_cl in sub_clusters:
+            sec_dim = round(np.average([getattr(l, sec_dim_1) for l in sub_cl],
+                                       weights=list(map(lambda l: l.length, sub_cl))))
+            line_dict = {
+                main_dim_1: min(map(lambda l: getattr(l, main_dim_1), sub_cl)),
+                main_dim_2: max(map(lambda l: getattr(l, main_dim_2), sub_cl)),
+                sec_dim_1: sec_dim,
+                sec_dim_2: sec_dim
+            }
+            line = Line(**line_dict)
 
-    # Remove "point" lines
-    final_lines = [line for line in final_lines if not line.width == line.height == 0]
+            if line.length > 0:
+                final_lines.append(line)
 
     return final_lines
 
@@ -128,30 +106,14 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
 
     # Compute Hough lines on horizontal image and get lines
     linesH = cv2.HoughLinesP(horizontal_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
-    h_lines = [Line(line=line[0]) for line in linesH]
+    h_lines = [Line(line=line[0]).reprocess() for line in linesH]
 
     # Compute Hough lines on vertical image and get lines
     linesV = cv2.HoughLinesP(vertical_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
-    v_lines = [Line(line=line[0]) for line in linesV]
-
-    # Merge lines
-    lines = h_lines + v_lines
-
-    # Identify horizontal and vertical lines
-    horizontal_lines = []
-    vertical_lines = []
-
-    for line in lines:
-        # Reprocess line
-        line.reprocess()
-
-        if line.vertical:
-            vertical_lines.append(line)
-        elif line.horizontal:
-            horizontal_lines.append(line)
+    v_lines = [Line(line=line[0]).reprocess() for line in linesV]
 
     # Compute merged lines
-    horizontal_lines = overlapping_filter(lines=horizontal_lines, horizontal=True, max_gap=2 * maxLineGap)
-    vertical_lines = overlapping_filter(lines=vertical_lines, horizontal=False, max_gap=maxLineGap)
+    horizontal_lines = overlapping_filter(lines=h_lines, horizontal=True, max_gap=2 * maxLineGap)
+    vertical_lines = overlapping_filter(lines=v_lines, horizontal=False, max_gap=maxLineGap)
 
     return horizontal_lines, vertical_lines

@@ -107,6 +107,8 @@ class Line(TableObject):
             x_val = round((self.x1 + self.x2) / 2)
             self.x2 = self.x1 = x_val
 
+        return self
+
 
 class Cell(TableObject):
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
