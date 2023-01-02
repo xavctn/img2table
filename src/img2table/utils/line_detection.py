@@ -51,7 +51,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
         for line in seq:
             # If lines are vertically close, merge line with curr_line
             dim_2_sub_clust = max(map(lambda l: getattr(l, main_dim_2), sub_clusters[-1]))
-            if dim_2_sub_clust - getattr(line, main_dim_1) <= max_gap:
+            if getattr(line, main_dim_1) - dim_2_sub_clust <= max_gap:
                 sub_clusters[-1].append(line)
             # If the difference in vertical coordinates is too large, create a new sub cluster
             else:
