@@ -1,13 +1,11 @@
 # coding: utf-8
-import math
+from collections import OrderedDict
 from typing import Union, List
-
-import pandas as pd
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects import TableObject
+from img2table.tables.objects.extraction import ExtractedTable, BBox
 from img2table.tables.objects.row import Row
-from img2table.utils.data_processing import remove_empty_rows, remove_empty_columns
 
 
 class Table(TableObject):
@@ -19,7 +17,6 @@ class Table(TableObject):
         else:
             self._items = rows
         self._title = None
-        self._data = None
 
     @property
     def items(self) -> List[Row]:
@@ -31,10 +28,6 @@ class Table(TableObject):
 
     def set_title(self, title: str):
         self._title = title
-
-    @property
-    def data(self) -> pd.DataFrame:
-        return self._data
 
     @property
     def nb_rows(self) -> int:
@@ -60,33 +53,37 @@ class Table(TableObject):
     def y2(self) -> int:
         return max(map(lambda x: x.y2, self.items))
 
-    def process_data(self):
-        """
-        Process dataframe from OCR
-        :return:
-        """
-        if self.data is None:
-            return None
-
-        # Remove empty rows and columns
-        self._data = remove_empty_rows(self._data)
-        self._data = remove_empty_columns(self._data)
-
-        # If the dataframe is empty or contains a single cell, set it to None
-        if math.prod(self.data.shape) <= 1:
-            self._data = None
-
     def get_content(self, ocr_df: OCRDataframe) -> "Table":
         """
-        Retrieve text from OCRDataframe object and set data attribute with dataframe corresponding to table
+        Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
         :param ocr_df: OCRDataframe object
         :return: Table object with data attribute containing dataframe
         """
-        # Create dataframe with text values and assign to _data attribute
-        df_pd = ocr_df.get_text_table(table=self)
-        self._data = df_pd
+        # Get content for each cell
+        self = ocr_df.get_text_table(table=self)
 
-        # Process dataframe
-        self.process_data()
+        # Check for empty rows and remove if necessary
+        empty_rows = list()
+        for idx, row in enumerate(self.items):
+            if all(map(lambda c: c.content is None, row.items)):
+                empty_rows.append(idx)
+        for idx in reversed(empty_rows):
+            self.items.pop(idx)
+
+        # Check for empty columns and remove if necessary
+        empty_cols = list()
+        for idx in range(self.nb_columns):
+            col_cells = [row.items[idx] for row in self.items]
+            if all(map(lambda c: c.content is None, col_cells)):
+                empty_cols.append(idx)
+        for idx in reversed(empty_cols):
+            for id_row in range(self.nb_rows):
+                self.items[id_row].items.pop(idx)
 
         return self
+
+    @property
+    def extracted_table(self) -> ExtractedTable:
+        bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
+        content = OrderedDict({idx: [cell.table_cell for cell in row.items] for idx, row in enumerate(self.items)})
+        return ExtractedTable(bbox=bbox, title=self.title, content=content)

@@ -21,7 +21,7 @@ def get_tables(cells: List[Cell]) -> List[Table]:
     tables = [create_rows_table(cluster_cells=cluster_cells)
               for cluster_cells in list_cluster_cells]
 
-    # Parse cells to table
+    # Handle merged cells in tables
     list_tables = [handle_merged_cells(table=table) for table in tables]
 
     return list_tables

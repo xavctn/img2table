@@ -4,14 +4,18 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from img2table.tables.objects import Cell, Table
+from img2table.tables.objects.cell import Cell
+from img2table.tables.objects.table import Table
 
 
 @dataclass
 class OCRDataframe:
     df: pd.DataFrame
 
-    def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = 0, min_confidence: int = 50) -> str:
+    def page(self, page_number: int = 0) -> "OCRDataframe":
+        return OCRDataframe(df=self.df[self.df["page"] == page_number])
+
+    def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
         """
         Get text corresponding to cell
         :param cell: Cell object in document
@@ -24,7 +28,9 @@ class OCRDataframe:
         bbox = cell.bbox(margin=margin)
 
         # Filter dataframe on relevant page
-        df_words = self.df[(self.df["class"] == "ocrx_word") & (self.df["page"] == page_number)]
+        df_words = self.df[(self.df["class"] == "ocrx_word")]
+        if page_number:
+            df_words = df_words[df_words["page"] == page_number]
         # Filter dataframe on relevant words
         df_words = df_words[df_words["value"].notnull() & (self.df["confidence"] >= min_confidence)]
 
@@ -60,18 +66,20 @@ class OCRDataframe:
                           )
 
         # Concatenate all lines
-        return df_text_parent["value"].str.cat(sep="\n") or None
+        return df_text_parent["value"].str.cat(sep="\n").strip() or None
 
-    def get_text_table(self, table: Table, page_number: int = 0, min_confidence: int = 50) -> pd.DataFrame:
+    def get_text_table(self, table: Table, page_number: int = None, min_confidence: int = 50) -> Table:
         """
         Identify text located in Table object
         :param table: Table object
         :param page_number: page number of the cell
         :param min_confidence: minimum confidence in order to include a word
-        :return: dataframe containing table data
+        :return: table with content set on all cells
         """
         # Filter dataframe on relevant page
-        df_words = self.df[(self.df["class"] == "ocrx_word") & (self.df["page"] == page_number)]
+        df_words = self.df[(self.df["class"] == "ocrx_word")]
+        if page_number:
+            df_words = df_words[df_words["page"] == page_number]
         # Filter dataframe on relevant words
         df_words = df_words[df_words["value"].notnull() & (self.df["confidence"] >= min_confidence)]
 
@@ -114,9 +122,8 @@ class OCRDataframe:
                           .reset_index()
                           )
 
-        # Recreate dataframe from values
-        values = [[None] * table.nb_columns for _ in range(table.nb_rows)]
+        # Implement found values to table cells content
         for rec in df_text_parent.to_dict(orient='records'):
-            values[rec.get('row')][rec.get('col')] = rec.get('text')
+            table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text').strip() or None
 
-        return pd.DataFrame(values)
+        return table
