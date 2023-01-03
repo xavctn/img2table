@@ -5,10 +5,10 @@ import re
 import shutil
 import tempfile
 
+import cv2
 import numpy as np
 import pandas as pd
 import pytesseract
-from cv2 import cv2
 
 from img2table.objects.tables import Line
 

@@ -1,11 +1,11 @@
 # coding: utf-8
 import re
 
+import cv2
 import numpy as np
 import pandas as pd
 import pytesseract
 from bs4 import BeautifulSoup
-from cv2 import cv2
 
 
 class OCRPage(object):

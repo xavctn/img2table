@@ -2,8 +2,8 @@
 import copy
 from typing import List, Union
 
+import cv2
 import numpy as np
-from cv2 import cv2
 
 from img2table.objects.tables import Cell
 

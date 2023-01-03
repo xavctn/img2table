@@ -2,8 +2,8 @@
 import copy
 from typing import List
 
+import cv2
 import numpy as np
-from cv2 import cv2
 
 from img2table.objects.ocr import OCRPage
 from img2table.objects.tables import Table, Line, Cell
@@ -209,7 +209,7 @@ class TableImage(object):
 if __name__ == '__main__':
     from PIL import Image as PILImage
 
-    img = cv2.imread(r"C:\Users\xavca\Pictures\test_excel.png", 2)
+    img = cv2.imread(r"C:\Users\xavca\Pictures\test_3.png", 2)
 
     image_object = TableImage(img)
     tables = image_object.extract_tables(implicit_rows=True,
