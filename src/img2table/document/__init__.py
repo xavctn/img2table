@@ -5,9 +5,6 @@ from typing import Union, Iterator, Dict, List
 
 import numpy as np
 
-from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
-from img2table.tables.image import TableImage
 from img2table.tables.objects.extraction import ExtractedTable
 
 
@@ -16,7 +13,7 @@ class Document:
     src: Union[str, io.BytesIO, bytes]
     dpi: int = 300
     ocr: "OCRInstance" = None
-    ocr_df: OCRDataframe = None
+    ocr_df: "OCRDataframe" = None
 
     @property
     def bytes(self) -> bytes:
@@ -44,6 +41,7 @@ class Document:
             self.ocr_df = self.ocr.of(document=self)
 
         # Extract tables from document
+        from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
                                   dpi=self.dpi,
                                   ocr_df=self.ocr_df,

@@ -1,8 +1,7 @@
 # coding: utf-8
 
-from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, OrderedDict
 
 import pandas as pd
 

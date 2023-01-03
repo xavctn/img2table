@@ -56,7 +56,7 @@ def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
             ii += 1
         elif len(matching_clusters) == 1:
             key = matching_clusters[0]
-            dict_clusters[key] = set(dict_clusters[key] + rel)
+            dict_clusters[key] = dict_clusters[key].union(set(rel))
         else:
             new_val = rel + [el for k, v in dict_clusters.items() for el in v if k in matching_clusters]
             dict_clusters[str(ii)] = set(new_val)

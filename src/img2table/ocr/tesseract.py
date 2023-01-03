@@ -40,7 +40,7 @@ class TesseractOCR(OCRInstance):
 
             # Get hocr
             api.SetImage(pil_img)
-            hocr = api.GetHOCRText(page_number=page_number)
+            hocr = api.GetHOCRText(page_number)
 
         return hocr
 

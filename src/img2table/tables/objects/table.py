@@ -2,7 +2,6 @@
 from collections import OrderedDict
 from typing import Union, List
 
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.extraction import ExtractedTable, BBox
 from img2table.tables.objects.row import Row
@@ -53,7 +52,7 @@ class Table(TableObject):
     def y2(self) -> int:
         return max(map(lambda x: x.y2, self.items))
 
-    def get_content(self, ocr_df: OCRDataframe) -> "Table":
+    def get_content(self, ocr_df: "OCRDataframe") -> "Table":
         """
         Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
         :param ocr_df: OCRDataframe object
