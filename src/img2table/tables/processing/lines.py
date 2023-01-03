@@ -4,19 +4,21 @@ from typing import List
 import cv2
 import numpy as np
 
-from img2table.objects.tables import Line
+from img2table.tables.objects.line import Line
 
 
-def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int = 5) -> List[Line]:
+def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     """
     Process lines to merge close lines
     :param lines: lines
-    :param horizontal: boolean indicating if horizontal lines are processed
     :param max_gap: maximum gap used to merge lines
     :return: list of filtered lines
     """
     if len(lines) == 0:
         return []
+
+    # Identify if lines are horizontal
+    horizontal = all(map(lambda l: l.horizontal, lines))
 
     # Define axis of analysis
     main_dim_1 = "x1" if horizontal else "y1"
@@ -76,7 +78,7 @@ def overlapping_filter(lines: List[Line], horizontal: bool = True, max_gap: int 
 
 
 def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
-                 minLinLength: int = 290, maxLineGap: int = 6) -> (List[Line], List[Line]):
+                 minLinLength: int = 290, maxLineGap: int = 6, kernel_size: int = 20) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
@@ -85,35 +87,26 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     :param threshold: threshold parameter for Hough line transform
     :param minLinLength: minLinLength parameter for Hough line transform
     :param maxLineGap: maxLineGap parameter for Hough line transform
+    :param kernel_size: kernel size to filter on horizontal / vertical lines
     :return: horizontal and vertical lines
     """
     # Create copy of image
     img = image.copy()
 
-    # Image to gray and canny
-    if len(img.shape) == 3:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Apply blurring and thresholding
     blur = cv2.GaussianBlur(img, (3, 3), 0)
     thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
-    # Detect horizontal lines
-    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
-    horizontal_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=1)
+    # Identify both vertical and horizontal lines
+    for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:
+        # Apply masking on image
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_tup)
+        mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
 
-    # Detect vertical lines
-    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 20))
-    vertical_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, vertical_kernel, iterations=1)
+        # Compute Hough lines on image and get lines
+        hough_lines = cv2.HoughLinesP(mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+        lines = [Line(*line[0].tolist()).reprocess() for line in hough_lines]
 
-    # Compute Hough lines on horizontal image and get lines
-    linesH = cv2.HoughLinesP(horizontal_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
-    h_lines = [Line(*line[0].tolist()).reprocess() for line in linesH]
-
-    # Compute Hough lines on vertical image and get lines
-    linesV = cv2.HoughLinesP(vertical_mask, rho, theta, threshold, None, minLinLength, maxLineGap)
-    v_lines = [Line(*line[0].tolist()).reprocess() for line in linesV]
-
-    # Compute merged lines
-    horizontal_lines = overlapping_filter(lines=h_lines, horizontal=True, max_gap=2 * maxLineGap)
-    vertical_lines = overlapping_filter(lines=v_lines, horizontal=False, max_gap=maxLineGap)
-
-    return horizontal_lines, vertical_lines
+        # Merge lines
+        merged_lines = overlapping_filter(lines=lines, max_gap=gap)
+        yield merged_lines

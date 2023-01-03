@@ -59,18 +59,12 @@ class TableObject(object):
 
 
 class Line(TableObject):
-    def __init__(self, line: Union[np.ndarray, tuple] = None, x1: int = None, y1: int = None, x2: int = None,
+    def __init__(self, x1: int = None, y1: int = None, x2: int = None,
                  y2: int = None):
-        if line is not None:
-            self.x1 = line[0]
-            self.y1 = line[1]
-            self.x2 = line[2]
-            self.y2 = line[3]
-        else:
-            self.x1 = x1
-            self.y1 = y1
-            self.x2 = x2
-            self.y2 = y2
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
 
     @property
     def angle(self) -> float:

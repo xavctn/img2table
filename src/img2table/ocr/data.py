@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from img2table.objects.tables import Cell, Table
+from img2table.tables.objects import Cell, Table
 
 
 @dataclass

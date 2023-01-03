@@ -47,7 +47,7 @@ def img_to_horizontal_lines(image: np.ndarray) -> np.ndarray:
 
     # Compute Hough lines on image
     lines = cv2.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 20, 10)
-    lines = [Line(line=line[0]) for line in lines]
+    lines = [Line(*line[0].tolist()) for line in lines]
 
     # If no lines found, return image
     if len(lines) == 0:
