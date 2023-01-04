@@ -38,7 +38,7 @@ if __name__ == "__main__":
     from img2table.ocr import TesseractOCR
     path_pdf = r"C:\Users\xavca\Pictures\test.pdf"
 
-    image = PDF(src=path_pdf, dpi=300, ocr=TesseractOCR(lang='fra+eng'), pages=[11, 12])
+    image = PDF(src=path_pdf, dpi=300, ocr=TesseractOCR(lang='fra+eng'))
     tables = image.extract_tables()
 
     print(tables)

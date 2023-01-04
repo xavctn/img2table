@@ -47,7 +47,7 @@ class PdfOCR(OCRInstance):
 
     def to_ocr_dataframe(self, content: List[List[Dict]]) -> OCRDataframe:
         # Check if any page has words
-        if max(map(len, content)) == 0:
+        if min(map(len, content)) == 0:
             return None
 
         # Create OCRDataframe
