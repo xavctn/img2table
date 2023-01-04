@@ -64,7 +64,7 @@ class TableImage:
             self.tables = get_title_tables(img=self.img, tables=self.tables, ocr_df=self.ocr_df)
 
             # Get content
-            self.tables = [self.ocr_df.get_text_table(table=table, min_confidence=self.min_confidence)
+            self.tables = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
                            for table in self.tables]
 
         return [table.extracted_table for table in self.tables if table.nb_columns * table.nb_rows > 1]

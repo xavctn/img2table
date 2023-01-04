@@ -17,3 +17,6 @@ class Cell(TableObject):
     def table_cell(self) -> TableCell:
         bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
         return TableCell(bbox=bbox, value=self.content)
+
+    def __hash__(self):
+        return hash(repr(self))

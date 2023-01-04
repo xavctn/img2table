@@ -30,7 +30,7 @@ class Table(TableObject):
 
     @property
     def nb_rows(self) -> int:
-        return len(self.items) if self.height > 0 else 0
+        return len(self.items)
 
     @property
     def nb_columns(self) -> int:
@@ -52,14 +52,15 @@ class Table(TableObject):
     def y2(self) -> int:
         return max(map(lambda x: x.y2, self.items))
 
-    def get_content(self, ocr_df: "OCRDataframe") -> "Table":
+    def get_content(self, ocr_df: "OCRDataframe", min_confidence: int = 50) -> "Table":
         """
         Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
         :param ocr_df: OCRDataframe object
+        :param min_confidence: minimum confidence in order to include a word
         :return: Table object with data attribute containing dataframe
         """
         # Get content for each cell
-        self = ocr_df.get_text_table(table=self)
+        self = ocr_df.get_text_table(table=self, min_confidence=min_confidence)
 
         # Check for empty rows and remove if necessary
         empty_rows = list()
@@ -78,6 +79,11 @@ class Table(TableObject):
         for idx in reversed(empty_cols):
             for id_row in range(self.nb_rows):
                 self.items[id_row].items.pop(idx)
+
+        # Check for uniqueness of content
+        unique_cells = set([cell for row in self.items for cell in row.items])
+        if len(unique_cells) == 1:
+            self._items = [Row(cells=self.items[0].items[0])]
 
         return self
 

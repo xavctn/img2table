@@ -60,7 +60,7 @@ class TesseractOCR(OCRInstance):
         # Create list of dataframes for each page
         list_dfs = list()
 
-        for hocr in content:
+        for page, hocr in enumerate(content):
             # Instantiate HTML parser
             soup = BeautifulSoup(hocr, features='html.parser')
 
@@ -69,6 +69,7 @@ class TesseractOCR(OCRInstance):
             for element in soup.find_all(class_=True):
                 # Get element properties
                 d_el = {
+                    "page": page,
                     "class": element["class"][0],
                     "id": element["id"],
                     "parent": element.parent.get('id'),

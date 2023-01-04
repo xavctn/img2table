@@ -12,6 +12,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 class Document:
     src: Union[str, io.BytesIO, bytes]
     dpi: int = 300
+    pages: List[int] = None
     ocr: "OCRInstance" = None
     ocr_df: "OCRDataframe" = None
 
@@ -44,8 +45,12 @@ class Document:
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
                                   dpi=self.dpi,
-                                  ocr_df=self.ocr_df,
+                                  ocr_df=self.ocr_df.page(page_number=idx),
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows)
                   for idx, img in enumerate(self.images)}
+
+        # If pages have been defined, modify tables keys
+        if self.pages:
+            tables = {self.pages[k]: v for k, v in tables.items()}
 
         return tables
