@@ -15,7 +15,7 @@ class Image(Document):
 
 if __name__ == "__main__":
     from img2table.ocr import TesseractOCR
-    path_img = r"C:\Users\xavca\Pictures\test_1.PNG"
+    path_img = r"C:\Users\xavca\Pictures\test_3.png"
 
     image = Image(src=path_img, dpi=200, ocr=TesseractOCR(n_threads=1, lang='fra+eng'))
     tables = image.extract_tables()

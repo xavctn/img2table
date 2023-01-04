@@ -16,6 +16,10 @@ class Document:
     ocr: "OCRInstance" = None
     ocr_df: "OCRDataframe" = None
 
+    def __post_init__(self):
+        if isinstance(self.pages, list):
+            self.pages = sorted(self.pages)
+
     @property
     def bytes(self) -> bytes:
         if isinstance(self.src, bytes):
