@@ -2,14 +2,15 @@
 
 import os
 import re
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from tempfile import NamedTemporaryFile
+from typing import List, Iterator
 
+import cv2
 import numpy as np
 import pandas as pd
-from PIL import Image
 from bs4 import BeautifulSoup
-from tesserocr import PyTessBaseAPI, PSM
 
 from img2table.document import Document
 from img2table.ocr.base import OCRInstance
@@ -27,27 +28,32 @@ class TesseractOCR(OCRInstance):
         self.lang = lang
         self.n_threads = n_threads
 
-    def hocr(self, image: np.ndarray, page_number: int = 0) -> str:
+    def hocr(self, image: np.ndarray) -> str:
         """
         Get hOCR HTML of an image using Tesseract
         :param image: numpy array representing the image
-        :param page_number: page index
         :return: hOCR HTML string
         """
-        with PyTessBaseAPI(lang=self.lang, psm=PSM.SPARSE_TEXT) as api:
-            # Convert image to PIL
-            pil_img = Image.fromarray(obj=image)
+        with NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_f:
+            # Write image to temporary file
+            cv2.imwrite(tmp_f.name, image)
 
-            # Get hocr
-            api.SetImage(pil_img)
-            hocr = api.GetHOCRText(page_number)
+            # Get hOCR
+            hocr = subprocess.check_output(f"tesseract {tmp_f.name} stdout --psm 11 -l {self.lang} hocr",
+                                           stderr=subprocess.STDOUT)
 
-        return hocr
+        # Remove temporary file
+        while os.path.exists(tmp_f.name):
+            try:
+                os.remove(tmp_f.name)
+            except PermissionError:
+                pass
 
-    def content(self, document: Document) -> List[str]:
+        return hocr.decode('utf-8')
+
+    def content(self, document: Document) -> Iterator[str]:
         with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
-            args = [(img, idx) for idx, img in enumerate(document.images)]
-            hocrs = pool.map(lambda d: self.hocr(*d), args)
+            hocrs = pool.map(self.hocr, document.images)
 
         return hocrs
 

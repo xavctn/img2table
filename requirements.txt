@@ -3,5 +3,4 @@ numpy
 pymupdf
 opencv-python-headless
 pytesseract
-tesserocr
 bs4
