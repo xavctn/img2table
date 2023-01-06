@@ -1,4 +1,6 @@
 # coding: utf-8
+import json
+
 import cv2
 
 from img2table.tables.objects.line import Line
@@ -22,27 +24,17 @@ def test_overlapping_filter():
 
 
 def test_detect_lines():
-    img = cv2.imread("test_data/test.PNG", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
-    result = detect_lines(image=img,
-                          rho=0.3,
-                          threshold=10,
-                          minLinLength=10,
-                          maxLineGap=10)
-    expected = [
-        [Line(x1=157, y1=92, x2=835, y2=92),
-         Line(x1=157, y1=168, x2=835, y2=168),
-         Line(x1=157, y1=212, x2=835, y2=212),
-         Line(x1=157, y1=256, x2=835, y2=256),
-         Line(x1=157, y1=299, x2=835, y2=299),
-         Line(x1=157, y1=342, x2=835, y2=342),
-         Line(x1=157, y1=386, x2=835, y2=386),
-         Line(x1=157, y1=430, x2=835, y2=430),
-         Line(x1=156, y1=473, x2=836, y2=473)],
-        [Line(x1=156, y1=92, x2=156, y2=475),
-         Line(x1=434, y1=92, x2=434, y2=474),
-         Line(x1=587, y1=92, x2=587, y2=474),
-         Line(x1=834, y1=92, x2=834, y2=475)]
-    ]
+    h_lines, v_lines = detect_lines(image=img,
+                                    rho=0.3,
+                                    threshold=10,
+                                    minLinLength=10,
+                                    maxLineGap=10)
 
-    assert list(result) == expected
+    with open("test_data/expected.json", 'r') as f:
+        data = json.load(f)
+    h_lines_expected = [Line(**el) for el in data.get('h_lines')]
+    v_lines_expected = [Line(**el) for el in data.get('v_lines')]
+
+    assert (h_lines, v_lines) == (h_lines_expected, v_lines_expected)
