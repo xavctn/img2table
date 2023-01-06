@@ -92,3 +92,14 @@ class Table(TableObject):
         bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
         content = OrderedDict({idx: [cell.table_cell for cell in row.items] for idx, row in enumerate(self.items)})
         return ExtractedTable(bbox=bbox, title=self.title, content=content)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            try:
+                assert self.items == other.items
+                assert self.title == other.title
+                return True
+            except AssertionError:
+                return False
+        return False
+

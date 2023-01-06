@@ -86,3 +86,12 @@ class Row(TableObject):
             l_new_rows.append(Row(cells=cells))
 
         return l_new_rows
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            try:
+                assert self.items == other.items
+                return True
+            except AssertionError:
+                return False
+        return False
