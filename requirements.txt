@@ -2,5 +2,4 @@ pandas
 numpy
 pymupdf
 opencv-python-headless
-pytesseract
 bs4
