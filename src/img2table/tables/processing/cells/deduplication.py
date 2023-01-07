@@ -38,7 +38,7 @@ def deduplicate_nested_cells(df_cells: pd.DataFrame) -> pd.DataFrame:
 
     # Create copy of df_cells
     df_cells_cp = df_cells.copy()
-    df_cells_cp.columns = ["index_", "x1_", "y1_", "x2_", "y2_", "area_", "width_", "height_"]
+    df_cells_cp.columns = ["index_", "x1_", "y1_", "x2_", "y2_", "width_", "height_", "area_"]
 
     # Cross join to get cells pairs and filter on right cells bigger than right cells
     df_cross_cells = df_cells.reset_index().merge(df_cells_cp, how='cross')
