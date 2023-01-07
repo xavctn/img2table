@@ -24,22 +24,6 @@ class TableObject:
         return bbox
 
     @property
-    def upper_bound(self) -> tuple:
-        return self.x1, self.y1, self.x2, self.y1
-
-    @property
-    def lower_bound(self) -> tuple:
-        return self.x1, self.y2, self.x2, self.y2
-
-    @property
-    def left_bound(self) -> tuple:
-        return self.x1, self.y1, self.x1, self.y2
-
-    @property
-    def right_bound(self) -> tuple:
-        return self.x2, self.y1, self.x2, self.y2
-
-    @property
     def height(self) -> int:
         return self.y2 - self.y1
 
