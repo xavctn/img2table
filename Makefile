@@ -2,7 +2,7 @@
 
 venv:
 	python -m venv ./venv || true
-	. ./activate_venv && python -m pip install -q pip --upgrade;
+	. ./activate_venv && python -m pip install -q pip wheel --upgrade;
 	. ./activate_venv && python -m pip install -q -r requirements-dev.txt
 
 update: venv
