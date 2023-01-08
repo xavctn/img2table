@@ -32,13 +32,3 @@ class PDF(Document):
         self.ocr_df = PdfOCR().of(document=self)
 
         return super().extract_tables(implicit_rows=implicit_rows, min_confidence=min_confidence)
-
-
-if __name__ == "__main__":
-    from img2table.ocr import TesseractOCR
-    path_pdf = r"C:\Users\xavca\Pictures\test.pdf"
-
-    image = PDF(src=path_pdf, dpi=300, ocr=TesseractOCR(lang='fra+eng'))
-    tables = image.extract_tables()
-
-    print(tables)
