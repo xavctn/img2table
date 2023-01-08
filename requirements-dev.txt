@@ -1,5 +1,5 @@
 -r requirements.txt
 
-pytest
+pytest >= 6
 pytest-cov
 pytest-xdist
