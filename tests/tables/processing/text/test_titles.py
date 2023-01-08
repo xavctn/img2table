@@ -20,3 +20,4 @@ def test_get_title_tables():
     result = get_title_tables(img=img, tables=[table], ocr_df=ocr_df)
 
     assert result[0].title == "10 most populous countries"
+    assert get_title_tables(img=img, tables=[], ocr_df=ocr_df) == []
