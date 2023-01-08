@@ -18,13 +18,16 @@ from img2table.ocr.data import OCRDataframe
 
 
 class TesseractOCR(OCRInstance):
-    def __init__(self, *args, n_threads: int = os.cpu_count(), lang: str = 'eng', **kwargs):
+    """
+    Tesseract-OCR instance
+    """
+    def __init__(self, n_threads: int = 1, lang: str = 'eng'):
         """
         Initialization of Tesseract OCR instance
         :param n_threads: number of parallel threads used for Tesseract
         :param lang: lang parameter used in Tesseract
         """
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self.lang = lang
         self.n_threads = n_threads
 

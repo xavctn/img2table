@@ -127,3 +127,12 @@ class OCRDataframe:
             table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text').strip() or None
 
         return table
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            try:
+                assert self.df.equals(other.df)
+                return True
+            except AssertionError:
+                return False
+        return False
