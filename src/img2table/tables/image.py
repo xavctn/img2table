@@ -12,7 +12,7 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.cells import get_cells
 from img2table.tables.processing.lines import detect_lines
 from img2table.tables.processing.tables import get_tables
-from img2table.tables.processing.tables.implicit_rows import handle_implicit_rows_table
+from img2table.tables.processing.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.text.titles import get_title_tables
 
 
@@ -43,7 +43,8 @@ class TableImage:
                                         threshold=10,
                                         minLinLength=self.dpi // 20,
                                         maxLineGap=self.dpi // 20,
-                                        kernel_size=self.dpi // 10)
+                                        kernel_size=self.dpi // 10,
+                                        ocr_df=self.ocr_df)
         self.lines = h_lines + v_lines
 
         # Create cells from lines
@@ -55,8 +56,9 @@ class TableImage:
 
         # If necessary, detect implicit rows
         if implicit_rows:
-            self.tables = [handle_implicit_rows_table(img=self.white_img, table=table)
-                           for table in self.tables]
+            self.tables = handle_implicit_rows(img=self.white_img,
+                                               tables=self.tables,
+                                               ocr_df=self.ocr_df)
 
         # If ocr_df is available, get titles and tables content
         if self.ocr_df is not None:

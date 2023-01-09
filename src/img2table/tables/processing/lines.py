@@ -3,7 +3,9 @@ from typing import List
 
 import cv2
 import numpy as np
+import pandas as pd
 
+from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
 
 
@@ -20,21 +22,19 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     # Identify if lines are horizontal
     horizontal = all(map(lambda l: l.horizontal, lines))
 
-    # Define axis of analysis
-    main_dim_1 = "x1" if horizontal else "y1"
-    main_dim_2 = "x2" if horizontal else "y2"
-    sec_dim_1 = "y1" if horizontal else "x1"
-    sec_dim_2 = "y2" if horizontal else "x2"
+    # If not horizontal, transpose all lines
+    if not horizontal:
+        lines = [line.transpose for line in lines]
 
     # Sort lines by secondary dimension
-    lines = sorted(lines, key=lambda l: (getattr(l, sec_dim_1), getattr(l, main_dim_1)))
+    lines = sorted(lines, key=lambda l: (l.y1, l.x1))
 
     # Create clusters of lines based on "similar" secondary dimension
     previous_sequence, current_sequence = iter(lines), iter(lines)
     line_clusters = [[next(current_sequence)]]
     for previous, line in zip(previous_sequence, current_sequence):
         # If the vertical difference between consecutive lines is too large, create a new cluster
-        if getattr(line, sec_dim_1) - getattr(previous, sec_dim_1) > 2:
+        if line.y1 - previous.y1 > 2:
             # Large gap, we create a new empty sublist
             line_clusters.append([])
 
@@ -45,15 +45,15 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     final_lines = list()
     for cluster in line_clusters:
         # Sort the cluster
-        cluster = sorted(cluster, key=lambda l: min(getattr(l, main_dim_1), getattr(l, main_dim_2)))
+        cluster = sorted(cluster, key=lambda l: min(l.x1, l.x2))
 
         # Loop over lines in the cluster to merge relevant lines together
         seq = iter(cluster)
         sub_clusters = [[next(seq)]]
         for line in seq:
             # If lines are vertically close, merge line with curr_line
-            dim_2_sub_clust = max(map(lambda l: getattr(l, main_dim_2), sub_clusters[-1]))
-            if getattr(line, main_dim_1) - dim_2_sub_clust <= max_gap:
+            dim_2_sub_clust = max(map(lambda l: l.x2, sub_clusters[-1]))
+            if line.x1 - dim_2_sub_clust <= max_gap:
                 sub_clusters[-1].append(line)
             # If the difference in vertical coordinates is too large, create a new sub cluster
             else:
@@ -61,24 +61,77 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
 
         # Create lines from sub clusters
         for sub_cl in sub_clusters:
-            sec_dim = round(np.average([getattr(l, sec_dim_1) for l in sub_cl],
+            y_value = round(np.average([l.y1 for l in sub_cl],
                                        weights=list(map(lambda l: l.length, sub_cl))))
-            line_dict = {
-                main_dim_1: min(map(lambda l: getattr(l, main_dim_1), sub_cl)),
-                main_dim_2: max(map(lambda l: getattr(l, main_dim_2), sub_cl)),
-                sec_dim_1: sec_dim,
-                sec_dim_2: sec_dim
-            }
-            line = Line(**line_dict)
+            line = Line(x1=min(map(lambda l: l.x1, sub_cl)),
+                        x2=max(map(lambda l: l.x2, sub_cl)),
+                        y1=y_value,
+                        y2=y_value)
 
             if line.length > 0:
                 final_lines.append(line)
 
+    # If not horizontal, transpose all lines
+    if not horizontal:
+        final_lines = [line.transpose for line in final_lines]
+
     return final_lines
 
 
+def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
+    """
+    Remove lines that corresponds to words in image
+    :param lines: list of lines
+    :param ocr_df: OCRDataframe object
+    :return: list of lines not intersecting with words
+    """
+    # If there are no lines, do nothing
+    if len(lines) == 0:
+        return lines
+
+    # Get words from dataframe
+    df_words = ocr_df.df[ocr_df.df['class'] == 'ocrx_word']
+    df_words = df_words[(df_words['confidence'] >= 50) | df_words['confidence'].isna()]
+
+    # Create dataframe containing lines
+    df_lines = pd.DataFrame(data=[line.dict for line in lines])
+    df_lines['length'] = pd.concat([df_lines['width'], df_lines['height']], axis=1).max(axis=1)
+    df_lines['vertical'] = (df_lines['x1'] == df_lines['x2'])
+    df_lines['line_id'] = range(len(df_lines))
+    df_lines.columns = ['x1_line', 'x2_line', 'y1_line', 'y2_line', 'width', 'height', 'length', 'vertical', 'line_id']
+
+    # Merge both dataframes
+    df_w_l = df_words.merge(df_lines, how='cross')
+
+    # Compute intersection between words bbox and lines
+    # - vertical case
+    vert_int = (
+            ((df_w_l['x1_line'] > df_w_l['x1']) & (df_w_l['x1_line'] < df_w_l['x2'])).astype(int)
+            * (df_w_l[['y2', 'y2_line']].min(axis=1) - df_w_l[['y1', 'y1_line']].max(axis=1)).clip(0, None)
+    )
+    # - horizontal case
+    hor_int = (
+            ((df_w_l['y1_line'] > df_w_l['y1']) & (df_w_l['y1_line'] < df_w_l['y2'])).astype(int)
+            * (df_w_l[['x2', 'x2_line']].min(axis=1) - df_w_l[['x1', 'x1_line']].max(axis=1)).clip(0, None)
+    )
+    df_w_l['intersection'] = (df_w_l['vertical'].astype(int) * vert_int
+                              + (1 - df_w_l['vertical'].astype(int)) * hor_int)
+
+    # Compute total intersection for each line
+    df_inter = (df_w_l.groupby(['line_id', 'length'])
+                .agg(intersection=('intersection', np.sum))
+                .reset_index()
+                )
+
+    # Identify lines that intersect words
+    intersecting_lines = df_inter[df_inter['intersection'] / df_inter['length'] > 0.5]['line_id'].values.tolist()
+
+    return [line for idx, line in enumerate(lines) if idx not in intersecting_lines]
+
+
 def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
-                 minLinLength: int = 290, maxLineGap: int = 6, kernel_size: int = 20) -> (List[Line], List[Line]):
+                 minLinLength: int = 290, maxLineGap: int = 6, kernel_size: int = 20,
+                 ocr_df: OCRDataframe = None) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
@@ -88,6 +141,7 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     :param minLinLength: minLinLength parameter for Hough line transform
     :param maxLineGap: maxLineGap parameter for Hough line transform
     :param kernel_size: kernel size to filter on horizontal / vertical lines
+    :param ocr_df: OCRDataframe object
     :return: horizontal and vertical lines
     """
     # Create copy of image
@@ -109,4 +163,9 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
 
         # Merge lines
         merged_lines = overlapping_filter(lines=lines, max_gap=gap)
+
+        # If possible, remove lines that corresponds to words
+        if ocr_df is not None:
+            merged_lines = remove_word_lines(lines=merged_lines, ocr_df=ocr_df)
+
         yield merged_lines

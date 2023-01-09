@@ -2,7 +2,9 @@
 import json
 
 import cv2
+import pandas as pd
 
+from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.lines import overlapping_filter, detect_lines
 
@@ -25,12 +27,14 @@ def test_overlapping_filter():
 
 def test_detect_lines():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    ocr_df = OCRDataframe(df=pd.read_csv("test_data/ocr.csv", sep=";"))
 
     h_lines, v_lines = detect_lines(image=img,
                                     rho=0.3,
                                     threshold=10,
                                     minLinLength=10,
-                                    maxLineGap=10)
+                                    maxLineGap=10,
+                                    ocr_df=ocr_df)
 
     with open("test_data/expected.json", 'r') as f:
         data = json.load(f)

@@ -1,6 +1,6 @@
 # coding: utf_8
 import copy
-from typing import List, Union
+from typing import List, Union, Optional
 
 import cv2
 import numpy as np
@@ -39,7 +39,7 @@ def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tu
     return intersection_area / inner_cell_area >= percentage
 
 
-def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
+def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:
     """
     Create merge contours by an axis
     :param contours: list of contours
@@ -47,8 +47,28 @@ def merge_contours(contours: List[Cell], vertically: bool = True) -> List[Cell]:
     :return: merged contours
     """
     # If contours is empty, return empty list
-    if len(contours) == 0 or vertically is None:
+    if len(contours) == 0:
         return contours
+
+    # If vertically is None, merge only contained contours
+    if vertically is None:
+        sorted_cnt = sorted(contours, key=lambda cnt: cnt.height * cnt.width, reverse=True)
+
+        seq = iter(sorted_cnt)
+        list_cnts = [copy.deepcopy(next(seq))]
+        for cnt in seq:
+            contained_cnt = [idx for idx, el in enumerate(list_cnts)
+                             if is_contained_cell(inner_cell=cnt, outer_cell=el, percentage=0.75)]
+            if len(contained_cnt) == 1:
+                id = contained_cnt.pop()
+                list_cnts[id].x1 = min(list_cnts[id].x1, cnt.x1)
+                list_cnts[id].y1 = min(list_cnts[id].y1, cnt.y1)
+                list_cnts[id].x2 = max(list_cnts[id].x2, cnt.x2)
+                list_cnts[id].y2 = max(list_cnts[id].y2, cnt.y2)
+            else:
+                list_cnts.append(copy.deepcopy(cnt))
+
+        return list_cnts
 
     # Define dimensions used to merge contours
     idx_1 = "y1" if vertically else "x1"

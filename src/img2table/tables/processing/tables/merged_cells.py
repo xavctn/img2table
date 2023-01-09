@@ -38,8 +38,8 @@ def handle_vertical_merged_cells(row: Row) -> List[Row]:
             _col = list()
             for delim in v_delimiters:
                 intersecting_cells = [cell for cell in col if cell.y1 <= delim <= cell.y2]
-                closest_cell = intersecting_cells[0] if intersecting_cells else Cell(x1=col[0].x1, x2=col[0].x1,
-                                                                                     y1=col[0].y1, y2=col[0].y1)
+                closest_cell = intersecting_cells.pop() if intersecting_cells else Cell(x1=col[0].x1, x2=col[0].x1,
+                                                                                        y1=col[0].y1, y2=col[0].y1)
                 _col.append(closest_cell)
             recomputed_columns.append(_col)
 
@@ -71,10 +71,10 @@ def handle_horizontal_merged_cells(table: Table) -> Table:
             _cells = list()
             for delim in average_delimiters:
                 intersecting_cells = [cell for cell in row.items if cell.x1 <= delim <= cell.x2]
-                closest_cell = intersecting_cells[0] if intersecting_cells else Cell(x1=row.items[0].x1,
-                                                                                     x2=row.items[0].x1,
-                                                                                     y1=row.items[0].y1,
-                                                                                     y2=row.items[0].y1)
+                closest_cell = intersecting_cells.pop() if intersecting_cells else Cell(x1=row.items[0].x1,
+                                                                                        x2=row.items[0].x1,
+                                                                                        y1=row.items[0].y1,
+                                                                                        y2=row.items[0].y1)
                 _cells.append(closest_cell)
             new_rows.append(Row(cells=_cells))
 

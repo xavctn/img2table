@@ -13,9 +13,10 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     :param vertical_lines: list of vertical lines
     :return: dataframe containing all cells
     """
+    default_df = pd.DataFrame(columns=["x1", "x2", "y1", "y2", 'width', "height"])
     # Create dataframe from horizontal and vertical lines
-    df_h_lines = pd.DataFrame(map(lambda l: l.dict, horizontal_lines))
-    df_v_lines = pd.DataFrame(map(lambda l: l.dict, vertical_lines))
+    df_h_lines = pd.DataFrame(map(lambda l: l.dict, horizontal_lines)) if horizontal_lines else default_df.copy()
+    df_v_lines = pd.DataFrame(map(lambda l: l.dict, vertical_lines)) if vertical_lines else default_df.copy()
 
     # Create copy of df_h_lines
     df_h_lines_cp = df_h_lines.copy()

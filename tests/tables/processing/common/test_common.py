@@ -18,10 +18,15 @@ def test_is_contained_cell():
 
 def test_merge_contours():
     contours = [Cell(x1=0, x2=20, y1=0, y2=20),
+                Cell(x1=0, x2=20, y1=10, y2=20),
                 Cell(x1=60, x2=80, y1=0, y2=20),
                 Cell(x1=10, x2=20, y1=100, y2=200)]
 
-    assert merge_contours(contours=contours, vertically=None) == contours
+    # Do not merge by axis
+    expected = [Cell(x1=0, x2=20, y1=0, y2=20),
+                Cell(x1=60, x2=80, y1=0, y2=20),
+                Cell(x1=10, x2=20, y1=100, y2=200)]
+    assert set(merge_contours(contours=contours, vertically=None)) == set(expected)
 
     # Merge vertically
     expected_vertical = [Cell(x1=0, x2=80, y1=0, y2=20), Cell(x1=10, x2=20, y1=100, y2=200)]

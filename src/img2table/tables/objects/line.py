@@ -42,6 +42,10 @@ class Line(TableObject):
                 "width": self.width,
                 "height": self.height}
 
+    @property
+    def transpose(self) -> "Line":
+        return Line(x1=self.y1, y1=self.x1, x2=self.y2, y2=self.x2)
+
     def reprocess(self):
         # Reallocate coordinates in proper order
         _x1 = min(self.x1, self.x2)

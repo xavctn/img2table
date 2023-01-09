@@ -34,7 +34,7 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
         close_upper_values = [y for y in list_y_values
                               if abs(y - cell.y1) / (low_bound_tb - up_bound_tb) <= 0.02]
         if len(close_upper_values) == 1:
-            cell.y1 = close_upper_values[0]
+            cell.y1 = close_upper_values.pop()
         else:
             list_y_values.append(cell.y1)
 
@@ -43,7 +43,7 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
         close_lower_values = [y for y in list_y_values
                               if abs(y - cell.y2) / (low_bound_tb - up_bound_tb) <= 0.02]
         if len(close_lower_values) == 1:
-            cell.y2 = close_lower_values[0]
+            cell.y2 = close_lower_values.pop()
         else:
             list_y_values.append(cell.y2)
 
