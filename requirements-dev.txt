@@ -7,3 +7,4 @@ pytest-xdist
 
 # Examples dependencies
 jupyter
+Pillow
