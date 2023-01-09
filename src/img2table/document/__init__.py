@@ -49,7 +49,7 @@ class Document:
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
                                   dpi=self.dpi,
-                                  ocr_df=self.ocr_df.page(page_number=idx),
+                                  ocr_df=self.ocr_df.page(page_number=idx) if self.ocr_df else None,
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows)
                   for idx, img in enumerate(self.images)}
 

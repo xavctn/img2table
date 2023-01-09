@@ -81,7 +81,7 @@ class OCRDataframe:
         if page_number:
             df_words = df_words[df_words["page"] == page_number]
         # Filter dataframe on relevant words
-        df_words = df_words[df_words["value"].notnull() & (self.df["confidence"] >= min_confidence)]
+        df_words = df_words[df_words["value"].notnull() & (df_words["confidence"] >= min_confidence)]
 
         # Create dataframe containing all coordinates of Cell objects
         list_cells = [{"row": id_row, "col": id_col, "x1_w": cell.x1, "x2_w": cell.x2, "y1_w": cell.y1, "y2_w": cell.y2}
