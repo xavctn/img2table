@@ -6,9 +6,6 @@ from img2table.ocr.data import OCRDataframe
 
 
 class OCRInstance:
-    def __init__(self):
-        pass
-
     def content(self, document: Document) -> Any:
         raise NotImplementedError
 

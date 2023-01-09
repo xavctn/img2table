@@ -1,7 +1,6 @@
 .idea
 .ipynb_checkpoints
 __pycache__
-data
 .pytest_cache
 .coverage
 

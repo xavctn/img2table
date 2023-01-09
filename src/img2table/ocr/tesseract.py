@@ -27,7 +27,6 @@ class TesseractOCR(OCRInstance):
         :param n_threads: number of parallel threads used for Tesseract
         :param lang: lang parameter used in Tesseract
         """
-        super().__init__()
         self.lang = lang
         self.n_threads = n_threads
 
