@@ -6,7 +6,7 @@ import pandas as pd
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.lines import overlapping_filter, detect_lines
+from img2table.tables.processing.lines import overlapping_filter, detect_lines, remove_word_lines
 
 
 def test_overlapping_filter():
@@ -23,6 +23,16 @@ def test_overlapping_filter():
                 Line(x1=20, x2=20, y1=10, y2=100)]
 
     assert result == expected
+
+
+def test_remove_word_lines():
+    ocr_df = OCRDataframe(df=pd.read_csv("test_data/ocr.csv", sep=";"))
+    lines = [Line(x1=10, x2=10, y1=10, y2=100),
+             Line(x1=975, x2=975, y1=40, y2=60)]
+
+    result = remove_word_lines(lines=lines, ocr_df=ocr_df)
+
+    assert result == [Line(x1=10, x2=10, y1=10, y2=100)]
 
 
 def test_detect_lines():
