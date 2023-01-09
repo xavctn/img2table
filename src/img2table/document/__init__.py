@@ -25,6 +25,7 @@ class Document:
         if isinstance(self.src, bytes):
             return self.src
         elif isinstance(self.src, io.BytesIO):
+            self.src.seek(0)
             return self.src.read()
         elif isinstance(self.src, str):
             with io.open(self.src, 'rb') as f:
