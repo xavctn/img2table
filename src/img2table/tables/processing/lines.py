@@ -161,6 +161,9 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
         hough_lines = cv2.HoughLinesP(mask, rho, theta, threshold, None, minLinLength, maxLineGap)
         lines = [Line(*line[0].tolist()).reprocess() for line in hough_lines]
 
+        # Remove lines that are not horizontal or vertical
+        lines = [line for line in lines if line.horizontal or line.vertical]
+
         # Merge lines
         merged_lines = overlapping_filter(lines=lines, max_gap=gap)
 

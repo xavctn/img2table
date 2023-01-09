@@ -34,7 +34,7 @@ def test_pdf_pages():
 
 def test_pdf_tables():
     ocr = TesseractOCR()
-    pdf = PDF(src="test_data/test.pdf", ocr=ocr, dpi=dpi, pages=[1])
+    pdf = PDF(src="test_data/test.pdf", ocr=ocr, dpi=dpi)
 
     result = pdf.extract_tables(implicit_rows=True, min_confidence=50)
 
