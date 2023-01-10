@@ -1,6 +1,5 @@
 pandas
 numpy
-pdf2image
+pymupdf
 opencv-python-headless
-pytesseract
 bs4

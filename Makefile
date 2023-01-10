@@ -1,13 +1,31 @@
 #!/bin/bash
 
-args = `arg="$(filter-out $@,$(MAKECMDGOALS))" && echo $${arg:-${1}}`
+VENV = ./activate_venv
+DIR := $(shell pwd)
+export PYTHONPATH := $(DIR)/src
 
+# Virtual environment commands
 venv:
 	python -m venv ./venv || true
-	. ./activate_venv && python -m pip install -q pip --upgrade;
-	. ./activate_venv && python -m pip install -q -r requirements.txt
+	. $(VENV); python -m pip install -q pip wheel --upgrade;
+	. $(VENV); python -m pip install -q -r requirements-dev.txt
 
-update: venv
-	. ./activate_venv && python -m pip install -q -r requirements.txt
+update:
+	. $(VENV); python -m pip install -q -r requirements-dev.txt
 
-.PHONY: venv update
+# Test commands
+test:
+	. $(VENV); pytest --cov-report term --cov=src
+
+# Examples commands
+jupyter-examples:
+	. $(VENV); cd examples && jupyter notebook
+
+update-examples:
+	. $(VENV);
+	for f in $(PWD)/examples/*.ipynb; do \
+	  jupyter nbconvert --to notebook --execute $$f --inplace; \
+	done
+
+
+.PHONY: venv
