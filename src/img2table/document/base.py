@@ -59,4 +59,7 @@ class Document:
         if self.pages:
             tables = {self.pages[k]: v for k, v in tables.items()}
 
+        # Reset ocr_df attribute
+        self.ocr_df = None
+
         return tables
