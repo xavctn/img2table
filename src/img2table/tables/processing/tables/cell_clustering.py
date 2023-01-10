@@ -39,32 +39,22 @@ def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
     :return: list of list of cells, representing several clusters of cells that form a table
     """
     # Loop over all cells to create relationships between adjacent cells
-    list_relations = list()
+    clusters = list()
     for i in range(len(cells)):
         for j in range(i, len(cells)):
-            adjacent = adjacent_cells(cells[i], cells[j])
-            if adjacent:
-                list_relations.append([i, j])
+            # Check if pair of cells is already in a cluster
+            if not any(map(lambda cl: {i, j}.intersection(cl) == {i, j}, clusters)):
+                adjacent = adjacent_cells(cells[i], cells[j])
+                # If cells are adjacent, find matching clusters
+                if adjacent:
+                    matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
+                    if matching_clusters:
+                        cl_id = matching_clusters.pop()
+                        clusters[cl_id] = clusters[cl_id].union({i, j})
+                    else:
+                        clusters.append({i, j})
 
-    # Create clusters of cells that corresponds to tables
-    dict_clusters = dict()
-    ii = 0
-    for rel in sorted(list_relations):
-        matching_clusters = [k for k, v in dict_clusters.items() if set(rel).intersection(v)]
-        if len(matching_clusters) == 0:
-            dict_clusters[str(ii)] = set(rel)
-            ii += 1
-        elif len(matching_clusters) == 1:
-            key = matching_clusters[0]
-            dict_clusters[key] = dict_clusters[key].union(set(rel))
-        else:
-            new_val = rel + [el for k, v in dict_clusters.items() for el in v if k in matching_clusters]
-            dict_clusters[str(ii)] = set(new_val)
-            for key in matching_clusters:
-                dict_clusters.pop(key, None)
-            ii += 1
-
-    # Create list of cells for each table
-    list_table_cells = [[cells[idx] for idx in v] for k, v in dict_clusters.items()]
+    # Return list of cell objects
+    list_table_cells = [[cells[idx] for idx in cl] for cl in clusters]
 
     return list_table_cells
