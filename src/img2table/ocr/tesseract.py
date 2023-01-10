@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from img2table.document import Document
+from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 

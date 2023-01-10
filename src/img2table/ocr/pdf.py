@@ -4,7 +4,7 @@ from typing import List, Dict
 import fitz
 import pandas as pd
 
-from img2table.document import Document
+from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 

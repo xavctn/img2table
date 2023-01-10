@@ -27,9 +27,9 @@ def test_load_image():
 
 def test_image_tables(mock_tesseract):
     ocr = TesseractOCR()
-    img = Image(src="test_data/test.png", ocr=ocr)
+    img = Image(src="test_data/test.png")
 
-    result = img.extract_tables(implicit_rows=True, min_confidence=50)
+    result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
     with open("test_data/extracted_tables.json", "r") as f:
         expected = {

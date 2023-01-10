@@ -34,9 +34,9 @@ def test_pdf_pages():
 
 def test_pdf_tables():
     ocr = TesseractOCR()
-    pdf = PDF(src="test_data/test.pdf", ocr=ocr, dpi=dpi)
+    pdf = PDF(src="test_data/test.pdf", dpi=dpi)
 
-    result = pdf.extract_tables(implicit_rows=True, min_confidence=50)
+    result = pdf.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
     with open("test_data/extracted_tables.json", "r") as f:
         expected = {

@@ -1,7 +1,7 @@
 # coding: utf-8
 from typing import Any
 
-from img2table.document import Document
+from img2table.document.base import Document
 from img2table.ocr.data import OCRDataframe
 
 
