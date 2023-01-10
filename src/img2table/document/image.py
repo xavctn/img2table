@@ -1,4 +1,5 @@
 # coding: utf-8
+from dataclasses import dataclass
 from typing import Iterator
 
 import cv2
@@ -7,6 +8,7 @@ import numpy as np
 from img2table.document.base import Document
 
 
+@dataclass
 class Image(Document):
     dpi: int = 200
 

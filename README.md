@@ -43,10 +43,22 @@ Searchable and non-searchable PDF files are supported.
 ### Documents
 
 #### Images
-
+Images are instantiated as follows :
 ```python
 from img2table.document import Image
 
 image = Image(src, dpi=300)
 ```
+>**src**: *file path, bytes or `io.BytesIO` object*<br>
+>**dpi**: *estimated image dpi (default 200)*
 
+#### PDF
+PDF files are instantiated as follows :
+```python
+from img2table.document import PDF
+
+pdf = PDF(src, dpi=300, pages=[0, 2])
+```
+>**src**: *file path, bytes or `io.BytesIO` object*<br>
+>**dpi**: *dpi used for conversion of PDF pages to images (default 300)*<br>
+>**pages**: *list of PDF page indexes to be processed (default None: all pages are processed)*
