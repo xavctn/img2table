@@ -7,4 +7,5 @@ pytest-xdist
 
 # Examples dependencies
 jupyter
+ipython-autotime
 Pillow
