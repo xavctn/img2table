@@ -104,10 +104,10 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 #### Return
 
-### Examples
+## Examples
 
 Several Jupyter notebooks with examples are available :
-<ul style="list-style-type: '\2713   '">
+<ul style="list-style-type: circle">
 <li>
 <a style="font-weight: bold" href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
 </li>
@@ -120,9 +120,9 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 </li>
 </ul>
 
-### FYI
+## FYI
 
-<ul style="list-style-type: '\2713   '">
+<ul style="list-style-type: circle">
 <li>
 For searchable PDF, text will be extracted directly from the file and the OCR service/tool will not be called.
 </li>
