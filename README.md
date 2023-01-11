@@ -82,9 +82,11 @@ Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions
 
 ### Table extraction
 
+Multiple tables can be extracted at once from a PDF page/ an image.
+
 ```python
 from img2table.ocr import TesseractOCR
-from img2table.document import PDF, Image
+from img2table.document import Image
 
 # Instantiation of OCR
 ocr = TesseractOCR(n_threads=1, lang="eng")
@@ -102,7 +104,15 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 > [example](/examples/Implicit_rows.ipynb) (default `True`)*<br>
 >**min_confidence**: *minimum confidence level from OCR in order to process text, from 0 - worst to 99 - best (default 50)*<br>
 
-#### Return
+#### Method return
+
+The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is used to model extracted tables from documents.
+
+> `ExtractedTable` attributes:  
+> &emsp;&emsp;**bbox**: [`BBox`](/src/img2table/tables/objects/extraction.py#L9) object representing the table bounding box   
+> &emsp;&emsp;**title**: extracted title of the table   
+> &emsp;&emsp;**content**: `OrderedDict` with row index as key and list of [`TableCell`](/src/img2table/tables/objects/extraction.py#L17) objects as values   
+> &emsp;&emsp;**df**: pandas `DataFrame` representation of the table   
 
 ## Examples
 
