@@ -22,6 +22,7 @@ It also provides implementations for several OCR services and tools in order to 
 
 
 ## Installation <a name="installation"></a>
+The library can be installed via pip.
 ```python
 pip install img2table
 ```
@@ -160,13 +161,13 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
 
-######Images
+<h6 style="color:grey">Images</h6>
 `extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 
 ```Python
 output = [ExtractedTable(...), ExtractedTable(...), ...]
 ```
 
-######PDF
+<h6 style="color:grey">PDF</h6>
 `extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects. 
 ```Python
 output = {
