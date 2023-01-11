@@ -67,7 +67,7 @@ from img2table.document import Image
 image = Image(src, dpi=200)
 ```
 
-> <h5>Parameters</h5>
+> <h4>Parameters</h4>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">Image source</dd>
@@ -83,7 +83,7 @@ from img2table.document import PDF
 pdf = PDF(src, dpi=300, pages=[0, 2])
 ```
 
-> <h5>Parameters</h5>
+> <h4>Parameters</h4>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
@@ -104,7 +104,7 @@ from img2table.ocr import TesseractOCR
 ocr = TesseractOCR(n_threads=1, lang="eng")
 ```
 
-> <h5>Parameters</h5>
+> <h4>Parameters</h4>
 ><dl>
 >    <dt>n_threads : int, optional, default <code>1</code></dt>
 >    <dd style="font-style: italic;">Number of concurrent threads used to call Tesseract</dd>
@@ -135,7 +135,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=True,
                                       min_confidence=50)
 ```
-> <h5>Parameters</h5>
+> <h4>Parameters</h4>
 ><dl>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
@@ -149,7 +149,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is used to model extracted tables from documents.
 
-> <h5>Attributes</h5>
+> <h4>Attributes</h4>
 ><dl>
 >    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L9" target="_self">BBox</a></code></dt>
 >    <dd style="font-style: italic;">Table bounding box</dd>
