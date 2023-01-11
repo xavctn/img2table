@@ -50,7 +50,7 @@ from img2table.document import Image
 image = Image(src, dpi=200)
 ```
 
->######Parameters
+> <span style="color:grey; font-weight: bold">Parameters</span>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">Image source</dd>
@@ -66,7 +66,7 @@ from img2table.document import PDF
 pdf = PDF(src, dpi=300, pages=[0, 2])
 ```
 
->######Parameters
+> <span style="color:grey; font-weight: bold">Parameters</span>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
@@ -87,7 +87,7 @@ from img2table.ocr import TesseractOCR
 ocr = TesseractOCR(n_threads=1, lang="eng")
 ```
 
->######Parameters
+> <span style="color:grey; font-weight: bold">Parameters</span>
 ><dl>
 >    <dt>n_threads : int, optional, default <code>1</code></dt>
 >    <dd style="font-style: italic;">Number of concurrent Tesseract threads used</dd>
@@ -118,7 +118,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=True,
                                       min_confidence=50)
 ```
->######Parameters
+> <span style="color:grey; font-weight: bold">Parameters</span>
 ><dl>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
@@ -132,13 +132,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is used to model extracted tables from documents.
 
-> [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) attributes:  
-> &emsp;&emsp;**bbox**: [`BBox`](/src/img2table/tables/objects/extraction.py#L9) object representing the table bounding box   
-> &emsp;&emsp;**title**: extracted title of the table   
-> &emsp;&emsp;**content**: `OrderedDict` with row index as key and list of [`TableCell`](/src/img2table/tables/objects/extraction.py#L17) objects as values   
-> &emsp;&emsp;**df**: pandas `DataFrame` representation of the table   
-
->######Attributes
+> <span style="color:grey; font-weight: bold">Attributes</span>
 ><dl>
 >    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L9" target="_self">BBox</a></code></dt>
 >    <dd style="font-style: italic;">Table bounding box</dd>
@@ -159,7 +153,7 @@ Several Jupyter notebooks with examples are available :
 <a style="font-weight: bold" href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
 </li>
 <li>
-<a style="font-weight: bold" href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
+<a style="²" href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
 </li>
 <li>
 <a style="font-weight: bold" href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
