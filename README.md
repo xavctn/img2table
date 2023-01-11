@@ -101,7 +101,7 @@ Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions
 
 ### Table extraction
 
-Multiple tables can be extracted at once from a PDF page/ an image.
+Multiple tables can be extracted at once from a PDF page/ an image using the `extract_tables` method of a document.
 
 ```python
 from img2table.ocr import TesseractOCR
@@ -165,6 +165,6 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 
 <ul style="list-style-type: circle">
 <li>
-For searchable PDF, text will be extracted directly from the file and the OCR service/tool will not be called.
+If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 </li>
 </ul>
