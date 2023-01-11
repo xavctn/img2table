@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from img2table.document import Document
+from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
@@ -24,11 +24,18 @@ class TesseractOCR(OCRInstance):
     def __init__(self, n_threads: int = 1, lang: str = 'eng'):
         """
         Initialization of Tesseract OCR instance
-        :param n_threads: number of parallel threads used for Tesseract
+        :param n_threads: number of concurrent threads used for Tesseract
         :param lang: lang parameter used in Tesseract
         """
-        self.lang = lang
-        self.n_threads = n_threads
+        if isinstance(n_threads, int):
+            self.n_threads = n_threads
+        else:
+            raise TypeError(f"Invalid type {type(n_threads)} for n_threads argument")
+
+        if isinstance(lang, str):
+            self.lang = lang
+        else:
+            raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
     def hocr(self, image: np.ndarray) -> str:
         """

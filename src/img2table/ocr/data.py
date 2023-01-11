@@ -21,7 +21,7 @@ class OCRDataframe:
         :param cell: Cell object in document
         :param margin: margin to take around cell
         :param page_number: page number of the cell
-        :param min_confidence: minimum confidence in order to include a word
+        :param min_confidence: minimum confidence in order to include a word, from 0 (worst) to 99 (best)
         :return: text contained in cell
         """
         # Define relevant bounding box
@@ -73,7 +73,7 @@ class OCRDataframe:
         Identify text located in Table object
         :param table: Table object
         :param page_number: page number of the cell
-        :param min_confidence: minimum confidence in order to include a word
+        :param min_confidence: minimum confidence in order to include a word, from 0 (worst) to 99 (best)
         :return: table with content set on all cells
         """
         # Filter dataframe on relevant page

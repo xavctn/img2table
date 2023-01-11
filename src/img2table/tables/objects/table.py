@@ -56,7 +56,7 @@ class Table(TableObject):
         """
         Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
         :param ocr_df: OCRDataframe object
-        :param min_confidence: minimum confidence in order to include a word
+        :param min_confidence: minimum confidence in order to include a word, from 0 (worst) to 99 (best)
         :return: Table object with data attribute containing dataframe
         """
         # Get content for each cell

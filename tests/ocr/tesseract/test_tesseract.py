@@ -3,11 +3,20 @@ import os
 
 import cv2
 import pandas as pd
+import pytest
 
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
 from img2table.ocr.data import OCRDataframe
 from tests import MOCK_DIR
+
+
+def test_validators():
+    with pytest.raises(TypeError) as e_info:
+        ocr = TesseractOCR(n_threads=[8])
+
+    with pytest.raises(TypeError) as e_info:
+        ocr = TesseractOCR(lang=12)
 
 
 def test_tesseract_hocr(mock_tesseract):
