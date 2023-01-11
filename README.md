@@ -1,6 +1,6 @@
 # img2table
 
-`img2table` is a table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
+`img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
 processing that supports most common image file formats as well as PDF files.
 
 It also provides implementations for several OCR services and tools in order to parse table contents.
@@ -77,4 +77,53 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 >**lang**: *lang parameter used in Tesseract (default "eng")*<br>
 
 
-*Usage of [Tesseract-OCR](https://tesseract-ocr.github.io/tessdoc/) requires prior installation. Check documentation for instructions relative to your platform.*
+*Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
+Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+
+### Table extraction
+
+```python
+from img2table.ocr import TesseractOCR
+from img2table.document import PDF, Image
+
+# Instantiation of OCR
+ocr = TesseractOCR(n_threads=1, lang="eng")
+
+# Instantiation of document, either an image or a PDF
+doc = Image(src, dpi=200)
+
+# Table extraction
+extracted_tables = doc.extract_tables(ocr=ocr,
+                                      implicit_rows=True,
+                                      min_confidence=50)
+```
+>**ocr**: *OCR instance used to parse document text (default `None`: cells content will not be extracted)*<br>
+>**implicit_rows**: *boolean indicating if implicit rows should be identified - check related 
+> [example](/examples/Implicit_rows.ipynb) (default `True`)*<br>
+>**min_confidence**: *minimum confidence level from OCR in order to process text, from 0 - worst to 99 - best (default 50)*<br>
+
+#### Return
+
+### Examples
+
+Several Jupyter notebooks with examples are available :
+<ul style="list-style-type: '\2713   '">
+<li>
+<a style="font-weight: bold" href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
+</li>
+<li>
+<a style="font-weight: bold" href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
+</li>
+<li>
+<a style="font-weight: bold" href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
+of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> method
+</li>
+</ul>
+
+### FYI
+
+<ul style="list-style-type: '\2713   '">
+<li>
+For searchable PDF, text will be extracted directly from the file and the OCR service/tool will not be called.
+</li>
+</ul>
