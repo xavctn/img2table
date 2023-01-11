@@ -42,16 +42,13 @@ def test_image_tables(mock_tesseract):
     result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
     with open("test_data/extracted_tables.json", "r") as f:
-        expected = {
-            int(k): [ExtractedTable(title=tb.get('title'),
-                                    bbox=BBox(**tb.get('bbox')),
-                                    content=OrderedDict({int(id): [TableCell(bbox=BBox(**c.get('bbox')),
-                                                                             value=c.get('value'))
-                                                                   for c in row]
-                                                         for id, row in tb.get('content').items()})
-                                    )
-                     for tb in list_tbs]
-            for k, list_tbs in json.load(f).items()
-        }
+        expected = [ExtractedTable(title=tb.get('title'),
+                                   bbox=BBox(**tb.get('bbox')),
+                                   content=OrderedDict({int(id): [TableCell(bbox=BBox(**c.get('bbox')),
+                                                                            value=c.get('value'))
+                                                                  for c in row]
+                                                        for id, row in tb.get('content').items()})
+                                   )
+                    for tb in json.load(f)]
 
     assert result == expected
