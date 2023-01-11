@@ -3,6 +3,9 @@
 __pycache__
 .pytest_cache
 .coverage
+*.egg-info
+dist
+build
 
 certs
 venv
