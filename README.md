@@ -139,31 +139,49 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
->    <dd style="font-style: italic;">Dict with with row index as key and list of <code><a href="/src/img2table/tables/objects/extraction.py#L17" target="_self">TableCell</a></code> objects as values</dd>
+>    <dd style="font-style: italic;">Dict with with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L17" target="_self">TableCell</a></code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
 
+######Images
+`extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 
+```Python
+output = [ExtractedTable(...), ExtractedTable(...), ...]
+```
 
+######PDF
+`extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects. 
+```Python
+output = {
+    0: [ExtractedTable(...), ...],
+    1: [],
+    ...
+    last_page: [ExtractedTable(...), ...]
+}
+```
 ## Examples
 
 Several Jupyter notebooks with examples are available :
-<ul style="list-style-type: circle">
+<ul>
 <li>
-<a style="font-weight: bold" href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
+<a href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
 </li>
 <li>
-<a style="²" href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
+<a href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
 </li>
 <li>
-<a style="font-weight: bold" href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
+<a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
 of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> method
 </li>
 </ul>
 
 ## FYI
 
-<ul style="list-style-type: circle">
+<ul>
+<li>
+Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
+</li>
 <li>
 If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 </li>
