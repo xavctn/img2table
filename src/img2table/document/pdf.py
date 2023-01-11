@@ -1,6 +1,6 @@
 # coding: utf-8
 from dataclasses import dataclass
-from typing import Iterator, Dict, List
+from typing import Iterator, Dict, List, Optional
 
 import cv2
 import fitz
@@ -14,6 +14,14 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class PDF(Document):
     pages: List[int] = None
+
+    def validate_pages(self, value, **_) -> Optional[List[int]]:
+        if value is not None:
+            if not isinstance(value, list):
+                raise TypeError(f"Invalid type {type(value)} for pages argument")
+            if not all(isinstance(x, int) for x in value):
+                raise TypeError("All values in pages argument should be integers")
+        return value
 
     @property
     def images(self) -> Iterator[np.ndarray]:

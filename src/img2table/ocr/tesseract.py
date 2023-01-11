@@ -27,8 +27,15 @@ class TesseractOCR(OCRInstance):
         :param n_threads: number of concurrent threads used for Tesseract
         :param lang: lang parameter used in Tesseract
         """
-        self.lang = lang
-        self.n_threads = n_threads
+        if isinstance(n_threads, int):
+            self.n_threads = n_threads
+        else:
+            raise TypeError(f"Invalid type {type(n_threads)} for n_threads argument")
+
+        if isinstance(lang, str):
+            self.lang = lang
+        else:
+            raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
     def hocr(self, image: np.ndarray) -> str:
         """

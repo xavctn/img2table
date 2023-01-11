@@ -3,9 +3,19 @@ import json
 from collections import OrderedDict
 from io import BytesIO
 
+import pytest
+
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import ExtractedTable, BBox, TableCell
+
+
+def test_validators():
+    with pytest.raises(TypeError) as e_info:
+        img = Image(src=1)
+
+    with pytest.raises(TypeError) as e_info:
+        img = Image(src="img", dpi="8")
 
 
 def test_load_image():

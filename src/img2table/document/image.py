@@ -14,8 +14,8 @@ class Image(Document):
     dpi: int = 200
 
     def __post_init__(self):
-        self.pages = None
         super(Image, self).__post_init__()
+        self.pages = None
 
     @property
     def images(self) -> Iterator[np.ndarray]:

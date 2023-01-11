@@ -1,19 +1,32 @@
 # coding: utf-8
 import io
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Union, Iterator, Dict, List
 
 import numpy as np
 
+from img2table import Validations
 from img2table.tables.objects.extraction import ExtractedTable
 
 
 @dataclass
-class Document:
-    src: Union[str, io.BytesIO, bytes]
+class Document(Validations):
+    src: Union[str, Path, io.BytesIO, bytes]
     dpi: int = 300
 
+    def validate_src(self, value, **_) -> Union[str, Path, io.BytesIO, bytes]:
+        if not isinstance(value, (str, Path, io.BytesIO, bytes)):
+            raise TypeError(f"Invalid type {type(value)} for src argument")
+        return value
+
+    def validate_dpi(self, value, **_) -> int:
+        if not isinstance(value, int):
+            raise TypeError(f"Invalid type {type(value)} for dpi argument")
+        return value
+
     def __post_init__(self):
+        super(Document, self).__post_init__()
         # Initialize ocr_df
         self.ocr_df = None
 

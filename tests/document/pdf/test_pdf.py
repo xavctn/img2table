@@ -3,11 +3,27 @@ import json
 from collections import OrderedDict
 from io import BytesIO
 
+import pytest
+
 from img2table.document.pdf import PDF
 from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import ExtractedTable, BBox, TableCell
 
 dpi = 300
+
+
+def test_validators():
+    with pytest.raises(TypeError) as e_info:
+        pdf = PDF(src=1)
+
+    with pytest.raises(TypeError) as e_info:
+        pdf = PDF(src="img", dpi="8")
+
+    with pytest.raises(TypeError) as e_info:
+        pdf = PDF(src="img", dpi=dpi, pages=12)
+
+    with pytest.raises(TypeError) as e_info:
+        pdf = PDF(src="img", dpi=dpi, pages=["12"])
 
 
 def test_load_pdf():
