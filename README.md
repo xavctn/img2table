@@ -162,12 +162,14 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is
 ></dl>
 
 <h5 style="color:grey">Images</h5>
+
 `extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 
 ```Python
 output = [ExtractedTable(...), ExtractedTable(...), ...]
 ```
 
 <h5 style="color:grey">PDF</h5>
+
 `extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects. 
 ```Python
 output = {
