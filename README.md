@@ -107,7 +107,7 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 > <span style="color:grey; font-weight: bold">Parameters</span>
 ><dl>
 >    <dt>n_threads : int, optional, default <code>1</code></dt>
->    <dd style="font-style: italic;">Number of concurrent Tesseract threads used</dd>
+>    <dd style="font-style: italic;">Number of concurrent threads used to call Tesseract</dd>
 >    <dt>lang : str, optional, default <code>"eng"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Tesseract for text extraction</dd>
 ></dl>
