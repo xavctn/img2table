@@ -49,8 +49,14 @@ from img2table.document import Image
 
 image = Image(src, dpi=200)
 ```
->**src**: *file path, `pathlib.Path`, bytes or `io.BytesIO` object*<br>
->**dpi**: *estimated image dpi (default 200)*
+
+>######Parameters
+><dl>
+>    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
+>    <dd style="font-style: italic;">Image source</dd>
+>    <dt>dpi : int, optional, default <code>200</code></dt>
+>    <dd style="font-style: italic;">Estimated image dpi, used to adapt OpenCV algorithm parameters</dd>
+></dl>
 
 #### PDF
 PDF files are instantiated as follows :
@@ -59,9 +65,16 @@ from img2table.document import PDF
 
 pdf = PDF(src, dpi=300, pages=[0, 2])
 ```
->**src**: *file path, `pathlib.Path`, bytes or `io.BytesIO` object*<br>
->**dpi**: *dpi used for conversion of PDF pages to images (default 300)*<br>
->**pages**: *list of PDF page indexes to be processed (default `None`: all pages are processed)*
+
+>######Parameters
+><dl>
+>    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
+>    <dd style="font-style: italic;">PDF source</dd>
+>    <dt>dpi : int, optional, default <code>300</code></dt>
+>    <dd style="font-style: italic;">Dpi used for conversion of PDF pages to images</dd>
+>    <dt>pages : list, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
+></dl>
 
 ### OCR
 `img2table` provides an interface for several OCR services and tools in order to parse table content.
@@ -73,8 +86,14 @@ from img2table.ocr import TesseractOCR
 
 ocr = TesseractOCR(n_threads=1, lang="eng")
 ```
->**n_threads**: *number of concurrent Tesseract threads (default 1)*<br>
->**lang**: *lang parameter used in Tesseract (default "eng")*<br>
+
+>######Parameters
+><dl>
+>    <dt>n_threads : int, optional, default <code>1</code></dt>
+>    <dd style="font-style: italic;">Number of concurrent Tesseract threads used</dd>
+>    <dt>lang : str, optional, default <code>"eng"</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in Tesseract for text extraction</dd>
+></dl>
 
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
@@ -99,20 +118,38 @@ extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=True,
                                       min_confidence=50)
 ```
->**ocr**: *OCR instance used to parse document text (default `None`: cells content will not be extracted)*<br>
->**implicit_rows**: *boolean indicating if implicit rows should be identified - check related 
-> [example](/examples/Implicit_rows.ipynb) (default `True`)*<br>
->**min_confidence**: *minimum confidence level from OCR in order to process text, from 0 - worst to 99 - best (default 50)*<br>
+>######Parameters
+><dl>
+>    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
+>    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dt>min_confidence : int, optional, default <code>50</code></dt>
+>    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
+></dl>
 
 #### Method return
 
 The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is used to model extracted tables from documents.
 
-> `ExtractedTable` attributes:  
+> [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) attributes:  
 > &emsp;&emsp;**bbox**: [`BBox`](/src/img2table/tables/objects/extraction.py#L9) object representing the table bounding box   
 > &emsp;&emsp;**title**: extracted title of the table   
 > &emsp;&emsp;**content**: `OrderedDict` with row index as key and list of [`TableCell`](/src/img2table/tables/objects/extraction.py#L17) objects as values   
 > &emsp;&emsp;**df**: pandas `DataFrame` representation of the table   
+
+>######Attributes
+><dl>
+>    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L9" target="_self">BBox</a></code></dt>
+>    <dd style="font-style: italic;">Table bounding box</dd>
+>    <dt>title : str</dt>
+>    <dd style="font-style: italic;">Extracted title of the table</dd>
+>    <dt>content : <code>OrderedDict</code></dt>
+>    <dd style="font-style: italic;">Dict with with row index as key and list of <code><a href="/src/img2table/tables/objects/extraction.py#L17" target="_self">TableCell</a></code> objects as values</dd>
+>    <dt>df : <code>pd.DataFrame</code></dt>
+>    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
+></dl>
+
 
 ## Examples
 
