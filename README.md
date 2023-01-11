@@ -6,19 +6,19 @@ processing that supports most common image file formats as well as PDF files.
 It also provides implementations for several OCR services and tools in order to parse table contents.
 
 ## Table of contents
-1. [Installation](#installation)
-2. [Supported file formats](#supported-file-formats)
-   1. [Images](#images-formats)
-   2. [PDF](#pdf-formats)
-3. [Usage](#usage)
-   1. [Documents](#documents)
-      1. [Images](#images-doc)
-      2. [PDF](#pdf-doc)
-   2. [OCR](#ocr)
-      1. [Tesseract](#tesseract)
-   3. [Table extraction](#table-extract)
-4. [Examples](#examples)
-5. [FYI](#fyi)
+* [Installation](#installation)
+* [Supported file formats](#supported-file-formats)
+   * [Images](#images-formats)
+   * [PDF](#pdf-formats)
+* [Usage](#usage)
+   * [Documents](#documents)
+      * [Images](#images-doc)
+      * [PDF](#pdf-doc)
+   * [OCR](#ocr)
+      * [Tesseract](#tesseract)
+   * [Table extraction](#table-extract)
+* [Examples](#examples)
+* [FYI](#fyi)
 
 
 ## Installation <a name="installation"></a>
@@ -47,7 +47,7 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 <li>OpenEXR Image files - *.exr</li>
 <li>Radiance HDR - <em>.hdr, </em>.pic</li>
 <li>Raster and Vector geospatial data supported by GDAL<br>
-<cite><a href="https://docs.opencv.org/4.2.0/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
+<cite><a href="https://docs.opencv.org/**0/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
 </ul>
 </blockquote>
 
