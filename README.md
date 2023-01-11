@@ -5,14 +5,30 @@ processing that supports most common image file formats as well as PDF files.
 
 It also provides implementations for several OCR services and tools in order to parse table contents.
 
-## Installation
+## Table of contents
+1. [Installation](#installation)
+2. [Supported file formats](#supported-file-formats)
+   1. [Images](#images-formats)
+   2. [PDF](#pdf-formats)
+3. [Usage](#usage)
+   1. [Documents](#documents)
+      1. [Images](#images-doc)
+      2. [PDF](#pdf-doc)
+   2. [OCR](#ocr)
+      1. [Tesseract](#tesseract)
+   3. [Table extraction](#table-extract)
+4. [Examples](#examples)
+5. [FYI](#fyi)
+
+
+## Installation <a name="installation"></a>
 ```python
 pip install img2table
 ```
 
-## Supported file formats
+## Supported file formats <a name="supported-file-formats"></a>
 
-### Images
+### Images <a name="images-formats"></a>
 
 Images are loaded using the `opencv-python` library, supported formats are listed below.
 
@@ -34,15 +50,15 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 
-### PDF 
+### PDF <a name="pdf-formats"></a>
 
 Searchable and non-searchable PDF files are supported.
 
-## Usage
+## Usage <a name="usage"></a>
 
-### Documents
+### Documents <a name="documents"></a>
 
-#### Images
+#### Images <a name="images-doc"></a>
 Images are instantiated as follows :
 ```python
 from img2table.document import Image
@@ -58,7 +74,7 @@ image = Image(src, dpi=200)
 >    <dd style="font-style: italic;">Estimated image dpi, used to adapt OpenCV algorithm parameters</dd>
 ></dl>
 
-#### PDF
+#### PDF <a name="pdf-doc"></a>
 PDF files are instantiated as follows :
 ```python
 from img2table.document import PDF
@@ -76,10 +92,10 @@ pdf = PDF(src, dpi=300, pages=[0, 2])
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
 ></dl>
 
-### OCR
+### OCR <a name="ocr"></a>
 `img2table` provides an interface for several OCR services and tools in order to parse table content.
 
-#### Tesseract
+#### Tesseract <a name="tesseract"></a>
 Tesseract is instantiated as such :
 ```python
 from img2table.ocr import TesseractOCR
@@ -99,7 +115,7 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
 
-### Table extraction
+### Table extraction <a name="table-extract"></a>
 
 Multiple tables can be extracted at once from a PDF page/ an image using the `extract_tables` method of a document.
 
@@ -160,7 +176,7 @@ output = {
     last_page: [ExtractedTable(...), ...]
 }
 ```
-## Examples
+## Examples <a name="examples"></a>
 
 Several Jupyter notebooks with examples are available :
 <ul>
@@ -176,7 +192,7 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 </li>
 </ul>
 
-## FYI
+## FYI <a name="fyi"></a>
 
 <ul>
 <li>
