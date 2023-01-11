@@ -161,13 +161,13 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
 
-<h6 style="color:grey">Images</h6>
+<h5 style="color:grey">Images</h5>
 `extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 
 ```Python
 output = [ExtractedTable(...), ExtractedTable(...), ...]
 ```
 
-<h6 style="color:grey">PDF</h6>
+<h5 style="color:grey">PDF</h5>
 `extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects. 
 ```Python
 output = {
