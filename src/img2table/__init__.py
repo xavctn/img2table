@@ -10,5 +10,5 @@ class Validations:
             `validate_<field_name>(self, value, field) -> field.type`
         """
         for name, field in self.__dataclass_fields__.items():
-            if method := getattr(self, f"validate_{name}", None):
-                setattr(self, name, method(getattr(self, name), field=field))
+            method = getattr(self, f"validate_{name}", None)
+            setattr(self, name, method(getattr(self, name), field=field))
