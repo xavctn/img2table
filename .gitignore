@@ -1,8 +1,11 @@
 .idea
 .ipynb_checkpoints
 __pycache__
-data
+.pytest_cache
+.coverage
+*.egg-info
+dist
+build
 
 certs
 venv
-*.cfg

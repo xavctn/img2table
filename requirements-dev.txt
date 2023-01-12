@@ -1,0 +1,17 @@
+-r requirements.txt
+
+# Test dependencies
+pytest >= 6
+pytest-cov
+pytest-xdist
+
+# Examples dependencies
+jupyter
+ipython-autotime
+Pillow
+
+# Build tools
+wheel
+setuptools
+pbr
+twine
