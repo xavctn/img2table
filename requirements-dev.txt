@@ -9,3 +9,9 @@ pytest-xdist
 jupyter
 ipython-autotime
 Pillow
+
+# Build tools
+wheel
+setuptools
+pbr
+twine

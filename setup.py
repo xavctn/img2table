@@ -1,8 +1,6 @@
-import setuptools
+from setuptools import setup
 
-setuptools.setup(
-    name="img2table",
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.7",
+setup(
+    setup_requires=['pbr'],
+    pbr=True,
 )

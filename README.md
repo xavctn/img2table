@@ -7,6 +7,7 @@ It also provides implementations for several OCR services and tools in order to 
 
 ## Table of contents
 * [Installation](#installation)
+* [Features](#features)
 * [Supported file formats](#supported-file-formats)
    * [Images](#images-formats)
    * [PDF](#pdf-formats)
@@ -18,7 +19,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [Tesseract](#tesseract)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
-* [FYI](#fyi)
+* [Caveats / FYI](#fyi)
 
 
 ## Installation <a name="installation"></a>
@@ -26,6 +27,14 @@ The library can be installed via pip.
 ```python
 pip install img2table
 ```
+
+## Features <a name="features"></a>
+
+* Table identification for image and PDF files, including bounding boxes at the table cell level
+* Table content extraction by providing support for OCR services / tools
+* Extraction of table titles
+* Handling of merged cells in tables
+* Handling of implicit rows - see [example](/examples/Implicit_rows.ipynb)
 
 ## Supported file formats <a name="supported-file-formats"></a>
 
@@ -50,6 +59,8 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 <cite><a href="https://docs.opencv.org/**0/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
 </ul>
 </blockquote>
+
+---
 
 ### PDF <a name="pdf-formats"></a>
 
@@ -93,6 +104,8 @@ pdf = PDF(src, dpi=300, pages=[0, 2])
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
 ></dl>
 
+---
+
 ### OCR <a name="ocr"></a>
 `img2table` provides an interface for several OCR services and tools in order to parse table content.
 
@@ -115,6 +128,8 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+
+---
 
 ### Table extraction <a name="table-extract"></a>
 
@@ -179,6 +194,7 @@ output = {
     last_page: [ExtractedTable(...), ...]
 }
 ```
+
 ## Examples <a name="examples"></a>
 
 Several Jupyter notebooks with examples are available :
@@ -195,9 +211,12 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 </li>
 </ul>
 
-## FYI <a name="fyi"></a>
+## Caveats / FYI <a name="fyi"></a>
 
 <ul>
+<li>
+Images are assumed to be straight. Rotated images may result in failure of table identification.
+</li>
 <li>
 Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
 </li>
