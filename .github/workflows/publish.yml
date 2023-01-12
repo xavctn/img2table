@@ -1,10 +1,8 @@
 name: Publish to Pypi
 
 on:
-  workflow_run:
-    workflows: [Tests]
-    types: [completed]
-    tags: ['*']
+  release:
+    types: [released]
 
 jobs:
   publish:
