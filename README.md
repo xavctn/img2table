@@ -19,7 +19,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [Tesseract](#tesseract)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
-* [FYI](#fyi)
+* [Caveats / FYI](#fyi)
 
 
 ## Installation <a name="installation"></a>
@@ -28,7 +28,7 @@ The library can be installed via pip.
 pip install img2table
 ```
 
-## Main features <a name="features"></a>
+## Features <a name="features"></a>
 
 * Table identification for image and PDF files, including bounding boxes at the table cell level
 * Table content extraction by providing support for OCR services / tools
@@ -211,7 +211,7 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 </li>
 </ul>
 
-## FYI <a name="fyi"></a>
+## Caveats / FYI <a name="fyi"></a>
 
 <ul>
 <li>
