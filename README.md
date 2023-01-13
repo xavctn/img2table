@@ -61,6 +61,8 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 
+Multi-page images are not supported.
+
 ---
 
 ### PDF <a name="pdf-formats"></a>
@@ -108,7 +110,9 @@ pdf = PDF(src, dpi=300, pages=[0, 2])
 ---
 
 ### OCR <a name="ocr"></a>
-`img2table` provides an interface for several OCR services and tools in order to parse table content.
+
+`img2table` provides an interface for several OCR services and tools in order to parse table content.<br>
+If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 #### Tesseract <a name="tesseract"></a>
 Tesseract is instantiated as such :
@@ -241,8 +245,5 @@ Images are assumed to be straight. Rotated images may result in failure of table
 </li>
 <li>
 Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
-</li>
-<li>
-If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 </li>
 </ul>
