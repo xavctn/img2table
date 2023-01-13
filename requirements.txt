@@ -3,3 +3,4 @@ numpy
 pymupdf
 opencv-python-headless
 bs4
+google-cloud-vision
