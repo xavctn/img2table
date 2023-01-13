@@ -57,7 +57,7 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 <li>OpenEXR Image files - *.exr</li>
 <li>Radiance HDR - <em>.hdr, </em>.pic</li>
 <li>Raster and Vector geospatial data supported by GDAL<br>
-<cite><a href="https://docs.opencv.org/**0/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
+<cite><a href="https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
 </ul>
 </blockquote>
 
