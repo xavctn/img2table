@@ -17,6 +17,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [PDF](#pdf-doc)
    * [OCR](#ocr)
       * [Tesseract](#tesseract)
+      * [Google Vision](#vision)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
 * [Caveats / FYI](#fyi)
@@ -128,6 +129,27 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+
+#### Google Vision <a name="vision"></a>
+
+Authentication to GCP can be done by setting the standard `GOOGLE_APPLICATION_CREDENTIALS` environment variable.<br>
+If this variable is missing, an API key should be provided via the `api_key` parameter.
+
+```python
+from img2table.ocr import VisionOCR
+
+ocr = VisionOCR(api_key="api_key", timeout=15)
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>api_key : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Google Vision API key</dd>
+>    <dt>timeout : int, optional, default <code>15</code></dt>
+>    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
+></dl>
+
+
 
 ---
 
