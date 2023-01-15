@@ -138,7 +138,7 @@ class VisionAPIContent(VisionContent):
     @staticmethod
     def map_response(response: vision_v1.types.BatchAnnotateImagesResponse) -> List[List[Dict]]:
         """
-        Extract test_data from API endpoint response object
+        Extract data from API endpoint response object
         :param response: API endpoint response object
         :return: list of OCR elements by pages
         """
@@ -239,8 +239,8 @@ class VisionOCR(OCRInstance):
 
     def to_ocr_dataframe(self, content: List[List[Dict]]) -> OCRDataframe:
         """
-        Convert hOCR HTML to OCRDataframe object
-        :param content: hOCR HTML string
+        Convert list of OCR elements by page to OCRDataframe object
+        :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
         list_dfs = map(pd.DataFrame, content)

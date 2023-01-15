@@ -1,5 +1,11 @@
 -r requirements.txt
 
+# GCP
+google-cloud-vision
+
+# AWS
+boto3
+
 # Test dependencies
 pytest >= 6
 pytest-cov
