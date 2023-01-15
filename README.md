@@ -18,6 +18,7 @@ It also provides implementations for several OCR services and tools in order to 
    * [OCR](#ocr)
       * [Tesseract](#tesseract)
       * [Google Vision](#vision)
+      * [AWS Textract](#textract)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
 * [Caveats / FYI](#fyi)
@@ -26,7 +27,14 @@ It also provides implementations for several OCR services and tools in order to 
 ## Installation <a name="installation"></a>
 The library can be installed via pip.
 ```python
+# Standard installation, supporting Tesseract
 pip install img2table
+
+# For usage with Google Vision OCR
+pip install img2table[gcp]
+
+# For usage with AWS Textract OCR
+pip install img2table[aws]
 ```
 
 ## Features <a name="features"></a>
@@ -153,6 +161,34 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 ></dl>
 
+#### AWS Textract <a name="textract"></a>
+
+When using AWS Textract, the DetectDocumentText API is exclusively called.
+
+Authentication to AWS can be done by passing credentials to the `TextractOCR` class.<br>
+If credentials are not provided, authentication is done using environment variables or configuration files. 
+Check `boto3` [documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) for more details.
+
+```python
+from img2table.ocr import TextractOCR
+
+ocr = TextractOCR(aws_access_key_id="***",
+                  aws_secret_access_key="***",
+                  aws_session_token="***",
+                  region="eu-west-1")
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>aws_access_key_id : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS access key id</dd>
+>    <dt>aws_secret_access_key : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS secret access key</dd>
+>    <dt>aws_session_token : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS temporary session token</dd>
+>    <dt>region : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS server region</dd>
+></dl>
 
 
 ---
