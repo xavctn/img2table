@@ -4,6 +4,7 @@ import os
 import pickle
 import subprocess
 
+import boto3
 import pytest
 import requests
 from google.cloud import vision
@@ -50,4 +51,20 @@ def mock_vision(monkeypatch):
     # Mock Vision API annotate
     monkeypatch.setattr(vision.ImageAnnotatorClient, "__init__", mock_init)
     monkeypatch.setattr(vision.ImageAnnotatorClient, "batch_annotate_images", mock_annotate)
+
+
+@pytest.fixture
+def mock_textract(monkeypatch):
+    class MockClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def detect_document_text(*args, **kwargs):
+            with open(os.path.join(MOCK_DIR, "textract.json"), "r") as f:
+                resp = json.load(f)
+
+            return resp
+
+    # Mock boto3 client
+    monkeypatch.setattr(boto3, "client", MockClient)
 

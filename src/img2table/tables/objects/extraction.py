@@ -50,3 +50,7 @@ class ExtractedTable:
                    <hr>
                 """
         return html
+
+    def __repr__(self):
+        return f"Extracted Table(\n\tTitle: {self.title}\n\tBounding Box: x1={self.bbox.x1}, y1={self.bbox.y1}, " \
+               f"x2={self.bbox.x2}, y2={self.bbox.y2}\n\tShape: ({len(self.content)}, {len(self.content[0])}))".strip()

@@ -18,6 +18,7 @@ It also provides implementations for several OCR services and tools in order to 
    * [OCR](#ocr)
       * [Tesseract](#tesseract)
       * [Google Vision](#vision)
+      * [AWS Textract](#textract)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
 * [Caveats / FYI](#fyi)
@@ -26,7 +27,14 @@ It also provides implementations for several OCR services and tools in order to 
 ## Installation <a name="installation"></a>
 The library can be installed via pip.
 ```python
+# Standard installation, supporting Tesseract
 pip install img2table
+
+# For usage with Google Vision OCR
+pip install img2table[gcp]
+
+# For usage with AWS Textract OCR
+pip install img2table[aws]
 ```
 
 ## Features <a name="features"></a>
@@ -57,9 +65,11 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 <li>OpenEXR Image files - *.exr</li>
 <li>Radiance HDR - <em>.hdr, </em>.pic</li>
 <li>Raster and Vector geospatial data supported by GDAL<br>
-<cite><a href="https://docs.opencv.org/**0/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
+<cite><a href="https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
 </ul>
 </blockquote>
+
+Multi-page images are not supported.
 
 ---
 
@@ -92,14 +102,14 @@ PDF files are instantiated as follows :
 ```python
 from img2table.document import PDF
 
-pdf = PDF(src, dpi=300, pages=[0, 2])
+pdf = PDF(src, dpi=200, pages=[0, 2])
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
->    <dt>dpi : int, optional, default <code>300</code></dt>
+>    <dt>dpi : int, optional, default <code>200</code></dt>
 >    <dd style="font-style: italic;">Dpi used for conversion of PDF pages to images</dd>
 >    <dt>pages : list, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
@@ -108,7 +118,9 @@ pdf = PDF(src, dpi=300, pages=[0, 2])
 ---
 
 ### OCR <a name="ocr"></a>
-`img2table` provides an interface for several OCR services and tools in order to parse table content.
+
+`img2table` provides an interface for several OCR services and tools in order to parse table content.<br>
+If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 #### Tesseract <a name="tesseract"></a>
 Tesseract is instantiated as such :
@@ -149,6 +161,34 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 ></dl>
 
+#### AWS Textract <a name="textract"></a>
+
+When using AWS Textract, the DetectDocumentText API is exclusively called.
+
+Authentication to AWS can be done by passing credentials to the `TextractOCR` class.<br>
+If credentials are not provided, authentication is done using environment variables or configuration files. 
+Check `boto3` [documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) for more details.
+
+```python
+from img2table.ocr import TextractOCR
+
+ocr = TextractOCR(aws_access_key_id="***",
+                  aws_secret_access_key="***",
+                  aws_session_token="***",
+                  region="eu-west-1")
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>aws_access_key_id : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS access key id</dd>
+>    <dt>aws_secret_access_key : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS secret access key</dd>
+>    <dt>aws_session_token : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS temporary session token</dd>
+>    <dt>region : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">AWS server region</dd>
+></dl>
 
 
 ---
@@ -222,10 +262,7 @@ output = {
 Several Jupyter notebooks with examples are available :
 <ul>
 <li>
-<a href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
-</li>
-<li>
-<a href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
+<a href="/examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
 </li>
 <li>
 <a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
@@ -241,8 +278,5 @@ Images are assumed to be straight. Rotated images may result in failure of table
 </li>
 <li>
 Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
-</li>
-<li>
-If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 </li>
 </ul>
