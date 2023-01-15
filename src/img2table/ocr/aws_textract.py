@@ -84,8 +84,8 @@ class TextractOCR(OCRInstance):
         :return: list of OCR elements by page
         """
         for page, image in enumerate(document.images):
-            _, img_bytes = cv2.imencode(".jpg", image)
-            content = self.client.detect_document_text(Document={'Bytes': img_bytes.tostring()})
+            _, img = cv2.imencode(".jpg", image)
+            content = self.client.detect_document_text(Document={'Bytes': img.tobytes()})
             yield self.map_response(response=content, image=image, page=page)
 
     def to_ocr_dataframe(self, content: Iterator[List[Dict]]) -> OCRDataframe:
