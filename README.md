@@ -102,14 +102,14 @@ PDF files are instantiated as follows :
 ```python
 from img2table.document import PDF
 
-pdf = PDF(src, dpi=300, pages=[0, 2])
+pdf = PDF(src, dpi=200, pages=[0, 2])
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
->    <dt>dpi : int, optional, default <code>300</code></dt>
+>    <dt>dpi : int, optional, default <code>200</code></dt>
 >    <dd style="font-style: italic;">Dpi used for conversion of PDF pages to images</dd>
 >    <dt>pages : list, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
@@ -262,10 +262,7 @@ output = {
 Several Jupyter notebooks with examples are available :
 <ul>
 <li>
-<a href="/examples/Image.ipynb" target="_self">Images</a>: library usage for images
-</li>
-<li>
-<a href="/examples/PDF.ipynb" target="_self">PDF</a>: library usage for PDF files
+<a href="/examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
 </li>
 <li>
 <a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 

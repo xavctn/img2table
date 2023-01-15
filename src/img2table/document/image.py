@@ -11,8 +11,6 @@ from img2table.tables.objects.extraction import ExtractedTable
 
 @dataclass
 class Image(Document):
-    dpi: int = 200
-
     def __post_init__(self):
         self.pages = None
 

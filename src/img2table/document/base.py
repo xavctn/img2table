@@ -13,7 +13,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class Document(Validations):
     src: Union[str, Path, io.BytesIO, bytes]
-    dpi: int = 300
+    dpi: int = 200
 
     def validate_src(self, value, **_) -> Union[str, Path, io.BytesIO, bytes]:
         if not isinstance(value, (str, Path, io.BytesIO, bytes)):
