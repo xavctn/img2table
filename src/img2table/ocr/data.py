@@ -55,7 +55,7 @@ class OCRDataframe:
         # Filter on words where its bbox is contained in area
         df_words_contained = df_words[df_words["int_area"] / df_words["w_area"] >= 0.75]
 
-        # Group text by parent
+        # Group text by parents
         df_text_parent = (df_words_contained.groupby('parent')
                           .agg(x1=("x1", np.min),
                                x2=("x2", np.max),
@@ -66,7 +66,7 @@ class OCRDataframe:
                           )
 
         # Concatenate all lines
-        return df_text_parent["value"].str.cat(sep="\n").strip() or None
+        return df_text_parent["value"].astype(str).str.cat(sep="\n").strip() or None
 
     def get_text_table(self, table: Table, page_number: int = None, min_confidence: int = 50) -> Table:
         """
@@ -108,6 +108,10 @@ class OCRDataframe:
 
         # Filter on words where its bbox is contained in area
         df_words_contained = df_word_cells[df_word_cells["int_area"] / df_word_cells["w_area"] >= 0.75]
+
+        # If no words are contained, return the table
+        if len(df_words_contained) == 0:
+            return table
 
         # Group text by parent
         df_text_parent = (df_words_contained.groupby(['row', 'col', 'parent'])
