@@ -32,7 +32,7 @@ class OCRDataframe:
         if page_number:
             df_words = df_words[df_words["page"] == page_number]
         # Filter dataframe on relevant words
-        df_words = df_words[df_words["value"].notnull() & (self.df["confidence"] >= min_confidence)]
+        df_words = df_words[df_words["value"].notnull() & (df_words["confidence"] >= min_confidence)]
 
         # Compute coordinates of intersection
         df_words = df_words.assign(**{"x1_bbox": bbox[0],

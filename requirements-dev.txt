@@ -6,6 +6,9 @@ google-cloud-vision
 # AWS
 boto3
 
+# Azure
+azure-cognitiveservices-vision-computervision
+
 # Test dependencies
 pytest >= 6
 pytest-cov
