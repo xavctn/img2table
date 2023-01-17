@@ -1,5 +1,5 @@
 pandas>=1.2.0
 numpy
-pymupdf
+pymupdf>=1.19.1
 opencv-python-headless
 bs4
