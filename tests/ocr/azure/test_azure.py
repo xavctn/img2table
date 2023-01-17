@@ -13,7 +13,7 @@ from tests import MOCK_DIR
 
 def test_content(mock_azure):
     img = Image("test_data/test.png")
-    ocr = AzureOCR(endpoint="aa", api_key="bb")
+    ocr = AzureOCR(endpoint="aa", subscription_key="bb")
 
     result = ocr.content(document=img)
 
@@ -24,7 +24,7 @@ def test_content(mock_azure):
 
 
 def test_to_ocr_df(mock_azure):
-    ocr = AzureOCR(endpoint="aa", api_key="bb")
+    ocr = AzureOCR(endpoint="aa", subscription_key="bb")
     with open(os.path.join(MOCK_DIR, "azure.pkl"), "rb") as f:
         content = pickle.load(f)
 
@@ -38,19 +38,19 @@ def test_to_ocr_df(mock_azure):
 def test_azure_ocr(mock_azure):
     # Test init error
     with pytest.raises(TypeError) as e_info:
-        AzureOCR(api_key=8, endpoint="a")
+        AzureOCR(subscription_key=8, endpoint="a")
 
     with pytest.raises(TypeError) as e_info:
-        AzureOCR(api_key="a", endpoint=0)
+        AzureOCR(subscription_key="a", endpoint=0)
 
     with pytest.raises(ValueError) as e_info:
-        AzureOCR(api_key="a")
+        AzureOCR(subscription_key="a")
 
     with pytest.raises(ValueError) as e_info:
-        AzureOCR(endpoint="a")
+        AzureOCR(subscription_key="a")
 
     img = Image("test_data/test.png")
-    ocr = AzureOCR(endpoint="aa", api_key="bb")
+    ocr = AzureOCR(endpoint="aa", subscription_key="bb")
 
     result = ocr.of(document=img)
 

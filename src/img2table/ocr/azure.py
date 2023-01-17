@@ -20,11 +20,11 @@ class AzureOCR(OCRInstance):
     Azure Cognitive Services OCR instance
     """
 
-    def __init__(self, endpoint: Optional[str] = None, api_key: Optional[str] = None):
+    def __init__(self, endpoint: Optional[str] = None, subscription_key: Optional[str] = None):
         """
         Initialization of Azure Cognitive Services OCR instance
         :param endpoint: Azure Cognitive Services endpoint
-        :param api_key: Azure Cognitive Services subscription key
+        :param subscription_key: Azure Cognitive Services subscription key
         """
         # Validation on endpoint variable
         if not (isinstance(endpoint, str) or endpoint is None):
@@ -35,17 +35,17 @@ class AzureOCR(OCRInstance):
             raise ValueError('The COMPUTER_VISION_ENDPOINT environment variable should be set if no endpoint '
                              'is provided')
 
-        # Validation on api_key variable
-        if not (isinstance(api_key, str) or api_key is None):
-            raise TypeError(f"Invalid type {type(api_key)} for endpoint argument")
+        # Validation on subscription_key variable
+        if not (isinstance(subscription_key, str) or subscription_key is None):
+            raise TypeError(f"Invalid type {type(subscription_key)} for endpoint argument")
 
-        api_key = api_key or os.getenv('COMPUTER_VISION_SUBSCRIPTION_KEY')
-        if api_key is None:
+        subscription_key = subscription_key or os.getenv('COMPUTER_VISION_SUBSCRIPTION_KEY')
+        if subscription_key is None:
             raise ValueError('The COMPUTER_VISION_SUBSCRIPTION_KEY environment variable should be set if no API key '
                              'is provided')
 
         self.client = ComputerVisionClient(endpoint=endpoint,
-                                           credentials=CognitiveServicesCredentials(subscription_key=api_key))
+                                           credentials=CognitiveServicesCredentials(subscription_key=subscription_key))
 
     def content(self, document: Document) -> List[ReadOperationResult]:
         """

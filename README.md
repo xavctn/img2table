@@ -19,6 +19,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [Tesseract](#tesseract)
       * [Google Vision](#vision)
       * [AWS Textract](#textract)
+      * [Azure Cognitive Services](#azure)
    * [Table extraction](#table-extract)
 * [Examples](#examples)
 * [Caveats / FYI](#fyi)
@@ -123,7 +124,7 @@ pdf = PDF(src, dpi=200, pages=[0, 2])
 If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 #### Tesseract <a name="tesseract"></a>
-Tesseract is instantiated as such :
+
 ```python
 from img2table.ocr import TesseractOCR
 
@@ -188,6 +189,24 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dd style="font-style: italic;">AWS temporary session token</dd>
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
+></dl>
+
+
+#### Azure Cognitive Services <a name="azure"></a>
+
+```python
+from img2table.ocr import AzureOCR
+
+ocr = AzureOCR(endpoint="abc.azure.com",
+               subscription_key="***")
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>endpoint : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Azure Cognitive Services endpoint. If None, inferred from the <code>COMPUTER_VISION_ENDPOINT</code> environment variable.</dd>
+>    <dt>subscription_key : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
 ></dl>
 
 
