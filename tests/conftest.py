@@ -3,7 +3,9 @@ import json
 import os
 import pickle
 import subprocess
+from typing import NamedTuple, Dict
 
+import azure
 import boto3
 import pytest
 import requests
@@ -67,4 +69,26 @@ def mock_textract(monkeypatch):
 
     # Mock boto3 client
     monkeypatch.setattr(boto3, "client", MockClient)
+
+
+@pytest.fixture
+def mock_azure(monkeypatch):
+    class MockRead(NamedTuple):
+        headers: Dict
+
+    def mock_read_in_stream(*args, **kwargs):
+        return MockRead(headers={"Operation-Location": "zz/zz"})
+
+    def mock_get_read_result(*args, **kwargs):
+        with open(os.path.join(MOCK_DIR, "azure.pkl"), "rb") as f:
+            resp = pickle.load(f)
+        return resp
+
+    # Mock azure client
+    monkeypatch.setattr(azure.cognitiveservices.vision.computervision.ComputerVisionClient,
+                        "read_in_stream",
+                        mock_read_in_stream)
+    monkeypatch.setattr(azure.cognitiveservices.vision.computervision.ComputerVisionClient,
+                        "get_read_result",
+                        mock_get_read_result)
 
