@@ -36,6 +36,9 @@ pip install img2table[gcp]
 
 # For usage with AWS Textract OCR
 pip install img2table[aws]
+
+# For usage with Azure Cognitive Services OCR
+pip install img2table[azure]
 ```
 
 ## Features <a name="features"></a>
