@@ -1,9 +1,11 @@
 # coding: utf-8
 
 from dataclasses import dataclass
-from typing import Optional, List, OrderedDict
+from typing import Optional, List, OrderedDict, NamedTuple
 
 import pandas as pd
+from xlsxwriter.format import Format
+from xlsxwriter.worksheet import Worksheet
 
 
 @dataclass
@@ -18,6 +20,15 @@ class BBox:
 class TableCell:
     bbox: BBox
     value: Optional[str]
+
+    def __hash__(self):
+        return hash(repr(self))
+
+
+class CellPosition(NamedTuple):
+    cell: TableCell
+    row: int
+    col: int
 
 
 @dataclass
@@ -34,6 +45,36 @@ class ExtractedTable:
         """
         values = [[cell.value for cell in row] for k, row in self.content.items()]
         return pd.DataFrame(values)
+
+    def to_worksheet(self, sheet: Worksheet, cell_fmt: Format):
+        """
+        Populate xlsx worksheet with table data
+        :param sheet: xlsxwriter Worksheet
+        :param cell_fmt: xlsxwriter cell format
+        """
+        # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
+        dict_cells = dict()
+        for id_row, row in self.content.items():
+            for id_col, cell in enumerate(row):
+                cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
+                dict_cells[hash(cell)] = dict_cells.get(hash(cell), []) + [cell_pos]
+
+        # Write all cells to sheet
+        for c in dict_cells.values():
+            if len(c) == 1:
+                cell_pos = c.pop()
+                sheet.write(cell_pos.row, cell_pos.col, cell_pos.cell.value, cell_fmt)
+            else:
+                # Case of merged cells
+                sheet.merge_range(first_row=min(map(lambda x: x.row, c)),
+                                  first_col=min(map(lambda x: x.col, c)),
+                                  last_row=max(map(lambda x: x.row, c)),
+                                  last_col=max(map(lambda x: x.col, c)),
+                                  data=c[0].cell.value,
+                                  cell_format=cell_fmt)
+
+        # Autofit worksheet
+        sheet.autofit()
 
     def html_repr(self, title: Optional[str] = None) -> str:
         """
