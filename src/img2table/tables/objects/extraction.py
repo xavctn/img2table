@@ -46,7 +46,7 @@ class ExtractedTable:
         values = [[cell.value for cell in row] for k, row in self.content.items()]
         return pd.DataFrame(values)
 
-    def to_worksheet(self, sheet: Worksheet, cell_fmt: Format):
+    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Optional[Format] = None):
         """
         Populate xlsx worksheet with table data
         :param sheet: xlsxwriter Worksheet
