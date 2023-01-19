@@ -2,7 +2,7 @@
 import io
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, Iterator, Dict, List
+from typing import Union, Iterator, Dict, List, Optional
 
 import numpy as np
 import xlsxwriter
@@ -79,14 +79,14 @@ class Document(Validations):
         return tables
 
     def to_xlsx(self, dest: Union[str, Path, io.BytesIO], ocr: "OCRInstance" = None, implicit_rows: bool = True,
-                min_confidence: int = 50):
+                min_confidence: int = 50) -> Optional[io.BytesIO]:
         """
-
+        Create xlsx file containing all extracted tables from document
         :param dest: destination for xlsx file
         :param ocr: OCRInstance object used to extract table content
         :param implicit_rows: boolean indicating if implicit rows are splitted
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
-        :return:
+        :return: if a buffer is passed as dest arg, it is returned containing xlsx data
         """
         # Extract tables
         extracted_tables = self.extract_tables(ocr=ocr,
@@ -99,6 +99,7 @@ class Document(Validations):
 
         # Create generic cell format
         cell_format = workbook.add_format({'align': 'center', 'valign': 'vcenter'})
+        cell_format.set_border()
 
         # For each extracted table, create a corresponding worksheet and populate it
         for page, tables in extracted_tables.items():
@@ -107,7 +108,7 @@ class Document(Validations):
                 sheet = workbook.add_worksheet(name=f"Page {page + 1} - Table {idx + 1}")
 
                 # Populate worksheet
-                table.to_worksheet(sheet=sheet, cell_fmt=cell_format)
+                table._to_worksheet(sheet=sheet, cell_fmt=cell_format)
 
         # Close workbook
         workbook.close()
