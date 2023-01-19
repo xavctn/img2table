@@ -3,4 +3,4 @@ numpy
 pymupdf>=1.19.1
 opencv-python-headless
 bs4
-xlsxwriter
+xlsxwriter>=3.0.6
