@@ -21,6 +21,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [AWS Textract](#textract)
       * [Azure Cognitive Services](#azure)
    * [Table extraction](#table-extract)
+   * [Excel export](#xlsx)
 * [Examples](#examples)
 * [Caveats / FYI](#fyi)
 
@@ -246,16 +247,16 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 #### Method return
 
-The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L23) class is used to model extracted tables from documents.
+The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is used to model extracted tables from documents.
 
 > <h4>Attributes</h4>
 ><dl>
->    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L9" target="_self">BBox</a></code></dt>
+>    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L12" target="_self">BBox</a></code></dt>
 >    <dd style="font-style: italic;">Table bounding box</dd>
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
->    <dd style="font-style: italic;">Dict with with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L17" target="_self">TableCell</a></code> objects as values</dd>
+>    <dd style="font-style: italic;">Dict with with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L20" target="_self">TableCell</a></code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
@@ -278,6 +279,44 @@ output = {
     last_page: [ExtractedTable(...), ...]
 }
 ```
+
+
+### Excel export <a name="xlsx"></a>
+
+Tables extracted from a document can be exported to a xlsx file. The resulting file is composed of one worksheet per extracted table.<br>
+Method arguments are mostly common with the `extract_tables` method.
+
+```python
+from img2table.ocr import TesseractOCR
+from img2table.document import Image
+
+# Instantiation of OCR
+ocr = TesseractOCR(n_threads=1, lang="eng")
+
+# Instantiation of document, either an image or a PDF
+doc = Image(src, dpi=200)
+
+# Extraction of tables and creation of an xlsx file containing tables
+doc.to_xlsx(dest=dest,
+            ocr=ocr,
+            implicit_rows=True,
+            min_confidence=50)
+```
+> <h4>Parameters</h4>
+><dl>
+>    <dt>dest : str, <code>pathlib.Path</code> or <code>io.BytesIO</code>, required</dt>
+>    <dd style="font-style: italic;">Destination for xlsx file</dd>
+>    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
+>    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dt>min_confidence : int, optional, default <code>50</code></dt>
+>    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
+></dl>
+> <h4>Returns</h4>
+> If a <code>io.BytesIO</code> buffer is passed as dest arg, it is returned containing xlsx data
+
+
 
 ## Examples <a name="examples"></a>
 

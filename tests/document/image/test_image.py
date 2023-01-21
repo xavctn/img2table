@@ -4,6 +4,7 @@ from collections import OrderedDict
 from io import BytesIO
 
 import pytest
+from openpyxl import load_workbook
 
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
@@ -52,3 +53,17 @@ def test_image_tables(mock_tesseract):
                     for tb in json.load(f)]
 
     assert result == expected
+
+
+def test_image_excel(mock_tesseract):
+    ocr = TesseractOCR()
+    img = Image(src="test_data/test.png")
+
+    result = img.to_xlsx(dest=BytesIO(), ocr=ocr, implicit_rows=True, min_confidence=50)
+
+    expected = load_workbook(filename="test_data/expected.xlsx")
+    result_wb = load_workbook(filename=result)
+
+    for idx, ws in enumerate(result_wb.worksheets):
+        assert ws.title == expected.worksheets[idx].title
+        assert list(ws.values) == list(expected.worksheets[idx].values)

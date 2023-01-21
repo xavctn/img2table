@@ -13,6 +13,7 @@ azure-cognitiveservices-vision-computervision
 pytest >= 6
 pytest-cov
 pytest-xdist
+openpyxl
 
 # Examples dependencies
 jupyter
