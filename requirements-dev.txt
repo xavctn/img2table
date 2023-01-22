@@ -14,7 +14,7 @@ pytest >= 6
 pytest-cov
 pytest-xdist
 openpyxl
-image-similarity-measures
+sewar
 
 # Examples dependencies
 jupyter

@@ -1,6 +1,7 @@
 # coding: utf-8
 import cv2
-from image_similarity_measures.quality_metrics import ssim
+import numpy as np
+from sewar import ssim
 
 from img2table.document.base.rotation import straightened_img, rotate_img, upside_down, fix_rotation_image
 
@@ -43,6 +44,7 @@ def test_fix_rotation_image():
 
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
+    similarities = list()
     for angle in range(-180, 180, 3):
         # Create test image by rotating it
         test_img = rotate_img(img=img.copy(), angle=angle)
@@ -50,5 +52,6 @@ def test_fix_rotation_image():
                                   orig_img=img)
 
         # Compute similarity between original image and result
-        similarity = ssim(org_img=img, pred_img=result)
-        assert similarity >= 0.9
+        similarities.append(ssim(GT=img, P=result)[0])
+
+    assert np.mean(similarities) >= 0.9
