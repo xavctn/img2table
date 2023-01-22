@@ -18,6 +18,9 @@ def test_validators():
     with pytest.raises(TypeError) as e_info:
         img = Image(src="img", dpi="8")
 
+    with pytest.raises(TypeError) as e_info:
+        img = Image(src="img", detect_rotation=3)
+
 
 def test_load_image():
     # Load from path
