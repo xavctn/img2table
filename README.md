@@ -108,7 +108,7 @@ image = Image(src,
 
 <br>
 
-:warning::warning::warning: 
+:warning::warning::warning: <br>
 The implemented method to handle skewed/rotated images is approximate and might not work on every image. 
 It is preferable to pass well-orientated images as inputs.<br>
 Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
