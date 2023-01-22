@@ -91,7 +91,9 @@ Images are instantiated as follows :
 ```python
 from img2table.document import Image
 
-image = Image(src, dpi=200)
+image = Image(src, 
+              dpi=200,
+              detect_rotation=False)
 ```
 
 > <h4>Parameters</h4>
@@ -100,7 +102,14 @@ image = Image(src, dpi=200)
 >    <dd style="font-style: italic;">Image source</dd>
 >    <dt>dpi : int, optional, default <code>200</code></dt>
 >    <dd style="font-style: italic;">Estimated image dpi, used to adapt OpenCV algorithm parameters</dd>
+>    <dt>detect_rotation : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Detect and correct skew/rotation of the image</dd>
 ></dl>
+
+**Caveat :** the implemented method to handle skewed/rotated images is approximate and might not work on every image. 
+It is preferable to pass well-orientated images as inputs.<br>
+Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
+methods might not correspond to the original image.
 
 #### PDF <a name="pdf-doc"></a>
 PDF files are instantiated as follows :
@@ -334,9 +343,6 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 ## Caveats / FYI <a name="fyi"></a>
 
 <ul>
-<li>
-Images are assumed to be straight. Rotated images may result in failure of table identification.
-</li>
 <li>
 Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
 </li>

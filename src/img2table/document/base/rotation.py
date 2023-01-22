@@ -65,7 +65,7 @@ def straightened_img(img: np.ndarray) -> Tuple[np.ndarray, float]:
 
 def upside_down(img: np.ndarray) -> bool:
     """
-    Identify is an image is upside down and rotate it if necessary
+    Identify is an image is upside down
     :param img: image array
     :return: boolean indicating if the image is upside down
     """
