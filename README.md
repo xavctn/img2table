@@ -108,10 +108,11 @@ image = Image(src,
 
 <br>
 
-> :warning: :warning: the implemented method to handle skewed/rotated images is approximate and might not work on every image. 
-> It is preferable to pass well-orientated images as inputs.<br>
-> Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
-> methods might not correspond to the original image.
+:warning::warning::warning: 
+The implemented method to handle skewed/rotated images is approximate and might not work on every image. 
+It is preferable to pass well-orientated images as inputs.<br>
+Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
+methods might not correspond to the original image.
 
 #### PDF <a name="pdf-doc"></a>
 PDF files are instantiated as follows :
