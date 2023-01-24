@@ -6,11 +6,19 @@ import cv2
 import numpy as np
 
 from img2table.document.base import Document
+from img2table.document.base.rotation import fix_rotation_image
 from img2table.tables.objects.extraction import ExtractedTable
 
 
 @dataclass
 class Image(Document):
+    detect_rotation: bool = False
+
+    def validate_detect_rotation(self, value, **_) -> int:
+        if not isinstance(value, bool):
+            raise TypeError(f"Invalid type {type(value)} for detect_rotation argument")
+        return value
+
     def __post_init__(self):
         self.pages = None
 
@@ -18,7 +26,8 @@ class Image(Document):
 
     @property
     def images(self) -> Iterator[np.ndarray]:
-        yield cv2.imdecode(np.frombuffer(self.bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+        img = cv2.imdecode(np.frombuffer(self.bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+        yield fix_rotation_image(img=img) if self.detect_rotation else img
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, min_confidence: int = 50) -> List[ExtractedTable]:
         """
