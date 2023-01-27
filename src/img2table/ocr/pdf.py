@@ -2,7 +2,7 @@
 from typing import List, Dict
 
 import fitz
-import pandas as pd
+import polars as pl
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
@@ -51,6 +51,6 @@ class PdfOCR(OCRInstance):
             return None
 
         # Create OCRDataframe
-        content_df = pd.concat(map(pd.DataFrame, content))
+        list_dfs = map(pl.from_dicts, content)
 
-        return OCRDataframe(df=content_df)
+        return OCRDataframe(df=pl.concat(list_dfs).lazy())

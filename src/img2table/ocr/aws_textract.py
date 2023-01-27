@@ -5,7 +5,7 @@ from typing import List, Iterator, Optional, Dict
 import boto3
 import cv2
 import numpy as np
-import pandas as pd
+import polars as pl
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
@@ -94,6 +94,6 @@ class TextractOCR(OCRInstance):
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = map(pd.DataFrame, content)
+        list_dfs = map(pl.from_dicts, content)
 
-        return OCRDataframe(df=pd.concat(list_dfs))
+        return OCRDataframe(df=pl.concat(list_dfs).lazy())
