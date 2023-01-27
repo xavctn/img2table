@@ -23,6 +23,6 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
 
     # Convert to Cell objects
     cells = [Cell(x1=row["x1"], x2=row["x2"], y1=row["y1"], y2=row["y2"])
-             for row in df_cells_dedup.to_dict(orient='records')]
+             for row in df_cells_dedup.collect().to_dicts()]
 
     return cells
