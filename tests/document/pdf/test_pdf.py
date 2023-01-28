@@ -9,8 +9,6 @@ from img2table.document.pdf import PDF
 from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import ExtractedTable, BBox, TableCell
 
-dpi = 300
-
 
 def test_validators():
     with pytest.raises(TypeError) as e_info:
@@ -20,23 +18,23 @@ def test_validators():
         pdf = PDF(src="img", dpi="8")
 
     with pytest.raises(TypeError) as e_info:
-        pdf = PDF(src="img", dpi=dpi, pages=12)
+        pdf = PDF(src="img", dpi=200, pages=12)
 
     with pytest.raises(TypeError) as e_info:
-        pdf = PDF(src="img", dpi=dpi, pages=["12"])
+        pdf = PDF(src="img", dpi=200, pages=["12"])
 
 
 def test_load_pdf():
     # Load from path
-    pdf_from_path = PDF(src="test_data/test.pdf", dpi=dpi)
+    pdf_from_path = PDF(src="test_data/test.pdf", dpi=300)
 
     # Load from bytes
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytes = PDF(src=f.read(), dpi=dpi)
+        pdf_from_bytes = PDF(src=f.read(), dpi=300)
 
     # Load from BytesIO
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytesio = PDF(src=BytesIO(f.read()), dpi=dpi)
+        pdf_from_bytesio = PDF(src=BytesIO(f.read()), dpi=300)
 
     assert pdf_from_path.bytes == pdf_from_bytes.bytes == pdf_from_bytesio.bytes
 
@@ -44,13 +42,13 @@ def test_load_pdf():
 
 
 def test_pdf_pages():
-    assert len(list(PDF(src="test_data/test.pdf", dpi=dpi).images)) == 2
-    assert len(list(PDF(src="test_data/test.pdf", dpi=dpi, pages=[0]).images)) == 1
+    assert len(list(PDF(src="test_data/test.pdf").images)) == 2
+    assert len(list(PDF(src="test_data/test.pdf", pages=[0]).images)) == 1
 
 
 def test_pdf_tables():
     ocr = TesseractOCR()
-    pdf = PDF(src="test_data/test.pdf", dpi=dpi)
+    pdf = PDF(src="test_data/test.pdf")
 
     result = pdf.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 

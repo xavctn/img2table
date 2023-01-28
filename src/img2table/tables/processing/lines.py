@@ -3,7 +3,7 @@ from typing import List
 
 import cv2
 import numpy as np
-import pandas as pd
+import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
@@ -90,41 +90,49 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
         return lines
 
     # Get words from dataframe
-    df_words = ocr_df.df[ocr_df.df['class'] == 'ocrx_word']
-    df_words = df_words[(df_words['confidence'] >= 50) | df_words['confidence'].isna()]
+    df_words = (ocr_df.df.filter(pl.col('class') == "ocrx_word")
+                .filter(pl.col('confidence') >= 50)
+                )
 
     # Create dataframe containing lines
-    df_lines = pd.DataFrame(data=[line.dict for line in lines])
-    df_lines['length'] = pd.concat([df_lines['width'], df_lines['height']], axis=1).max(axis=1)
-    df_lines['vertical'] = (df_lines['x1'] == df_lines['x2'])
-    df_lines['line_id'] = range(len(df_lines))
-    df_lines.columns = ['x1_line', 'x2_line', 'y1_line', 'y2_line', 'width', 'height', 'length', 'vertical', 'line_id']
+    df_lines = (pl.from_dicts(dicts=[line.dict for line in lines])
+                .lazy()
+                .with_columns([pl.max([pl.col('width'), pl.col('height')]).alias('length'),
+                               (pl.col('x1') == pl.col('x2')).alias('vertical')]
+                              )
+                .with_row_count(name="line_id")
+                .rename({"x1": "x1_line", "x2": "x2_line", "y1": "y1_line", "y2": "y2_line"})
+                )
 
     # Merge both dataframes
-    df_w_l = df_words.merge(df_lines, how='cross')
+    df_words_lines = df_words.join(df_lines, how='cross')
 
     # Compute intersection between words bbox and lines
     # - vertical case
     vert_int = (
-            ((df_w_l['x1_line'] > df_w_l['x1']) & (df_w_l['x1_line'] < df_w_l['x2'])).astype(int)
-            * (df_w_l[['y2', 'y2_line']].min(axis=1) - df_w_l[['y1', 'y1_line']].max(axis=1)).clip(0, None)
+        ((pl.col('x1_line') > pl.col('x1')) & (pl.col('x1_line') < pl.col('x2')))
+        * pl.max([(pl.min([pl.col('y2'), pl.col('y2_line')]) - pl.max([pl.col('y1'), pl.col('y1_line')])), pl.lit(0)])
     )
     # - horizontal case
     hor_int = (
-            ((df_w_l['y1_line'] > df_w_l['y1']) & (df_w_l['y1_line'] < df_w_l['y2'])).astype(int)
-            * (df_w_l[['x2', 'x2_line']].min(axis=1) - df_w_l[['x1', 'x1_line']].max(axis=1)).clip(0, None)
+        ((pl.col('y1_line') > pl.col('y1')) & (pl.col('y1_line') < pl.col('y2')))
+        * pl.max([(pl.min([pl.col('x2'), pl.col('x2_line')]) - pl.max([pl.col('x1'), pl.col('x1_line')])), pl.lit(0)])
     )
-    df_w_l['intersection'] = (df_w_l['vertical'].astype(int) * vert_int
-                              + (1 - df_w_l['vertical'].astype(int)) * hor_int)
+    df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
+                                                  + (1 - pl.col('vertical')) * hor_int).alias('intersection')
+                                                 )
 
     # Compute total intersection for each line
-    df_inter = (df_w_l.groupby(['line_id', 'length'])
-                .agg(intersection=('intersection', np.sum))
-                .reset_index()
+    df_inter = (df_words_lines.groupby(['line_id', 'length'])
+                .agg(pl.col('intersection').sum().alias('intersection'))
                 )
 
     # Identify lines that intersect words
-    intersecting_lines = df_inter[df_inter['intersection'] / df_inter['length'] > 0.5]['line_id'].values.tolist()
+    intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.5)
+                          .collect()
+                          .get_column('line_id')
+                          .to_list()
+                          )
 
     return [line for idx, line in enumerate(lines) if idx not in intersecting_lines]
 

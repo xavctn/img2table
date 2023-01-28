@@ -2,7 +2,7 @@
 import os
 
 import cv2
-import pandas as pd
+import polars as pl
 import pytest
 
 from img2table.document.image import Image
@@ -47,7 +47,7 @@ def test_tesseract_ocr_df():
 
     result = instance.to_ocr_dataframe(content=content)
 
-    expected = OCRDataframe(df=pd.read_csv("test_data/ocr_df.csv", sep=";"))
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     assert result == expected
 
@@ -58,6 +58,6 @@ def test_tesseract_document(mock_tesseract):
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pd.read_csv("test_data/ocr_df.csv", sep=";"))
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     assert result == expected

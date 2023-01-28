@@ -1,7 +1,7 @@
 # coding: utf-8
 import json
 
-import pandas as pd
+import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
@@ -29,7 +29,7 @@ def test_get_table_content():
                   for tb in json.load(f)]
 
     # Load OCR
-    ocr_df = OCRDataframe(pd.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8"))
+    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8").lazy())
 
     result = [table.get_content(ocr_df=ocr_df, min_confidence=50) for table in tables]
 

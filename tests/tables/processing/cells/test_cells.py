@@ -1,7 +1,7 @@
 # coding: utf-8
 import json
 
-import pandas as pd
+import polars as pl
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -17,8 +17,8 @@ def test_get_cells():
     result = get_cells(horizontal_lines=h_lines,
                        vertical_lines=v_lines)
 
-    df_expected = pd.read_csv("test_data/expected.csv", sep=";", encoding="utf-8")
+    df_expected = pl.read_csv("test_data/expected.csv", sep=";", encoding="utf-8")
     expected = [Cell(x1=row["x1"], x2=row["x2"], y1=row["y1"], y2=row["y2"])
-                for row in df_expected.to_dict(orient='records')]
+                for row in df_expected.to_dicts()]
 
     assert result == expected
