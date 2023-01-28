@@ -2,7 +2,7 @@
 import json
 import os
 
-import pandas as pd
+import polars as pl
 
 from img2table.document import Image
 from img2table.ocr import TextractOCR
@@ -45,7 +45,7 @@ def test_to_ocr_df(mock_textract):
 
     result = ocr.to_ocr_dataframe(content=[content])
 
-    expected = OCRDataframe(df=pd.read_csv("test_data/ocr_df.csv", sep=";"))
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     assert result == expected
 
@@ -59,6 +59,6 @@ def test_textract_ocr(mock_textract):
 
     result = ocr.of(document=img)
 
-    expected = OCRDataframe(df=pd.read_csv("test_data/ocr_df.csv", sep=";"))
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     assert result == expected
