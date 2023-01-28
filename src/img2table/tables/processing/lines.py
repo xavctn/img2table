@@ -110,21 +110,21 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
     # Compute intersection between words bbox and lines
     # - vertical case
     vert_int = (
-        ((pl.col('x1_line') > pl.col('x1')) & (pl.col('x1_line') < pl.col('x2'))).cast(pl.Int8)
+        ((pl.col('x1_line') > pl.col('x1')) & (pl.col('x1_line') < pl.col('x2')))
         * pl.max([(pl.min([pl.col('y2'), pl.col('y2_line')]) - pl.max([pl.col('y1'), pl.col('y1_line')])), pl.lit(0)])
     )
     # - horizontal case
     hor_int = (
-        ((pl.col('y1_line') > pl.col('y1')) & (pl.col('y1_line') < pl.col('y2'))).cast(pl.Int8)
+        ((pl.col('y1_line') > pl.col('y1')) & (pl.col('y1_line') < pl.col('y2')))
         * pl.max([(pl.min([pl.col('x2'), pl.col('x2_line')]) - pl.max([pl.col('x1'), pl.col('x1_line')])), pl.lit(0)])
     )
-    df_words_lines = df_words_lines.with_columns((pl.col('vertical').cast(pl.Int8) * vert_int
-                                                  + (1 - pl.col('vertical').cast(pl.Int8) * hor_int)).alias('intersection')
+    df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
+                                                  + (1 - pl.col('vertical')) * hor_int).alias('intersection')
                                                  )
 
     # Compute total intersection for each line
     df_inter = (df_words_lines.groupby(['line_id', 'length'])
-                .agg(pl.sum(pl.col('intersection')).alias('intersection'))
+                .agg(pl.col('intersection').sum().alias('intersection'))
                 )
 
     # Identify lines that intersect words

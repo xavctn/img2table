@@ -94,6 +94,6 @@ class TextractOCR(OCRInstance):
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = map(pl.from_dicts, content)
+        list_dfs = list(map(pl.from_dicts, content))
 
         return OCRDataframe(df=pl.concat(list_dfs).lazy())

@@ -15,8 +15,8 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     """
     default_df = pl.DataFrame(columns=["x1", "x2", "y1", "y2", 'width', "height"]).lazy()
     # Create dataframe from horizontal and vertical lines
-    df_h_lines = pl.from_dicts(map(lambda l: l.dict, horizontal_lines)).lazy() if horizontal_lines else default_df.clone()
-    df_v_lines = pl.from_dicts(map(lambda l: l.dict, vertical_lines)).lazy() if vertical_lines else default_df.clone()
+    df_h_lines = pl.from_dicts([l.dict for l in horizontal_lines]).lazy() if horizontal_lines else default_df.clone()
+    df_v_lines = pl.from_dicts([l.dict for l in vertical_lines]).lazy() if vertical_lines else default_df.clone()
 
     # Create copy of df_h_lines
     df_h_lines_cp = (df_h_lines.clone()
@@ -32,10 +32,10 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     cross_h_lines = cross_h_lines.with_columns([
         (((pl.col('x1') - pl.col('x1_')) / pl.col('width')).abs() <= 0.02).alias("l_corresponds"),
         (((pl.col('x2') - pl.col('x2_')) / pl.col('width')).abs() <= 0.02).alias("r_corresponds"),
-        ((pl.col('x1') <= pl.col('x1_') <= pl.col('x2'))
-         | (pl.col('x1_') <= pl.col('x1') <= pl.col('x2_'))).alias('l_contained'),
-        ((pl.col('x1') <= pl.col('x2_') <= pl.col('x2'))
-         | (pl.col('x1_') <= pl.col('x2') <= pl.col('x2_'))).alias('r_contained'),
+        (((pl.col('x1') <= pl.col('x1_')) & (pl.col('x1_') <= pl.col('x2')))
+         | ((pl.col('x1_') <= pl.col('x1')) & (pl.col('x1') <= pl.col('x2_')))).alias('l_contained'),
+        (((pl.col('x1') <= pl.col('x2_')) & (pl.col('x2_') <= pl.col('x2')))
+         | ((pl.col('x1_') <= pl.col('x2')) & (pl.col('x2') <= pl.col('x2_')))).alias('r_contained')
     ])
 
     # Create condition on horizontal correspondence in order to use both lines and filter on relevant combinations
@@ -44,11 +44,13 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     cross_h_lines = cross_h_lines.filter(matching_condition)
 
     # Create cell bbox from horizontal lines
-    df_bbox = cross_h_lines.select([pl.max([pl.col('x1'), pl.col('x1_')]).alias('x1_bbox'),
-                                    pl.min([pl.col('x2'), pl.col('x2_')]).alias('x2_bbox'),
-                                    pl.col('y1').alias("y1_bbox"),
-                                    pl.col('y1_').alias('y2_bbox')]
-                                   )
+    df_bbox = (cross_h_lines.select([pl.max([pl.col('x1'), pl.col('x1_')]).alias('x1_bbox'),
+                                     pl.min([pl.col('x2'), pl.col('x2_')]).alias('x2_bbox'),
+                                     pl.col('y1').alias("y1_bbox"),
+                                     pl.col('y1_').alias('y2_bbox')]
+                                    )
+               .with_row_count(name="idx")
+               )
 
     # Cross join with vertical lines
     df_bbox = df_bbox.with_columns(pl.max([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.05,
@@ -58,7 +60,7 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
 
     # Check horizontal correspondence between cell and vertical lines
     horizontal_cond = ((pl.col("x1_bbox") - pl.col("h_margin") <= pl.col("x1"))
-                       & (pl.col("x2_bbox") + pl.col("h_margin") > + pl.col("x1")))
+                       & (pl.col("x2_bbox") + pl.col("h_margin") >= pl.col("x1")))
     df_bbox_v = df_bbox_v.filter(horizontal_cond)
 
     # Check vertical overlapping
@@ -69,13 +71,13 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
                  )
 
     # Get all vertical delimiters by bbox
-    df_bbox_delimiters = (df_bbox_v.groupby(['index', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
+    df_bbox_delimiters = (df_bbox_v.groupby(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
                           .agg(pl.col('x1').apply(lambda x: [bound for bound in zip(sorted(x), sorted(x)[1:])] or None
                                                   ).alias('dels'))
                           )
 
     # Create new cells based on vertical delimiters
-    df_cells = (df_bbox_delimiters.filter(pl.col('dels').is_not_null())
+    df_cells = (df_bbox_delimiters.filter(pl.col("dels").arr.lengths() > 0)
                 .explode("dels")
                 .with_columns([pl.col('dels').arr.get(0).alias('x1_bbox'),
                                pl.col('dels').arr.get(1).alias('x2_bbox')])

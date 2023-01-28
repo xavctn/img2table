@@ -10,9 +10,6 @@ def deduplicate_cells_vertically(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     :param df_cells: dataframe containing cells
     :return: dataframe with deduplicate cells that have a common upper or lower bound
     """
-    # Get original columns
-    orig_cols = df_cells.columns
-
     # Deduplicate on upper bound
     df_cells = (df_cells.sort(by=["x1", "x2", "y1", "y2"])
                 .with_columns(pl.lit(1).alias('ones'))
@@ -27,7 +24,7 @@ def deduplicate_cells_vertically(df_cells: pl.LazyFrame) -> pl.LazyFrame:
                 .filter(pl.col('cell_rk') == 1)
                 )
 
-    return df_cells.select(orig_cols)
+    return df_cells
 
 
 def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
@@ -40,6 +37,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     df_cells = (df_cells.with_columns([(pl.col('x2') - pl.col('x1')).alias('width'),
                                        (pl.col('y2') - pl.col('y1')).alias('height')])
                 .with_columns((pl.col('height') * pl.col('width')).alias('area'))
+                .with_row_count(name="idx")
                 )
 
     # Create copy of df_cells
@@ -49,7 +47,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     # Cross join to get cells pairs and filter on right cells bigger than right cells
     df_cross_cells = (df_cells.join(df_cells_cp, how='cross')
-                      .filter(pl.col('index') != pl.col('index_'))
+                      .filter(pl.col('idx') != pl.col('idx_'))
                       .filter(pl.col('area') <= pl.col('area_'))
                       )
 
@@ -101,7 +99,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     # Get list of redundant cells and remove them from original cell dataframe
     redundant_cells = (df_cross_cells.filter(pl.col('redundant'))
                        .collect()
-                       .get_column('index_')
+                       .get_column('idx_')
                        .unique()
                        .to_list()
                        )

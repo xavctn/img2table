@@ -51,6 +51,6 @@ class PdfOCR(OCRInstance):
             return None
 
         # Create OCRDataframe
-        list_dfs = map(pl.from_dicts, content)
+        list_dfs = list(map(pl.from_dicts, content))
 
         return OCRDataframe(df=pl.concat(list_dfs).lazy())
