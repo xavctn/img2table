@@ -26,15 +26,15 @@ def test_validators():
 
 def test_load_pdf():
     # Load from path
-    pdf_from_path = PDF(src="test_data/test.pdf", dpi=dpi)
+    pdf_from_path = PDF(src="test_data/test.pdf", dpi=300)
 
     # Load from bytes
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytes = PDF(src=f.read(), dpi=dpi)
+        pdf_from_bytes = PDF(src=f.read(), dpi=300)
 
     # Load from BytesIO
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytesio = PDF(src=BytesIO(f.read()), dpi=dpi)
+        pdf_from_bytesio = PDF(src=BytesIO(f.read()), dpi=300)
 
     assert pdf_from_path.bytes == pdf_from_bytes.bytes == pdf_from_bytesio.bytes
 
@@ -42,8 +42,8 @@ def test_load_pdf():
 
 
 def test_pdf_pages():
-    assert len(list(PDF(src="test_data/test.pdf", dpi=dpi).images)) == 2
-    assert len(list(PDF(src="test_data/test.pdf", dpi=dpi, pages=[0]).images)) == 1
+    assert len(list(PDF(src="test_data/test.pdf").images)) == 2
+    assert len(list(PDF(src="test_data/test.pdf", pages=[0]).images)) == 1
 
 
 def test_pdf_tables():
