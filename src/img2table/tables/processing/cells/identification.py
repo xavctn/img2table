@@ -71,21 +71,24 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
                  )
 
     # Get all vertical delimiters by bbox
-    df_bbox_delimiters = (df_bbox_v.groupby(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
-                          .agg(pl.col('x1').apply(lambda x: [bound for bound in zip(sorted(x), sorted(x)[1:])] or None
-                                                  ).alias('dels'))
+    df_bbox_delimiters = (df_bbox_v.sort(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox", "x1"])
+                          .groupby(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
+                          .agg(pl.col('x1').list().alias('dels'))
+                          .filter(pl.col("dels").arr.lengths() >= 2)
                           )
 
     # Create new cells based on vertical delimiters
-    df_cells = (df_bbox_delimiters.filter(pl.col("dels").arr.lengths() > 0)
-                .explode("dels")
-                .with_columns([pl.col('dels').arr.get(0).alias('x1_bbox'),
-                               pl.col('dels').arr.get(1).alias('x2_bbox')])
+    df_cells = (df_bbox_delimiters.explode("dels")
+                .with_columns([pl.col('dels').shift(1).over(pl.col('idx')).alias("x1_bbox"),
+                               pl.col('dels').alias("x2_bbox")])
+                .filter(pl.col('x1_bbox').is_not_null())
                 .select([pl.col("x1_bbox").alias("x1"),
                          pl.col("y1_bbox").alias("y1"),
                          pl.col("x2_bbox").alias("x2"),
                          pl.col("y2_bbox").alias("y2")
                          ])
+                .sort(['x1', 'y1', 'x2', 'y2'])
+                .with_row_count(name="index")
                 )
 
     return df_cells
