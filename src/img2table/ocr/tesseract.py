@@ -96,7 +96,7 @@ class TesseractOCR(OCRInstance):
                 if str_conf:
                     d_el["confidence"] = int(str_conf[0].split()[1])
                 else:
-                    d_el["confidence"] = np.nan
+                    d_el["confidence"] = None
 
                 # Get bbox
                 bbox = re.findall(r"bbox \d{1,4} \d{1,4} \d{1,4} \d{1,4}", element["title"])[0]

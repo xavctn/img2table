@@ -2,7 +2,7 @@
 import json
 
 import cv2
-import pandas as pd
+import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.image import TableImage
@@ -13,7 +13,7 @@ from img2table.tables.objects.table import Table
 
 def test_table_image():
     image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(pd.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8"))
+    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8").lazy())
 
     tb_image = TableImage(img=image,
                           dpi=200,
