@@ -42,17 +42,16 @@ def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
     clusters = list()
     for i in range(len(cells)):
         for j in range(i, len(cells)):
-            # Check if pair of cells is already in a cluster
-            if not any(map(lambda cl: {i, j}.intersection(cl) == {i, j}, clusters)):
-                adjacent = adjacent_cells(cells[i], cells[j])
-                # If cells are adjacent, find matching clusters
-                if adjacent:
-                    matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
-                    if matching_clusters:
-                        cl_id = matching_clusters.pop()
-                        clusters[cl_id] = clusters[cl_id].union({i, j})
-                    else:
-                        clusters.append({i, j})
+            adjacent = adjacent_cells(cells[i], cells[j])
+            # If cells are adjacent, find matching clusters
+            if adjacent:
+                matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
+                if matching_clusters:
+                    remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
+                    new_cluster = {i, j}.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
+                    clusters = remaining_clusters + [new_cluster]
+                else:
+                    clusters.append({i, j})
 
     # Return list of cell objects
     list_table_cells = [[cells[idx] for idx in cl] for cl in clusters]
