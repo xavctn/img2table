@@ -44,17 +44,19 @@ class TesseractOCR(OCRInstance):
         :return: hOCR HTML string
         """
         with NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_f:
+            tmp_file = tmp_f.name
             # Write image to temporary file
-            cv2.imwrite(tmp_f.name, image)
+            cv2.imwrite(tmp_file, image)
 
             # Get hOCR
-            hocr = subprocess.check_output(f"tesseract {tmp_f.name} stdout --psm 11 -l {self.lang} hocr",
-                                           stderr=subprocess.STDOUT)
+            hocr = subprocess.check_output(f"tesseract {tmp_file} stdout --psm 11 -l {self.lang} hocr",
+                                           stderr=subprocess.STDOUT,
+                                           shell=True)
 
         # Remove temporary file
-        while os.path.exists(tmp_f.name):
+        while os.path.exists(tmp_file):
             try:
-                os.remove(tmp_f.name)
+                os.remove(tmp_file)
             except PermissionError:
                 pass
 
