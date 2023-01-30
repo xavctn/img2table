@@ -1,4 +1,4 @@
-polars[pandas]<0.16
+polars[pandas]
 numpy
 pymupdf>=1.19.1
 opencv-python
