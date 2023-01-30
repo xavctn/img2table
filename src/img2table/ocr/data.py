@@ -70,7 +70,7 @@ class OCRDataframe:
                                 pl.col('x2').max(),
                                 pl.col('y1').min(),
                                 pl.col('y2').max(),
-                                pl.col('value').list()])
+                                pl.col('value').alias('value')])
                           .sort([pl.col("y1"), pl.col("x1")])
                           )
 
@@ -136,10 +136,10 @@ class OCRDataframe:
                                 pl.col('x2').max(),
                                 pl.col('y1').min(),
                                 pl.col('y2').max(),
-                                pl.col('value').list().apply(lambda x: ' '.join(x)).alias('value')])
+                                pl.col('value').apply(lambda x: ' '.join(x)).alias('value')])
                           .sort([pl.col("row"), pl.col("col"), pl.col('y1'), pl.col('x1')])
                           .groupby(['row', 'col'])
-                          .agg(pl.col('value').list().apply(lambda x: '\n'.join(x).strip()).alias('text'))
+                          .agg(pl.col('value').apply(lambda x: '\n'.join(x).strip()).alias('text'))
                           )
 
         # Implement found values to table cells content
