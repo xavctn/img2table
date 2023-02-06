@@ -347,6 +347,7 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 
 <ul>
 <li>
-Table identification only works on tables with borders. "Aligned" blocks of text are not recognized.
+Table identification only works on tables with borders. Borderless tables are not supported, as they would most likely 
+require NN-based methods.
 </li>
 </ul>

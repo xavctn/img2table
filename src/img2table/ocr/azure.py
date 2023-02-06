@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import List, Optional
 
 import cv2
-import pandas as pd
+import polars as pl
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import ReadOperationResult, OperationStatusCodes
 from msrest.authentication import CognitiveServicesCredentials
@@ -106,6 +106,6 @@ class AzureOCR(OCRInstance):
 
                         word_elements.append(d_word)
 
-            list_dfs.append(pd.DataFrame(word_elements))
+            list_dfs.append(pl.from_dicts(word_elements))
 
-        return OCRDataframe(df=pd.concat(list_dfs))
+        return OCRDataframe(df=pl.concat(list_dfs).lazy())

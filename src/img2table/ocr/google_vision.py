@@ -7,7 +7,7 @@ from typing import List, Optional, Dict
 
 import cv2
 import numpy as np
-import pandas as pd
+import polars as pl
 import requests
 from google.cloud import vision, vision_v1
 
@@ -243,6 +243,6 @@ class VisionOCR(OCRInstance):
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = map(pd.DataFrame, content)
+        list_dfs = list(map(pl.from_dicts, content))
 
-        return OCRDataframe(df=pd.concat(list_dfs))
+        return OCRDataframe(df=pl.concat(list_dfs).lazy())

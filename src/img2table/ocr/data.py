@@ -1,8 +1,7 @@
 # coding: utf-8
 from dataclasses import dataclass
 
-import numpy as np
-import pandas as pd
+import polars as pl
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.table import Table
@@ -10,10 +9,12 @@ from img2table.tables.objects.table import Table
 
 @dataclass
 class OCRDataframe:
-    df: pd.DataFrame
+    df: pl.LazyFrame
 
     def page(self, page_number: int = 0) -> "OCRDataframe":
-        return OCRDataframe(df=self.df[self.df["page"] == page_number])
+        # Filter dataframe on specific page
+        df_page = self.df.filter(pl.col('page') == page_number)
+        return OCRDataframe(df=df_page)
 
     def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
         """
@@ -28,45 +29,59 @@ class OCRDataframe:
         bbox = cell.bbox(margin=margin)
 
         # Filter dataframe on relevant page
-        df_words = self.df[(self.df["class"] == "ocrx_word")]
+        df_words = self.df.filter(pl.col('class') == "ocrx_word")
         if page_number:
-            df_words = df_words[df_words["page"] == page_number]
+            df_words = df_words.filter(pl.col('page') == page_number)
         # Filter dataframe on relevant words
-        df_words = df_words[df_words["value"].notnull() & (df_words["confidence"] >= min_confidence)]
+        df_words = df_words.filter(pl.col('value').is_not_null() & (pl.col('confidence') >= min_confidence))
 
         # Compute coordinates of intersection
-        df_words = df_words.assign(**{"x1_bbox": bbox[0],
-                                      "y1_bbox": bbox[1],
-                                      "x2_bbox": bbox[2],
-                                      "y2_bbox": bbox[3]})
-        df_words["x_left"] = df_words[["x1", "x1_bbox"]].max(axis=1)
-        df_words["y_top"] = df_words[["y1", "y1_bbox"]].max(axis=1)
-        df_words["x_right"] = df_words[["x2", "x2_bbox"]].min(axis=1)
-        df_words["y_bottom"] = df_words[["y2", "y2_bbox"]].min(axis=1)
+        df_words = (df_words.with_columns([pl.lit(bbox[0]).alias('x1_bbox'),
+                                           pl.lit(bbox[1]).alias('y1_bbox'),
+                                           pl.lit(bbox[2]).alias('x2_bbox'),
+                                           pl.lit(bbox[3]).alias('y2_bbox')]
+                                          )
+                    .with_columns([pl.max([pl.col('x1'), pl.col('x1_bbox')]).alias('x_left'),
+                                   pl.max([pl.col('y1'), pl.col('y1_bbox')]).alias('y_top'),
+                                   pl.min([pl.col('x2'), pl.col('x2_bbox')]).alias('x_right'),
+                                   pl.min([pl.col('y2'), pl.col('y2_bbox')]).alias('y_bottom'),
+                                   ])
+                    )
 
         # Filter where intersection is not empty
-        df_words = df_words[df_words["x_right"] > df_words["x_left"]]
-        df_words = df_words[df_words["y_bottom"] > df_words["y_top"]]
+        df_intersection = (df_words.filter(pl.col("x_right") > pl.col("x_left"))
+                           .filter(pl.col("y_bottom") > pl.col("y_top"))
+                           )
 
         # Compute area of word bbox and intersection
-        df_words["w_area"] = (df_words["x2"] - df_words["x1"]) * (df_words["y2"] - df_words["y1"])
-        df_words["int_area"] = (df_words["x_right"] - df_words["x_left"]) * (df_words["y_bottom"] - df_words["y_top"])
+        df_areas = (df_intersection.with_columns([
+            ((pl.col('x2') - pl.col('x1')) * (pl.col('y2') - pl.col('y1'))).alias('w_area'),
+            ((pl.col('x_right') - pl.col('x_left')) * (pl.col('y_bottom') - pl.col('y_top'))).alias('int_area')
+        ])
+        )
 
         # Filter on words where its bbox is contained in area
-        df_words_contained = df_words[df_words["int_area"] / df_words["w_area"] >= 0.75]
+        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') >= 0.75)
 
         # Group text by parents
-        df_text_parent = (df_words_contained.groupby('parent')
-                          .agg(x1=("x1", np.min),
-                               x2=("x2", np.max),
-                               y1=("y1", np.min),
-                               y2=("y2", np.max),
-                               value=("value", lambda x: ' '.join(x)))
-                          .sort_values(by=["y1", "x1"])
+        df_text_parent = (df_words_contained
+                          .groupby('parent')
+                          .agg([pl.col('x1').min(),
+                                pl.col('x2').max(),
+                                pl.col('y1').min(),
+                                pl.col('y2').max(),
+                                pl.col('value').alias('value')])
+                          .sort([pl.col("y1"), pl.col("x1")])
                           )
 
         # Concatenate all lines
-        return df_text_parent["value"].astype(str).str.cat(sep="\n").strip() or None
+        text_lines = (df_text_parent.select(pl.col('value'))
+                      .collect()
+                      .get_column('value')
+                      .to_list()
+                      )
+
+        return "\n".join([" ".join(line).strip() for line in text_lines]).strip() or None
 
     def get_text_table(self, table: Table, page_number: int = None, min_confidence: int = 50) -> Table:
         """
@@ -77,65 +92,66 @@ class OCRDataframe:
         :return: table with content set on all cells
         """
         # Filter dataframe on relevant page
-        df_words = self.df[(self.df["class"] == "ocrx_word")]
+        df_words = self.df.filter(pl.col('class') == "ocrx_word")
         if page_number:
-            df_words = df_words[df_words["page"] == page_number]
+            df_words = df_words.filter(pl.col('page') == page_number)
         # Filter dataframe on relevant words
-        df_words = df_words[df_words["value"].notnull() & (df_words["confidence"] >= min_confidence)]
+        df_words = df_words.filter(pl.col('value').is_not_null() & (pl.col('confidence') >= min_confidence))
 
         # Create dataframe containing all coordinates of Cell objects
         list_cells = [{"row": id_row, "col": id_col, "x1_w": cell.x1, "x2_w": cell.x2, "y1_w": cell.y1, "y2_w": cell.y2}
                       for id_row, row in enumerate(table.items)
                       for id_col, cell in enumerate(row.items)]
-        df_cells = pd.DataFrame(list_cells)
+        df_cells = pl.from_dicts(dicts=list_cells).lazy()
 
         # Cartesian product between two dataframes
-        df_word_cells = df_words.merge(df_cells, how="cross")
+        df_word_cells = df_words.join(other=df_cells, how="cross")
 
         # Compute coordinates of intersection
-        df_word_cells["x_left"] = df_word_cells[["x1", "x1_w"]].max(axis=1)
-        df_word_cells["y_top"] = df_word_cells[["y1", "y1_w"]].max(axis=1)
-        df_word_cells["x_right"] = df_word_cells[["x2", "x2_w"]].min(axis=1)
-        df_word_cells["y_bottom"] = df_word_cells[["y2", "y2_w"]].min(axis=1)
+        df_word_cells = df_word_cells.with_columns([pl.max([pl.col('x1'), pl.col('x1_w')]).alias('x_left'),
+                                                    pl.max([pl.col('y1'), pl.col('y1_w')]).alias('y_top'),
+                                                    pl.min([pl.col('x2'), pl.col('x2_w')]).alias('x_right'),
+                                                    pl.min([pl.col('y2'), pl.col('y2_w')]).alias('y_bottom'),
+                                                    ])
 
         # Filter where intersection is not empty
-        df_word_cells = df_word_cells[df_word_cells["x_right"] > df_word_cells["x_left"]]
-        df_word_cells = df_word_cells[df_word_cells["y_bottom"] > df_word_cells["y_top"]]
+        df_intersection = (df_word_cells.filter(pl.col("x_right") > pl.col("x_left"))
+                           .filter(pl.col("y_bottom") > pl.col("y_top"))
+                           )
 
         # Compute area of word bbox and intersection
-        df_word_cells["w_area"] = (df_word_cells["x2"] - df_word_cells["x1"]) * (df_word_cells["y2"] - df_word_cells["y1"])
-        df_word_cells["int_area"] = (df_word_cells["x_right"] - df_word_cells["x_left"]) * (df_word_cells["y_bottom"] - df_word_cells["y_top"])
+        df_areas = (df_intersection.with_columns([
+            ((pl.col('x2') - pl.col('x1')) * (pl.col('y2') - pl.col('y1'))).alias('w_area'),
+            ((pl.col('x_right') - pl.col('x_left')) * (pl.col('y_bottom') - pl.col('y_top'))).alias('int_area')
+        ])
+        )
 
         # Filter on words where its bbox is contained in area
-        df_words_contained = df_word_cells[df_word_cells["int_area"] / df_word_cells["w_area"] >= 0.75]
-
-        # If no words are contained, return the table
-        if len(df_words_contained) == 0:
-            return table
+        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') >= 0.75)
 
         # Group text by parent
-        df_text_parent = (df_words_contained.groupby(['row', 'col', 'parent'])
-                          .agg(x1=("x1", np.min),
-                               x2=("x2", np.max),
-                               y1=("y1", np.min),
-                               y2=("y2", np.max),
-                               value=("value", lambda x: ' '.join(x)))
-                          .sort_values(by=["row", "col", "y1", "x1"])
-                          .groupby(["row", "col"])
-                          .agg(text=("value", lambda x: "\n".join(x) or None))
-                          .reset_index()
+        df_text_parent = (df_words_contained
+                          .groupby(['row', 'col', 'parent'])
+                          .agg([pl.col('x1').min(),
+                                pl.col('x2').max(),
+                                pl.col('y1').min(),
+                                pl.col('y2').max(),
+                                pl.col('value').apply(lambda x: ' '.join(x)).alias('value')])
+                          .sort([pl.col("row"), pl.col("col"), pl.col('y1'), pl.col('x1')])
+                          .groupby(['row', 'col'])
+                          .agg(pl.col('value').apply(lambda x: '\n'.join(x).strip()).alias('text'))
                           )
 
         # Implement found values to table cells content
-        for rec in df_text_parent.to_dict(orient='records'):
-            table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text').strip() or None
+        for rec in df_text_parent.collect().to_dicts():
+            table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text') or None
 
         return table
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             try:
-                assert self.df.equals(other.df)
+                assert self.df.collect().frame_equal(other.df.collect())
                 return True
             except AssertionError:
                 return False

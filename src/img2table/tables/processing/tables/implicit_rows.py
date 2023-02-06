@@ -3,6 +3,7 @@ import copy
 from typing import List
 
 import numpy as np
+import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.table import Table
@@ -17,14 +18,14 @@ def create_word_image(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
     :return: image containing only words from the hOCR
     """
     # Extract words
-    df_words = ocr_df.df[ocr_df.df['class'] == 'ocrx_word']
+    df_words = ocr_df.df.filter(pl.col('class') == 'ocrx_word')
 
     # Create image where words will be put and fill it in white
     words_img = np.zeros(img.shape, dtype=np.uint8)
     words_img.fill(255)
 
     # Extract each word from hocr and copy bbox to white image
-    for word in df_words.to_dict(orient='records'):
+    for word in df_words.collect().to_dicts():
         # Get cropped image of word
         cropped_img = img[word.get('y1'):word.get('y2'), word.get('x1'):word.get('x2')]
 

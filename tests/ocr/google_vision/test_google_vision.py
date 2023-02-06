@@ -3,7 +3,7 @@ import json
 import os
 import pickle
 
-import pandas as pd
+import polars as pl
 import pytest
 
 from img2table.document import Image
@@ -56,7 +56,7 @@ def test_vision_ocr(mock_vision):
     with open("test_data/expected_content.json", "r") as f:
         content = json.load(f)
 
-    expected_ocr_df = OCRDataframe(df=pd.read_csv("test_data/ocr_df.csv", sep=";"))
+    expected_ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     # Test init error
     with pytest.raises(TypeError) as e_info:

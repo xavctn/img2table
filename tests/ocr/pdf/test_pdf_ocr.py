@@ -1,7 +1,7 @@
 # coding: utf-8
 import json
 
-import pandas as pd
+import polars as pl
 
 from img2table.document.pdf import PDF
 from img2table.ocr.data import OCRDataframe
@@ -28,8 +28,7 @@ def test_pdf_ocr_df():
 
     result = instance.to_ocr_dataframe(content=content)
 
-    df_expected = pd.read_csv("test_data/ocr_df.csv", sep=";")
-    df_expected.index = result.df.index
+    df_expected = pl.read_csv("test_data/ocr_df.csv", sep=";").lazy()
     expected = OCRDataframe(df=df_expected)
 
     assert result == expected
@@ -41,8 +40,7 @@ def test_pdf_document():
 
     result = instance.of(document=doc)
 
-    df_expected = pd.read_csv("test_data/ocr_df.csv", sep=";")
-    df_expected.index = result.df.index
+    df_expected = pl.read_csv("test_data/ocr_df.csv", sep=";").lazy()
     expected = OCRDataframe(df=df_expected)
 
     assert result == expected

@@ -9,7 +9,7 @@ from typing import List, Iterator
 
 import cv2
 import numpy as np
-import pandas as pd
+import polars as pl
 from bs4 import BeautifulSoup
 
 from img2table.document.base import Document
@@ -44,17 +44,19 @@ class TesseractOCR(OCRInstance):
         :return: hOCR HTML string
         """
         with NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_f:
+            tmp_file = tmp_f.name
             # Write image to temporary file
-            cv2.imwrite(tmp_f.name, image)
+            cv2.imwrite(tmp_file, image)
 
             # Get hOCR
-            hocr = subprocess.check_output(f"tesseract {tmp_f.name} stdout --psm 11 -l {self.lang} hocr",
-                                           stderr=subprocess.STDOUT)
+            hocr = subprocess.check_output(f"tesseract {tmp_file} stdout --psm 11 -l {self.lang} hocr",
+                                           stderr=subprocess.STDOUT,
+                                           shell=True)
 
         # Remove temporary file
-        while os.path.exists(tmp_f.name):
+        while os.path.exists(tmp_file):
             try:
-                os.remove(tmp_f.name)
+                os.remove(tmp_file)
             except PermissionError:
                 pass
 
@@ -96,7 +98,7 @@ class TesseractOCR(OCRInstance):
                 if str_conf:
                     d_el["confidence"] = int(str_conf[0].split()[1])
                 else:
-                    d_el["confidence"] = np.nan
+                    d_el["confidence"] = None
 
                 # Get bbox
                 bbox = re.findall(r"bbox \d{1,4} \d{1,4} \d{1,4} \d{1,4}", element["title"])[0]
@@ -106,6 +108,6 @@ class TesseractOCR(OCRInstance):
                 list_elements.append(d_el)
 
             # Create dataframe
-            list_dfs.append(pd.DataFrame(list_elements))
+            list_dfs.append(pl.from_dicts(list_elements))
 
-        return OCRDataframe(df=pd.concat(list_dfs))
+        return OCRDataframe(df=pl.concat(list_dfs).lazy())
