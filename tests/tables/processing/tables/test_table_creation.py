@@ -4,7 +4,7 @@ import json
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.tables.table_creation import normalize_table_cells, is_contained, cluster_to_table
+from img2table.tables.processing.tables.table_creation import normalize_table_cells, cluster_to_table
 
 
 def test_normalize_table_cells():
@@ -17,15 +17,6 @@ def test_normalize_table_cells():
         expected = [[Cell(**el) for el in cluster] for cluster in json.load(f)]
 
     assert result == expected
-
-
-def test_is_contained():
-    cell_1 = Cell(x1=100, y1=100, x2=200, y2=200)
-    cell_2 = Cell(x1=0, y1=0, x2=300, y2=195)
-    cell_3 = Cell(x1=1000, y1=1000, x2=2000, y2=2000)
-
-    assert is_contained(inner_cell=cell_1, outer_cell=cell_2)
-    assert not is_contained(inner_cell=cell_1, outer_cell=cell_3)
 
 
 def test_cluster_to_table():

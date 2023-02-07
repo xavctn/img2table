@@ -6,6 +6,7 @@ import numpy as np
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
+from img2table.tables.processing.common import is_contained_cell
 
 
 def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
@@ -44,32 +45,6 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
     return normalized_cells
 
 
-def is_contained(inner_cell: Cell, outer_cell: Cell, pct: float = 0.9) -> bool:
-    """
-    Compute if the inner cell is contained in the outer cell
-    :param inner_cell: inner Cell object
-    :param outer_cell: outer Cell object
-    :param pct: percentage of the inner cell that needs to be contained in outer cell
-    :return: boolean indicating if the inner cell is contained in the outer cell
-    """
-    # Compute intersection coordinates
-    x_left = max(inner_cell.x1, outer_cell.x1)
-    x_right = min(inner_cell.x2, outer_cell.x2)
-    y_top = max(inner_cell.y1, outer_cell.y1)
-    y_bottom = min(inner_cell.y2, outer_cell.y2)
-
-    # If intersection is empty, return False
-    if x_right < x_left or y_bottom < y_top:
-        return False
-
-    # Compute inner cell and intersection area
-    inner_cell_area = inner_cell.height * inner_cell.width
-    intersection_area = (x_right - x_left) * (y_bottom - y_top)
-
-    # Check percentage of the inner cell contained in outer cell
-    return intersection_area / inner_cell_area > pct
-
-
 def cluster_to_table(cluster_cells: List[Cell]) -> Table:
     """
     Convert a cell cluster to a Table object
@@ -91,7 +66,8 @@ def cluster_to_table(cluster_cells: List[Cell]) -> Table:
             default_cell = Cell(x1=x_left, y1=y_top, x2=x_right, y2=y_bottom)
 
             # Check cells that contain the default cell
-            containing_cells = sorted([c for c in cluster_cells if is_contained(inner_cell=default_cell, outer_cell=c)],
+            containing_cells = sorted([c for c in cluster_cells
+                                       if is_contained_cell(inner_cell=default_cell, outer_cell=c, percentage=0.9)],
                                       key=lambda c: c.width * c.height)
 
             # Append either a cell that contain the default cell, or the default cell itself

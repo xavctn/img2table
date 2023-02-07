@@ -97,7 +97,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
 
 
 def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: int = 9, kernel_size: int = 15,
-                      merge_vertically: bool = True) -> List[Cell]:
+                      merge_vertically: Optional[bool] = True) -> List[Cell]:
     """
     Get list of contours contained in cell
     :param img: image array
