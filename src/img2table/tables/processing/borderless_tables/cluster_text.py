@@ -60,6 +60,30 @@ def aligned_cells(cell_1: Cell, cell_2: Cell) -> bool:
     return left_aligned(cell_1, cell_2) or right_aligned(cell_1, cell_2) or center_aligned(cell_1, cell_2)
 
 
+def vertically_coherent_cluster(cluster: List[Cell]):
+    """
+    Verify if cluster if vertically coherent and split into sub-clusters if needed
+    :param cluster: cluster of text contours based on alignment
+    :return: vertically coherent clusters
+    """
+    # Sort cluster by vertical position
+    cluster = sorted(cluster, key=lambda c: c.y1 + c.y2)
+
+    # Compute median of distance between two elements of the cluster
+    med_dist = np.median([bottom.y1 + bottom.y2 - top.y1 - top.y2 for top, bottom in zip(cluster, cluster[1:])])
+
+    # Create sub clusters based on vertical distance
+    seq = iter(cluster)
+    subclusters = [[next(seq)]]
+    for c in seq:
+        distance = c.y1 + c.y2 - subclusters[-1][-1].y1 - subclusters[-1][-1].y2
+        if distance > 2 * med_dist or distance < 0.5 * med_dist:
+            subclusters.append([])
+        subclusters[-1].append(c)
+
+    return [subcl for subcl in subclusters if len(subcl) > 1]
+
+
 def cluster_text_contours(segment: List[Cell]) -> List[List[Cell]]:
     """
     Cluster text contours based on alignment
@@ -87,7 +111,10 @@ def cluster_text_contours(segment: List[Cell]) -> List[List[Cell]]:
     # Merge corresponding cells in each cluster
     clusters = [merge_contours(contours=[cells[idx] for idx in cl]) for cl in clusters]
 
-    # Order clusters by horizontal position
-    clusters = sorted(clusters, key=lambda cl: np.mean([c.x1 + c.x2 for c in cl]))
+    # Get vertically coherent clusters
+    v_clusters = [subcl for cluster in clusters for subcl in vertically_coherent_cluster(cluster=cluster)]
 
-    return clusters
+    # Order clusters by horizontal position
+    v_clusters = sorted(v_clusters, key=lambda cl: np.mean([c.x1 + c.x2 for c in cl]))
+
+    return v_clusters
