@@ -56,6 +56,10 @@ def aligned_cells(cell_1: Cell, cell_2: Cell) -> bool:
     :param cell_2: Cell object
     :return: boolean indicating if cells are aligned
     """
+    # Check for width coherency
+    if min(cell_1.width, cell_2.width) / max(cell_1.width, cell_2.width) < 0.25:
+        return False
+
     # Check for each type of alignment
     return left_aligned(cell_1, cell_2) or right_aligned(cell_1, cell_2) or center_aligned(cell_1, cell_2)
 
