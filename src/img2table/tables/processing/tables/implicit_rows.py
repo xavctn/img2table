@@ -10,15 +10,18 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.common import get_contours_cell
 
 
-def create_word_image(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
+def create_word_image(img: np.ndarray, ocr_df: OCRDataframe, min_confidence: int = 0) -> np.ndarray:
     """
     Create blank image containing only words from the hOCR
     :param img: original image
     :param ocr_df: OCRDataframe object
+    :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
     :return: image containing only words from the hOCR
     """
     # Extract words
-    df_words = ocr_df.df.filter(pl.col('class') == 'ocrx_word')
+    df_words = (ocr_df.df.filter(pl.col('class') == 'ocrx_word')
+                .filter(pl.col('confidence') >= min_confidence)
+                )
 
     # Create image where words will be put and fill it in white
     words_img = np.zeros(img.shape, dtype=np.uint8)

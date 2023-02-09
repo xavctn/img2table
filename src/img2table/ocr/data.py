@@ -16,6 +16,20 @@ class OCRDataframe:
         df_page = self.df.filter(pl.col('page') == page_number)
         return OCRDataframe(df=df_page)
 
+    @property
+    def text_size(self) -> float:
+        """
+        Get average text height in pixels
+        :return: average text height in pixels
+        """
+        # Compute average text size
+        df_text_size = (self.df.filter(pl.col('class') == "ocrx_word")
+                        .select((pl.col('y2') - pl.col('y1')).alias('size'))
+                        .mean()
+                        )
+
+        return df_text_size.collect().to_dicts().pop().get('size')
+
     def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
         """
         Get text corresponding to cell

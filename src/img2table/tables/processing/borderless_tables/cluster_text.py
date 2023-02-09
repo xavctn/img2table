@@ -4,7 +4,6 @@ from typing import List
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.common import merge_contours
 
 
 def left_aligned(cell_1: Cell, cell_2: Cell) -> bool:
@@ -98,22 +97,37 @@ def cluster_text_contours(segment: List[Cell]) -> List[List[Cell]]:
     cells = sorted(set(segment), key=lambda c: (c.y1, c.x1))
 
     # Create clusters based on alignment of cells
-    clusters = list()
-    for i in range(len(cells)):
-        for j in range(i + 1, len(cells)):
-            aligned = aligned_cells(cells[i], cells[j])
-            # If cells are adjacent, find matching clusters
-            if aligned:
-                matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
-                if matching_clusters:
-                    remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
-                    new_cluster = {i, j}.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
-                    clusters = remaining_clusters + [new_cluster]
-                else:
-                    clusters.append({i, j})
+    total_clusters = list()
+    for func in (left_aligned, right_aligned, center_aligned):
+        clusters = list()
+        for i in range(len(cells)):
+            for j in range(i + 1, len(cells)):
+                aligned = func(cells[i], cells[j])
+                # If cells are adjacent, find matching clusters
+                if aligned:
+                    matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
+                    if matching_clusters:
+                        remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
+                        new_cluster = {i, j}.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
+                        clusters = remaining_clusters + [new_cluster]
+                    else:
+                        clusters.append({i, j})
 
-    # Merge corresponding cells in each cluster
-    clusters = [merge_contours(contours=[cells[idx] for idx in cl]) for cl in clusters]
+        total_clusters.extend(clusters)
+
+    # Check if there are some clusters
+    if len(total_clusters) == 0:
+        return []
+
+    # Get maximal clusters
+    seq = iter(sorted(total_clusters, key=lambda cc: len(cc), reverse=True))
+    dedup_clusters = [next(seq)]
+    for cl in seq:
+        if not any([cl.intersection(c) == cl for c in dedup_clusters]):
+            dedup_clusters.append(cl)
+
+    # Get cells in clusters
+    clusters = [[cells[idx] for idx in cl] for cl in dedup_clusters]
 
     # Get vertically coherent clusters
     v_clusters = [subcl for cluster in clusters for subcl in vertically_coherent_cluster(cluster=cluster)]
