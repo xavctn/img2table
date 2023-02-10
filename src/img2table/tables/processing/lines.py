@@ -85,14 +85,14 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
     :param ocr_df: OCRDataframe object
     :return: list of lines not intersecting with words
     """
-    # If there are no lines, do nothing
-    if len(lines) == 0:
-        return lines
-
     # Get words from dataframe
     df_words = (ocr_df.df.filter(pl.col('class') == "ocrx_word")
                 .filter(pl.col('confidence') >= 50)
                 )
+
+    # If there are no lines or no words, do nothing
+    if len(lines) == 0 or df_words.collect().height == 0:
+        return lines
 
     # Create dataframe containing lines
     df_lines = (pl.from_dicts(dicts=[line.dict for line in lines])
