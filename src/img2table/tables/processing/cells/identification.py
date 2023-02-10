@@ -13,10 +13,13 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     :param vertical_lines: list of vertical lines
     :return: dataframe containing all cells
     """
-    default_df = pl.DataFrame(columns=["x1", "x2", "y1", "y2", 'width', "height"]).lazy()
+    # Check for empty lines
+    if len(horizontal_lines) * len(vertical_lines) == 0:
+        return pl.DataFrame().lazy()
+
     # Create dataframe from horizontal and vertical lines
-    df_h_lines = pl.from_dicts([l.dict for l in horizontal_lines]).lazy() if horizontal_lines else default_df.clone()
-    df_v_lines = pl.from_dicts([l.dict for l in vertical_lines]).lazy() if vertical_lines else default_df.clone()
+    df_h_lines = pl.from_dicts([l.dict for l in horizontal_lines]).lazy()
+    df_v_lines = pl.from_dicts([l.dict for l in vertical_lines]).lazy()
 
     # Create copy of df_h_lines
     df_h_lines_cp = (df_h_lines.clone()

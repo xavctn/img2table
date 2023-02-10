@@ -39,6 +39,15 @@ def test_load_image():
     assert list(img_from_path.images)[0].shape == (417, 1365)
 
 
+def test_blank_image():
+    ocr = TesseractOCR()
+    img = Image(src="test_data/blank.png")
+
+    result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
+
+    assert result == []
+
+
 def test_image_tables(mock_tesseract):
     ocr = TesseractOCR()
     img = Image(src="test_data/test.png")
