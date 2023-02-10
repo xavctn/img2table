@@ -167,6 +167,12 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
 
         # Compute Hough lines on image and get lines
         hough_lines = cv2.HoughLinesP(mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+
+        # Handle case with no lines
+        if hough_lines is None:
+            yield []
+            continue
+
         lines = [Line(*line[0].tolist()).reprocess() for line in hough_lines]
 
         # Remove lines that are not horizontal or vertical
