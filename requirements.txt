@@ -1,4 +1,5 @@
 polars[pandas]
+pyarrow>=7
 numpy
 pymupdf>=1.19.1
 opencv-python
