@@ -39,7 +39,7 @@ def test_load_image():
     assert list(img_from_path.images)[0].shape == (417, 1365)
 
 
-def test_blank_image():
+def test_blank_image(mock_tesseract):
     ocr = TesseractOCR()
     img = Image(src="test_data/blank.png")
 
