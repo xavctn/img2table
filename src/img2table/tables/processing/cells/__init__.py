@@ -17,6 +17,10 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
     # Create dataframe with cells from horizontal and vertical lines
     df_cells = get_cells_dataframe(horizontal_lines=horizontal_lines,
                                    vertical_lines=vertical_lines)
+    
+    # Handle case of empty cells
+    if df_cells.collect().height == 0:
+        return []
 
     # Deduplicate cells
     df_cells_dedup = deduplicate_cells(df_cells=df_cells)
