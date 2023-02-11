@@ -128,11 +128,11 @@ def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: L
 
     # Get number of table cells included in table
     nb_tb_cells_included = len([cell for cell in table_cells
-                                if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox)])
+                                if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox, percentage=0.5)])
 
     # Get number of segments cells included in table
     nb_seg_cells_included = len([cell for cell in segment_cells
-                                 if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox)])
+                                 if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox, percentage=0.5)])
 
     # Return table if table cells represent at lest 80% of cells in bbox
     return table if nb_tb_cells_included > 0.8 * nb_seg_cells_included else None
