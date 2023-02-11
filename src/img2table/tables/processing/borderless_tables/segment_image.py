@@ -34,13 +34,15 @@ def text_countours_from_group(word_group: List[Dict]) -> List[Cell]:
     :return: list of Cell objects representing text contours
     """
     # Sort words
-    word_group = sorted(word_group, key=lambda c: (c.get('y1'), c.get('x1')))
+    word_group = sorted(word_group, key=lambda c: (c.get('y1') + c.get('y2'), c.get('x1')))
 
     # Separate words into lines
     previous_seq, current_seq = iter(word_group), iter(word_group)
     lines = [[next(current_seq)]]
     for current, previous in zip(current_seq, previous_seq):
-        if current.get('y1') > previous.get('y2'):
+        y_corr = min(current.get('y2'), previous.get('y2')) - max(current.get('y1'), previous.get('y1'))
+        height = min(current.get('y2') - current.get('y1'), previous.get('y2') - previous.get('y1'))
+        if y_corr / height <= 0.25:
             lines.append([])
         lines[-1].append(current)
 
