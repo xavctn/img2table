@@ -45,7 +45,7 @@ def center_aligned(cell_1: Cell, cell_2: Cell) -> bool:
     width = np.min([cell_1.width, cell_2.width])
 
     # Check for center alignment
-    return abs(cell_1.x1 + cell_1.x2 - cell_2.x1 - cell_2.x2) / 2 * width < 0.1
+    return abs(cell_1.x1 + cell_1.x2 - cell_2.x1 - cell_2.x2) / (2 * width) < 0.1
 
 
 def aligned_cells(cell_1: Cell, cell_2: Cell) -> bool:

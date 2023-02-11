@@ -132,7 +132,7 @@ def identify_tables(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
             # Get list of common rows with element of the cycle
             common_rows_cl = [v for k, v in d_common_rows.items()
                               if idx in k and len(set(k).intersection(cycle)) == 1]
-            if max(common_rows_cl) >= 0.75 * len(cl):
+            if max(common_rows_cl + [0]) >= 0.75 * len(cl):
                 matching_cycle.add(idx)
         matching_cycles.append(matching_cycle)
 

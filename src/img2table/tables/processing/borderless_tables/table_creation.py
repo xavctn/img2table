@@ -73,7 +73,7 @@ def get_row_delimiters(tb_clusters: List[List[Cell]], margin: int = 5) -> List[i
     return y_delimiters
 
 
-def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Table:
+def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Optional[Table]:
     """
     Check coherency of top and bottom rows of table which should have at least 2 columns with content
     :param tb: Table object
@@ -112,7 +112,7 @@ def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Table:
         else:
             break
 
-    return tb
+    return tb if tb.nb_rows >= 2 else None
 
 
 def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: List[Cell]) -> Optional[Table]:
@@ -159,6 +159,10 @@ def create_table_from_clusters(tb_clusters: List[List[Cell]], segment_cells: Lis
     # Check coherency of top and bottom rows of table which should have at least 2 columns with content
     coherent_table = check_coherency_rows(tb=table,
                                           word_cells=[cell for cl in tb_clusters for cell in cl])
+
+    # Check if table is not None
+    if coherent_table is None:
+        return None
 
     # Check if table is mainly comprised of cells used for its creation
     final_table = check_versus_content(table=coherent_table,

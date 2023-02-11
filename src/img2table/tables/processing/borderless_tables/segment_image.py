@@ -56,7 +56,7 @@ def text_countours_from_group(word_group: List[Dict]) -> List[Cell]:
             continue
 
         line = sorted(line, key=lambda c: c.get('x1'))
-        median_word_sep = np.median([w2.get('x1') - w1.get('x2') for w1, w2 in zip(line, line[1:])])
+        median_word_sep = np.median([max(w2.get('x1') - w1.get('x2'), 0) for w1, w2 in zip(line, line[1:])])
 
         seq = iter(line)
         word_cnts = [[next(seq)]]
@@ -85,7 +85,6 @@ def text_countours_from_group(word_group: List[Dict]) -> List[Cell]:
 def create_word_contours(ocr_df: OCRDataframe) -> List[Cell]:
     """
     Create list of contours corresponding to text present in the image
-    :param img: image array
     :param ocr_df: OCRDataframe object
     :return: list of text contours as Cell objects
     """
