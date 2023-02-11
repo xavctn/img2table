@@ -87,7 +87,7 @@ def vertically_coherent_cluster(cluster: List[Cell]):
     return [subcl for subcl in subclusters if len(subcl) > 1]
 
 
-def cluster_text_contours(segment: List[Cell]) -> List[List[Cell]]:
+def cluster_aligned_text(segment: List[Cell]) -> List[List[Cell]]:
     """
     Cluster text contours based on alignment
     :param segment: list of text contours as Cell objects
