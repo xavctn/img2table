@@ -1,12 +1,14 @@
 # coding: utf-8
+import operator
 from typing import List, Dict
 
+import cv2
 import numpy as np
 import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.common import get_contours_cell, is_contained_cell
+from img2table.tables.processing.common import is_contained_cell, merge_contours
 
 
 def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[Cell]:
@@ -16,13 +18,37 @@ def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[Cell]:
     :param ocr_df: OCRDataframe object
     :return: list of image segments as Cell objects
     """
-    # Segmentation of image into "large" parts
-    img_segments = get_contours_cell(img=img,
-                                     cell=Cell(x1=0, y1=0, x2=img.shape[1], y2=img.shape[0]),
-                                     margin=0,
-                                     blur_size=3,
-                                     kernel_size=round(ocr_df.text_size),
-                                     merge_vertically=True)
+    # Reprocess images
+    blur = cv2.GaussianBlur(img, (5, 5), 0)
+    # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 30)
+    thresh = cv2.Canny(blur, 0, 0)
+
+    # Dilate to combine adjacent text contours
+    kernel_size = round(ocr_df.text_size / 2)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    dilate = cv2.dilate(thresh, kernel, iterations=4)
+
+    # Create new image by adding black borders
+    margin = 10
+    back_borders = np.zeros(tuple(map(operator.add, img.shape, (2 * margin, 2 * margin))), dtype=np.uint8)
+    back_borders[margin:img.shape[0] + margin, margin:img.shape[1] + margin] = dilate
+
+    # Find contours, highlight text areas, and extract ROIs
+    cnts = cv2.findContours(back_borders, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
+    # Get list of contours
+    list_cnts_cell = list()
+    for c in cnts:
+        x, y, w, h = cv2.boundingRect(c)
+        x = x - margin
+        y = y - margin
+        contour_cell = Cell(x, y, x + w, y + h)
+        list_cnts_cell.append(contour_cell)
+
+    # Add contours to row
+    img_segments = merge_contours(contours=list_cnts_cell,
+                                  vertically=None)
 
     return img_segments
 
@@ -125,9 +151,11 @@ def segment_image_text(img: np.ndarray, ocr_df: OCRDataframe) -> List[List[Cell]
     dict_segments = {seg: [] for seg in img_segments}
     for cnt in text_contours:
         # Find most likely segment
-        best_segment = sorted([seg for seg in img_segments if is_contained_cell(inner_cell=cnt, outer_cell=seg)],
-                              key=lambda s: s.width * s.height,
-                              reverse=True).pop(0)
-        dict_segments[best_segment].append(cnt)
+        matching_segments = sorted([seg for seg in img_segments if is_contained_cell(inner_cell=cnt, outer_cell=seg)],
+                                   key=lambda s: s.width * s.height,
+                                   reverse=True)
+        if matching_segments:
+            best_segment = matching_segments.pop(0)
+            dict_segments[best_segment].append(cnt)
 
     return list(dict_segments.values())
