@@ -20,7 +20,6 @@ def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[Cell]:
     """
     # Reprocess images
     blur = cv2.GaussianBlur(img, (5, 5), 0)
-    # thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 30)
     thresh = cv2.Canny(blur, 0, 0)
 
     # Dilate to combine adjacent text contours
