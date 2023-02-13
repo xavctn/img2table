@@ -51,7 +51,7 @@ class PaddleOCR(OCRInstance):
             except PermissionError:
                 pass
 
-        return ocr_result.pop()
+        return [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result.pop()]
 
     def content(self, document: Document) -> List[List]:
         # Get OCR of all images
@@ -78,7 +78,7 @@ class PaddleOCR(OCRInstance):
                     "id": f"word_{page + 1}_{word_id}",
                     "parent": f"word_{page + 1}_{word_id}",
                     "value": word[0],
-                    "confidence": round(100 * word[1]),
+                    "confidence": 100 * word[1],
                     "x1": round(min([edge[0] for edge in bbox])),
                     "y1": round(min([edge[1] for edge in bbox])),
                     "x2": round(max([edge[0] for edge in bbox])),
