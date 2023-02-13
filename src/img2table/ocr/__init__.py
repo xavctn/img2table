@@ -1,5 +1,7 @@
 # coding: utf-8
 
+from img2table.ocr.tesseract import TesseractOCR
+
 try:
     from img2table.ocr.aws_textract import TextractOCR
 except ImportError:
@@ -15,4 +17,7 @@ try:
 except ImportError:
     pass
 
-from img2table.ocr.tesseract import TesseractOCR
+try:
+    from img2table.ocr.paddle import PaddleOCR
+except ImportError:
+    pass

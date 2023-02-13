@@ -9,6 +9,10 @@ boto3
 # Azure
 azure-cognitiveservices-vision-computervision
 
+# Paddle
+paddlepaddle
+paddleocr>=2.0.6
+
 # Test dependencies
 pytest >= 6
 pytest-cov

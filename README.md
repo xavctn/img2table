@@ -17,6 +17,7 @@ It also provides implementations for several OCR services and tools in order to 
       * [PDF](#pdf-doc)
    * [OCR](#ocr)
       * [Tesseract](#tesseract)
+      * [PaddleOCR](#paddle)
       * [Google Vision](#vision)
       * [AWS Textract](#textract)
       * [Azure Cognitive Services](#azure)
@@ -31,6 +32,11 @@ The library can be installed via pip.
 ```python
 # Standard installation, supporting Tesseract
 pip install img2table
+
+# For usage with Paddle OCR
+pip install img2table[paddle]
+# For usage with Paddle OCR - GPU (CUDA 9 / CUDA 10)
+pip install img2table[paddle-gpu]
 
 # For usage with Google Vision OCR
 pip install img2table[gcp]
@@ -110,7 +116,7 @@ image = Image(src,
 
 :warning::warning::warning: **Disclaimer** <br>
 The implemented method to handle skewed/rotated images is approximate and might not work on every image. 
-It is preferable to pass well-orientated images as inputs.<br>
+It is preferable to pass well-oriented images as inputs.<br>
 Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
 methods might not correspond to the original image.
 
@@ -158,6 +164,25 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+
+
+#### <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> <a name="paddle"></a>
+
+PaddleOCR is an open-source OCR based on Deep Learning models.<b>
+At first use, relevant models will be downloaded.
+
+```python
+from img2table.ocr import PaddleOCR
+
+ocr = PaddleOCR(lang="en")
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>lang : str, optional, default <code>"en"</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in Paddle for text extraction, check <a href="https://github.com/Mushroomcat9998/PaddleOCR/blob/main/doc/doc_en/multi_languages_en.md#5-support-languages-and-abbreviations">documentation for available languages</a></dd>
+></dl>
+
 
 #### Google Vision <a name="vision"></a>
 
