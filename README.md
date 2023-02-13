@@ -169,7 +169,7 @@ Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions
 #### <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> <a name="paddle"></a>
 
 PaddleOCR is an open-source OCR based on Deep Learning models.<br>
-At first use, relevant models will be downloaded.
+At first use, relevant languages models will be downloaded.
 
 ```python
 from img2table.ocr import PaddleOCR
