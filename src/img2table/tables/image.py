@@ -39,7 +39,7 @@ class TableImage:
     def extract_tables(self, implicit_rows: bool = True, borderless_tables: bool = False) -> List[ExtractedTable]:
         """
         Identify and extract tables from image
-        :param implicit_rows: boolean indicating if implicit rows should be detected
+        :param implicit_rows: boolean indicating if implicit rows are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :return: list of identified tables
         """
