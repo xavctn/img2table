@@ -1,17 +1,21 @@
 # coding: utf-8
 
 import os
+import warnings
 from tempfile import NamedTemporaryFile
 from typing import List
 
 import cv2
 import numpy as np
 import polars as pl
-from paddleocr import PaddleOCR as OCR
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    from paddleocr import PaddleOCR as OCR
 
 
 class PaddleOCR(OCRInstance):

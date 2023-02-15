@@ -3,7 +3,7 @@
 `img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
 processing that supports most common image file formats as well as PDF files.
 
-It also provides support for several OCR services and tools in order to parse table contents.
+Thanks to its design, it provides a practical and lighter alternative to Neural Networks based solutions, especially for usage on CPU.
 
 ## Table of contents
 * [Installation](#installation)
@@ -50,11 +50,12 @@ pip install img2table[azure]
 
 ## Features <a name="features"></a>
 
-* Table identification for image and PDF files, including bounding boxes at the table cell level
-* Table content extraction by providing support for OCR services / tools
-* Extraction of table titles
-* Handling of merged cells in tables
+* Table identification for images and PDF files, including bounding boxes at the table cell level
+* Handling of complex table structures such as merged cells
 * Handling of implicit rows - see [example](/examples/Implicit_rows.ipynb)
+* Table content extraction by providing support for OCR services / tools
+* Extracted tables are returned as a simple object, including a Pandas DataFrame representation
+* Export extracted tables to an Excel file, preserving their original structure
 
 ## Supported file formats <a name="supported-file-formats"></a>
 
@@ -183,6 +184,7 @@ ocr = PaddleOCR(lang="en")
 >    <dd style="font-style: italic;">Lang parameter used in Paddle for text extraction, check <a href="https://github.com/Mushroomcat9998/PaddleOCR/blob/main/doc/doc_en/multi_languages_en.md#5-support-languages-and-abbreviations">documentation for available languages</a></dd>
 ></dl>
 
+*Released in version 0.0.13*
 
 #### Google Vision <a name="vision"></a>
 
@@ -270,6 +272,7 @@ doc = Image(src, dpi=200)
 # Table extraction
 extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=True,
+                                      borderless_tables=False,
                                       min_confidence=50)
 ```
 > <h4>Parameters</h4>
@@ -278,9 +281,16 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if borderless tables are extracted. It requires to provide an OCR to the method in order to be performed.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 ></dl>
+
+*Borderless table extraction released in version 0.0.14*
+
+**NB**: the implemented method for extraction of borderless tables heavily relies on OCR quality. In order to achieve 
+decent results, it is recommended to use PaddleOCR or one of the supported commercial solutions.
 
 #### Method return
 
@@ -363,6 +373,9 @@ Several Jupyter notebooks with examples are available :
 <a href="/examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
 </li>
 <li>
+<a href="/examples/borderless.ipynb" target="_self">Borderless tables</a>: specific examples dedicated to the extraction of borderless tables
+</li>
+<li>
 <a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
 of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> method
 </li>
@@ -372,7 +385,7 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 
 <ul>
 <li>
-Table identification only works on tables with borders. Borderless tables are not supported, as they would most likely 
-require NN-based methods.
+Borderless tables extraction is still in <b>alpha</b> stage and might be inconsistent on complex cases. 
+Improvements to the algorithm will be released in future versions.
 </li>
 </ul>

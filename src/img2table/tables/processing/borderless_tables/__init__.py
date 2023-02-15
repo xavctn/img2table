@@ -7,7 +7,6 @@ from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.alignment import cluster_aligned_text
 from img2table.tables.processing.borderless_tables.identify_tables import identify_tables
-from img2table.tables.processing.borderless_tables.prepare_image import prepare_image
 from img2table.tables.processing.borderless_tables.segment_image import segment_image_text
 from img2table.tables.processing.borderless_tables.table_creation import create_table_from_clusters
 from img2table.tables.processing.common import is_contained_cell
@@ -41,11 +40,8 @@ def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tab
     :param existing_tables: list of already identified table objects
     :return: list of borderless tables identified in image
     """
-    # Prepare image
-    prep_image = prepare_image(img=img)
-
     # Segment image and get text contours corresponding to each segment
-    image_segments = segment_image_text(img=prep_image, ocr_df=ocr_df)
+    image_segments = segment_image_text(img=img, ocr_df=ocr_df)
 
     # Identify tables in each segment
     list_tables = list()

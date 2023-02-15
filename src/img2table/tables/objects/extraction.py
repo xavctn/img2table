@@ -87,7 +87,7 @@ class ExtractedTable:
                        <b>Title:</b> {self.title or 'No title detected'}<br>
                        <b>Bounding box:</b> x1={self.bbox.x1}, y1={self.bbox.y1}, x2={self.bbox.x2}, y2={self.bbox.y2}
                    </p>
-                   <div align=\"center\">{self.df.to_html()}</div>
+                   <div align=\"center\">{self.df.to_html().replace("None", "")}</div>
                    <hr>
                 """
         return html
