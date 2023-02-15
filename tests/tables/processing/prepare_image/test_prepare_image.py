@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-from img2table.tables.processing.borderless_tables import prepare_image
+from img2table.tables.processing.prepare_image import prepare_image
 
 
 def test_prepare_image():
