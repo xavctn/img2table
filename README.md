@@ -389,8 +389,8 @@ The library is tailored for usage on documents with white/light background.
 Effectiveness can not be guaranteed on other type of documents. 
 </li>
 <li>
-Borderless tables extraction is still in <b>alpha</b> stage and might be inconsistent on complex cases.
-As an example, table with multi-lines cells can cause troubles.<br>
+Borderless tables extraction is still in alpha stage and might be inconsistent on complex cases.
+As an example, tables with multi-lines cells can cause troubles.<br>
 Improvements to the algorithm will be released in future versions.
 </li>
 </ul>
