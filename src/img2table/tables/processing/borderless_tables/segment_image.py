@@ -22,8 +22,15 @@ def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[Cell]:
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thresh = cv2.Canny(blur, 0, 0)
 
+    # Define kernel size by using most stable metric between different OCRs
+    if ocr_df.median_line_sep is not None:
+        kernel_size = round(ocr_df.median_line_sep / 3)
+    elif ocr_df.text_size is not None:
+        kernel_size = round(ocr_df.text_size / 2)
+    else:
+        kernel_size = 20
+
     # Dilate to combine adjacent text contours
-    kernel_size = round(ocr_df.text_size / 2)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
     dilate = cv2.dilate(thresh, kernel, iterations=4)
 

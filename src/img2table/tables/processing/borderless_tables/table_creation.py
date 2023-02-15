@@ -21,8 +21,10 @@ def get_column_delimiters(tb_clusters: List[List[Cell]], margin: int = 5) -> Lis
     col_clusters = list()
     for i in range(len(bounds)):
         for j in range(i, len(bounds)):
-            # If clusters have common cells, find matching clusters
-            if min(bounds[i][1], bounds[j][1]) - max(bounds[i][0], bounds[j][0]) > 0:
+            # If clusters overlap, put them in same column
+            x_diff = min(bounds[i][1], bounds[j][1]) - max(bounds[i][0], bounds[j][0])
+            overlap = x_diff / max(bounds[i][1] - bounds[i][0], bounds[j][1] - bounds[j][0]) >= 0.1
+            if overlap:
                 matching_clusters = [idx for idx, cl in enumerate(col_clusters) if {i, j}.intersection(cl)]
                 if matching_clusters:
                     remaining_clusters = [cl for idx, cl in enumerate(col_clusters) if idx not in matching_clusters]
@@ -59,7 +61,7 @@ def get_row_delimiters(tb_clusters: List[List[Cell]], margin: int = 5) -> List[i
     for cell in seq:
         cl_y1, cl_y2 = min([c.y1 for c in row_clusters[-1]]), max([c.y2 for c in row_clusters[-1]])
         y_corr = min(cell.y2, cl_y2) - max(cell.y1, cl_y1)
-        if y_corr < 0:
+        if y_corr / max(cl_y2 - cl_y1, cell.y2 - cell.y1) <= 0.2:
             row_clusters.append([])
         row_clusters[-1].append(cell)
 

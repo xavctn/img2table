@@ -3,6 +3,7 @@ from collections import OrderedDict
 from typing import Union, List
 
 from img2table.tables.objects import TableObject
+from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.extraction import ExtractedTable, BBox
 from img2table.tables.objects.row import Row
 
@@ -51,6 +52,10 @@ class Table(TableObject):
     @property
     def y2(self) -> int:
         return max(map(lambda x: x.y2, self.items))
+
+    @property
+    def cell(self) -> Cell:
+        return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
 
     def get_content(self, ocr_df: "OCRDataframe", min_confidence: int = 50) -> "Table":
         """
