@@ -2,6 +2,8 @@
 from collections import OrderedDict
 from typing import Union, List
 
+import numpy as np
+
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.extraction import ExtractedTable, BBox
@@ -57,6 +59,60 @@ class Table(TableObject):
     def cell(self) -> Cell:
         return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
 
+    def remove_rows(self, row_ids: List[int]):
+        """
+        Remove rows by ids
+        :param row_ids: list of row ids to be removed
+        """
+        # Get remaining rows
+        remaining_rows = [idx for idx in range(self.nb_rows) if idx not in row_ids]
+
+        if len(remaining_rows) > 1:
+            # Check created gaps between rows
+            gaps = [(id_row, id_next) for id_row, id_next in zip(remaining_rows, remaining_rows[1:])
+                    if id_next - id_row > 1]
+
+            for id_row, id_next in gaps:
+                # Normalize y value between rows
+                y_gap = round((self.items[id_row].y2 + self.items[id_next].y1) / 2)
+
+                # Put y value in both rows
+                for c in self.items[id_row].items:
+                    setattr(c, "y2", y_gap)
+                for c in self.items[id_next].items:
+                    setattr(c, "y1", y_gap)
+
+        # Remove rows
+        for idx in reversed(row_ids):
+            self.items.pop(idx)
+
+    def remove_columns(self, col_ids: List[int]):
+        """
+        Remove columns by ids
+        :param col_ids: list of column ids to be removed
+        """
+        # Get remaining cols
+        remaining_cols = [idx for idx in range(self.nb_columns) if idx not in col_ids]
+
+        if len(remaining_cols) > 1:
+            # Check created gaps between columns
+            gaps = [(id_col, id_next) for id_col, id_next in zip(remaining_cols, remaining_cols[1:])
+                    if id_next - id_col > 1]
+
+            for id_col, id_next in gaps:
+                # Normalize x value between columns
+                x_gap = round(np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items]) / 2)
+
+                # Put y value in both columns
+                for row in self.items:
+                    setattr(row.items[id_col], "x2", x_gap)
+                    setattr(row.items[id_next], "x1", x_gap)
+
+        # Remove columns
+        for idx in reversed(col_ids):
+            for id_row in range(self.nb_rows):
+                self.items[id_row].items.pop(idx)
+
     def get_content(self, ocr_df: "OCRDataframe", min_confidence: int = 50) -> "Table":
         """
         Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
@@ -72,8 +128,7 @@ class Table(TableObject):
         for idx, row in enumerate(self.items):
             if all(map(lambda c: c.content is None, row.items)):
                 empty_rows.append(idx)
-        for idx in reversed(empty_rows):
-            self.items.pop(idx)
+        self.remove_rows(row_ids=empty_rows)
 
         # Check for empty columns and remove if necessary
         empty_cols = list()
@@ -81,9 +136,7 @@ class Table(TableObject):
             col_cells = [row.items[idx] for row in self.items]
             if all(map(lambda c: c.content is None, col_cells)):
                 empty_cols.append(idx)
-        for idx in reversed(empty_cols):
-            for id_row in range(self.nb_rows):
-                self.items[id_row].items.pop(idx)
+        self.remove_columns(col_ids=empty_cols)
 
         # Check for uniqueness of content
         unique_cells = set([cell for row in self.items for cell in row.items])
