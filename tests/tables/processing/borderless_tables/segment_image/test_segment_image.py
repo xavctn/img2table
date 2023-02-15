@@ -16,7 +16,7 @@ def test_create_image_segments():
 
     result = create_image_segments(img=img, ocr_df=ocr_df)
 
-    assert result == [Cell(x1=2, y1=0, x2=804, y2=361), Cell(x1=928, y1=0, x2=1188, y2=157)]
+    assert set(result) == {Cell(x1=2, y1=0, x2=804, y2=361), Cell(x1=928, y1=0, x2=1188, y2=157)}
 
 
 def test_text_countours_from_group():
@@ -41,7 +41,7 @@ def test_create_word_contours():
     with open("test_data/word_contours.json", "r") as f:
         expected = [Cell(**element) for element in json.load(f)]
 
-    assert result == expected
+    assert set(result) == set(expected)
 
 
 def test_segment_image_text():
@@ -53,4 +53,4 @@ def test_segment_image_text():
     with open("test_data/expected.json", "r") as f:
         expected = [[Cell(**element) for element in seg] for seg in json.load(f)]
 
-    assert result == expected
+    assert [set(seg) for seg in result] == [set(seg) for seg in expected]

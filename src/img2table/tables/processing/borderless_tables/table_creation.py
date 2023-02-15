@@ -125,6 +125,10 @@ def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: L
     :param segment_cells: list of all cells in segment
     :return: Table object if it is mainly comprised of cells used for its creation
     """
+    # Check table attributes
+    if table.nb_rows * table.nb_columns == 0:
+        return None
+
     # Get table bbox as Cell
     tb_bbox = Cell(*table.bbox())
 
