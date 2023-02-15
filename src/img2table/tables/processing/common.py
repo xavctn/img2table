@@ -58,7 +58,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
         list_cnts = [copy.deepcopy(next(seq))]
         for cnt in seq:
             contained_cnt = [idx for idx, el in enumerate(list_cnts)
-                             if is_contained_cell(inner_cell=cnt, outer_cell=el, percentage=0.75)]
+                             if is_contained_cell(inner_cell=cnt, outer_cell=el, percentage=0.25)]
             if len(contained_cnt) == 1:
                 id = contained_cnt.pop()
                 list_cnts[id].x1 = min(list_cnts[id].x1, cnt.x1)
@@ -97,7 +97,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
 
 
 def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: int = 9, kernel_size: int = 15,
-                      merge_vertically: bool = True) -> List[Cell]:
+                      merge_vertically: Optional[bool] = True) -> List[Cell]:
     """
     Get list of contours contained in cell
     :param img: image array

@@ -16,6 +16,67 @@ class OCRDataframe:
         df_page = self.df.filter(pl.col('page') == page_number)
         return OCRDataframe(df=df_page)
 
+    @property
+    def median_line_sep(self) -> float:
+        """
+        Get median of vertical line separation in pixels
+        :return: median of vertical line separation in pixels
+        """
+        # Get only words
+        df_words = self.df.filter(pl.col('class') == "ocrx_word")
+
+        # Check if there are some words
+        if df_words.collect().height <= 1:
+            return None
+
+        # Cross join to get corresponding words and filter on words that corresponds horizontally
+        df_h_words = (df_words.join(df_words, how='cross')
+                      .filter(pl.col('id') != pl.col('id_right'))
+                      .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
+                              - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
+                      )
+
+        # Get word which is directly below
+        df_words_below = (df_h_words.filter(pl.col('y1') < pl.col('y1_right'))
+                          .sort(['id', 'y1_right'])
+                          .with_columns(pl.lit(1).alias('ones'))
+                          .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
+                          .filter(pl.col('rk') == 1)
+                          )
+
+        # Check if there are some correspondence
+        if df_words_below.collect().height <= 1:
+            return None
+
+        # Compute median vertical distance between words
+        median_v_dist = (df_words_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
+                                                       - pl.col('y1') - pl.col('y2')) / 2).alias('y_diff'))
+                         .select(pl.median('y_diff'))
+                         .collect()
+                         .to_dicts()
+                         .pop()
+                         .get('y_diff')
+                         )
+
+        return median_v_dist
+
+    @property
+    def text_size(self) -> float:
+        """
+        Get average text height in pixels
+        :return: average text height in pixels
+        """
+        try:
+            # Compute average text size
+            df_text_size = (self.df.filter(pl.col('class') == "ocrx_word")
+                            .select((pl.col('y2') - pl.col('y1')).alias('size'))
+                            .mean()
+                            )
+
+            return df_text_size.collect().to_dicts().pop().get('size')
+        except Exception:
+            return None
+
     def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
         """
         Get text corresponding to cell

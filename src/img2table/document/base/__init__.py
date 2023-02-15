@@ -49,11 +49,13 @@ class Document(Validations):
     def images(self) -> Iterator[np.ndarray]:
         raise NotImplementedError
 
-    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
+    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,
+                       min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
         """
         Extract tables from document
         :param ocr: OCRInstance object used to extract table content
         :param implicit_rows: boolean indicating if implicit rows are splitted
+        :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
         """
@@ -66,7 +68,8 @@ class Document(Validations):
         tables = {idx: TableImage(img=img,
                                   dpi=self.dpi,
                                   ocr_df=self.ocr_df.page(page_number=idx) if self.ocr_df else None,
-                                  min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows)
+                                  min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows,
+                                                                                borderless_tables=borderless_tables)
                   for idx, img in enumerate(self.images)}
 
         # If pages have been defined, modify tables keys

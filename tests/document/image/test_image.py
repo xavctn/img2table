@@ -43,7 +43,10 @@ def test_blank_image(mock_tesseract):
     ocr = TesseractOCR()
     img = Image(src="test_data/blank.png")
 
-    result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
+    result = img.extract_tables(ocr=ocr,
+                                implicit_rows=True,
+                                borderless_tables=True,
+                                min_confidence=50)
 
     assert result == []
 

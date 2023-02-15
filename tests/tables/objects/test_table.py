@@ -9,6 +9,38 @@ from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
 
 
+def test_remove_rows():
+    table = Table(rows=[Row(cells=[Cell(x1=0, x2=100, y1=0, y2=10)]),
+                        Row(cells=[Cell(x1=0, x2=100, y1=10, y2=20)]),
+                        Row(cells=[Cell(x1=0, x2=100, y1=20, y2=30)])])
+    table.remove_rows(row_ids=[1])
+
+    expected = Table(rows=[Row(cells=[Cell(x1=0, x2=100, y1=0, y2=15)]),
+                           Row(cells=[Cell(x1=0, x2=100, y1=15, y2=30)])])
+
+    assert table == expected
+
+
+def test_remove_columns():
+    table = Table(rows=[Row(cells=[Cell(x1=0, x2=100, y1=0, y2=10),
+                                   Cell(x1=100, x2=200, y1=0, y2=10),
+                                   Cell(x1=200, x2=300, y1=0, y2=10)]),
+                        Row(cells=[Cell(x1=0, x2=100, y1=10, y2=20),
+                                   Cell(x1=100, x2=200, y1=10, y2=20),
+                                   Cell(x1=200, x2=300, y1=10, y2=20)]),
+                        ])
+
+    table.remove_columns(col_ids=[1])
+
+    expected = Table(rows=[Row(cells=[Cell(x1=0, x2=150, y1=0, y2=10),
+                                      Cell(x1=150, x2=300, y1=0, y2=10)]),
+                           Row(cells=[Cell(x1=0, x2=150, y1=10, y2=20),
+                                      Cell(x1=150, x2=300, y1=10, y2=20)])
+                           ])
+
+    assert table == expected
+
+
 def test_table():
     with open("test_data/tables.json", "r") as f:
         tables = [Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in tb])

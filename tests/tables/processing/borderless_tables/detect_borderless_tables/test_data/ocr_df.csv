@@ -1,0 +1,82 @@
+page;class;id;parent;value;confidence;x1;y1;x2;y2
+0;ocrx_word;word_1_1;word_1_1;Bank of Something;98.0;30;12;182;29
+0;ocrx_word;word_1_2;word_1_2;Your Statement;97.0;542;10;671;30
+0;ocrx_word;word_1_3;word_1_3;P.O.Box 12321;95.0;28;48;134;65
+0;ocrx_word;word_1_4;word_1_4;Contact Tel 1-800-000-000;97.0;497;50;670;64
+0;ocrx_word;word_1_5;word_1_5;AnyCity,DA 12765;95.0;30;69;160;83
+0;ocrx_word;word_1_6;word_1_6;Text Phone123-456-7890;97.0;492;69;670;83
+0;ocrx_word;word_1_7;word_1_7;www.bankofsomething.com;100.0;496;85;671;103
+0;ocrx_word;word_1_8;word_1_8;Savings Account Statement;96.0;29;149;212;163
+0;ocrx_word;word_1_9;word_1_9;Account Summary;98.0;439;140;588;159
+0;ocrx_word;word_1_10;word_1_10;Account name;98.0;27;184;122;200
+0;ocrx_word;word_1_11;word_1_11;John Doe;94.0;151;183;216;199
+0;ocrx_word;word_1_12;word_1_12;Beginning Balance:;94.0;440;179;565;195
+0;ocrx_word;word_1_13;word_1_13;$8000.00;99.0;627;175;692;196
+0;ocrx_word;word_1_14;word_1_14;Account number  00002134001;96.0;27;202;236;219
+0;ocrx_word;word_1_15;word_1_15;Deposits;100.0;439;205;498;223
+0;ocrx_word;word_1_16;word_1_16;$3005.50;100.0;628;205;692;223
+0;ocrx_word;word_1_17;word_1_17;Statement Date:;96.0;27;221;130;235
+0;ocrx_word;word_1_18;word_1_18;Date;99.0;26;240;83;254
+0;ocrx_word;word_1_19;word_1_19;February 1,2022 to February 28,2022;94.0;77;237;343;255
+0;ocrx_word;word_1_20;word_1_20;Other Subtractions;96.0;439;232;560;249
+0;ocrx_word;word_1_21;word_1_21;-1539.55;96.0;632;232;693;250
+0;ocrx_word;word_1_22;word_1_22;Checks;100.0;439;259;489;277
+0;ocrx_word;word_1_23;word_1_23;0.00;99.0;439;288;470;304
+0;ocrx_word;word_1_24;word_1_24;Service Fees;95.0;440;317;521;331
+0;ocrx_word;word_1_25;word_1_25;0.00;99.0;438;343;470;358
+0;ocrx_word;word_1_26;word_1_26;Deposits and others Debits;96.0;28;420;267;437
+0;ocrx_word;word_1_27;word_1_27;Amount;100.0;439;459;500;479
+0;ocrx_word;word_1_28;word_1_28;Date;100.0;54;480;90;498
+0;ocrx_word;word_1_29;word_1_29;Description;100.0;164;479;243;499
+0;ocrx_word;word_1_30;word_1_30;Details;100.0;314;481;362;496
+0;ocrx_word;word_1_31;word_1_31;Credits;99.0;403;478;455;499
+0;ocrx_word;word_1_32;word_1_32;Debits;100.0;489;478;538;499
+0;ocrx_word;word_1_33;word_1_33;Balance;100.0;572;479;629;499
+0;ocrx_word;word_1_34;word_1_34;2/4/2022;100.0;40;502;106;519
+0;ocrx_word;word_1_35;word_1_35;Life Insurance Payments;96.0;102;502;285;520
+0;ocrx_word;word_1_36;word_1_36;Credit;100.0;316;502;360;520
+0;ocrx_word;word_1_37;word_1_37;445;100.0;523;501;551;520
+0;ocrx_word;word_1_38;word_1_38;9500.45;100.0;583;502;641;520
+0;ocrx_word;word_1_39;word_1_39;Property Management;97.0;131;526;279;540
+0;ocrx_word;word_1_40;word_1_40;Credit;100.0;317;525;359;540
+0;ocrx_word;word_1_41;word_1_41;300;100.0;524;524;552;540
+0;ocrx_word;word_1_42;word_1_42;9945.45;100.0;583;524;644;542
+0;ocrx_word;word_1_43;word_1_43;Retail Store4;96.0;162;547;248;561
+0;ocrx_word;word_1_44;word_1_44;Credit;100.0;316;545;360;563
+0;ocrx_word;word_1_45;word_1_45;65.75;100.0;512;545;551;563
+0;ocrx_word;word_1_46;word_1_46;10245.45;100.0;576;546;641;563
+0;ocrx_word;word_1_47;word_1_47;2/3/2022;100.0;40;565;105;581
+0;ocrx_word;word_1_48;word_1_48;Electricity Bill;93.0;161;567;249;583
+0;ocrx_word;word_1_49;word_1_49;Credit;100.0;316;566;360;583
+0;ocrx_word;word_1_50;word_1_50;245.45;100.0;503;566;551;583
+0;ocrx_word;word_1_51;word_1_51;10311.2;100.0;583;566;643;583
+0;ocrx_word;word_1_52;word_1_52;Water Bill;97.0;172;587;239;604
+0;ocrx_word;word_1_53;word_1_53;Credit;100.0;316;587;360;605
+0;ocrx_word;word_1_54;word_1_54;312.85;100.0;504;588;551;603
+0;ocrx_word;word_1_55;word_1_55;10556.65;100.0;575;585;644;606
+0;ocrx_word;word_1_56;word_1_56;Rental Deposit;98.0;157;609;253;626
+0;ocrx_word;word_1_57;word_1_57;Credit;100.0;315;606;360;627
+0;ocrx_word;word_1_58;word_1_58;3000;100.0;431;608;468;626
+0;ocrx_word;word_1_59;word_1_59;10869.5;100.0;584;609;642;626
+0;ocrx_word;word_1_60;word_1_60;2/2/2022;99.0;40;628;104;645
+0;ocrx_word;word_1_61;word_1_61;Retail Store 3;93.0;160;629;248;646
+0;ocrx_word;word_1_62;word_1_62;Credit;100.0;316;629;360;647
+0;ocrx_word;word_1_63;word_1_63;125;100.0;522;628;552;647
+0;ocrx_word;word_1_64;word_1_64;7869.5;100.0;590;628;643;649
+0;ocrx_word;word_1_65;word_1_65;Retail Store 2 Refund;94.0;137;653;273;667
+0;ocrx_word;word_1_66;word_1_66;Debit;100.0;317;651;358;669
+0;ocrx_word;word_1_67;word_1_67;5.5;99.0;442;651;469;669
+0;ocrx_word;word_1_68;word_1_68;7994.5;100.0;591;651;645;669
+0;ocrx_word;word_1_69;word_1_69;Retail Store1;97.0;162;674;248;688
+0;ocrx_word;word_1_70;word_1_70;Credit;100.0;316;672;360;690
+0;ocrx_word;word_1_71;word_1_71;45.5;100.0;519;672;552;691
+0;ocrx_word;word_1_72;word_1_72;8000;99.0;603;672;642;690
+0;ocrx_word;word_1_73;word_1_73;2/1/2022;100.0;40;692;104;709
+0;ocrx_word;word_1_74;word_1_74;Shoe Store Refund;96.0;144;694;263;708
+0;ocrx_word;word_1_75;word_1_75;Credit;99.0;316;693;360;711
+0;ocrx_word;word_1_76;word_1_76;33;100.0;446;693;468;711
+0;ocrx_word;word_1_77;word_1_77;8045.5;99.0;590;692;644;712
+0;ocrx_word;word_1_78;word_1_78;Snack Vending Machine;97.0;128;717;281;731
+0;ocrx_word;word_1_79;word_1_79;Debit;100.0;318;716;358;731
+0;ocrx_word;word_1_80;word_1_80;4;100.0;536;714;553;732
+0;ocrx_word;word_1_81;word_1_81;8012.5;99.0;591;715;645;732
