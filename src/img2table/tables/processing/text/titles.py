@@ -39,7 +39,9 @@ def get_title_tables(img: np.ndarray, tables: List[Table], ocr_df: OCRDataframe,
     final_tables = list()
     for id_cl, cluster in enumerate(tb_cl):
         # Compute horizontal boundaries of title
-        x_delimiters = [10] + [round((tb_1.x2 + tb_2.x1) / 2) for tb_1, tb_2 in zip(cluster, cluster[1:])] + [width - 10]
+        x_delimiters = [round((tb_1.x2 + tb_2.x1) / 2) for tb_1, tb_2 in zip(cluster, cluster[1:])]
+        x_delimiters = [max(10, round(cluster[0].x1 - 0.2 * cluster[0].width))] + x_delimiters + [width - 10]
+        x_delimiters = x_delimiters + [min(width - 10, round(cluster[-1].x2 + 0.2 * cluster[-1].width))]
         x_bounds = [(del_1, del_2) for del_1, del_2 in zip(x_delimiters, x_delimiters[1:])]
 
         # Compute vertical boundaries of title
