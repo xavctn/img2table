@@ -282,7 +282,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if borderless tables are extracted. It requires to provide an OCR to the method in order to be performed.</dd>
+>    <dd style="font-style: italic;">Boolean indicating if borderless tables are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 ></dl>
@@ -384,6 +384,10 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 ## Caveats / FYI <a name="fyi"></a>
 
 <ul>
+<li>
+The library is tailored for usage on documents with white/light background. 
+Effectiveness can not be guaranteed on other type of documents. 
+</li>
 <li>
 Borderless tables extraction is still in <b>alpha</b> stage and might be inconsistent on complex cases.
 As an example, table with multi-lines cells can cause troubles.<br>
