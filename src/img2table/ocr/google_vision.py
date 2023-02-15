@@ -243,6 +243,9 @@ class VisionOCR(OCRInstance):
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = list(map(pl.from_dicts, content))
+        list_dfs = list()
+        for page_elements in content:
+            if page_elements:
+                list_dfs.append(pl.from_dicts(page_elements))
 
-        return OCRDataframe(df=pl.concat(list_dfs).lazy())
+        return OCRDataframe(df=pl.concat(list_dfs).lazy()) if list_dfs else None

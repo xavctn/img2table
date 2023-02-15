@@ -33,7 +33,7 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     return final_tables
 
 
-def identify_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tables: List[Table]) -> List[Table]:
+def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tables: List[Table]) -> List[Table]:
     """
     Identify borderless tables in image
     :param img: image array

@@ -3,7 +3,7 @@
 `img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
 processing that supports most common image file formats as well as PDF files.
 
-It also provides implementations for several OCR services and tools in order to parse table contents.
+It also provides support for several OCR services and tools in order to parse table contents.
 
 ## Table of contents
 * [Installation](#installation)

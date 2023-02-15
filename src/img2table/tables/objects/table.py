@@ -102,7 +102,10 @@ class Table(TableObject):
         if isinstance(other, self.__class__):
             try:
                 assert self.items == other.items
-                assert self.title == other.title
+                if self.title is not None:
+                    assert self.title == other.title
+                else:
+                    assert other.title is None
                 return True
             except AssertionError:
                 return False

@@ -87,4 +87,4 @@ class PaddleOCR(OCRInstance):
 
                 list_elements.append(dict_word)
 
-        return OCRDataframe(df=pl.from_dicts(list_elements).lazy())
+        return OCRDataframe(df=pl.from_dicts(list_elements).lazy()) if list_elements else None

@@ -136,11 +136,17 @@ def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: L
     nb_seg_cells_included = len([cell for cell in segment_cells
                                  if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox)])
 
-    # Return table if table cells represent at lest 80% of cells in bbox
+    # Return table if table cells represent at least 80% of cells in bbox
     return table if nb_tb_cells_included > 0.8 * nb_seg_cells_included else None
 
 
 def create_table_from_clusters(tb_clusters: List[List[Cell]], segment_cells: List[Cell]) -> Optional[Table]:
+    """
+    Create table from aligned clusters forming it
+    :param tb_clusters: list of aligned word clusters
+    :param segment_cells: list of word cells comprised in image segment
+    :return: Table object if relevant
+    """
     # Identify column delimiters from clusters
     col_dels = get_column_delimiters(tb_clusters=tb_clusters)
 

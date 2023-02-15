@@ -9,7 +9,7 @@ import numpy as np
 from img2table.tables.objects.extraction import ExtractedTable
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables import identify_borderless_tables
+from img2table.tables.processing.borderless_tables import detect_borderless_tables
 from img2table.tables.processing.cells import get_cells
 from img2table.tables.processing.lines import detect_lines
 from img2table.tables.processing.tables import get_tables
@@ -71,9 +71,9 @@ class TableImage:
         if self.ocr_df is not None:
             if borderless_tables:
                 # Extract borderless tables
-                self.tables += identify_borderless_tables(img=self.img,
-                                                          ocr_df=self.ocr_df,
-                                                          existing_tables=self.tables)
+                self.tables += detect_borderless_tables(img=self.img,
+                                                        ocr_df=self.ocr_df,
+                                                        existing_tables=self.tables)
 
             # Get title
             self.tables = get_title_tables(img=self.img, tables=self.tables, ocr_df=self.ocr_df)
