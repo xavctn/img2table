@@ -385,7 +385,8 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 
 <ul>
 <li>
-Borderless tables extraction is still in <b>alpha</b> stage and might be inconsistent on complex cases. 
+Borderless tables extraction is still in <b>alpha</b> stage and might be inconsistent on complex cases.
+As an example, table with multi-lines cells can cause troubles.<br>
 Improvements to the algorithm will be released in future versions.
 </li>
 </ul>
