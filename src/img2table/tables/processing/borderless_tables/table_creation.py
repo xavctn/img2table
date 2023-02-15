@@ -73,7 +73,7 @@ def get_row_delimiters(tb_clusters: List[List[Cell]], margin: int = 5) -> List[i
     return y_delimiters
 
 
-def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Optional[Table]:
+def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Table:
     """
     Check coherency of top and bottom rows of table which should have at least 2 columns with content
     :param tb: Table object
@@ -112,7 +112,7 @@ def check_coherency_rows(tb: Table, word_cells: List[Cell]) -> Optional[Table]:
         else:
             break
 
-    return tb if tb.nb_rows >= 2 else None
+    return tb
 
 
 def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: List[Cell]) -> Optional[Table]:
@@ -128,11 +128,11 @@ def check_versus_content(table: Table, table_cells: List[Cell], segment_cells: L
 
     # Get number of table cells included in table
     nb_tb_cells_included = len([cell for cell in table_cells
-                                if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox, percentage=0.5)])
+                                if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox)])
 
     # Get number of segments cells included in table
     nb_seg_cells_included = len([cell for cell in segment_cells
-                                 if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox, percentage=0.5)])
+                                 if is_contained_cell(inner_cell=cell, outer_cell=tb_bbox)])
 
     # Return table if table cells represent at lest 80% of cells in bbox
     return table if nb_tb_cells_included > 0.8 * nb_seg_cells_included else None
@@ -159,10 +159,6 @@ def create_table_from_clusters(tb_clusters: List[List[Cell]], segment_cells: Lis
     # Check coherency of top and bottom rows of table which should have at least 2 columns with content
     coherent_table = check_coherency_rows(tb=table,
                                           word_cells=[cell for cl in tb_clusters for cell in cl])
-
-    # Check if table is not None
-    if coherent_table is None:
-        return None
 
     # Check if table is mainly comprised of cells used for its creation
     final_table = check_versus_content(table=coherent_table,
