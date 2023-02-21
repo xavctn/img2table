@@ -21,11 +21,22 @@ def change_test_dir(request, monkeypatch):
 
 @pytest.fixture
 def mock_tesseract(monkeypatch):
-    def mockreturn(*args, **kwargs):
-        with open(os.path.join(MOCK_DIR, "tesseract_hocr.html"), "r") as f:
-            return f.read().encode("utf-8")
+    def mock_check_output(*args, **kwargs):
+        if args[0] == "tesseract --list-langs":
+            return "Langs\neng".encode("utf-8")
+        else:
+            with open(os.path.join(MOCK_DIR, "tesseract_hocr.html"), "r") as f:
+                return f.read().encode("utf-8")
 
-    monkeypatch.setattr(subprocess, "check_output", mockreturn)
+    def mock_run(*args, **kwargs):
+        class MResp:
+            @property
+            def returncode(self):
+                return 0
+        return MResp()
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+    monkeypatch.setattr(subprocess, "run", mock_run)
 
 
 @pytest.fixture

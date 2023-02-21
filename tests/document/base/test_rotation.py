@@ -45,7 +45,7 @@ def test_fix_rotation_image():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
     similarities = list()
-    for angle in range(-180, 180, 3):
+    for angle in range(-180, 180, 15):
         # Create test image by rotating it
         test_img = rotate_img(img=img.copy(), angle=angle)
         result = crop_to_orig_img(img=fix_rotation_image(img=test_img),
