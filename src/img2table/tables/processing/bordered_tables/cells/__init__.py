@@ -3,8 +3,8 @@ from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.cells.deduplication import deduplicate_cells
-from img2table.tables.processing.cells.identification import get_cells_dataframe
+from img2table.tables.processing.bordered_tables.cells.deduplication import deduplicate_cells
+from img2table.tables.processing.bordered_tables.cells.identification import get_cells_dataframe
 
 
 def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:

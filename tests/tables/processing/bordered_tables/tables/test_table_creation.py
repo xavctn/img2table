@@ -4,7 +4,7 @@ import json
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.tables.table_creation import normalize_table_cells, cluster_to_table
+from img2table.tables.processing.bordered_tables.tables.table_creation import normalize_table_cells, cluster_to_table
 
 
 def test_normalize_table_cells():

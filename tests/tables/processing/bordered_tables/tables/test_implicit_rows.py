@@ -9,8 +9,8 @@ from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.tables.implicit_rows import create_word_image, handle_implicit_rows_table, \
-    handle_implicit_rows
+from img2table.tables.processing.bordered_tables.tables.implicit_rows import create_word_image, \
+    handle_implicit_rows_table, handle_implicit_rows
 
 
 def test_create_word_image():

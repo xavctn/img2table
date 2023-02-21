@@ -2,7 +2,7 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.tables.cell_clustering import cluster_cells_in_tables, adjacent_cells
+from img2table.tables.processing.bordered_tables.tables.cell_clustering import cluster_cells_in_tables, adjacent_cells
 
 
 def test_adjacent_cells():

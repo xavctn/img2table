@@ -4,7 +4,7 @@ import json
 import polars as pl
 
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.cells.identification import get_cells_dataframe
+from img2table.tables.processing.bordered_tables.cells import get_cells_dataframe
 
 
 def test_get_cells_dataframe():

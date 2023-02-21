@@ -3,8 +3,8 @@ from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.tables.cell_clustering import cluster_cells_in_tables
-from img2table.tables.processing.tables.table_creation import cluster_to_table, normalize_table_cells
+from img2table.tables.processing.bordered_tables.tables.cell_clustering import cluster_cells_in_tables
+from img2table.tables.processing.bordered_tables.tables.table_creation import cluster_to_table, normalize_table_cells
 
 
 def get_tables(cells: List[Cell]) -> List[Table]:
