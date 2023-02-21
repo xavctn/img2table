@@ -22,7 +22,7 @@ def change_test_dir(request, monkeypatch):
 @pytest.fixture
 def mock_tesseract(monkeypatch):
     def mock_check_output(*args, **kwargs):
-        if args[0] == "tesseract --list-langs":
+        if "tesseract --list-langs" in args:
             return "Langs\neng".encode("utf-8")
         else:
             with open(os.path.join(MOCK_DIR, "tesseract_hocr.html"), "r") as f:
