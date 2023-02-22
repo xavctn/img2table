@@ -4,7 +4,7 @@ import json
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.identify_tables import find_common_rows, dfs, get_maximal_cycles, \
-    merge_cycle_clusters, identify_tables
+    merge_cycle_clusters, identify_tables, match_with_cycle
 
 
 def test_find_common_rows():
@@ -38,6 +38,20 @@ def test_get_maximal_cycles():
     result = get_maximal_cycles(cycles=cycles)
 
     assert result == [{1, 2, 3, 4}, {1, 3, 4, 6}, {5, 6}]
+
+
+def test_match_with_cycle():
+    cluster = [Cell(x1=0, x2=0, y1=0, y2=10), Cell(x1=0, x2=0, y1=20, y2=30),
+               Cell(x1=0, x2=0, y1=30, y2=40), Cell(x1=0, x2=0, y1=100, y2=110)]
+    cycle = [[Cell(x1=0, x2=0, y1=0, y2=10)],
+             [Cell(x1=0, x2=0, y1=20, y2=40)],
+             [Cell(x1=0, x2=0, y1=100, y2=110)]]
+
+    assert match_with_cycle(cluster=cluster, cycle=cycle)
+
+    # Pop from cycle
+    cycle.pop(1)
+    assert not match_with_cycle(cluster=cluster, cycle=cycle)
 
 
 def test_merge_cycle_clusters():
