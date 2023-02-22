@@ -20,21 +20,31 @@ def prepare_image(img: np.ndarray) -> np.ndarray:
     # Compute contours
     contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Get largest detect contour
-    largest_contour = Cell(x1=0, x2=0, y1=0, y2=0)
+    # Get contours cells
+    contour_cells = list()
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
-        contour_cell = Cell(x, y, x + w, y + h)
+        contour_cells.append(Cell(x, y, x + w, y + h))
+    contour_cells = sorted(contour_cells, key=lambda c: c.area, reverse=True)
 
-        if contour_cell.width * contour_cell.height > largest_contour.width * largest_contour.height:
-            largest_contour = contour_cell
+    if contour_cells:
+        largest_contour = None
+        if len(contour_cells) == 1:
+            # Set largest contour
+            largest_contour = contour_cells.pop(0)
+        elif contour_cells[0].area / contour_cells[1].area > 10:
+            # Set largest contour
+            largest_contour = contour_cells.pop(0)
 
-    # Recreate image from blank image by adding largest contour of the original image
-    processed_img = np.zeros(img.shape, dtype=np.uint8)
-    processed_img.fill(255)
+        if largest_contour:
+            # Recreate image from blank image by adding largest contour of the original image
+            processed_img = np.zeros(img.shape, dtype=np.uint8)
+            processed_img.fill(255)
 
-    # Add contour from original image
-    cropped_img = img[largest_contour.y1:largest_contour.y2, largest_contour.x1:largest_contour.x2]
-    processed_img[largest_contour.y1:largest_contour.y2, largest_contour.x1:largest_contour.x2] = cropped_img
+            # Add contour from original image
+            cropped_img = img[largest_contour.y1:largest_contour.y2, largest_contour.x1:largest_contour.x2]
+            processed_img[largest_contour.y1:largest_contour.y2, largest_contour.x1:largest_contour.x2] = cropped_img
 
-    return processed_img
+            return processed_img
+
+    return img

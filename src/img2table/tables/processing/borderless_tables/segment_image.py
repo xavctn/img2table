@@ -158,7 +158,7 @@ def segment_image_text(img: np.ndarray, ocr_df: OCRDataframe) -> List[List[Cell]
     for cnt in text_contours:
         # Find most likely segment
         matching_segments = sorted([seg for seg in img_segments if is_contained_cell(inner_cell=cnt, outer_cell=seg)],
-                                   key=lambda s: s.width * s.height,
+                                   key=lambda s: s.area,
                                    reverse=True)
         if matching_segments:
             best_segment = matching_segments.pop(0)

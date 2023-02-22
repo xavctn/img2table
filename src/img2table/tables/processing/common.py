@@ -34,9 +34,8 @@ def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tu
 
     # Compute intersection area as well as inner cell area
     intersection_area = (x_right - x_left) * (y_bottom - y_top)
-    inner_cell_area = inner_cell.height * inner_cell.width
 
-    return intersection_area / inner_cell_area >= percentage
+    return intersection_area / inner_cell.area >= percentage
 
 
 def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:
@@ -52,7 +51,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
 
     # If vertically is None, merge only contained contours
     if vertically is None:
-        sorted_cnt = sorted(contours, key=lambda cnt: cnt.height * cnt.width, reverse=True)
+        sorted_cnt = sorted(contours, key=lambda cnt: cnt.area, reverse=True)
 
         seq = iter(sorted_cnt)
         list_cnts = [copy.deepcopy(next(seq))]
