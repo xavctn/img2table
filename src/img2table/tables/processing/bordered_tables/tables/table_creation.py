@@ -39,7 +39,7 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
                                y1=sorted(v_delims, key=lambda d: abs(d - cell.y1)).pop(0),
                                y2=sorted(v_delims, key=lambda d: abs(d - cell.y2)).pop(0))
         # Check if cell is not empty
-        if cell.height * cell.width > 0:
+        if cell.area > 0:
             normalized_cells.append(normalized_cell)
 
     return normalized_cells
@@ -68,7 +68,7 @@ def cluster_to_table(cluster_cells: List[Cell]) -> Table:
             # Check cells that contain the default cell
             containing_cells = sorted([c for c in cluster_cells
                                        if is_contained_cell(inner_cell=default_cell, outer_cell=c, percentage=0.9)],
-                                      key=lambda c: c.width * c.height)
+                                      key=lambda c: c.area)
 
             # Append either a cell that contain the default cell, or the default cell itself
             list_cells.append(containing_cells.pop(0) if containing_cells else default_cell)

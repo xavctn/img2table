@@ -9,12 +9,12 @@ import numpy as np
 from img2table.tables.objects.extraction import ExtractedTable
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
+from img2table.tables.processing.bordered_tables.cells import get_cells
+from img2table.tables.processing.bordered_tables.lines import detect_lines
+from img2table.tables.processing.bordered_tables.tables import get_tables
+from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.borderless_tables import detect_borderless_tables
-from img2table.tables.processing.cells import get_cells
-from img2table.tables.processing.lines import detect_lines
 from img2table.tables.processing.prepare_image import prepare_image
-from img2table.tables.processing.tables import get_tables
-from img2table.tables.processing.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.text.titles import get_title_tables
 
 

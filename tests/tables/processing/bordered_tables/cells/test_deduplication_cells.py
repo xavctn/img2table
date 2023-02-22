@@ -1,7 +1,8 @@
 # coding: utf-8
 import polars as pl
 
-from img2table.tables.processing.cells.deduplication import deduplicate_cells_vertically, deduplicate_nested_cells, \
+from img2table.tables.processing.bordered_tables.cells.deduplication import deduplicate_cells_vertically, \
+    deduplicate_nested_cells, \
     deduplicate_cells
 
 

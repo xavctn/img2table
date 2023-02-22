@@ -20,7 +20,7 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     :return: deduplicated list of identified borderless tables
     """
     # Sort tables by area
-    identified_tables = sorted(identified_tables, key=lambda tb: tb.height * tb.width, reverse=True)
+    identified_tables = sorted(identified_tables, key=lambda tb: tb.area, reverse=True)
 
     # For each table check if it does not overlap with an existing table
     final_tables = list()
@@ -62,3 +62,4 @@ def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tab
 
     return deduplicate_tables(identified_tables=list_tables,
                               existing_tables=existing_tables)
+

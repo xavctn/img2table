@@ -4,7 +4,7 @@ import json
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.tables import get_tables
+from img2table.tables.processing.bordered_tables.tables import get_tables
 
 
 def test_get_tables():

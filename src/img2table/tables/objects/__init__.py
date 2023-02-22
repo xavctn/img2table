@@ -30,3 +30,7 @@ class TableObject:
     @property
     def width(self) -> int:
         return self.x2 - self.x1
+
+    @property
+    def area(self) -> int:
+        return self.height * self.width

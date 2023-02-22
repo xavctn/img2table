@@ -6,7 +6,7 @@ import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.lines import overlapping_filter, detect_lines, remove_word_lines
+from img2table.tables.processing.bordered_tables.lines import overlapping_filter, detect_lines, remove_word_lines
 
 
 def test_overlapping_filter():

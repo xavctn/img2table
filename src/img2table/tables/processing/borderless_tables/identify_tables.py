@@ -64,6 +64,45 @@ def get_maximal_cycles(cycles: List[Set]) -> List[Set]:
     return max_cycles
 
 
+def match_with_cycle(cluster: List[Cell], cycle: List[List[Cell]]) -> bool:
+    """
+    Assert if a cluster can be matched with a cycle
+    :param cluster: cluster of cells
+    :param cycle: list of cell clusters
+    :return: boolean indicating if the cluster can be matched with a cycle
+    """
+    # Sort cluster
+    cluster = sorted(cluster, key=lambda c: c.y1 + c.y2)
+
+    # Compute cycle height
+    nb_rows = max(map(len, cycle))
+    height = max(map(lambda cl: max([c.y2 for c in cl]) - min([c.y1 for c in cl]), cycle))
+
+    # Get all cells in cycle
+    cycle_cells = [c for cl in cycle for c in cl]
+
+    matching_cells = list()
+    # Try matching cluster cells with cycle cells
+    for cell in cluster:
+        for c in cycle_cells:
+            if abs(c.y1 + c.y2 - cell.y1 - cell.y2) / (2 * height) <= 1 / (4 * nb_rows):
+                matching_cells.append(cell)
+                break
+
+    # Try matching merged cells from cluster with cycle cell
+    merged_cells = [(up, down) for up, down in zip(cluster, cluster[1:])
+                    if len({up, down}.intersection(set(matching_cells))) == 0]
+    for up, down in merged_cells:
+        merged_cell = Cell(x1=up.x1, x2=up.x2, y1=min(up.y1, down.y1), y2=max(up.y2, down.y2))
+        for c in cycle_cells:
+            if abs(c.y1 + c.y2 - merged_cell.y1 - merged_cell.y2) / (2 * height) <= 1 / (4 * nb_rows):
+                matching_cells += [up, down]
+                break
+
+    # Check if at least 75% of cells are matching with cluster
+    return len(matching_cells) / len(cluster) >= 0.75
+
+
 def merge_cycle_clusters(cycle: List[List[Cell]]) -> List[List[Cell]]:
     """
     Merge clusters in cycle that have common cells
@@ -128,11 +167,9 @@ def identify_tables(clusters: List[List[Cell]]) -> List[List[List[Cell]]]:
     matching_cycles = list()
     for cycle in cycles:
         matching_cycle = cycle.copy()
+        cycle = [clusters[idx] for idx in cycle]
         for idx, cl in enumerate(clusters):
-            # Get list of common rows with element of the cycle
-            common_rows_cl = [v for k, v in d_common_rows.items()
-                              if idx in k and len(set(k).intersection(cycle)) == 1]
-            if max(common_rows_cl + [0]) >= 0.75 * len(cl):
+            if match_with_cycle(cluster=clusters[idx], cycle=cycle):
                 matching_cycle.add(idx)
         matching_cycles.append(matching_cycle)
 
