@@ -39,7 +39,7 @@ def test_tesseract_content(mock_tesseract):
         assert list(result) == [f.read()]
 
 
-def test_tesseract_ocr_df():
+def test_tesseract_ocr_df(mock_tesseract):
     instance = TesseractOCR()
 
     with open(os.path.join(MOCK_DIR, "tesseract_hocr.html"), 'r') as f:

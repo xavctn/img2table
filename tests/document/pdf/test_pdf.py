@@ -46,7 +46,7 @@ def test_pdf_pages():
     assert len(list(PDF(src="test_data/test.pdf", pages=[0]).images)) == 1
 
 
-def test_pdf_tables():
+def test_pdf_tables(mock_tesseract):
     ocr = TesseractOCR()
     pdf = PDF(src="test_data/test.pdf")
 

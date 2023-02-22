@@ -151,7 +151,7 @@ If possible (i.e for searchable PDF), PDF text will be extracted directly from t
 ```python
 from img2table.ocr import TesseractOCR
 
-ocr = TesseractOCR(n_threads=1, lang="eng")
+ocr = TesseractOCR(n_threads=1, lang="eng", tessdata_dir="...")
 ```
 
 > <h4>Parameters</h4>
@@ -160,6 +160,8 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 >    <dd style="font-style: italic;">Number of concurrent threads used to call Tesseract</dd>
 >    <dt>lang : str, optional, default <code>"eng"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Tesseract for text extraction</dd>
+>    <dt>tessdata_dir : str, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Directory containing Tesseract traineddata files. If None, the <code>TESSDATA_PREFIX</code> env variable is used.</dd>
 ></dl>
 
 
@@ -384,6 +386,10 @@ of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> m
 ## Caveats / FYI <a name="fyi"></a>
 
 <ul>
+<li>
+For table extraction, results are highly dependent on OCR quality. By design, tables where no OCR data 
+can be found are not returned.
+</li>
 <li>
 The library is tailored for usage on documents with white/light background. 
 Effectiveness can not be guaranteed on other type of documents. 
