@@ -18,6 +18,14 @@ def test_validators():
     with pytest.raises(TypeError) as e_info:
         ocr = TesseractOCR(lang=12)
 
+    with pytest.raises(EnvironmentError) as e_info:
+        ocr = TesseractOCR()
+
+
+def test_lang_validators(mock_tesseract):
+    with pytest.raises(EnvironmentError) as e_info:
+        ocr = TesseractOCR(lang="zzz")
+
 
 def test_tesseract_hocr(mock_tesseract):
     instance = TesseractOCR()
