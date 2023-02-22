@@ -62,3 +62,18 @@ def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tab
 
     return deduplicate_tables(identified_tables=list_tables,
                               existing_tables=existing_tables)
+
+
+
+if __name__ == '__main__':
+    from img2table.document import Image
+    from img2table.ocr import PaddleOCR
+    from img2table.tables.processing.prepare_image import prepare_image
+
+    img = Image(r"C:\Users\xavca\Pictures\test_7.jpg")
+    ocr = PaddleOCR()
+    ocr_df = ocr.of(img)
+
+    img = prepare_image(list(img.images)[0])
+
+    result = detect_borderless_tables(img=img, ocr_df=ocr_df, existing_tables=[])
