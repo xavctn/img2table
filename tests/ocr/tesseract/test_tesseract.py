@@ -8,7 +8,7 @@ import pytest
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
 from img2table.ocr.data import OCRDataframe
-from tests import MOCK_DIR
+from tests import MOCK_DIR, TESSERACT_INSTALL
 
 
 def test_validators():
@@ -18,6 +18,9 @@ def test_validators():
     with pytest.raises(TypeError) as e_info:
         ocr = TesseractOCR(lang=12)
 
+
+@pytest.mark.skipif(TESSERACT_INSTALL, reason="Tesseract installed locally")
+def test_installed():
     with pytest.raises(EnvironmentError) as e_info:
         ocr = TesseractOCR()
 
