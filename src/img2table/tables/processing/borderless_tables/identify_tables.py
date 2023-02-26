@@ -54,14 +54,16 @@ def get_maximal_cycles(cycles: List[Set]) -> List[Set]:
     :param cycles: list of sets
     :return: list of maximal sets
     """
-    # Get maximal cycles
-    seq = iter(sorted(cycles, key=lambda cc: len(cc), reverse=True))
-    max_cycles = [next(seq)]
-    for cycle in seq:
-        if not any([cycle.intersection(c) == cycle for c in max_cycles]):
-            max_cycles.append(cycle)
+    if cycles:
+        # Get maximal cycles
+        seq = iter(sorted(cycles, key=lambda cc: len(cc), reverse=True))
+        max_cycles = [next(seq)]
+        for cycle in seq:
+            if not any([cycle.intersection(c) == cycle for c in max_cycles]):
+                max_cycles.append(cycle)
 
-    return max_cycles
+        return max_cycles
+    return []
 
 
 def match_with_cycle(cluster: List[Cell], cycle: List[List[Cell]]) -> bool:
