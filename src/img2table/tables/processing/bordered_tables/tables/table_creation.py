@@ -23,13 +23,13 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
     h_values = sorted(list(set([x_val for cell in cluster_cells for x_val in [cell.x1, cell.x2]])))
     # Compute delimiters by grouping close values together
     h_delims = [round(np.mean(h_group)) for h_group in
-                np.split(h_values, np.where(np.diff(h_values) / height >= 0.02)[0] + 1)]
+                np.split(h_values, np.where(np.diff(h_values) >= min(width * 0.02, 10))[0] + 1)]
 
     # Get list of existing vertical values
     v_values = sorted(list(set([y_val for cell in cluster_cells for y_val in [cell.y1, cell.y2]])))
     # Compute delimiters by grouping close values together
     v_delims = [round(np.mean(v_group)) for v_group in
-                np.split(v_values, np.where(np.diff(v_values) / width >= 0.02)[0] + 1)]
+                np.split(v_values, np.where(np.diff(v_values) >= min(height * 0.02, 10))[0] + 1)]
 
     # Normalize all cells
     normalized_cells = list()
