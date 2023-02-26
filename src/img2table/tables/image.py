@@ -48,14 +48,22 @@ class TableImage:
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :return: list of identified tables
         """
+        # If an OCR is provided, compute parameters base on it
+        if self.ocr_df is not None:
+            minLinLength = maxLineGap = round(0.75 * self.ocr_df.text_size or self.dpi // 20)
+            kernel_size = round(1.5 * self.ocr_df.text_size or self.dpi // 10)
+        else:
+            minLinLength = maxLineGap = self.dpi // 20
+            kernel_size = self.dpi // 10
+
         # Detect lines in image
         h_lines, v_lines = detect_lines(image=self.img,
                                         rho=0.3,
                                         theta=np.pi / 180,
                                         threshold=10,
-                                        minLinLength=self.dpi // 20,
-                                        maxLineGap=self.dpi // 20,
-                                        kernel_size=self.dpi // 10,
+                                        minLinLength=minLinLength,
+                                        maxLineGap=maxLineGap,
+                                        kernel_size=kernel_size,
                                         ocr_df=self.ocr_df)
         self.lines = h_lines + v_lines
 
