@@ -33,9 +33,9 @@ The library can be installed via pip.
 # Standard installation, supporting Tesseract
 pip install img2table
 
-# For usage with Paddle OCR
+# For usage with Paddle OCR (Python <= 3.10 only)
 pip install img2table[paddle]
-# For usage with Paddle OCR - GPU (CUDA 9 / CUDA 10)
+# For usage with Paddle OCR - GPU (CUDA 9 / CUDA 10) (Python <= 3.10 only)
 pip install img2table[paddle-gpu]
 
 # For usage with Google Vision OCR
@@ -170,6 +170,8 @@ Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions
 
 
 #### <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> <a name="paddle"></a>
+
+*Available for Python versions <= 3.10*
 
 PaddleOCR is an open-source OCR based on Deep Learning models.<br>
 At first use, relevant languages models will be downloaded.
