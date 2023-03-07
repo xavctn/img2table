@@ -20,7 +20,7 @@ def deduplicate_cells_vertically(df_cells: pl.LazyFrame) -> pl.LazyFrame:
                 )
 
     # Deduplicate on lower bound
-    df_cells = (df_cells.sort(by=["x1", "x2", "y2", "y1"], reverse=[False, False, False, True])
+    df_cells = (df_cells.sort(by=["x1", "x2", "y2", "y1"], descending=[False, False, False, True])
                 .with_columns(pl.lit(1).alias('ones'))
                 .with_columns(pl.col('ones').cumsum().over(["x1", "x2", "y2"]).alias('cell_rk'))
                 .filter(pl.col('cell_rk') == 1)

@@ -49,9 +49,9 @@ class TableImage:
         :return: list of identified tables
         """
         # If an OCR is provided, compute parameters base on it
-        if self.ocr_df is not None:
-            minLinLength = maxLineGap = round(0.75 * self.ocr_df.text_size or self.dpi // 20)
-            kernel_size = round(1.5 * self.ocr_df.text_size or self.dpi // 10)
+        if self.ocr_df.text_size is not None:
+            minLinLength = maxLineGap = round(0.75 * self.ocr_df.text_size)
+            kernel_size = round(1.5 * self.ocr_df.text_size)
         else:
             minLinLength = maxLineGap = self.dpi // 20
             kernel_size = self.dpi // 10
