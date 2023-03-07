@@ -51,14 +51,15 @@ def straightened_img(img: np.ndarray) -> Tuple[np.ndarray, float]:
                             threshold=50,
                             minLineLength=100,
                             maxLineGap=20)
+    
+    if lines:
+        # Get the median angle of detected lines
+        median_angle = float(np.median([math.degrees(math.atan2(y2 - y1, x2 - x1)) for [[x1, y1, x2, y2]] in lines]))
 
-    # Get the median angle of detected lines
-    median_angle = float(np.median([math.degrees(math.atan2(y2 - y1, x2 - x1)) for [[x1, y1, x2, y2]] in lines]))
-
-    if median_angle % 180 != 0:
-        # Rotate the image to straighten it
-        straight_img = rotate_img(img=img, angle=median_angle)
-        return straight_img, median_angle
+        if median_angle % 180 != 0:
+            # Rotate the image to straighten it
+            straight_img = rotate_img(img=img, angle=median_angle)
+            return straight_img, median_angle
 
     return img, 0.0
 
