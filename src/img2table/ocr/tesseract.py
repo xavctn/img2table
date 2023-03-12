@@ -21,11 +21,12 @@ class TesseractOCR(OCRInstance):
     """
     Tesseract-OCR instance
     """
-    def __init__(self, n_threads: int = 1, lang: str = 'eng', tessdata_dir: Optional[str] = None):
+    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None):
         """
         Initialization of Tesseract OCR instance
         :param n_threads: number of concurrent threads used for Tesseract
         :param lang: lang parameter used in Tesseract
+        :param psm: PSM parameter used in Tesseract
         :param tessdata_dir: directory containing Tesseract traineddata files
         """
         if isinstance(n_threads, int):
@@ -37,6 +38,11 @@ class TesseractOCR(OCRInstance):
             self.lang = lang
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
+
+        if isinstance(psm, int):
+            self.psm = psm
+        else:
+            raise TypeError(f"Invalid type {type(psm)} for psm argument")
 
         # Create custom environment
         env = os.environ.copy()
@@ -70,7 +76,7 @@ class TesseractOCR(OCRInstance):
             cv2.imwrite(tmp_file, image)
 
             # Get hOCR
-            hocr = subprocess.check_output(f"tesseract {tmp_file} stdout --psm 11 -l {self.lang} hocr",
+            hocr = subprocess.check_output(f"tesseract {tmp_file} stdout --psm {self.psm} -l {self.lang} hocr",
                                            env=self.env,
                                            stderr=subprocess.STDOUT,
                                            shell=True)

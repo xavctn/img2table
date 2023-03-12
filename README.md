@@ -151,7 +151,10 @@ If possible (i.e for searchable PDF), PDF text will be extracted directly from t
 ```python
 from img2table.ocr import TesseractOCR
 
-ocr = TesseractOCR(n_threads=1, lang="eng", tessdata_dir="...")
+ocr = TesseractOCR(n_threads=1, 
+                   lang="eng", 
+                   psm=11,
+                   tessdata_dir="...")
 ```
 
 > <h4>Parameters</h4>
@@ -160,6 +163,8 @@ ocr = TesseractOCR(n_threads=1, lang="eng", tessdata_dir="...")
 >    <dd style="font-style: italic;">Number of concurrent threads used to call Tesseract</dd>
 >    <dt>lang : str, optional, default <code>"eng"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Tesseract for text extraction</dd>
+>    <dt>psm : int, optional, default <code>11</code></dt>
+>    <dd style="font-style: italic;">PSM parameter used in Tesseract, run <code>tesseract --help-psm</code> for details</dd>
 >    <dt>tessdata_dir : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Directory containing Tesseract traineddata files. If None, the <code>TESSDATA_PREFIX</code> env variable is used.</dd>
 ></dl>
