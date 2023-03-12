@@ -4,31 +4,6 @@ import itertools
 import polars as pl
 
 
-def deduplicate_cells_vertically(df_cells: pl.LazyFrame) -> pl.LazyFrame:
-    """
-    Deduplicate cells that have a common upper or lower bound
-    :param df_cells: dataframe containing cells
-    :return: dataframe with deduplicate cells that have a common upper or lower bound
-    """
-    orig_cols = df_cells.columns
-
-    # Deduplicate on upper bound
-    df_cells = (df_cells.sort(by=["x1", "x2", "y1", "y2"])
-                .with_columns(pl.lit(1).alias('ones'))
-                .with_columns(pl.col('ones').cumsum().over(["x1", "x2", "y1"]).alias('cell_rk'))
-                .filter(pl.col('cell_rk') == 1)
-                )
-
-    # Deduplicate on lower bound
-    df_cells = (df_cells.sort(by=["x1", "x2", "y2", "y1"], descending=[False, False, False, True])
-                .with_columns(pl.lit(1).alias('ones'))
-                .with_columns(pl.col('ones').cumsum().over(["x1", "x2", "y2"]).alias('cell_rk'))
-                .filter(pl.col('cell_rk') == 1)
-                )
-
-    return df_cells.select(orig_cols)
-
-
 def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     """
     Deduplicate nested cells in order to keep the smallest ones
@@ -119,10 +94,7 @@ def deduplicate_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     :param df_cells: dataframe containing cells
     :return: dataframe with deduplicated cells
     """
-    # Deduplicate cells by vertical positions
-    df_cells = deduplicate_cells_vertically(df_cells=df_cells)
-
     # Deduplicate nested cells
-    df_cells_final = deduplicate_nested_cells(df_cells=df_cells)
+    deduplicated_cells = deduplicate_nested_cells(df_cells=df_cells)
 
-    return df_cells_final
+    return deduplicated_cells

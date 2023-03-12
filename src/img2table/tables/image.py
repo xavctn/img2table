@@ -50,8 +50,8 @@ class TableImage:
         """
         # If an OCR is provided, compute parameters base on it
         if self.ocr_df is not None:
-            minLinLength = maxLineGap = round(0.75 * self.ocr_df.text_size) if self.ocr_df.text_size is not None else self.dpi // 20
-            kernel_size = round(1.5 * self.ocr_df.text_size) if self.ocr_df.text_size is not None else self.dpi // 10
+            minLinLength = maxLineGap = round(0.33 * self.ocr_df.median_line_sep) if self.ocr_df.median_line_sep is not None else self.dpi // 20
+            kernel_size = round(0.66 * self.ocr_df.median_line_sep) if self.ocr_df.median_line_sep is not None else self.dpi // 10
         else:
             minLinLength = maxLineGap = self.dpi // 20
             kernel_size = self.dpi // 10
@@ -82,17 +82,25 @@ class TableImage:
 
         # If ocr_df is available, get titles and tables content
         if self.ocr_df is not None:
+            # Get content
+            self.tables = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
+                           for table in self.tables]
+            self.tables = [table for table in self.tables if table.nb_rows * table.nb_columns > 1]
+
             if borderless_tables:
                 # Extract borderless tables
-                self.tables += detect_borderless_tables(img=self.img,
-                                                        ocr_df=self.ocr_df,
-                                                        existing_tables=self.tables)
+                borderless_tbs = detect_borderless_tables(img=self.img,
+                                                          ocr_df=self.ocr_df,
+                                                          existing_tables=self.tables)
+
+                # Get content
+                borderless_tbs = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
+                                  for table in borderless_tbs]
+
+                # Add to tables
+                self.tables += borderless_tbs
 
             # Get title
             self.tables = get_title_tables(img=self.img, tables=self.tables, ocr_df=self.ocr_df)
 
-            # Get content
-            self.tables = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
-                           for table in self.tables]
-
-        return [table.extracted_table for table in self.tables if table.nb_columns * table.nb_rows > 1]
+        return [table.extracted_table for table in self.tables]

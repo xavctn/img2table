@@ -18,6 +18,9 @@ def test_validators():
     with pytest.raises(TypeError) as e_info:
         ocr = TesseractOCR(lang=12)
 
+    with pytest.raises(TypeError) as e_info:
+        ocr = TesseractOCR(psm="r")
+
 
 @pytest.mark.skipif(TESSERACT_INSTALL, reason="Tesseract installed locally")
 def test_installed():

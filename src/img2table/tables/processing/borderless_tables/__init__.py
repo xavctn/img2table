@@ -25,7 +25,8 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     # For each table check if it does not overlap with an existing table
     final_tables = list()
     for table in identified_tables:
-        if not any([is_contained_cell(inner_cell=table.cell, outer_cell=tb.cell, percentage=0.5)
+        if not any([max(is_contained_cell(inner_cell=table.cell, outer_cell=tb.cell, percentage=0.1),
+                        is_contained_cell(inner_cell=tb.cell, outer_cell=table.cell, percentage=0.1))
                     for tb in existing_tables + final_tables]):
             final_tables.append(table)
 
@@ -58,7 +59,8 @@ def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tab
                                                segment_cells=[c for c in segment])
 
             if table:
-                list_tables.append(table)
+                if table.nb_rows > 1:
+                    list_tables.append(table)
 
     return deduplicate_tables(identified_tables=list_tables,
                               existing_tables=existing_tables)
