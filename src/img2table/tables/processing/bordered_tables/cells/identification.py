@@ -55,6 +55,21 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
                .with_row_count(name="idx")
                )
 
+    # Deduplicate on upper bound
+    df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
+               .with_columns(pl.lit(1).alias('ones'))
+               .with_columns(pl.col('ones').cumsum().over(["x1_bbox", "x2_bbox", "y1_bbox"]).alias('cell_rk'))
+               .filter(pl.col('cell_rk') == 1)
+               )
+
+    # Deduplicate on lower bound
+    df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y2_bbox", "y1_bbox"], descending=[False, False, False, True])
+               .with_columns(pl.lit(1).alias('ones'))
+               .with_columns(pl.col('ones').cumsum().over(["x1_bbox", "x2_bbox", "y2_bbox"]).alias('cell_rk'))
+               .filter(pl.col('cell_rk') == 1)
+               .drop(['ones', 'cell_rk'])
+               )
+
     # Cross join with vertical lines
     df_bbox = df_bbox.with_columns(pl.max([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.05,
                                            pl.lit(5.0)]).round(0).alias('h_margin')

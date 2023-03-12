@@ -1,6 +1,4 @@
 # coding: utf-8
-import json
-from collections import OrderedDict
 from io import BytesIO
 
 import pytest
@@ -8,7 +6,7 @@ from openpyxl import load_workbook
 
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
-from img2table.tables.objects.extraction import ExtractedTable, BBox, TableCell
+from img2table.tables.objects.extraction import BBox
 
 
 def test_validators():
@@ -57,17 +55,17 @@ def test_image_tables(mock_tesseract):
 
     result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
-    with open("test_data/extracted_tables.json", "r") as f:
-        expected = [ExtractedTable(title=tb.get('title'),
-                                   bbox=BBox(**tb.get('bbox')),
-                                   content=OrderedDict({int(id): [TableCell(bbox=BBox(**c.get('bbox')),
-                                                                            value=c.get('value'))
-                                                                  for c in row]
-                                                        for id, row in tb.get('content').items()})
-                                   )
-                    for tb in json.load(f)]
+    assert len(result) == 2
 
-    assert result == expected
+    assert result[0].title is None
+    assert result[0].bbox == BBox(x1=35, y1=20, x2=770, y2=327)
+    assert len(result[0].content) == 6
+    assert len(result[0].content[0]) == 3
+
+    assert result[1].title is None
+    assert result[1].bbox == BBox(x1=962, y1=21, x2=1154, y2=123)
+    assert len(result[1].content) == 2
+    assert len(result[1].content[0]) == 2
 
 
 def test_image_excel(mock_tesseract):

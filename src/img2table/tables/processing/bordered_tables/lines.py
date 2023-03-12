@@ -110,7 +110,7 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
     # Compute intersection between words bbox and lines
     # - vertical case
     vert_int = (
-        (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.25)
+        (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.4)
         * pl.max([(pl.min([pl.col('y2'), pl.col('y2_line')]) - pl.max([pl.col('y1'), pl.col('y1_line')])), pl.lit(0)])
     )
     # - horizontal case
