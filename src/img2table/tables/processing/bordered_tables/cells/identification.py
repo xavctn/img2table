@@ -6,21 +6,12 @@ import polars as pl
 from img2table.tables.objects.line import Line
 
 
-def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pl.LazyFrame:
+def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
     """
-    Create dataframe of all possible cells from horizontal and vertical lines
-    :param horizontal_lines: list of horizontal lines
-    :param vertical_lines: list of vertical lines
-    :return: dataframe containing all cells
+    Identify potential cells by matching corresponding horizontal lines
+    :param df_h_lines: dataframe containing horizontal lines
+    :return: dataframe containing potential cells
     """
-    # Check for empty lines
-    if len(horizontal_lines) * len(vertical_lines) == 0:
-        return pl.DataFrame().lazy()
-
-    # Create dataframe from horizontal and vertical lines
-    df_h_lines = pl.from_dicts([l.dict for l in horizontal_lines]).lazy()
-    df_v_lines = pl.from_dicts([l.dict for l in vertical_lines]).lazy()
-
     # Create copy of df_h_lines
     df_h_lines_cp = (df_h_lines.clone()
                      .rename({col: f"{col}_" for col in df_h_lines.columns})
@@ -70,8 +61,29 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
                .drop(['ones', 'cell_rk'])
                )
 
+    return df_bbox
+
+
+def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pl.LazyFrame:
+    """
+    Create dataframe of all possible cells from horizontal and vertical lines
+    :param horizontal_lines: list of horizontal lines
+    :param vertical_lines: list of vertical lines
+    :return: dataframe containing all cells
+    """
+    # Check for empty lines
+    if len(horizontal_lines) * len(vertical_lines) == 0:
+        return pl.DataFrame().lazy()
+
+    # Create dataframe from horizontal and vertical lines
+    df_h_lines = pl.from_dicts([l.dict for l in horizontal_lines]).lazy()
+    df_v_lines = pl.from_dicts([l.dict for l in vertical_lines]).lazy()
+
+    # Identify potential cells bboxes from horizontal lines
+    df_bbox = get_potential_cells_from_h_lines(df_h_lines=df_h_lines)
+
     # Cross join with vertical lines
-    df_bbox = df_bbox.with_columns(pl.max([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.05,
+    df_bbox = df_bbox.with_columns(pl.max([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.025,
                                            pl.lit(5.0)]).round(0).alias('h_margin')
                                    )
     df_bbox_v = df_bbox.join(df_v_lines, how='cross')

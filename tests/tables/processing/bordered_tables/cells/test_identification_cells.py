@@ -4,7 +4,22 @@ import json
 import polars as pl
 
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.bordered_tables.cells import get_cells_dataframe
+from img2table.tables.processing.bordered_tables.cells.identification import get_cells_dataframe, \
+    get_potential_cells_from_h_lines
+
+
+def test_get_potential_cells_from_h_lines():
+    with open("test_data/lines.json", 'r') as f:
+        data = json.load(f)
+    h_lines = [Line(**el) for el in data.get('h_lines')]
+
+    df_h_lines = pl.from_dicts([l.dict for l in h_lines]).lazy()
+
+    result = get_potential_cells_from_h_lines(df_h_lines=df_h_lines).collect()
+
+    expected = pl.read_csv("test_data/expected_potential_cells.csv", sep=";", encoding="utf-8")
+
+    assert result.frame_equal(expected)
 
 
 def test_get_cells_dataframe():
