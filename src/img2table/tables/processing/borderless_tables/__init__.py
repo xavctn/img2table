@@ -4,11 +4,12 @@ from typing import List
 import numpy as np
 
 from img2table.ocr.data import OCRDataframe
+from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.alignment import cluster_aligned_text
-from img2table.tables.processing.borderless_tables.identify_tables import identify_tables
-from img2table.tables.processing.borderless_tables.segment_image import segment_image_text
-from img2table.tables.processing.borderless_tables.table_creation import create_table_from_clusters
+from img2table.tables.processing.borderless_tables.column_delimiters import get_whitespace_column_delimiters
+from img2table.tables.processing.borderless_tables.lines import identify_line_groups
+from img2table.tables.processing.borderless_tables.segment_image import segment_image
+from img2table.tables.processing.borderless_tables.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
 
 
@@ -33,35 +34,34 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     return final_tables
 
 
-def detect_borderless_tables(img: np.ndarray, ocr_df: OCRDataframe, existing_tables: List[Table]) -> List[Table]:
-    """
-    Identify borderless tables in image
-    :param img: image array
-    :param ocr_df: OCRDataframe
-    :param existing_tables: list of already identified table objects
-    :return: list of borderless tables identified in image
-    """
-    # Segment image and get text contours corresponding to each segment
-    image_segments = segment_image_text(img=img, ocr_df=ocr_df)
+def identify_borderless_tables(img: np.ndarray, lines: List[Line], ocr_df: OCRDataframe,
+                               existing_tables: List[Table]) -> List[Table]:
+    # Segment image
+    img_segments = segment_image(img=img,
+                                 lines=lines,
+                                 ocr_df=ocr_df)
 
-    # Identify tables in each segment
-    list_tables = list()
-    for segment in image_segments:
-        # Cluster text contours based on alignment
-        alignment_clusters = cluster_aligned_text(segment=segment)
+    # In each segment, create groups of lines and identify tables
+    tables = list()
+    for seg in img_segments:
+        # Identify line groups in segment
+        seg_line_groups = identify_line_groups(segment=seg,
+                                               ocr_df=ocr_df)
 
-        # Table detection based on clusters
-        table_clusters = identify_tables(clusters=alignment_clusters)
+        # For each line group, identify column delimiters and create tables
+        for line_gp in seg_line_groups.line_groups:
+            # Get column delimiters
+            col_delimiters = get_whitespace_column_delimiters(line_group=line_gp,
+                                                              segment_elements=seg_line_groups.elements)
 
-        # Create table objects
-        for table_cluster in table_clusters:
-            table = create_table_from_clusters(tb_clusters=table_cluster,
-                                               segment_cells=[c for c in segment])
+            # Create table
+            table = identify_table(line_group=line_gp,
+                                   column_delimiters=col_delimiters,
+                                   lines=lines,
+                                   elements=seg_line_groups.elements)
 
             if table:
-                if table.nb_rows > 1:
-                    list_tables.append(table)
+                tables.append(table)
 
-    return deduplicate_tables(identified_tables=list_tables,
+    return deduplicate_tables(identified_tables=tables,
                               existing_tables=existing_tables)
-

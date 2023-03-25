@@ -61,19 +61,20 @@ class OCRDataframe:
         return median_v_dist
 
     @property
-    def text_size(self) -> float:
+    def char_length(self) -> float:
         """
-        Get average text height in pixels
-        :return: average text height in pixels
+        Get average character length in pixels
+        :return: average character length in pixels
         """
         try:
             # Compute average text size
-            df_text_size = (self.df.filter(pl.col('class') == "ocrx_word")
-                            .select((pl.col('y2') - pl.col('y1')).alias('size'))
-                            .mean()
+            df_text_size = (self.df.filter(pl.col('value').is_not_null())
+                            .with_columns([pl.col('value').str.lengths().alias('str_length'),
+                                           (pl.col('x2') - pl.col('x1')).alias('width')])
+                            .select((pl.sum('width') / pl.sum('str_length')).alias('char_length'))
                             )
 
-            return df_text_size.collect().to_dicts().pop().get('size')
+            return df_text_size.collect().to_dicts().pop().get('char_length')
         except Exception:
             return None
 
