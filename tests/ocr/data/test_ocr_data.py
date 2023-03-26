@@ -13,7 +13,7 @@ def test_text_sizes():
     ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
 
     assert round(ocr_df.median_line_sep, 2) == 51.0
-    assert round(ocr_df.text_size, 2) == 54.3
+    assert round(ocr_df.char_length, 2) == 24.2
 
 
 def test_pages():
