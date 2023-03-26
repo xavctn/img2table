@@ -114,6 +114,9 @@ class LineGroup:
     def add(self, line: TableLine):
         self.lines.append(line)
 
+    def __hash__(self):
+        return hash(repr(self))
+
 
 @dataclass
 class ImageSegment:
@@ -126,3 +129,6 @@ class ImageSegment:
 
     def set_elements(self, elements: List[Cell]):
         self.elements = elements
+
+    def __hash__(self):
+        return hash(repr(self))
