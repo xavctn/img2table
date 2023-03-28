@@ -36,12 +36,12 @@ def test_identify_table():
     expected = Table(rows=[Row(cells=[Cell(x1=0, x2=10, y1=10, y2=30),
                                       Cell(x1=10, x2=20, y1=10, y2=30),
                                       Cell(x1=20, x2=30, y1=10, y2=30)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40, content=True),
-                                      Cell(x1=10, x2=20, y1=30, y2=40, content=True),
-                                      Cell(x1=20, x2=30, y1=30, y2=40, content=True)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100, content=True),
-                                      Cell(x1=10, x2=20, y1=40, y2=100, content=False),
-                                      Cell(x1=20, x2=30, y1=40, y2=100, content=True)]),
+                           Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40),
+                                      Cell(x1=10, x2=20, y1=30, y2=40),
+                                      Cell(x1=20, x2=30, y1=30, y2=40)]),
+                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100),
+                                      Cell(x1=10, x2=20, y1=40, y2=100),
+                                      Cell(x1=20, x2=30, y1=40, y2=100)]),
                            ])
 
     assert result == expected

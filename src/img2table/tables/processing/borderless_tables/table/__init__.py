@@ -29,4 +29,9 @@ def identify_table(line_group: LineGroup, column_delimiters: List[Cell], lines: 
     # Identify headers
     table_headers = process_headers(table=table, lines=lines, elements=elements)
 
+    # Reset table content
+    for id_row, row in enumerate(table_headers.items):
+        for id_col, col in enumerate(row.items):
+            table_headers.items[id_row].items[id_col].content = None
+
     return table_headers
