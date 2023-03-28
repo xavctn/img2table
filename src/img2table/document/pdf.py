@@ -1,6 +1,6 @@
 # coding: utf-8
 from dataclasses import dataclass
-from typing import Iterator, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import cv2
 import fitz
@@ -14,6 +14,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class PDF(Document):
     pages: List[int] = None
+    _images: List[np.ndarray] = None
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -23,15 +24,28 @@ class PDF(Document):
                 raise TypeError("All values in pages argument should be integers")
         return value
 
+    def validate__images(self, value, **_) -> Optional[List[int]]:
+        return value
+
     @property
-    def images(self) -> Iterator[np.ndarray]:
+    def images(self) -> List[np.ndarray]:
+        if self._images is not None:
+            return self._images
+
         mat = fitz.Matrix(self.dpi / 72, self.dpi / 72)
         doc = fitz.Document(stream=self.bytes, filetype='pdf')
+
+        # Get all images
+        images = list()
         for page_number in self.pages or range(doc.page_count):
             page = doc.load_page(page_id=page_number)
             pix = page.get_pixmap(matrix=mat)
             img = np.frombuffer(buffer=pix.samples, dtype=np.uint8).reshape((pix.height, pix.width, 3))
-            yield cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            images.append(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+
+        # Set _images variable
+        self._images = images
+        return images
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,
                        min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
