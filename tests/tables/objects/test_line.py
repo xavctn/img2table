@@ -15,8 +15,8 @@ def test_line():
 
 
 def test_reprocess_line():
-    line = Line(x1=20, y1=73, x2=19, y2=20)
+    line = Line(x1=20, y1=73, x2=19, y2=20, thickness=18)
 
     reprocessed_line = line.reprocess()
-    assert reprocessed_line == Line(x1=20, x2=20, y1=20, y2=73)
+    assert reprocessed_line == Line(x1=20, x2=20, y1=20, y2=73, thickness=18)
     assert reprocessed_line.vertical

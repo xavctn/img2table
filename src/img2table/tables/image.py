@@ -13,7 +13,7 @@ from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
-from img2table.tables.processing.borderless_tables import detect_borderless_tables
+from img2table.tables.processing.borderless_tables import identify_borderless_tables
 from img2table.tables.processing.prepare_image import prepare_image
 from img2table.tables.processing.text.titles import get_title_tables
 
@@ -89,16 +89,17 @@ class TableImage:
 
             if borderless_tables:
                 # Extract borderless tables
-                borderless_tbs = detect_borderless_tables(img=self.img,
-                                                          ocr_df=self.ocr_df,
-                                                          existing_tables=self.tables)
+                borderless_tbs = identify_borderless_tables(img=self.img,
+                                                            ocr_df=self.ocr_df,
+                                                            lines=self.lines,
+                                                            existing_tables=self.tables)
 
                 # Get content
                 borderless_tbs = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
                                   for table in borderless_tbs]
 
                 # Add to tables
-                self.tables += borderless_tbs
+                self.tables += [tb for tb in borderless_tbs if min(tb.nb_rows, tb.nb_columns) >= 2]
 
             # Get title
             self.tables = get_title_tables(img=self.img, tables=self.tables, ocr_df=self.ocr_df)

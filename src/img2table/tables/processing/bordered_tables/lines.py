@@ -63,10 +63,12 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
         for sub_cl in sub_clusters:
             y_value = round(np.average([l.y1 for l in sub_cl],
                                        weights=list(map(lambda l: l.length, sub_cl))))
+            thickness = min(max(1, max(map(lambda l: l.y2, sub_cl)) - min(map(lambda l: l.y1, sub_cl))), 5)
             line = Line(x1=min(map(lambda l: l.x1, sub_cl)),
                         x2=max(map(lambda l: l.x2, sub_cl)),
                         y1=y_value,
-                        y2=y_value)
+                        y2=y_value,
+                        thickness=thickness)
 
             if line.length > 0:
                 final_lines.append(line)
@@ -110,12 +112,12 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
     # Compute intersection between words bbox and lines
     # - vertical case
     vert_int = (
-        (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.4)
+        (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.45)
         * pl.max([(pl.min([pl.col('y2'), pl.col('y2_line')]) - pl.max([pl.col('y1'), pl.col('y1_line')])), pl.lit(0)])
     )
     # - horizontal case
     hor_int = (
-        (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.25)
+        (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.4)
         * pl.max([(pl.min([pl.col('x2'), pl.col('x2_line')]) - pl.max([pl.col('x1'), pl.col('x1_line')])), pl.lit(0)])
     )
     df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
