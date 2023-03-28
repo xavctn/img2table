@@ -23,10 +23,8 @@ class PdfOCR(OCRInstance):
             page_height, page_width = page.mediabox.height, page.mediabox.width
 
             # Extract words
-            list_words = list()
-            for word in page.get_text("words", sort=True):
-                x1, y1, x2, y2, value, block_no, line_no, word_no = word
-                dict_word = {
+            list_words = [
+                {
                     "page": idx,
                     "class": "ocrx_word",
                     "id": f"word_{idx + 1}_{block_no}_{line_no}_{word_no}",
@@ -38,10 +36,29 @@ class PdfOCR(OCRInstance):
                     "x2": round(x2 * img_width / page_width),
                     "y2": round(y2 * img_height / page_height)
                 }
-                list_words.append(dict_word)
+                for x1, y1, x2, y2, value, block_no, line_no, word_no in page.get_text("words", sort=True)
+            ]
 
-            # Append to list of pages
-            list_pages.append(list_words)
+            if list_words:
+                # Append to list of pages
+                list_pages.append(list_words)
+            elif len(page.get_images()) == 0:
+                # Check if page is blank
+                page_item = {
+                    "page": idx,
+                    "class": "ocr_page",
+                    "id": f"page_{idx + 1}",
+                    "parent": None,
+                    "value": None,
+                    "confidence": None,
+                    "x1": 0,
+                    "y1": 0,
+                    "x2": img_width,
+                    "y2": img_height
+                }
+                list_pages.append([page_item])
+            else:
+                list_pages.append([])
 
         return list_pages
 
