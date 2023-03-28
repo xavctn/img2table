@@ -50,10 +50,3 @@ class PDF(Document):
                                       implicit_rows=implicit_rows,
                                       borderless_tables=borderless_tables,
                                       min_confidence=min_confidence)
-
-
-if __name__ == '__main__':
-    doc = PDF(src=r"C:\Users\xavca\Pictures\img2table\bordered\2.pdf", pages=[3])
-    tables = doc.extract_tables()
-
-    print(tables)

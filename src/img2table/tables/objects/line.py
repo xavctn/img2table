@@ -1,6 +1,7 @@
 # coding: utf-8
 import math
 from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 
@@ -13,6 +14,7 @@ class Line(TableObject):
     y1: int
     x2: int
     y2: int
+    thickness: Optional[int] = None
 
     @property
     def angle(self) -> float:
@@ -44,7 +46,7 @@ class Line(TableObject):
 
     @property
     def transpose(self) -> "Line":
-        return Line(x1=self.y1, y1=self.x1, x2=self.y2, y2=self.x2)
+        return Line(x1=self.y1, y1=self.x1, x2=self.y2, y2=self.x2, thickness=self.thickness)
 
     def reprocess(self):
         # Reallocate coordinates in proper order

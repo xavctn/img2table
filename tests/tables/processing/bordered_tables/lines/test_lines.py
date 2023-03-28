@@ -18,9 +18,9 @@ def test_overlapping_filter():
              Line(x1=20, x2=20, y1=10, y2=100)]
 
     result = overlapping_filter(lines=lines, max_gap=10)
-    expected = [Line(x1=10, x2=10, y1=10, y2=120),
-                Line(x1=12, x2=12, y1=210, y2=255),
-                Line(x1=20, x2=20, y1=10, y2=100)]
+    expected = [Line(x1=10, x2=10, y1=10, y2=120, thickness=1),
+                Line(x1=12, x2=12, y1=210, y2=255, thickness=1),
+                Line(x1=20, x2=20, y1=10, y2=100, thickness=1)]
 
     assert result == expected
 

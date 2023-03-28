@@ -22,6 +22,7 @@ def test_create_image_segments():
 
 def test_get_segment_elements():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
     img_segments = [ImageSegment(x1=2, y1=0, x2=804, y2=361),
                     ImageSegment(x1=928, y1=0, x2=1188, y2=157)]
 
@@ -33,7 +34,7 @@ def test_get_segment_elements():
                                   lines=lines,
                                   img_segments=img_segments,
                                   blur_size=3,
-                                  kernel_size=13)
+                                  ocr_df=ocr_df)
 
     assert len(result[0].elements) == 14
     assert len(result[1].elements) == 4

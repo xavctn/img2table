@@ -58,27 +58,30 @@ def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[ImageSe
     return [ImageSegment(x1=seg.x1, y1=seg.y1, x2=seg.x2, y2=seg.y2) for seg in img_segments]
 
 
-def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], blur_size: int = 3,
-                         kernel_size: int = 3) -> List[ImageSegment]:
+def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], ocr_df: OCRDataframe,
+                         blur_size: int = 3) -> List[ImageSegment]:
     """
     Identify image elements that correspond to each segment
     :param img: image array
     :param lines: list of image lines
     :param img_segments: list of ImageSegment objects
     :param blur_size: kernel size for blurring operation
-    :param kernel_size: kernel size for dilate operation
+    :param kernel: kernel for dilate operation
     :return: list of ImageSegment objects with corresponding elements
     """
     # Reprocess image
     blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 30)
+    thresh = cv2.Canny(blur, 85, 255)
 
     # Mask lines
     for l in lines:
-        cv2.rectangle(thresh, (l.x1, l.y1), (l.x2, l.y2), (0, 0, 0), 5)
+        if l.horizontal:
+            cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
+        elif l.vertical:
+            cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 2 * l.thickness)
 
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(1.5 * ocr_df.char_length), int(ocr_df.median_line_sep // 6)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs
@@ -115,16 +118,12 @@ def segment_image(img: np.ndarray, lines: List[Line], ocr_df: OCRDataframe) -> L
     image_segments = create_image_segments(img=img,
                                            ocr_df=ocr_df)
 
-    # Get image with no line and compute kernel size
-    ref_size = int(ocr_df.median_line_sep // 4)
-    kernel_size = ref_size + 1 - (ref_size % 2)
-
     # Detect elements corresponding to each segment
     image_segments = get_segment_elements(img=img,
                                           lines=lines,
                                           img_segments=image_segments,
                                           blur_size=3,
-                                          kernel_size=kernel_size)
+                                          ocr_df=ocr_df)
 
     return image_segments
 
