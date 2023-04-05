@@ -87,7 +87,7 @@ Multi-page images are not supported.
 
 ### PDF <a name="pdf-formats"></a>
 
-Searchable and non-searchable PDF files are supported.
+Both native and scanned PDF files are supported.
 
 ## Usage <a name="usage"></a>
 
