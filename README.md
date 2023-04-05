@@ -115,10 +115,9 @@ image = Image(src,
 
 <br>
 
-:warning::warning::warning: **Disclaimer** <br>
-The implemented method to handle skewed/rotated images is approximate and might not work on every image. 
-It is preferable to pass well-oriented images as inputs.<br>
-Moreover, when setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
+The implemented method to handle skewed/rotated images supports skew angles up to 45° and is
+based on the publication by <a href="https://www.mdpi.com/2079-9292/9/1/55">Huang, 2020</a>.<br>
+Setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
 methods might not correspond to the original image.
 
 #### PDF <a name="pdf-doc"></a>
