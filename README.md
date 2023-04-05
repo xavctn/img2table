@@ -297,9 +297,6 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 *Borderless table extraction released in version 0.0.14*
 
-**NB**: the implemented method for extraction of borderless tables heavily relies on OCR quality. In order to achieve 
-decent results, it is recommended to use PaddleOCR or one of the supported commercial solutions.
-
 #### Method return
 
 The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is used to model extracted tables from documents.
@@ -405,7 +402,6 @@ Effectiveness can not be guaranteed on other type of documents.
 </li>
 <li>
 Borderless tables extraction is still in alpha stage and might be inconsistent on complex cases.
-As an example, tables with multi-lines cells can cause troubles.<br>
 Improvements to the algorithm will be released in future versions.
 </li>
 </ul>
