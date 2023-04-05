@@ -9,6 +9,36 @@ from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.line import Line
 
 
+def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
+    """
+    Threshold image by differentiating areas with light and dark backgrounds
+    :param img: image array
+    :param ocr_df: OCRDataframe object
+    :return: threshold image
+    """
+    # Get threshold on image and binary image
+    blur = cv2.GaussianBlur(img, (3, 3), 0)
+    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+    binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+
+    # Mask on areas with dark background
+    blur_size = int(2 * ocr_df.char_length) + 1 - int(2 * ocr_df.char_length) % 2 if ocr_df.char_length else 11
+    blur = cv2.medianBlur(img, blur_size)
+    mask = cv2.inRange(blur, 0, 100)
+
+    # Get contours of dark areas
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # For each dark area, use binary threshold instead of regular threshold
+    for c in contours:
+        x, y, w, h = cv2.boundingRect(c)
+        margin = int(ocr_df.char_length) if ocr_df.char_length else 5
+        if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
+            thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
+
+    return thresh
+
+
 def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     """
     Process lines to merge close lines
@@ -157,9 +187,12 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     # Create copy of image
     img = image.copy()
 
-    # Apply blurring and thresholding
-    blur = cv2.GaussianBlur(img, (3, 3), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+    # Apply thresholding
+    if ocr_df.char_length is not None:
+        thresh = threshold_dark_areas(img=img, ocr_df=ocr_df)
+    else:
+        blur = cv2.GaussianBlur(img, (3, 3), 0)
+        thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
     # Identify both vertical and horizontal lines
     for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:

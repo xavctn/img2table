@@ -3,30 +3,32 @@ import cv2
 import numpy as np
 from sewar import ssim
 
-from img2table.document.base.rotation import straightened_img, rotate_img, upside_down, fix_rotation_image
+from img2table.document.base.rotation import rotate_img_with_border, fix_rotation_image, get_connected_components, \
+    get_relevant_slopes
 
 
-def test_straightened_img():
+def test_get_connected_components():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
-    for angle in range(-180, 180, 1):
-        # Create test image by rotating it
-        test_img = rotate_img(img=img.copy(), angle=angle)
-        _, rotation_angle = straightened_img(img=test_img)
+    cc, thresh = get_connected_components(img=img)
 
-        # Compute angle error
-        error = min(abs(rotation_angle + angle),
-                    abs(rotation_angle + angle + 180),
-                    abs(rotation_angle + angle - 180))
-        # Check if the error is less than half a degree
-        assert error < 0.5
+    assert len(cc) == 98
 
 
-def test_upside_down():
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+def test_get_relevant_slopes():
+    centroids = [[35.8676, 5473.6768],
+                 [45.4648, 8734.32],
+                 [476.386, 98.437],
+                 [9834.4648, 468.47],
+                 [746.746, 7348.43],
+                 [846.462, 8474.48],
+                 [2983.846, 94483.46],
+                 [1093.46, 8473.46],
+                 [3676.77, 84783.64]]
 
-    assert not upside_down(img=img)
-    assert upside_down(img=rotate_img(img, 180))
+    result = get_relevant_slopes(centroids=np.array(centroids), n_max=7)
+
+    assert len(result) == 7
 
 
 def test_fix_rotation_image():
@@ -45,9 +47,9 @@ def test_fix_rotation_image():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
     similarities = list()
-    for angle in range(-180, 180, 15):
+    for angle in range(-30, 30, 3):
         # Create test image by rotating it
-        test_img = rotate_img(img=img.copy(), angle=angle)
+        test_img = rotate_img_with_border(img=img.copy(), angle=angle)
         result = crop_to_orig_img(img=fix_rotation_image(img=test_img),
                                   orig_img=img)
 
