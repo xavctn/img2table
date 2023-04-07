@@ -22,7 +22,10 @@ def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
     binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
     # Mask on areas with dark background
-    blur_size = int(2 * ocr_df.char_length) + 1 - int(2 * ocr_df.char_length) % 2 if ocr_df.char_length else 11
+    try:
+        blur_size = int(2 * ocr_df.char_length) + 1 - int(2 * ocr_df.char_length) % 2 if ocr_df.char_length else 11
+    except Exception as e:
+        blur_size = 11
     blur = cv2.medianBlur(img, blur_size)
     mask = cv2.inRange(blur, 0, 100)
 
@@ -188,11 +191,7 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
     img = image.copy()
 
     # Apply thresholding
-    if ocr_df.char_length is not None:
-        thresh = threshold_dark_areas(img=img, ocr_df=ocr_df)
-    else:
-        blur = cv2.GaussianBlur(img, (3, 3), 0)
-        thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+    thresh = threshold_dark_areas(img=img, ocr_df=ocr_df)
 
     # Identify both vertical and horizontal lines
     for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:
