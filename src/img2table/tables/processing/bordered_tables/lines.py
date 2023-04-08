@@ -130,8 +130,7 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
         return lines
 
     # Create dataframe containing lines
-    df_lines = (pl.from_dicts(dicts=[line.dict for line in lines])
-                .lazy()
+    df_lines = (pl.LazyFrame(data=[line.dict for line in lines])
                 .with_columns([pl.max([pl.col('width'), pl.col('height')]).alias('length'),
                                (pl.col('x1') == pl.col('x2')).alias('vertical')]
                               )

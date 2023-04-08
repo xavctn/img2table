@@ -26,7 +26,7 @@ def test_overlapping_filter():
 
 
 def test_remove_word_lines():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";").lazy())
     lines = [Line(x1=10, x2=10, y1=10, y2=100),
              Line(x1=975, x2=975, y1=40, y2=60)]
 
@@ -37,7 +37,7 @@ def test_remove_word_lines():
 
 def test_detect_lines():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";").lazy())
 
     h_lines, v_lines = detect_lines(image=img,
                                     rho=0.3,

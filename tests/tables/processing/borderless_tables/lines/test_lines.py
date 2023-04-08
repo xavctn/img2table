@@ -67,7 +67,7 @@ def test_vertically_coherent_groups():
 
 
 def test_is_text_block():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     line_group = LineGroup(lines=[TableLine(cells=[Cell(x1=0, x2=20, y1=0, y2=10), Cell(x1=20, x2=40, y1=0, y2=10)]),
                                   TableLine(cells=[Cell(x1=0, x2=20, y1=13, y2=23), Cell(x1=20, x2=40, y1=13, y2=23)])])
@@ -79,7 +79,7 @@ def test_is_text_block():
 
 
 def test_identify_line_groups():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     with open("test_data/image_segment.json", "r") as f:
         data = json.load(f)

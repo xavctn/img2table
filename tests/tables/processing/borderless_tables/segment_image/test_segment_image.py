@@ -13,7 +13,7 @@ from img2table.tables.processing.borderless_tables.segment_image import create_i
 
 def test_create_image_segments():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     result = create_image_segments(img=img, ocr_df=ocr_df)
 
@@ -22,7 +22,7 @@ def test_create_image_segments():
 
 def test_get_segment_elements():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
     img_segments = [ImageSegment(x1=2, y1=0, x2=804, y2=361),
                     ImageSegment(x1=928, y1=0, x2=1188, y2=157)]
 
@@ -42,7 +42,7 @@ def test_get_segment_elements():
 
 def test_segment_image():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)
     lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]

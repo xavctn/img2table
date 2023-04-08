@@ -13,7 +13,7 @@ from img2table.tables.objects.table import Table
 
 def test_table_image():
     image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8").lazy())
+    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", separator=";", encoding="utf-8").lazy())
 
     tb_image = TableImage(img=image,
                           dpi=200,

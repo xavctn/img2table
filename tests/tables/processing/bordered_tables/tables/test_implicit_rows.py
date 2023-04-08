@@ -15,7 +15,7 @@ from img2table.tables.processing.bordered_tables.tables.implicit_rows import cre
 
 def test_create_word_image():
     img = cv2.imread("test_data/implicit.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/implicit_ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/implicit_ocr_df.csv", separator=";").lazy())
 
     result = create_word_image(img=img, ocr_df=ocr_df)
 
@@ -38,7 +38,7 @@ def test_handle_implicit_rows_table():
 
 def test_handle_implicit_rows():
     img = cv2.imread("test_data/implicit.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/implicit_ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/implicit_ocr_df.csv", separator=";").lazy())
 
     with open("test_data/implicit_table.json", 'r') as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])

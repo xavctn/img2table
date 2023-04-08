@@ -164,7 +164,7 @@ class OCRDataframe:
         list_cells = [{"row": id_row, "col": id_col, "x1_w": cell.x1, "x2_w": cell.x2, "y1_w": cell.y1, "y2_w": cell.y2}
                       for id_row, row in enumerate(table.items)
                       for id_col, cell in enumerate(row.items)]
-        df_cells = pl.from_dicts(dicts=list_cells).lazy()
+        df_cells = pl.LazyFrame(data=list_cells)
 
         # Cartesian product between two dataframes
         df_word_cells = df_words.join(other=df_cells, how="cross")
