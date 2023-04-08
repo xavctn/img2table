@@ -17,7 +17,7 @@ def test_get_potential_cells_from_h_lines():
 
     result = get_potential_cells_from_h_lines(df_h_lines=df_h_lines).collect()
 
-    expected = pl.read_csv("test_data/expected_potential_cells.csv", sep=";", encoding="utf-8")
+    expected = pl.read_csv("test_data/expected_potential_cells.csv", separator=";", encoding="utf-8")
 
     assert result.frame_equal(expected)
 
@@ -30,6 +30,6 @@ def test_get_cells_dataframe():
 
     result = get_cells_dataframe(horizontal_lines=h_lines,
                                  vertical_lines=v_lines).collect()
-    expected = pl.read_csv("test_data/expected_ident_cells.csv", sep=";", encoding="utf-8")
+    expected = pl.read_csv("test_data/expected_ident_cells.csv", separator=";", encoding="utf-8")
 
     assert result.frame_equal(expected.sort(['x1', 'y1', 'x2', 'y2']))

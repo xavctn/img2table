@@ -10,14 +10,14 @@ from img2table.tables.objects.table import Table
 
 
 def test_text_sizes():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     assert round(ocr_df.median_line_sep, 2) == 51.0
     assert round(ocr_df.char_length, 2) == 24.2
 
 
 def test_pages():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     ocr_df_page_0 = ocr_df.page(page_number=0)
     ocr_df_page_1 = ocr_df.page(page_number=1)
@@ -30,7 +30,7 @@ def test_pages():
 
 
 def test_get_text_cell():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
     cell = Cell(x1=200, x2=800, y1=700, y2=850)
 
     result = ocr_df.get_text_cell(cell=cell,
@@ -41,7 +41,7 @@ def test_get_text_cell():
 
 
 def test_get_text_table():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     with open("test_data/table.json", "r") as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])

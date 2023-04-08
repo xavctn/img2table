@@ -11,7 +11,7 @@ from img2table.tables.processing.borderless_tables import identify_borderless_ta
 
 def test_identify_borderless_tables():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", sep=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)

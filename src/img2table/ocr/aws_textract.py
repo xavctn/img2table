@@ -97,6 +97,6 @@ class TextractOCR(OCRInstance):
         list_dfs = list()
         for page_elements in content:
             if page_elements:
-                list_dfs.append(pl.from_dicts(page_elements))
+                list_dfs.append(pl.LazyFrame(data=page_elements))
 
-        return OCRDataframe(df=pl.concat(list_dfs).lazy()) if list_dfs else None
+        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

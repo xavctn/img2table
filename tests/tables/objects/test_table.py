@@ -61,7 +61,7 @@ def test_get_table_content():
                   for tb in json.load(f)]
 
     # Load OCR
-    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", sep=";", encoding="utf-8").lazy())
+    ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", separator=";", encoding="utf-8").lazy())
 
     result = [table.get_content(ocr_df=ocr_df, min_confidence=50) for table in tables]
 
