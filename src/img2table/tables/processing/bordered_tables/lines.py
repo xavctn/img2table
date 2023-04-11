@@ -35,7 +35,11 @@ def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
     # For each dark area, use binary threshold instead of regular threshold
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
-        margin = int(ocr_df.char_length) if ocr_df.char_length else 5
+        
+        try:
+            margin = int(ocr_df.char_length)
+        except Exception as e:
+            margin = 5
         if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
             thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
 
