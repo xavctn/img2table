@@ -39,7 +39,8 @@ def test_load_image():
 
 def test_blank_image(mock_tesseract):
     ocr = TesseractOCR()
-    img = Image(src="test_data/blank.png")
+    img = Image(src="test_data/blank.png",
+                detect_rotation=True)
 
     result = img.extract_tables(ocr=ocr,
                                 implicit_rows=True,
@@ -50,7 +51,8 @@ def test_blank_image(mock_tesseract):
 
 
 def test_blank_no_ocr():
-    img = Image(src="test_data/blank.png")
+    img = Image(src="test_data/blank.png",
+                detect_rotation=True)
 
     result = img.extract_tables(implicit_rows=True,
                                 borderless_tables=True,
@@ -61,7 +63,8 @@ def test_blank_no_ocr():
 
 def test_image_tables(mock_tesseract):
     ocr = TesseractOCR()
-    img = Image(src="test_data/test.png")
+    img = Image(src="test_data/test.png",
+                detect_rotation=True)
 
     result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
@@ -79,7 +82,8 @@ def test_image_tables(mock_tesseract):
 
 
 def test_no_ocr():
-    img = Image(src="test_data/dark.png")
+    img = Image(src="test_data/dark.png",
+                detect_rotation=True)
 
     result = img.extract_tables(implicit_rows=True, min_confidence=50)
 
@@ -93,7 +97,8 @@ def test_no_ocr():
 
 def test_image_excel(mock_tesseract):
     ocr = TesseractOCR()
-    img = Image(src="test_data/test.png")
+    img = Image(src="test_data/test.png",
+                detect_rotation=True)
 
     result = img.to_xlsx(dest=BytesIO(), ocr=ocr, implicit_rows=True, min_confidence=50)
 

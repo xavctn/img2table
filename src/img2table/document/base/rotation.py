@@ -169,6 +169,10 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
     # Get connected components of the images
     cc_centroids, thresh = get_connected_components(img=img)
 
+    # Check number of centroids
+    if len(cc_centroids) < 2:
+        return img
+
     # Compute most likely slopes from connected components
     slopes = get_relevant_slopes(centroids=cc_centroids)
 
