@@ -70,10 +70,10 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
     deleted_contours = df_cross.filter(pl.col('overlaps')).select('id').unique()
     df_overlap = (df_cross.filter(pl.col('overlaps'))
                   .groupby(pl.col('id_right').alias('id'))
-                  .agg(pl.min('x1_right').alias('x1_overlap'),
-                       pl.max('x2_right').alias('x2_overlap'),
-                       pl.min('y1_right').alias('y1_overlap'),
-                       pl.max('y2_right').alias('y2_overlap'))
+                  .agg(pl.min('x1').alias('x1_overlap'),
+                       pl.max('x2').alias('x2_overlap'),
+                       pl.min('y1').alias('y1_overlap'),
+                       pl.max('y2').alias('y2_overlap'))
                   )
 
     df_final = (df_cnt.join(deleted_contours, on="id", how="anti")

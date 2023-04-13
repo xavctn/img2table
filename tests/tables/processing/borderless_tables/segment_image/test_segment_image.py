@@ -17,7 +17,7 @@ def test_create_image_segments():
 
     result = create_image_segments(img=img, ocr_df=ocr_df)
 
-    assert result == [ImageSegment(x1=2, y1=0, x2=804, y2=361), ImageSegment(x1=928, y1=0, x2=1188, y2=157)]
+    assert set(result) == {ImageSegment(x1=2, y1=0, x2=804, y2=361), ImageSegment(x1=928, y1=0, x2=1188, y2=157)}
 
 
 def test_get_segment_elements():
@@ -51,5 +51,4 @@ def test_segment_image():
                            ocr_df=ocr_df,
                            lines=lines)
 
-    assert len(result[0].elements) == 14
-    assert len(result[1].elements) == 4
+    assert {len(result[0].elements), len(result[1].elements)} == {14, 4}
