@@ -29,9 +29,6 @@ class PDF(Document):
 
     @cached_property
     def images(self) -> List[np.ndarray]:
-        if self._images is not None:
-            return self._images
-
         mat = fitz.Matrix(self.dpi / 72, self.dpi / 72)
         doc = fitz.Document(stream=self.bytes, filetype='pdf')
 
