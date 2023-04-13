@@ -1,7 +1,10 @@
 # coding: utf-8
 import copy
 from dataclasses import dataclass
-from functools import cached_property
+try:
+    from functools import cached_property
+except ImportError:
+    from cached_property import cached_property
 from typing import List
 
 import cv2

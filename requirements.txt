@@ -5,3 +5,4 @@ pymupdf>=1.19.1
 opencv-python
 bs4
 xlsxwriter>=3.0.6
+cached-property; python_version == '3.7'
