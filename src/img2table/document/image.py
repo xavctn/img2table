@@ -1,6 +1,7 @@
 # coding: utf-8
 from dataclasses import dataclass
-from typing import Iterator, List
+from functools import cached_property
+from typing import List
 
 import cv2
 import numpy as np
@@ -24,10 +25,10 @@ class Image(Document):
 
         super(Image, self).__post_init__()
 
-    @property
-    def images(self) -> Iterator[np.ndarray]:
+    @cached_property
+    def images(self) -> List[np.ndarray]:
         img = cv2.imdecode(np.frombuffer(self.bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-        yield fix_rotation_image(img=img) if self.detect_rotation else img
+        return [fix_rotation_image(img=img) if self.detect_rotation else img]
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,
                        min_confidence: int = 50) -> List[ExtractedTable]:

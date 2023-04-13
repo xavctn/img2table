@@ -1,6 +1,7 @@
 # coding: utf-8
 import copy
 from dataclasses import dataclass
+from functools import cached_property
 from typing import List
 
 import cv2
@@ -31,7 +32,7 @@ class TableImage:
         # Prepare image by removing eventual black background
         self.img = prepare_image(img=self.img)
 
-    @property
+    @cached_property
     def white_img(self) -> np.ndarray:
         white_img = copy.deepcopy(self.img)
 

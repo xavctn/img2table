@@ -1,5 +1,6 @@
 # coding: utf-8
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Dict, List, Optional
 
 import cv2
@@ -14,7 +15,6 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class PDF(Document):
     pages: List[int] = None
-    _images: List[np.ndarray] = None
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -27,7 +27,7 @@ class PDF(Document):
     def validate__images(self, value, **_) -> Optional[List[int]]:
         return value
 
-    @property
+    @cached_property
     def images(self) -> List[np.ndarray]:
         if self._images is not None:
             return self._images
@@ -43,8 +43,6 @@ class PDF(Document):
             img = np.frombuffer(buffer=pix.samples, dtype=np.uint8).reshape((pix.height, pix.width, 3))
             images.append(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
 
-        # Set _images variable
-        self._images = images
         return images
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,

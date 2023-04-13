@@ -1,6 +1,7 @@
 # coding: utf-8
 import io
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Union, Iterator, Dict, List, Optional
 
@@ -34,7 +35,7 @@ class Document(Validations):
         if isinstance(self.pages, list):
             self.pages = sorted(self.pages)
 
-    @property
+    @cached_property
     def bytes(self) -> bytes:
         if isinstance(self.src, bytes):
             return self.src

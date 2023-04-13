@@ -1,4 +1,6 @@
 # coding: utf-8
+from functools import cached_property
+
 
 class TableObject:
     def bbox(self, margin: int = 0, height_margin: int = 0, width_margin: int = 0) -> tuple:
@@ -23,14 +25,14 @@ class TableObject:
 
         return bbox
 
-    @property
+    @cached_property
     def height(self) -> int:
         return self.y2 - self.y1
 
-    @property
+    @cached_property
     def width(self) -> int:
         return self.x2 - self.x1
 
-    @property
+    @cached_property
     def area(self) -> int:
         return self.height * self.width

@@ -1,5 +1,6 @@
 # coding: utf-8
 from dataclasses import dataclass
+from functools import cached_property
 
 import polars as pl
 
@@ -16,7 +17,7 @@ class OCRDataframe:
         df_page = self.df.filter(pl.col('page') == page_number)
         return OCRDataframe(df=df_page)
 
-    @property
+    @cached_property
     def median_line_sep(self) -> float:
         """
         Get median of vertical line separation in pixels
@@ -60,7 +61,7 @@ class OCRDataframe:
 
         return median_v_dist
 
-    @property
+    @cached_property
     def char_length(self) -> float:
         """
         Get average character length in pixels
