@@ -72,7 +72,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4
     # Cross join and keep only relevant pairs
     df_cross = (df_centroids.join(df_centroids, how='cross')
                 .filter(pl.col('x1') != pl.col('x1_right'))
-                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 4 * ref_height)
+                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 5 * ref_height)
                 )
 
     # Compute slopes and angles
@@ -95,7 +95,8 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4
                           .to_dicts()
                           )
 
-    return sorted([angle.get('angle') for angle in most_likely_angles])
+    return sorted(list(set([angle.get('angle') for angle in most_likely_angles
+                            if angle.get('count') >= 0.3 * max([a.get('count') for a in most_likely_angles])])))
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
@@ -162,24 +163,30 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
     :param thresh: thresholded image
     :return: best angle
     """
+    # If there is only one angle, return it
+    if len(angles) == 1:
+        return angles.pop()
+
     if angles[-1] - angles[0] <= 0.015:
+        # Get angle by applying Dixon Q test
         best_angle = angle_dixon_q_test(angles=angles)
     else:
-        # Evaluate angles
+        # Evaluate angles by rotation
         best_angle = None
         best_evaluation = 0
-        for angle in angles:
+        for angle in sorted(angles, key=lambda a: abs(a)):
             # Get angle evaluation
             angle_evaluation = evaluate_angle(img=thresh, angle=angle)
 
             if angle_evaluation > best_evaluation:
-                best_angle = angle if abs(angle) < 45 else 90 - abs(angle)
+                best_angle = angle
                 best_evaluation = angle_evaluation
 
     return best_angle or 0
 
 
-def rotate_img_with_border(img: np.ndarray, angle: float, background_color: Tuple[int] = (255, 255, 255)) -> np.ndarray:
+def rotate_img_with_border(img: np.ndarray, angle: float,
+                           background_color: Tuple[int, int, int] = (255, 255, 255)) -> np.ndarray:
     """
     Rotate an image of the defined angle and add background on border
     :param img: image array
@@ -224,7 +231,6 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
 
     # Compute most likely angles from connected components
     angles = get_relevant_angles(centroids=cc_centroids, ref_height=ref_height)
-
     # Estimate skew
     skew_angle = estimate_skew(angles=angles, thresh=thresh)
 

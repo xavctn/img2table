@@ -109,7 +109,7 @@ image = Image(src,
 >    <dd style="font-style: italic;">Image source</dd>
 >    <dt>dpi : int, optional, default <code>200</code></dt>
 >    <dd style="font-style: italic;">Estimated image dpi, used to adapt OpenCV algorithm parameters</dd>
->    <dt>detect_rotation : bool, optional, default <code>False</code></dt>
+>    <dt>detect_rotation : bool, optional, default <code>True</code></dt>
 >    <dd style="font-style: italic;">Detect and correct skew/rotation of the image</dd>
 ></dl>
 
@@ -117,8 +117,15 @@ image = Image(src,
 
 The implemented method to handle skewed/rotated images supports skew angles up to 45° and is
 based on the publication by <a href="https://www.mdpi.com/2079-9292/9/1/55">Huang, 2020</a>.<br>
-Setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
+<ul>
+<li>
+By default, the <code>detect_rotation</code> parameter is set to <code>True</code>, image coordinates and bounding boxes returned by other 
 methods might not correspond to the original image.
+</li>
+<li>
+If input images are guaranteed to be straight, disabling the skew correction will improve speed of the algorithm.
+</li>
+</ul>
 
 #### PDF <a name="pdf-doc"></a>
 PDF files are instantiated as follows :

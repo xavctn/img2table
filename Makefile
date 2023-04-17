@@ -7,7 +7,7 @@ export PYTHONPATH := $(DIR)/src
 # Virtual environment commands
 venv:
 	python -m venv ./venv || true
-	. $(VENV); python -m pip install pip --upgrade;
+	. $(VENV); python -m pip install pip wheel --upgrade;
 	. $(VENV); python -m pip install -r requirements-dev.txt
 
 update: venv

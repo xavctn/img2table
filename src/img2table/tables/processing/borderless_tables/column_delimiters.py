@@ -19,14 +19,6 @@ class Rectangle(NamedTuple):
         return cls(x1=cell.x1, y1=cell.y1, x2=cell.x2, y2=cell.y2)
 
     @property
-    def height(self):
-        return self.y2 - self.y1
-
-    @property
-    def width(self):
-        return self.x2 - self.x1
-
-    @property
     def area(self):
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
@@ -47,10 +39,7 @@ class Rectangle(NamedTuple):
         x_right = min(self.x2, other.x2)
         y_bottom = min(self.y2, other.y2)
 
-        if x_right < x_left or y_bottom < y_top:
-            return False
-
-        return (x_right - x_left) * (y_bottom - y_top) > 0
+        return max(x_right - x_left, 0) * max(y_bottom - y_top, 0) > 0
 
 
 def identify_trivial_delimiters(line_group: LineGroup, elements: List[Cell]) -> List[Cell]:
@@ -92,16 +81,12 @@ def find_whitespaces(line_group: LineGroup, elements: List[Cell]) -> List[Cell]:
     queue = PriorityQueue()
     queue.put([-group_rect.area, group_rect, obstacles])
 
-    # Get covered area
-    covered_area = sum([o.area for o in obstacles])
-
     whitespaces = list()
     while not queue.qsize() == 0:
         q, r, obs = queue.get()
         if len(obs) == 0:
             # Update whitespaces and covered area
             whitespaces.append(r)
-            covered_area += r.area
 
             # Update elements in queue
             for element in queue.queue:
