@@ -1,13 +1,18 @@
 # coding: utf-8
-import random
-from collections import Counter
 from typing import Tuple, List
 
 import cv2
 import numpy as np
+import polars as pl
+
+dixon_q_test_confidence_dict = {
+    0.9: {3: 0.941, 4: 0.765, 5: 0.642, 6: 0.56, 7: 0.507, 8: 0.468, 9: 0.437, 10: 0.412},
+    0.95: {3: 0.970, 4: 0.829, 5: 0.71, 6: 0.625, 7: 0.568, 8: 0.526, 9: 0.493, 10: 0.466},
+    0.99: {3: 0.994, 4: 0.926, 5: 0.821, 6: 0.74, 7: 0.68, 8: 0.634, 9: 0.598, 10: 0.568}
+}
 
 
-def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.ndarray]:
     """
     Identify connected components in image
     :param img: image array
@@ -50,30 +55,77 @@ def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     centroids_y = stats[:, cv2.CC_STAT_TOP] + stats[:, cv2.CC_STAT_HEIGHT] / 2
     filtered_centroids = np.column_stack([centroids_x, centroids_y])
 
-    return filtered_centroids, thresh
+    return filtered_centroids, median_height, thresh
 
 
-def get_relevant_slopes(centroids: np.ndarray, n_max: int = 10) -> List[float]:
+def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4) -> List[float]:
     """
-    Identify relevant slopes from connected components centroids
+    Identify relevant angles from connected components centroids
     :param centroids: array of connected components centroids
-    :param n_max: maximum number of returned slopes
-    :return: list of slopes values
+    :param ref_height: reference height
+    :param n_max: maximum number of returned angles
+    :return: list of angle values
     """
-    nb_iter = 0
-    slopes = list()
-    while nb_iter < 30 * len(centroids):
-        nb_iter += 1
-        idx1, idx2 = random.sample(range(len(centroids)), 2)
+    # Create dataframe with centroids
+    df_centroids = pl.LazyFrame(data=centroids, schema=['x1', 'y1'])
 
-        # Compute slope
-        slope = (centroids[idx1, 1] - centroids[idx2, 1]) / (centroids[idx1, 0] - centroids[idx2, 0])
-        slopes.append(slope)
+    # Cross join and keep only relevant pairs
+    df_cross = (df_centroids.join(df_centroids, how='cross')
+                .filter(pl.col('x1') != pl.col('x1_right'))
+                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 2 * ref_height)
+                )
 
-    # Get n_max most frequent slopes
-    most_frequent_slopes = [slope[0] for slope in Counter(slopes).most_common()[:n_max]]
+    # Compute slopes and angles
+    df_angles = (df_cross.with_columns(((pl.col('y1') - pl.col('y1_right')) / (pl.col('x1') - pl.col('x1_right'))
+                                        ).round(4).alias('slope'))
+                 .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
+                 .with_columns(pl.when(pl.col('angle').abs() <= 45)
+                               .then(pl.col('angle'))
+                               .otherwise(pl.min(pl.col('angle') + 90, 90 - pl.col('angle')) * -pl.col('angle').sign())
+                               .alias('angle')
+                               )
+                 )
 
-    return most_frequent_slopes
+    # Get n most represented angles
+    most_likely_angles = (df_angles.groupby('angle')
+                          .count()
+                          .sort(by='count', descending=True)
+                          .limit(n_max)
+                          .collect(streaming=True)
+                          .to_dicts()
+                          )
+
+    return sorted([angle.get('angle') for angle in most_likely_angles])
+
+
+def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
+    """
+    Compute best angle according to Dixon Q test
+    :param angles: list of possible angles
+    :param confidence: confidence level for outliers (0.9, 0.95, 0.99)
+    :return: estimated angle
+    """
+    # Get dict of Q crit corresponding to confidence level
+    dict_q_crit = dixon_q_test_confidence_dict.get(confidence)
+
+    while len(angles) >= 3:
+        # Compute range
+        rng = angles[-1] - angles[0]
+
+        # Get outlier and compute diff with closest angle
+        diffs = [abs(nexxt - prev) for prev, nexxt in zip(angles, angles[1:])]
+        idx_outlier = 0 if np.argmin(diffs) == 0 else len(angles) - 1
+        gap = np.max(diffs)
+
+        # Compute Qexp and compare to Qcrit
+        q_exp = gap / rng
+
+        if q_exp > dict_q_crit.get(len(angles)):
+            angles.pop(idx_outlier)
+        else:
+            break
+
+    return np.mean(angles)
 
 
 def rotate_img(img: np.ndarray, angle: float) -> np.array:
@@ -103,29 +155,26 @@ def evaluate_angle(img: np.ndarray, angle: float) -> int:
     return np.sum(proj == 0)
 
 
-def estimate_skew(slopes: List[float], thresh: np.ndarray) -> float:
+def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
     """
-    Estimate skew from slopes
-    :param slopes: list of slopes
+    Estimate skew from angles
+    :param angles: list of angles
     :param thresh: thresholded image
     :return: best angle
     """
-    # Get angles from slopes
-    angles = [np.arctan(slope) * 180 / np.pi for slope in slopes]
+    if angles[-1] - angles[0] <= 0.015:
+        best_angle = angle_dixon_q_test(angles=angles)
+    else:
+        # Evaluate angles
+        best_angle = None
+        best_evaluation = 0
+        for angle in angles:
+            # Get angle evaluation
+            angle_evaluation = evaluate_angle(img=thresh, angle=angle)
 
-    angles = [angle if abs(angle) <= 45 else min(angle + 90, 90 - angle) * -np.sign(angle)
-              for angle in angles]
-
-    # Evaluate angles
-    best_angle = None
-    best_evaluation = 0
-    for angle in angles:
-        # Get angle evaluation
-        angle_evaluation = evaluate_angle(img=thresh, angle=angle)
-
-        if angle_evaluation > best_evaluation:
-            best_angle = angle if abs(angle) < 45 else 90 - abs(angle)
-            best_evaluation = angle_evaluation
+            if angle_evaluation > best_evaluation:
+                best_angle = angle if abs(angle) < 45 else 90 - abs(angle)
+                best_evaluation = angle_evaluation
 
     return best_angle or 0
 
@@ -167,17 +216,17 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
     :return: rotated image array
     """
     # Get connected components of the images
-    cc_centroids, thresh = get_connected_components(img=img)
+    cc_centroids, ref_height, thresh = get_connected_components(img=img)
 
     # Check number of centroids
     if len(cc_centroids) < 2:
         return img
 
-    # Compute most likely slopes from connected components
-    slopes = get_relevant_slopes(centroids=cc_centroids)
+    # Compute most likely angles from connected components
+    angles = get_relevant_angles(centroids=cc_centroids, ref_height=ref_height)
 
     # Estimate skew
-    skew_angle = estimate_skew(slopes=slopes, thresh=thresh)
+    skew_angle = estimate_skew(angles=angles, thresh=thresh)
 
     if skew_angle != 0:
         # Rotate image with borders

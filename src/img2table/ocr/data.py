@@ -30,7 +30,7 @@ class OCRDataframe:
         df_words = self.df.filter(pl.col('class') == "ocrx_word")
 
         # Check if there are some words
-        if df_words.collect().height <= 1:
+        if df_words.collect(streaming=True).height <= 1:
             return None
 
         # Cross join to get corresponding words and filter on words that corresponds horizontally
@@ -49,14 +49,14 @@ class OCRDataframe:
                           )
 
         # Check if there are some correspondence
-        if df_words_below.collect().height <= 1:
+        if df_words_below.collect(streaming=True).height <= 1:
             return None
 
         # Compute median vertical distance between words
         median_v_dist = (df_words_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
                                                        - pl.col('y1') - pl.col('y2')) / 2).alias('y_diff'))
                          .select(pl.median('y_diff'))
-                         .collect()
+                         .collect(streaming=True)
                          .to_dicts()
                          .pop()
                          .get('y_diff')
@@ -78,7 +78,7 @@ class OCRDataframe:
                             .select((pl.sum('width') / pl.sum('str_length')).alias('char_length'))
                             )
 
-            return df_text_size.collect().to_dicts().pop().get('char_length')
+            return df_text_size.collect(streaming=True).to_dicts().pop().get('char_length')
         except Exception:
             return None
 
@@ -142,7 +142,7 @@ class OCRDataframe:
 
         # Concatenate all lines
         text_lines = (df_text_parent.select(pl.col('value'))
-                      .collect()
+                      .collect(streaming=True)
                       .get_column('value')
                       .to_list()
                       )
@@ -209,7 +209,7 @@ class OCRDataframe:
                           )
 
         # Implement found values to table cells content
-        for rec in df_text_parent.collect().to_dicts():
+        for rec in df_text_parent.collect(streaming=True).to_dicts():
             table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text') or None
 
         return table
@@ -217,7 +217,7 @@ class OCRDataframe:
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             try:
-                assert self.df.collect().frame_equal(other.df.collect())
+                assert self.df.collect(streaming=True).frame_equal(other.df.collect(streaming=True))
                 return True
             except AssertionError:
                 return False

@@ -130,7 +130,7 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
                 )
 
     # If there are no lines or no words, do nothing
-    if len(lines) == 0 or df_words.collect().height == 0:
+    if len(lines) == 0 or df_words.collect(streaming=True).height == 0:
         return lines
 
     # Create dataframe containing lines
@@ -167,7 +167,7 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
 
     # Identify lines that intersect words
     intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.5)
-                          .collect()
+                          .collect(streaming=True)
                           .get_column('line_id')
                           .to_list()
                           )

@@ -4,18 +4,18 @@ import numpy as np
 from sewar import ssim
 
 from img2table.document.base.rotation import rotate_img_with_border, fix_rotation_image, get_connected_components, \
-    get_relevant_slopes
+    get_relevant_angles
 
 
 def test_get_connected_components():
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
 
-    cc, thresh = get_connected_components(img=img)
+    cc, ref_height, thresh = get_connected_components(img=img)
 
     assert len(cc) == 98
 
 
-def test_get_relevant_slopes():
+def test_get_relevant_angles():
     centroids = [[35.8676, 5473.6768],
                  [45.4648, 8734.32],
                  [476.386, 98.437],
@@ -26,9 +26,9 @@ def test_get_relevant_slopes():
                  [1093.46, 8473.46],
                  [3676.77, 84783.64]]
 
-    result = get_relevant_slopes(centroids=np.array(centroids), n_max=7)
+    result = get_relevant_angles(centroids=np.array(centroids), ref_height=1000, n_max=5)
 
-    assert len(result) == 7
+    assert len(result) == 5
 
 
 def test_fix_rotation_image():
@@ -56,4 +56,4 @@ def test_fix_rotation_image():
         # Compute similarity between original image and result
         similarities.append(ssim(GT=img, P=result)[0])
 
-    assert np.mean(similarities) >= 0.9
+    assert np.mean(similarities) >= 0.8

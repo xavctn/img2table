@@ -28,7 +28,7 @@ def create_word_image(img: np.ndarray, ocr_df: OCRDataframe, min_confidence: int
     words_img.fill(255)
 
     # Extract each word from hocr and copy bbox to white image
-    for word in df_words.collect().to_dicts():
+    for word in df_words.collect(streaming=True).to_dicts():
         # Get cropped image of word
         cropped_img = img[word.get('y1'):word.get('y2'), word.get('x1'):word.get('x2')]
 
