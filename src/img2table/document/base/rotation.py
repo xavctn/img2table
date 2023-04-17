@@ -72,7 +72,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4
     # Cross join and keep only relevant pairs
     df_cross = (df_centroids.join(df_centroids, how='cross')
                 .filter(pl.col('x1') != pl.col('x1_right'))
-                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 2 * ref_height)
+                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 4 * ref_height)
                 )
 
     # Compute slopes and angles
@@ -114,7 +114,7 @@ def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
 
         # Get outlier and compute diff with closest angle
         diffs = [abs(nexxt - prev) for prev, nexxt in zip(angles, angles[1:])]
-        idx_outlier = 0 if np.argmin(diffs) == 0 else len(angles) - 1
+        idx_outlier = 0 if np.argmax(diffs) == 0 else len(angles) - 1
         gap = np.max(diffs)
 
         # Compute Qexp and compare to Qcrit

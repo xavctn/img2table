@@ -4,7 +4,7 @@ import numpy as np
 from sewar import ssim
 
 from img2table.document.base.rotation import rotate_img_with_border, fix_rotation_image, get_connected_components, \
-    get_relevant_angles
+    get_relevant_angles, angle_dixon_q_test
 
 
 def test_get_connected_components():
@@ -29,6 +29,12 @@ def test_get_relevant_angles():
     result = get_relevant_angles(centroids=np.array(centroids), ref_height=1000, n_max=5)
 
     assert len(result) == 5
+
+
+def test_angle_dixon_q_test():
+    result = angle_dixon_q_test(angles=[12.23, 12.78, 12.79, 12.82], confidence=0.9)
+
+    assert round(result, 3) == 12.797
 
 
 def test_fix_rotation_image():
@@ -56,4 +62,4 @@ def test_fix_rotation_image():
         # Compute similarity between original image and result
         similarities.append(ssim(GT=img, P=result)[0])
 
-    assert np.mean(similarities) >= 0.8
+    assert np.mean(similarities) >= 0.9

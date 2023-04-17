@@ -54,7 +54,7 @@ class OCRDataframe:
 
         # Compute median vertical distance between words
         median_v_dist = (df_words_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
-                                                       - pl.col('y1') - pl.col('y2')) / 2).alias('y_diff'))
+                                                       - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
                          .select(pl.median('y_diff'))
                          .collect(streaming=True)
                          .to_dicts()
