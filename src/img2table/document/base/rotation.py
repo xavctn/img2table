@@ -58,7 +58,7 @@ def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.nda
     return filtered_centroids, median_height, thresh
 
 
-def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4) -> List[float]:
+def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5) -> List[float]:
     """
     Identify relevant angles from connected components centroids
     :param centroids: array of connected components centroids
@@ -95,8 +95,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 4
                           .to_dicts()
                           )
 
-    return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                            if angle.get('count') >= 0.3 * max([a.get('count') for a in most_likely_angles])])))
+    return sorted(list(set([angle.get('angle') for angle in most_likely_angles])))
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
@@ -153,7 +152,7 @@ def evaluate_angle(img: np.ndarray, angle: float) -> int:
     # Apply horizontal projection
     proj = np.sum(rotated_img, 1)
     # Count number of empty rows
-    return np.sum(proj == 0)
+    return np.sum((proj[1:] - proj[:-1]) ** 2)
 
 
 def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
@@ -163,6 +162,7 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
     :param thresh: thresholded image
     :return: best angle
     """
+    print(angles)
     # If there is only one angle, return it
     if len(angles) == 1:
         return angles.pop()
@@ -177,6 +177,8 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
         for angle in sorted(angles, key=lambda a: abs(a)):
             # Get angle evaluation
             angle_evaluation = evaluate_angle(img=thresh, angle=angle)
+            print(angle)
+            print(angle_evaluation)
 
             if angle_evaluation > best_evaluation:
                 best_angle = angle
