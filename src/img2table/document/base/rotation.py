@@ -72,12 +72,12 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     # Cross join and keep only relevant pairs
     df_cross = (df_centroids.join(df_centroids, how='cross')
                 .filter(pl.col('x1') != pl.col('x1_right'))
-                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 5 * ref_height)
+                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 10 * ref_height)
                 )
 
     # Compute slopes and angles
     df_angles = (df_cross.with_columns(((pl.col('y1') - pl.col('y1_right')) / (pl.col('x1') - pl.col('x1_right'))
-                                        ).round(4).alias('slope'))
+                                        ).alias('slope'))
                  .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
                  .with_columns(pl.when(pl.col('angle').abs() <= 45)
                                .then(pl.col('angle'))
@@ -89,13 +89,14 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     # Get n most represented angles
     most_likely_angles = (df_angles.groupby('angle')
                           .count()
-                          .sort(by='count', descending=True)
+                          .sort(by=['count', pl.col('angle').abs()], descending=[True, False])
                           .limit(n_max)
                           .collect(streaming=True)
                           .to_dicts()
                           )
 
-    return sorted(list(set([angle.get('angle') for angle in most_likely_angles])))
+    return sorted(list(set([angle.get('angle') for angle in most_likely_angles
+                            if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
@@ -162,7 +163,6 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
     :param thresh: thresholded image
     :return: best angle
     """
-    print(angles)
     # If there is only one angle, return it
     if len(angles) == 1:
         return angles.pop()
@@ -177,8 +177,6 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
         for angle in sorted(angles, key=lambda a: abs(a)):
             # Get angle evaluation
             angle_evaluation = evaluate_angle(img=thresh, angle=angle)
-            print(angle)
-            print(angle_evaluation)
 
             if angle_evaluation > best_evaluation:
                 best_angle = angle
