@@ -10,7 +10,7 @@ from img2table.ocr.pdf import PdfOCR
 
 def test_pdf_content(mock_tesseract):
     instance = PdfOCR()
-    doc = PDF(src="test_data/test.pdf", dpi=300)
+    doc = PDF(src="test_data/test.pdf")
 
     result = instance.content(document=doc)
 
@@ -36,7 +36,7 @@ def test_pdf_ocr_df():
 
 def test_pdf_document():
     instance = PdfOCR()
-    doc = PDF(src="test_data/test.pdf", dpi=300)
+    doc = PDF(src="test_data/test.pdf")
 
     result = instance.of(document=doc)
 

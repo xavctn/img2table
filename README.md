@@ -63,6 +63,9 @@ pip install img2table[azure]
 
 Images are loaded using the `opencv-python` library, supported formats are listed below.
 
+<details>
+<summary>Supported image formats</summary>
+
 <blockquote>
 <ul>
 <li>Windows bitmaps - <em>.bmp, </em>.dib</li>
@@ -81,6 +84,8 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 
+</details>
+<br>
 Multi-page images are not supported.
 
 ---
@@ -99,7 +104,6 @@ Images are instantiated as follows :
 from img2table.document import Image
 
 image = Image(src, 
-              dpi=200,
               detect_rotation=False)
 ```
 
@@ -107,43 +111,32 @@ image = Image(src,
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">Image source</dd>
->    <dt>dpi : int, optional, default <code>200</code></dt>
->    <dd style="font-style: italic;">Estimated image dpi, used to adapt OpenCV algorithm parameters</dd>
->    <dt>detect_rotation : bool, optional, default <code>True</code></dt>
+>    <dt>detect_rotation : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Detect and correct skew/rotation of the image</dd>
 ></dl>
-
 <br>
-
 The implemented method to handle skewed/rotated images supports skew angles up to 45° and is
 based on the publication by <a href="https://www.mdpi.com/2079-9292/9/1/55">Huang, 2020</a>.<br>
-<ul>
-<li>
-By default, the <code>detect_rotation</code> parameter is set to <code>True</code>, image coordinates and bounding boxes returned by other 
+Setting the `detect_rotation` parameter to `True`, image coordinates and bounding boxes returned by other 
 methods might not correspond to the original image.
-</li>
-<li>
-If input images are guaranteed to be straight, disabling the skew correction will improve speed of the algorithm.
-</li>
-</ul>
 
 #### PDF <a name="pdf-doc"></a>
 PDF files are instantiated as follows :
 ```python
 from img2table.document import PDF
 
-pdf = PDF(src, dpi=200, pages=[0, 2])
+pdf = PDF(src, pages=[0, 2])
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
->    <dt>dpi : int, optional, default <code>200</code></dt>
->    <dd style="font-style: italic;">Dpi used for conversion of PDF pages to images</dd>
 >    <dt>pages : list, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
 ></dl>
+
+PDF pages are converted to images with a 200 DPI for table identification.
 
 ---
 
@@ -152,7 +145,8 @@ pdf = PDF(src, dpi=200, pages=[0, 2])
 `img2table` provides an interface for several OCR services and tools in order to parse table content.<br>
 If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
-#### Tesseract <a name="tesseract"></a>
+<details>
+<summary>Tesseract<a name="tesseract"></a></summary>
 
 ```python
 from img2table.ocr import TesseractOCR
@@ -178,13 +172,14 @@ ocr = TesseractOCR(n_threads=1,
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+</details>
 
-
-#### <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> <a name="paddle"></a>
+<details>
+<summary>PaddleOCR<a name="paddle"></a></summary>
 
 *Available for Python versions <= 3.10*
 
-PaddleOCR is an open-source OCR based on Deep Learning models.<br>
+<a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> is an open-source OCR based on Deep Learning models.<br>
 At first use, relevant languages models will be downloaded.
 
 ```python
@@ -200,8 +195,10 @@ ocr = PaddleOCR(lang="en")
 ></dl>
 
 *Released in version 0.0.13*
+</details>
 
-#### Google Vision <a name="vision"></a>
+<details>
+<summary>Google Vision<a name="vision"></a></summary>
 
 Authentication to GCP can be done by setting the standard `GOOGLE_APPLICATION_CREDENTIALS` environment variable.<br>
 If this variable is missing, an API key should be provided via the `api_key` parameter.
@@ -219,8 +216,10 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dt>timeout : int, optional, default <code>15</code></dt>
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 ></dl>
+</details>
 
-#### AWS Textract <a name="textract"></a>
+<details>
+<summary>AWS Textract<a name="textract"></a></summary>
 
 When using AWS Textract, the DetectDocumentText API is exclusively called.
 
@@ -248,9 +247,10 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
 ></dl>
+</details>
 
-
-#### Azure Cognitive Services <a name="azure"></a>
+<details>
+<summary>Azure Cognitive Services<a name="azure"></a></summary>
 
 ```python
 from img2table.ocr import AzureOCR
@@ -266,7 +266,7 @@ ocr = AzureOCR(endpoint="abc.azure.com",
 >    <dt>subscription_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
 ></dl>
-
+</details>
 
 ---
 
@@ -282,7 +282,7 @@ from img2table.document import Image
 ocr = TesseractOCR(n_threads=1, lang="eng")
 
 # Instantiation of document, either an image or a PDF
-doc = Image(src, dpi=200)
+doc = Image(src)
 
 # Table extraction
 extracted_tables = doc.extract_tables(ocr=ocr,
@@ -353,7 +353,7 @@ from img2table.document import Image
 ocr = TesseractOCR(n_threads=1, lang="eng")
 
 # Instantiation of document, either an image or a PDF
-doc = Image(src, dpi=200)
+doc = Image(src)
 
 # Extraction of tables and creation of an xlsx file containing tables
 doc.to_xlsx(dest=dest,

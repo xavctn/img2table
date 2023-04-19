@@ -18,7 +18,6 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class Document(Validations):
     src: Union[str, Path, io.BytesIO, bytes]
-    dpi: int = 200
 
     def validate_src(self, value, **_) -> Union[str, Path, io.BytesIO, bytes]:
         if not isinstance(value, (str, Path, io.BytesIO, bytes)):
@@ -70,7 +69,6 @@ class Document(Validations):
         # Extract tables from document
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
-                                  dpi=self.dpi,
                                   ocr_df=self.ocr_df.page(page_number=idx) if self.ocr_df else None,
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows,
                                                                                 borderless_tables=borderless_tables)

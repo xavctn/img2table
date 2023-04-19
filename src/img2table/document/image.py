@@ -16,7 +16,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 
 @dataclass
 class Image(Document):
-    detect_rotation: bool = True
+    detect_rotation: bool = False
 
     def validate_detect_rotation(self, value, **_) -> int:
         if not isinstance(value, bool):

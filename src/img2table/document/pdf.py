@@ -32,7 +32,7 @@ class PDF(Document):
 
     @cached_property
     def images(self) -> List[np.ndarray]:
-        mat = fitz.Matrix(self.dpi / 72, self.dpi / 72)
+        mat = fitz.Matrix(200 / 72, 200 / 72)
         doc = fitz.Document(stream=self.bytes, filetype='pdf')
 
         # Get all images
