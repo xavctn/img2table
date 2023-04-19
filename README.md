@@ -65,6 +65,7 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 
 <details>
 <summary>Supported image formats</summary>
+<br>
 
 <blockquote>
 <ul>
@@ -84,6 +85,7 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 
+<br>
 </details>
 <br>
 Multi-page images are not supported.
@@ -147,6 +149,7 @@ If possible (i.e for searchable PDF), PDF text will be extracted directly from t
 
 <details>
 <summary>Tesseract<a name="tesseract"></a></summary>
+<br>
 
 ```python
 from img2table.ocr import TesseractOCR
@@ -172,10 +175,12 @@ ocr = TesseractOCR(n_threads=1,
 
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+<br>
 </details>
 
 <details>
 <summary>PaddleOCR<a name="paddle"></a></summary>
+<br>
 
 *Available for Python versions <= 3.10*
 
@@ -195,10 +200,12 @@ ocr = PaddleOCR(lang="en")
 ></dl>
 
 *Released in version 0.0.13*
+<br>
 </details>
 
 <details>
 <summary>Google Vision<a name="vision"></a></summary>
+<br>
 
 Authentication to GCP can be done by setting the standard `GOOGLE_APPLICATION_CREDENTIALS` environment variable.<br>
 If this variable is missing, an API key should be provided via the `api_key` parameter.
@@ -216,10 +223,12 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dt>timeout : int, optional, default <code>15</code></dt>
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 ></dl>
+<br>
 </details>
 
 <details>
 <summary>AWS Textract<a name="textract"></a></summary>
+<br>
 
 When using AWS Textract, the DetectDocumentText API is exclusively called.
 
@@ -247,10 +256,12 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
 ></dl>
+<br>
 </details>
 
 <details>
 <summary>Azure Cognitive Services<a name="azure"></a></summary>
+<br>
 
 ```python
 from img2table.ocr import AzureOCR
@@ -266,6 +277,7 @@ ocr = AzureOCR(endpoint="abc.azure.com",
 >    <dt>subscription_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
 ></dl>
+<br>
 </details>
 
 ---
