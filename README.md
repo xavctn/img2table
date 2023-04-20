@@ -1,7 +1,7 @@
 # img2table
 
 `img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
-processing with little to no parametrization, which supports most common image file formats as well as PDF files.
+processing that supports most common image file formats as well as PDF files.
 
 Thanks to its design, it provides a practical and lighter alternative to Neural Networks based solutions, especially for usage on CPU.
 
