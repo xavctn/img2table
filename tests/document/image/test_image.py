@@ -14,9 +14,6 @@ def test_validators():
         img = Image(src=1)
 
     with pytest.raises(TypeError) as e_info:
-        img = Image(src="img", dpi="8")
-
-    with pytest.raises(TypeError) as e_info:
         img = Image(src="img", detect_rotation=3)
 
 

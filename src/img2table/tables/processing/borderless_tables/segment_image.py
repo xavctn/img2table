@@ -5,29 +5,25 @@ from typing import List
 import cv2
 import numpy as np
 
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 from img2table.tables.processing.common import is_contained_cell, merge_contours
 
 
-def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[ImageSegment]:
+def create_image_segments(img: np.ndarray, median_line_sep: float) -> List[ImageSegment]:
     """
     Create segmentation of the image into specific parts
     :param img: image array
-    :param ocr_df: OCRDataframe object
+    :param median_line_sep: median line separation
     :return: list of image segments as Cell objects
     """
     # Reprocess images
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thresh = cv2.Canny(blur, 0, 0)
 
-    # Define kernel size by using most stable metric between different OCRs
-    if ocr_df.median_line_sep is not None:
-        kernel_size = round(ocr_df.median_line_sep / 3)
-    else:
-        kernel_size = 20
+    # Define kernel size by using median line separation
+    kernel_size = round(median_line_sep / 3)
 
     # Dilate to combine adjacent text contours
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
@@ -58,15 +54,16 @@ def create_image_segments(img: np.ndarray, ocr_df: OCRDataframe) -> List[ImageSe
     return [ImageSegment(x1=seg.x1, y1=seg.y1, x2=seg.x2, y2=seg.y2) for seg in img_segments]
 
 
-def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], ocr_df: OCRDataframe,
-                         blur_size: int = 3) -> List[ImageSegment]:
+def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], char_length: float,
+                         median_line_sep: float, blur_size: int = 3) -> List[ImageSegment]:
     """
     Identify image elements that correspond to each segment
     :param img: image array
     :param lines: list of image lines
     :param img_segments: list of ImageSegment objects
+    :param char_length: average character length
+    :param median_line_sep: median line separation
     :param blur_size: kernel size for blurring operation
-    :param kernel: kernel for dilate operation
     :return: list of ImageSegment objects with corresponding elements
     """
     # Reprocess image
@@ -81,7 +78,7 @@ def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[
             cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 2 * l.thickness)
 
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(1.5 * ocr_df.char_length), int(ocr_df.median_line_sep // 6)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(1.5 * char_length), int(median_line_sep // 6)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs
@@ -106,24 +103,26 @@ def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[
     return img_segments
 
 
-def segment_image(img: np.ndarray, lines: List[Line], ocr_df: OCRDataframe) -> List[ImageSegment]:
+def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[ImageSegment]:
     """
     Segment image and its elements
     :param img: image array
     :param lines: list of Line objects of the image
-    :param ocr_df: OCRDataframe object
+    :param char_length: average character length
+    :param median_line_sep: median line separation
     :return: list of ImageSegment objects with corresponding elements
     """
     # Create image segments
     image_segments = create_image_segments(img=img,
-                                           ocr_df=ocr_df)
+                                           median_line_sep=median_line_sep)
 
     # Detect elements corresponding to each segment
     image_segments = get_segment_elements(img=img,
                                           lines=lines,
                                           img_segments=image_segments,
-                                          blur_size=3,
-                                          ocr_df=ocr_df)
+                                          char_length=char_length,
+                                          median_line_sep=median_line_sep,
+                                          blur_size=3)
 
     return image_segments
 

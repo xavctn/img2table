@@ -14,30 +14,27 @@ def test_validators():
         pdf = PDF(src=1)
 
     with pytest.raises(TypeError) as e_info:
-        pdf = PDF(src="img", dpi="8")
+        pdf = PDF(src="img", pages=12)
 
     with pytest.raises(TypeError) as e_info:
-        pdf = PDF(src="img", dpi=200, pages=12)
-
-    with pytest.raises(TypeError) as e_info:
-        pdf = PDF(src="img", dpi=200, pages=["12"])
+        pdf = PDF(src="img", pages=["12"])
 
 
 def test_load_pdf():
     # Load from path
-    pdf_from_path = PDF(src="test_data/test.pdf", dpi=300)
+    pdf_from_path = PDF(src="test_data/test.pdf")
 
     # Load from bytes
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytes = PDF(src=f.read(), dpi=300)
+        pdf_from_bytes = PDF(src=f.read())
 
     # Load from BytesIO
     with open("test_data/test.pdf", "rb") as f:
-        pdf_from_bytesio = PDF(src=BytesIO(f.read()), dpi=300)
+        pdf_from_bytesio = PDF(src=BytesIO(f.read()))
 
     assert pdf_from_path.bytes == pdf_from_bytes.bytes == pdf_from_bytesio.bytes
 
-    assert list(pdf_from_path.images)[0].shape == (3300, 2550)
+    assert list(pdf_from_path.images)[0].shape == (2200, 1700)
 
 
 def test_pdf_pages():
