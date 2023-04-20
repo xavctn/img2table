@@ -2,9 +2,6 @@
 
 import json
 
-import polars as pl
-
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.lines import identify_lines, create_h_pos_groups, \
     vertically_coherent_groups, is_text_block, identify_line_groups
@@ -67,20 +64,16 @@ def test_vertically_coherent_groups():
 
 
 def test_is_text_block():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
-
     line_group = LineGroup(lines=[TableLine(cells=[Cell(x1=0, x2=20, y1=0, y2=10), Cell(x1=20, x2=40, y1=0, y2=10)]),
                                   TableLine(cells=[Cell(x1=0, x2=20, y1=13, y2=23), Cell(x1=20, x2=40, y1=13, y2=23)])])
-    assert is_text_block(line_group=line_group, ocr_df=ocr_df)
+    assert is_text_block(line_group=line_group, char_length=8.44)
 
     line_group = LineGroup(lines=[TableLine(cells=[Cell(x1=0, x2=20, y1=0, y2=10), Cell(x1=40, x2=60, y1=0, y2=10)]),
                                   TableLine(cells=[Cell(x1=0, x2=20, y1=13, y2=23), Cell(x1=40, x2=60, y1=13, y2=23)])])
-    assert not is_text_block(line_group=line_group, ocr_df=ocr_df)
+    assert not is_text_block(line_group=line_group, char_length=8.44)
 
 
 def test_identify_line_groups():
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
-
     with open("test_data/image_segment.json", "r") as f:
         data = json.load(f)
     img_segment = ImageSegment(x1=data.get('x1'),
@@ -90,7 +83,8 @@ def test_identify_line_groups():
                                elements=[Cell(**c) for c in data.get('elements')])
 
     result = identify_line_groups(segment=img_segment,
-                                  ocr_df=ocr_df)
+                                  median_line_sep=51,
+                                  char_length=8.44)
 
     assert isinstance(result, ImageSegment)
     assert result.x1 == img_segment.x1

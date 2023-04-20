@@ -21,10 +21,6 @@ class Row(TableObject):
         return self._items
 
     @property
-    def contours(self) -> List[Cell]:
-        return self._contours
-
-    @property
     def nb_columns(self) -> int:
         return len(self.items)
 

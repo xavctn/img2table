@@ -1,6 +1,10 @@
 # coding: utf-8
 import io
 from dataclasses import dataclass
+try:
+    from functools import cached_property
+except ImportError:
+    from cached_property import cached_property
 from pathlib import Path
 from typing import Union, Iterator, Dict, List, Optional
 
@@ -14,7 +18,6 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class Document(Validations):
     src: Union[str, Path, io.BytesIO, bytes]
-    dpi: int = 200
 
     def validate_src(self, value, **_) -> Union[str, Path, io.BytesIO, bytes]:
         if not isinstance(value, (str, Path, io.BytesIO, bytes)):
@@ -34,7 +37,7 @@ class Document(Validations):
         if isinstance(self.pages, list):
             self.pages = sorted(self.pages)
 
-    @property
+    @cached_property
     def bytes(self) -> bytes:
         if isinstance(self.src, bytes):
             return self.src
@@ -66,7 +69,6 @@ class Document(Validations):
         # Extract tables from document
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
-                                  dpi=self.dpi,
                                   ocr_df=self.ocr_df.page(page_number=idx) if self.ocr_df else None,
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows,
                                                                                 borderless_tables=borderless_tables)

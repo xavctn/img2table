@@ -19,7 +19,7 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
                                    vertical_lines=vertical_lines)
     
     # Handle case of empty cells
-    if df_cells.collect().height == 0:
+    if df_cells.collect(streaming=True).height == 0:
         return []
 
     # Deduplicate cells
@@ -27,6 +27,6 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
 
     # Convert to Cell objects
     cells = [Cell(x1=row["x1"], x2=row["x2"], y1=row["y1"], y2=row["y2"])
-             for row in df_cells_dedup.collect().to_dicts()]
+             for row in df_cells_dedup.collect(streaming=True).to_dicts()]
 
     return cells

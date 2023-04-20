@@ -1,7 +1,6 @@
 # coding: utf-8
 from typing import List
 
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import TableLine, LineGroup, ImageSegment
 
@@ -105,11 +104,11 @@ def vertically_coherent_groups(lines: List[TableLine], max_gap: float) -> List[L
     return line_groups
 
 
-def is_text_block(line_group: LineGroup, ocr_df: OCRDataframe) -> bool:
+def is_text_block(line_group: LineGroup, char_length: float) -> bool:
     """
     Check if the line group corresponds to a text block
     :param line_group: LineGroup object
-    :param ocr_df: OCRDataframe object
+    :param char_length: average character length
     :return: boolean indicating if the line group is a text block
     """
     # Get list of lines and if they are complete text
@@ -122,7 +121,7 @@ def is_text_block(line_group: LineGroup, ocr_df: OCRDataframe) -> bool:
 
         for prev, nextt in zip(cells, cells[1:]):
             x_diff = nextt.x1 - prev.x2
-            if x_diff >= 2 * ocr_df.char_length:
+            if x_diff >= 2 * char_length:
                 text_line = False
                 break
 
@@ -131,21 +130,22 @@ def is_text_block(line_group: LineGroup, ocr_df: OCRDataframe) -> bool:
     return nb_lines_text / len(line_group.lines) >= 0.5
 
 
-def identify_line_groups(segment: ImageSegment, ocr_df: OCRDataframe) -> ImageSegment:
+def identify_line_groups(segment: ImageSegment, char_length: float, median_line_sep: float) -> ImageSegment:
     """
     From elements of the segment, identify lines that are coherent together
     :param segment: ImageSegment object
-    :param ocr_df: OCRDataframe object
+    :param char_length: average character length
+    :param median_line_sep: median line separation
     :return: segment with its groups of lines
     """
     # Identify lines in segment
     lines = identify_lines(elements=segment.elements,
-                           ref_size=int(ocr_df.median_line_sep // 4))
+                           ref_size=int(median_line_sep // 4))
 
     # Create line groups
     line_groups = [line_group for h_group in create_h_pos_groups(lines=lines)
-                   for line_group in vertically_coherent_groups(lines=h_group, max_gap=ocr_df.median_line_sep)
-                   if line_group.size > 1 and not is_text_block(line_group=line_group, ocr_df=ocr_df)]
+                   for line_group in vertically_coherent_groups(lines=h_group, max_gap=median_line_sep)
+                   if line_group.size > 1 and not is_text_block(line_group=line_group, char_length=char_length)]
 
     return ImageSegment(x1=segment.x1,
                         y1=segment.y1,

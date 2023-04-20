@@ -75,7 +75,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     # Get list of redundant cells and remove them from original cell dataframe
     redundant_cells = (df_cross_cells.filter(pl.col('redundant'))
-                       .collect()
+                       .collect(streaming=True)
                        .get_column('index_')
                        .unique()
                        .to_list()

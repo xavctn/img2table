@@ -4,6 +4,7 @@ from typing import List, Union, Optional
 
 import cv2
 import numpy as np
+import polars as pl
 
 from img2table.tables.objects.cell import Cell
 
@@ -38,6 +39,56 @@ def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tu
     return intersection_area / inner_cell.area >= percentage
 
 
+def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
+    """
+    Merge overlapping contours
+    :param contours: list of contours as Cell objects
+    :return: list of merged contours
+    """
+    # Create dataframe with contours
+    df_cnt = pl.LazyFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
+                                for idx, c in enumerate(contours)])
+
+    # Cross join
+    df_cross = (df_cnt.join(df_cnt, how='cross')
+                .filter(pl.col('id') != pl.col('id_right'))
+                .filter(pl.col('area') <= pl.col('area_right'))
+                )
+
+    # Compute intersection area between contours and identify if the smallest contour overlaps the largest one
+    x_left = pl.max(pl.col('x1'), pl.col('x1_right'))
+    x_right = pl.min(pl.col('x2'), pl.col('x2_right'))
+    y_top = pl.max(pl.col('y1'), pl.col('y1_right'))
+    y_bottom = pl.min(pl.col('y2'), pl.col('y2_right'))
+    intersection = pl.max(x_right - x_left, 0) * pl.max(y_bottom - y_top, 0)
+
+    df_cross = (df_cross.with_columns(intersection.alias('intersection'))
+                .with_columns((pl.col('intersection') / pl.col('area') >= 0.25).alias('overlaps'))
+                )
+
+    # Identify relevant contours: no contours is overlapping it
+    deleted_contours = df_cross.filter(pl.col('overlaps')).select('id').unique()
+    df_overlap = (df_cross.filter(pl.col('overlaps'))
+                  .groupby(pl.col('id_right').alias('id'))
+                  .agg(pl.min('x1').alias('x1_overlap'),
+                       pl.max('x2').alias('x2_overlap'),
+                       pl.min('y1').alias('y1_overlap'),
+                       pl.max('y2').alias('y2_overlap'))
+                  )
+
+    df_final = (df_cnt.join(deleted_contours, on="id", how="anti")
+                .join(df_overlap, on='id', how='left')
+                .select([pl.min(pl.col('x1'), pl.col('x1_overlap')).alias('x1'),
+                         pl.max(pl.col('x2'), pl.col('x2_overlap')).alias('x2'),
+                         pl.min(pl.col('y1'), pl.col('y1_overlap')).alias('y1'),
+                         pl.max(pl.col('y2'), pl.col('y2_overlap')).alias('y2'),
+                         ])
+                )
+
+    # Map results to cells
+    return [Cell(**d) for d in df_final.collect(streaming=True).to_dicts()]
+
+
 def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:
     """
     Create merge contours by an axis
@@ -51,23 +102,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
 
     # If vertically is None, merge only contained contours
     if vertically is None:
-        sorted_cnt = sorted(contours, key=lambda cnt: cnt.area, reverse=True)
-
-        seq = iter(sorted_cnt)
-        list_cnts = [copy.deepcopy(next(seq))]
-        for cnt in seq:
-            contained_cnt = [idx for idx, el in enumerate(list_cnts)
-                             if is_contained_cell(inner_cell=cnt, outer_cell=el, percentage=0.25)]
-            if len(contained_cnt) == 1:
-                id = contained_cnt.pop()
-                list_cnts[id].x1 = min(list_cnts[id].x1, cnt.x1)
-                list_cnts[id].y1 = min(list_cnts[id].y1, cnt.y1)
-                list_cnts[id].x2 = max(list_cnts[id].x2, cnt.x2)
-                list_cnts[id].y2 = max(list_cnts[id].y2, cnt.y2)
-            else:
-                list_cnts.append(copy.deepcopy(cnt))
-
-        return list_cnts
+        return merge_overlapping_contours(contours=contours)
 
     # Define dimensions used to merge contours
     idx_1 = "y1" if vertically else "x1"

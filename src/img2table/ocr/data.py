@@ -1,5 +1,9 @@
 # coding: utf-8
 from dataclasses import dataclass
+try:
+    from functools import cached_property
+except ImportError:
+    from cached_property import cached_property
 
 import polars as pl
 
@@ -15,68 +19,6 @@ class OCRDataframe:
         # Filter dataframe on specific page
         df_page = self.df.filter(pl.col('page') == page_number)
         return OCRDataframe(df=df_page)
-
-    @property
-    def median_line_sep(self) -> float:
-        """
-        Get median of vertical line separation in pixels
-        :return: median of vertical line separation in pixels
-        """
-        # Get only words
-        df_words = self.df.filter(pl.col('class') == "ocrx_word")
-
-        # Check if there are some words
-        if df_words.collect().height <= 1:
-            return None
-
-        # Cross join to get corresponding words and filter on words that corresponds horizontally
-        df_h_words = (df_words.join(df_words, how='cross')
-                      .filter(pl.col('id') != pl.col('id_right'))
-                      .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
-                              - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
-                      )
-
-        # Get word which is directly below
-        df_words_below = (df_h_words.filter(pl.col('y1') < pl.col('y1_right'))
-                          .sort(['id', 'y1_right'])
-                          .with_columns(pl.lit(1).alias('ones'))
-                          .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
-                          .filter(pl.col('rk') == 1)
-                          )
-
-        # Check if there are some correspondence
-        if df_words_below.collect().height <= 1:
-            return None
-
-        # Compute median vertical distance between words
-        median_v_dist = (df_words_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
-                                                       - pl.col('y1') - pl.col('y2')) / 2).alias('y_diff'))
-                         .select(pl.median('y_diff'))
-                         .collect()
-                         .to_dicts()
-                         .pop()
-                         .get('y_diff')
-                         )
-
-        return median_v_dist
-
-    @property
-    def char_length(self) -> float:
-        """
-        Get average character length in pixels
-        :return: average character length in pixels
-        """
-        try:
-            # Compute average text size
-            df_text_size = (self.df.filter(pl.col('value').is_not_null())
-                            .with_columns([pl.col('value').str.lengths().alias('str_length'),
-                                           (pl.col('x2') - pl.col('x1')).alias('width')])
-                            .select((pl.sum('width') / pl.sum('str_length')).alias('char_length'))
-                            )
-
-            return df_text_size.collect().to_dicts().pop().get('char_length')
-        except Exception:
-            return None
 
     def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
         """
@@ -138,7 +80,7 @@ class OCRDataframe:
 
         # Concatenate all lines
         text_lines = (df_text_parent.select(pl.col('value'))
-                      .collect()
+                      .collect(streaming=True)
                       .get_column('value')
                       .to_list()
                       )
@@ -205,7 +147,7 @@ class OCRDataframe:
                           )
 
         # Implement found values to table cells content
-        for rec in df_text_parent.collect().to_dicts():
+        for rec in df_text_parent.collect(streaming=True).to_dicts():
             table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text') or None
 
         return table
@@ -213,7 +155,7 @@ class OCRDataframe:
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             try:
-                assert self.df.collect().frame_equal(other.df.collect())
+                assert self.df.collect(streaming=True).frame_equal(other.df.collect(streaming=True))
                 return True
             except AssertionError:
                 return False

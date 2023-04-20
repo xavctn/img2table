@@ -1,19 +1,19 @@
 # coding: utf-8
-from typing import List
+from typing import List, Optional
 
 import cv2
 import numpy as np
 import polars as pl
 
-from img2table.ocr.data import OCRDataframe
+from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
+def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.ndarray:
     """
     Threshold image by differentiating areas with light and dark backgrounds
     :param img: image array
-    :param ocr_df: OCRDataframe object
+    :param char_length: average character length
     :return: threshold image
     """
     # Get threshold on image and binary image
@@ -22,10 +22,7 @@ def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
     binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
     # Mask on areas with dark background
-    try:
-        blur_size = int(2 * ocr_df.char_length) + 1 - int(2 * ocr_df.char_length) % 2 if ocr_df.char_length else 11
-    except Exception as e:
-        blur_size = 11
+    blur_size = int(2 * char_length) + 1 - int(2 * char_length) % 2 if char_length else 11
     blur = cv2.medianBlur(img, blur_size)
     mask = cv2.inRange(blur, 0, 100)
 
@@ -35,11 +32,8 @@ def threshold_dark_areas(img: np.ndarray, ocr_df: OCRDataframe) -> np.ndarray:
     # For each dark area, use binary threshold instead of regular threshold
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
-        
-        try:
-            margin = int(ocr_df.char_length)
-        except Exception as e:
-            margin = 5
+
+        margin = int(char_length)
         if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
             thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
 
@@ -117,20 +111,18 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     return final_lines
 
 
-def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
+def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     """
-    Remove lines that corresponds to words in image
+    Remove lines that corresponds to contours in image
     :param lines: list of lines
-    :param ocr_df: OCRDataframe object
+    :param contours: list of image contours as cell objects
     :return: list of lines not intersecting with words
     """
-    # Get words from dataframe
-    df_words = (ocr_df.df.filter(pl.col('class') == "ocrx_word")
-                .filter(pl.col('confidence') >= 50)
-                )
+    # Get contours dataframe
+    df_cnts = pl.LazyFrame(data=[{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in contours])
 
-    # If there are no lines or no words, do nothing
-    if len(lines) == 0 or df_words.collect().height == 0:
+    # If there are no lines or no contours, do nothing
+    if len(lines) == 0 or df_cnts.collect(streaming=True).height == 0:
         return lines
 
     # Create dataframe containing lines
@@ -143,9 +135,9 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
                 )
 
     # Merge both dataframes
-    df_words_lines = df_words.join(df_lines, how='cross')
+    df_words_lines = df_cnts.join(df_lines, how='cross')
 
-    # Compute intersection between words bbox and lines
+    # Compute intersection between contours bbox and lines
     # - vertical case
     vert_int = (
         (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.45)
@@ -165,9 +157,9 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
                 .agg(pl.col('intersection').sum().alias('intersection'))
                 )
 
-    # Identify lines that intersect words
+    # Identify lines that intersect contours
     intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.5)
-                          .collect()
+                          .collect(streaming=True)
                           .get_column('line_id')
                           .to_list()
                           )
@@ -175,26 +167,27 @@ def remove_word_lines(lines: List[Line], ocr_df: OCRDataframe) -> List[Line]:
     return [line for idx, line in enumerate(lines) if idx not in intersecting_lines]
 
 
-def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, threshold: int = 50,
-                 minLinLength: int = 290, maxLineGap: int = 6, kernel_size: int = 20,
-                 ocr_df: OCRDataframe = None) -> (List[Line], List[Line]):
+def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
+                 theta: float = np.pi / 180, threshold: int = 50, minLinLength: int = 290, maxLineGap: int = 6,
+                 kernel_size: int = 20) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical lines on image
     :param image: image array
+    :param contours: list of image contours as cell objects
+    :param char_length: average character length
     :param rho: rho parameter for Hough line transform
     :param theta: theta parameter for Hough line transform
     :param threshold: threshold parameter for Hough line transform
     :param minLinLength: minLinLength parameter for Hough line transform
     :param maxLineGap: maxLineGap parameter for Hough line transform
     :param kernel_size: kernel size to filter on horizontal / vertical lines
-    :param ocr_df: OCRDataframe object
     :return: horizontal and vertical lines
     """
     # Create copy of image
     img = image.copy()
 
     # Apply thresholding
-    thresh = threshold_dark_areas(img=img, ocr_df=ocr_df)
+    thresh = threshold_dark_areas(img=img, char_length=char_length)
 
     # Identify both vertical and horizontal lines
     for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:
@@ -219,7 +212,7 @@ def detect_lines(image: np.ndarray, rho: float = 1, theta: float = np.pi / 180, 
         merged_lines = overlapping_filter(lines=lines, max_gap=gap)
 
         # If possible, remove lines that corresponds to words
-        if ocr_df is not None:
-            merged_lines = remove_word_lines(lines=merged_lines, ocr_df=ocr_df)
+        if contours is not None:
+            merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
 
         yield merged_lines
