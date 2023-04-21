@@ -77,7 +77,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
 
     # Compute slopes and angles
     df_angles = (df_cross.with_columns(((pl.col('y1') - pl.col('y1_right')) / (pl.col('x1') - pl.col('x1_right'))
-                                        ).alias('slope'))
+                                        ).round(3).alias('slope'))
                  .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
                  .with_columns(pl.when(pl.col('angle').abs() <= 45)
                                .then(pl.col('angle'))
