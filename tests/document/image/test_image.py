@@ -73,7 +73,7 @@ def test_image_tables(mock_tesseract):
     assert len(result[0].content[0]) == 3
 
     assert result[1].title is None
-    assert result[1].bbox == BBox(x1=962, y1=21, x2=1154, y2=123)
+    assert result[1].bbox == BBox(x1=962, y1=20, x2=1154, y2=123)
     assert len(result[1].content) == 2
     assert len(result[1].content[0]) == 2
 

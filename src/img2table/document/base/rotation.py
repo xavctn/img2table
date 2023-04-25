@@ -77,7 +77,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
 
     # Compute slopes and angles
     df_angles = (df_cross.with_columns(((pl.col('y1') - pl.col('y1_right')) / (pl.col('x1') - pl.col('x1_right'))
-                                        ).alias('slope'))
+                                        ).round(3).alias('slope'))
                  .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
                  .with_columns(pl.when(pl.col('angle').abs() <= 45)
                                .then(pl.col('angle'))
@@ -95,8 +95,11 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                           .to_dicts()
                           )
 
-    return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                            if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
+    if most_likely_angles[0].get('angle') == 0:
+        return [0]
+    else:
+        return sorted(list(set([angle.get('angle') for angle in most_likely_angles
+                                if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
@@ -234,7 +237,7 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
     # Estimate skew
     skew_angle = estimate_skew(angles=angles, thresh=thresh)
 
-    if skew_angle != 0:
+    if abs(skew_angle) >= 0.25:
         # Rotate image with borders
         return rotate_img_with_border(img=img, angle=skew_angle)
 
