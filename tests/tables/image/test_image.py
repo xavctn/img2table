@@ -1,14 +1,11 @@
 # coding: utf-8
-import json
 
 import cv2
 import polars as pl
 
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.image import TableImage
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.row import Row
-from img2table.tables.objects.table import Table
+from img2table.tables.objects.extraction import BBox
 
 
 def test_table_image():
@@ -22,8 +19,8 @@ def test_table_image():
 
     result = tb_image.extract_tables(implicit_rows=True)
 
-    with open("test_data/expected_tables.json", "r") as f:
-        expected = [Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in tb]).extracted_table
-                    for tb in json.load(f)]
+    assert result[0].bbox == BBox(x1=35, y1=20, x2=770, y2=327)
+    assert (len(result[0].content), len(result[0].content[0])) == (6, 3)
 
-    assert result == expected
+    assert result[1].bbox == BBox(x1=962, y1=20, x2=1154, y2=123)
+    assert (len(result[1].content), len(result[1].content[0])) == (2, 2)

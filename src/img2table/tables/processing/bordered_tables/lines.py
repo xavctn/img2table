@@ -1,4 +1,6 @@
 # coding: utf-8
+from itertools import groupby
+from operator import itemgetter
 from typing import List, Optional
 
 import cv2
@@ -38,6 +40,54 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
             thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
 
     return thresh
+
+
+def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
+    """
+    Dilate specific rows/columns of the threshold image in order to detect dotted lines
+    :param thresh: threshold image array
+    :param char_length: average character length in image
+    :return: threshold image with dilated dotted lines
+    """
+    ### Horizontal case
+    # Create dilated image
+    h_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (int(char_length // 2), 1)))
+
+    # Get rows with at least 2 times the average number of white pixels
+    white_rows = np.where(np.mean(thresh, axis=1) > 2 * np.mean(thresh))[0].tolist()
+
+    # Split into consecutive groups of rows and keep only small ones to avoid targeting text rows
+    white_rows_cl = [list(map(itemgetter(1), g))
+                     for k, g in groupby(enumerate(white_rows), lambda i_x: i_x[0] - i_x[1])]
+    white_rows_final = [idx for cl in white_rows_cl for idx in cl if len(cl) < char_length / 3]
+
+    # Keep only dilated image on specific rows
+    mask = np.ones(thresh.shape[0], dtype=bool)
+    mask[white_rows_final] = False
+    h_dilated[mask, :] = 0
+
+    # Update threshold image
+    thresh = np.maximum(thresh, h_dilated)
+
+    ### Vertical case
+    # Create dilated image
+    v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, int(char_length // 2))))
+
+    # Get columns with at least 2 times the average number of white pixels
+    white_cols = np.where(np.mean(thresh, axis=0) > 2 * np.mean(thresh))[0].tolist()
+
+    # Split into consecutive groups of columns and keep only small ones to avoid targeting text columns
+    white_cols_cl = [list(map(itemgetter(1), g))
+                     for k, g in groupby(enumerate(white_cols), lambda i_x: i_x[0] - i_x[1])]
+    white_cols_final = [idx for cl in white_cols_cl for idx in cl if len(cl) < char_length / 3]
+
+    # Keep only dilated image on specific columns
+    mask = np.ones(thresh.shape[1], dtype=bool)
+    mask[white_cols_final] = False
+    v_dilated[:, mask] = 0
+
+    # Update threshold image
+    return np.maximum(thresh, v_dilated)
 
 
 def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
@@ -188,6 +238,10 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
 
     # Apply thresholding
     thresh = threshold_dark_areas(img=img, char_length=char_length)
+
+    if char_length is not None:
+        # Process threshold image in order to detect dotted lines
+        thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length)
 
     # Identify both vertical and horizontal lines
     for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:

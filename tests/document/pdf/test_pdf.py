@@ -50,7 +50,7 @@ def test_pdf_tables(mock_tesseract):
 
     assert result[0][0].title == "Example of Data Table 1"
     if sys.version_info.minor < 11:
-        assert result[0][0].bbox == BBox(x1=236, y1=249, x2=1442, y2=543)
+        assert result[0][0].bbox == BBox(x1=235, y1=249, x2=1442, y2=543)
     assert (len(result[0][0].content), len(result[0][0].content[0])) == (5, 4)
 
     assert result[0][1].title == "Example of Data Table 2"
