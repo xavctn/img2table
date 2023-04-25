@@ -40,13 +40,18 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     upper_bound = 4 * median_width * median_height
     lower_bound = 0.25 * median_width * median_height
 
+    # Filter components based on aspect ratio
+    mask_lower_ar = 0.2 < stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
+    mask_upper_ar = 5 > stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
+    mask_ar = mask_lower_ar & mask_upper_ar
+
     # Filter connected components according to their area
     mask_lower_area = lower_bound < stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_upper_area = upper_bound > stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_area = mask_lower_area & mask_upper_area
 
     # Filter connected components from mask
-    stats = stats[mask_img & mask_area]
+    stats = stats[mask_img & mask_area & mask_ar]
 
     if len(stats) > 0:
         # Compute average character length
