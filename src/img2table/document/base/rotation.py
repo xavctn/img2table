@@ -95,8 +95,11 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                           .to_dicts()
                           )
 
-    return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                            if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
+    if most_likely_angles[0].get('angle') == 0:
+        return [0]
+    else:
+        return sorted(list(set([angle.get('angle') for angle in most_likely_angles
+                                if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
@@ -234,7 +237,7 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
     # Estimate skew
     skew_angle = estimate_skew(angles=angles, thresh=thresh)
 
-    if skew_angle != 0:
+    if abs(skew_angle) >= 0.25:
         # Rotate image with borders
         return rotate_img_with_border(img=img, angle=skew_angle)
 
