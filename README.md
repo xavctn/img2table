@@ -21,25 +21,14 @@ Thanks to its design, it provides a practical and lighter alternative to Neural 
 
 
 ## Installation <a name="installation"></a>
-The library can be installed via pip.
-```python
-# Standard installation, supporting Tesseract
-pip install img2table
+The library can be installed via pip:
 
-# For usage with Paddle OCR (Python <= 3.10 only)
-pip install img2table[paddle]
-# For usage with Paddle OCR - GPU (CUDA 9 / CUDA 10) (Python <= 3.10 only)
-pip install img2table[paddle-gpu]
-
-# For usage with Google Vision OCR
-pip install img2table[gcp]
-
-# For usage with AWS Textract OCR
-pip install img2table[aws]
-
-# For usage with Azure Cognitive Services OCR
-pip install img2table[azure]
-```
+> <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
+> <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
+> <code>pip install img2table[paddle-gpu]</code>: For usage with Paddle OCR - GPU (CUDA 9 / CUDA 10) (Python <= 3.10 only)<br>
+> <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
+> <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
+> <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
 
 ## Features <a name="features"></a>
 
