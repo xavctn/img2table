@@ -1,0 +1,27 @@
+page;class;id;parent;value;confidence;x1;y1;x2;y2
+0;ocrx_word;word_1_1;word_1_1;Title;100;380;35;427;60
+0;ocrx_word;word_1_2;word_1_2;Test 1;100;962;36;1020;60
+0;ocrx_word;word_1_3;word_1_3;(Test 2;53;1058;36;1116;60
+0;ocrx_word;word_1_4;word_1_4;Line 1;100;39;89;97;109
+0;ocrx_word;word_1_5;word_1_5;Col 1;94;106;86;156;110
+0;ocrx_word;word_1_6;word_1_6;Line 1;100;279;89;337;109
+0;ocrx_word;word_1_7;word_1_7;Col 2;87;347;89;395;109
+0;ocrx_word;word_1_8;word_1_8;Line 1 - Col 3;83;497;89;615;109
+0;ocrx_word;word_1_9;word_1_9;Test 3;80;962;86;1020;110
+0;ocrx_word;word_1_10;word_1_10;Test 4;77;1058;86;1116;110
+0;ocrx_word;word_1_11;word_1_11;Line 2 - Col 1;98;38;138;156;162
+0;ocrx_word;word_1_12;word_1_12;Line 2 - Col 3;83;496;138;616;162
+0;ocrx_word;word_1_13;word_1_13;Line 3;92;38;188;98;212
+0;ocrx_word;word_1_14;word_1_14;Col 1;78;107;191;155;211
+0;ocrx_word;word_1_15;word_1_15;Merged Cells;100;327;187;448;217
+0;ocrx_word;word_1_16;word_1_16;Line 3;100;497;191;555;211
+0;ocrx_word;word_1_17;word_1_17;Col 3;100;567;191;615;211
+0;ocrx_word;word_1_18;word_1_18;Line 4;90;38;240;98;264
+0;ocrx_word;word_1_19;word_1_19;Col 1;78;106;240;156;264
+0;ocrx_word;word_1_20;word_1_20;Line 4;82;496;240;556;264
+0;ocrx_word;word_1_21;word_1_21;Col 3;94;566;240;616;264
+0;ocrx_word;word_1_22;word_1_22;Line 5;100;39;293;97;313
+0;ocrx_word;word_1_23;word_1_23;Col 1;78;107;293;155;313
+0;ocrx_word;word_1_24;word_1_24;Line 5;100;279;293;337;313
+0;ocrx_word;word_1_25;word_1_25;Col 2;87;347;293;395;313
+0;ocrx_word;word_1_26;word_1_26;Line 5 - Col 3;99;497;293;615;313
