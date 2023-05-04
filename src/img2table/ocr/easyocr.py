@@ -25,7 +25,7 @@ class EasyOCR(OCRInstance):
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
-        self.reader = Reader(self.lang)
+        self.reader = Reader(self.lang, verbose=False)
 
     def content(self, document: Document) -> List[List[Tuple]]:
         # Get OCR of all images

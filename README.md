@@ -26,6 +26,7 @@ The library can be installed via pip:
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
 > <code>pip install img2table[paddle-gpu]</code>: For usage with Paddle OCR - GPU (Python <= 3.10 only)<br>
+> <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
 > <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
@@ -67,7 +68,7 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 </details>
-<br>
+
 Multi-page images are not supported.
 
 ---
@@ -125,7 +126,7 @@ PDF pages are converted to images with a 200 DPI for table identification.
 ### OCR <a name="ocr"></a>
 
 `img2table` provides an interface for several OCR services and tools in order to parse table content.<br>
-If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
+If possible (i.e for native PDF files), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 <details>
 <summary>Tesseract<a name="tesseract"></a></summary>
@@ -180,6 +181,30 @@ ocr = PaddleOCR(lang="en")
 ></dl>
 
 *Released in version 0.0.13*
+<br>
+</details>
+
+
+<details>
+<summary>EasyOCR<a name="easyocr"></a></summary>
+<br>
+
+<a href="https://github.com/JaidedAI/EasyOCR">EasyOCR</a> is an open-source OCR based on Deep Learning models.<br>
+At first use, relevant languages models will be downloaded.
+
+```python
+from img2table.ocr import EasyOCR
+
+ocr = EasyOCR(lang=["en"])
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>lang : list, optional, default <code>["en"]</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in EasyOCR for text extraction, check <a href="https://www.jaided.ai/easyocr">documentation for available languages</a></dd>
+></dl>
+
+*Released in version 0.1.2*
 <br>
 </details>
 
