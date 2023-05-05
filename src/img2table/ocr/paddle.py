@@ -77,7 +77,7 @@ class PaddleOCR(OCRInstance):
             for bbox, word in ocr_result:
                 word_id += 1
                 dict_word = {
-                    "page": 0,
+                    "page": page,
                     "class": "ocrx_word",
                     "id": f"word_{page + 1}_{word_id}",
                     "parent": f"word_{page + 1}_{word_id}",
