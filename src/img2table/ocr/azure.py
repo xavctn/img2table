@@ -107,6 +107,6 @@ class AzureOCR(OCRInstance):
                         word_elements.append(d_word)
 
             if word_elements:
-                list_dfs.append(pl.LazyFrame(data=word_elements))
+                list_dfs.append(pl.LazyFrame(data=word_elements, schema=self.pl_schema))
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

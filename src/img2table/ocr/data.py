@@ -155,7 +155,7 @@ class OCRDataframe:
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             try:
-                assert self.df.collect(streaming=True).sort(by='id').frame_equal(other.df.collect(streaming=True).sort(by='id'))
+                assert self.df.collect(streaming=True).sort(by=['id']).frame_equal(other.df.collect(streaming=True).sort(by=['id']))
                 return True
             except AssertionError:
                 return False
