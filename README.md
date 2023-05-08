@@ -67,7 +67,6 @@ Images are loaded using the `opencv-python` library, supported formats are liste
 </ul>
 </blockquote>
 </details>
-<br>
 Multi-page images are not supported.
 
 ---
@@ -125,7 +124,7 @@ PDF pages are converted to images with a 200 DPI for table identification.
 ### OCR <a name="ocr"></a>
 
 `img2table` provides an interface for several OCR services and tools in order to parse table content.<br>
-If possible (i.e for searchable PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
+If possible (i.e for native PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 <details>
 <summary>Tesseract<a name="tesseract"></a></summary>
@@ -307,7 +306,7 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
->    <dd style="font-style: italic;">Dict with with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L20" target="_self">TableCell</a></code> objects as values</dd>
+>    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L20" target="_self">TableCell</a></code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
@@ -347,7 +346,7 @@ ocr = TesseractOCR(n_threads=1, lang="eng")
 # Instantiation of document, either an image or a PDF
 doc = Image(src)
 
-# Extraction of tables and creation of an xlsx file containing tables
+# Extraction of tables and creation of a xlsx file containing tables
 doc.to_xlsx(dest=dest,
             ocr=ocr,
             implicit_rows=True,
