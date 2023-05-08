@@ -1,11 +1,29 @@
 # coding: utf-8
 from typing import Any
 
+import polars as pl
+
 from img2table.document.base import Document
 from img2table.ocr.data import OCRDataframe
 
 
 class OCRInstance:
+    @property
+    def pl_schema(self):
+        schema = {
+            "page": pl.Int64,
+            "class": str,
+            "id": str,
+            "parent": str,
+            "value": str,
+            "confidence": pl.Int64,
+            "x1": pl.Int64,
+            "y1": pl.Int64,
+            "x2": pl.Int64,
+            "y2": pl.Int64
+        }
+        return schema
+
     def content(self, document: Document) -> Any:
         raise NotImplementedError
 

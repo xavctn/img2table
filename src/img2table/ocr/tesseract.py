@@ -137,6 +137,6 @@ class TesseractOCR(OCRInstance):
 
             # Create dataframe
             if list_elements:
-                list_dfs.append(pl.LazyFrame(data=list_elements))
+                list_dfs.append(pl.LazyFrame(data=list_elements, schema=self.pl_schema))
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
