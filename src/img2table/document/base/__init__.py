@@ -52,7 +52,7 @@ class Document(Validations):
     def images(self) -> Iterator[np.ndarray]:
         raise NotImplementedError
 
-    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,
+    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, borderless_tables: bool = False,
                        min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
         """
         Extract tables from document
@@ -83,7 +83,7 @@ class Document(Validations):
 
         return tables
 
-    def to_xlsx(self, dest: Union[str, Path, io.BytesIO], ocr: "OCRInstance" = None, implicit_rows: bool = True,
+    def to_xlsx(self, dest: Union[str, Path, io.BytesIO], ocr: "OCRInstance" = None, implicit_rows: bool = False,
                 borderless_tables: bool = False, min_confidence: int = 50) -> Optional[io.BytesIO]:
         """
         Create xlsx file containing all extracted tables from document

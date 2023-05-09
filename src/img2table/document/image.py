@@ -33,7 +33,7 @@ class Image(Document):
         img = cv2.imdecode(np.frombuffer(self.bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
         return [fix_rotation_image(img=img) if self.detect_rotation else img]
 
-    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = True, borderless_tables: bool = False,
+    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, borderless_tables: bool = False,
                        min_confidence: int = 50) -> List[ExtractedTable]:
         """
         Extract tables from document

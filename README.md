@@ -277,7 +277,7 @@ doc = Image(src)
 
 # Table extraction
 extracted_tables = doc.extract_tables(ocr=ocr,
-                                      implicit_rows=True,
+                                      implicit_rows=False,
                                       borderless_tables=False,
                                       min_confidence=50)
 ```
@@ -285,7 +285,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 ><dl>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
->    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
+>    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
@@ -349,7 +349,7 @@ doc = Image(src)
 # Extraction of tables and creation of a xlsx file containing tables
 doc.to_xlsx(dest=dest,
             ocr=ocr,
-            implicit_rows=True,
+            implicit_rows=False,
             borderless_tables=False,
             min_confidence=50)
 ```
@@ -359,7 +359,7 @@ doc.to_xlsx(dest=dest,
 >    <dd style="font-style: italic;">Destination for xlsx file</dd>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
->    <dt>implicit_rows : bool, optional, default <code>True</code></dt>
+>    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
