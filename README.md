@@ -402,4 +402,9 @@ Effectiveness can not be guaranteed on other type of documents.
 Borderless tables extraction is still in alpha stage and might be inconsistent on complex cases.
 Improvements to the algorithm will be released in future versions.
 </li>
+<li>
+Table detection using only OpenCV processing can have some limitations. If the library fails to detect tables, 
+you may check CNN based solutions like <a href="https://github.com/DevashishPrasad/CascadeTabNet">CascadeTabNet</a> or 
+the <a href="https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.6/ppstructure/docs/quickstart_en.md#224-table-recognition">PaddleOCR implementation</a>.
+</li>
 </ul>

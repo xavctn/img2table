@@ -95,11 +95,13 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                           .to_dicts()
                           )
 
-    if most_likely_angles[0].get('angle') == 0:
-        return [0]
-    else:
-        return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                                if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
+    if most_likely_angles:
+        if most_likely_angles[0].get('angle') == 0:
+            return [0]
+        else:
+            return sorted(list(set([angle.get('angle') for angle in most_likely_angles
+                                    if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
+    return [0]
 
 
 def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
