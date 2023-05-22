@@ -24,9 +24,9 @@ class Document(Validations):
             raise TypeError(f"Invalid type {type(value)} for src argument")
         return value
 
-    def validate_dpi(self, value, **_) -> int:
-        if not isinstance(value, int):
-            raise TypeError(f"Invalid type {type(value)} for dpi argument")
+    def validate_detect_rotation(self, value, **_) -> int:
+        if not isinstance(value, bool):
+            raise TypeError(f"Invalid type {type(value)} for detect_rotation argument")
         return value
 
     def __post_init__(self):
