@@ -106,7 +106,9 @@ PDF files are instantiated as follows :
 ```python
 from img2table.document import PDF
 
-pdf = PDF(src, pages=[0, 2])
+pdf = PDF(src, 
+          pages=[0, 2],
+          detect_rotation=False)
 ```
 
 > <h4>Parameters</h4>
@@ -115,6 +117,8 @@ pdf = PDF(src, pages=[0, 2])
 >    <dd style="font-style: italic;">PDF source</dd>
 >    <dt>pages : list, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">List of PDF page indexes to be processed. If None, all pages are processed</dd>
+>    <dt>detect_rotation : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Detect and correct skew/rotation of extracted images from the PDF</dd>
 ></dl>
 
 PDF pages are converted to images with a 200 DPI for table identification.

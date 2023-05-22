@@ -1,5 +1,8 @@
 # coding: utf-8
 from dataclasses import dataclass
+
+from img2table.document.base.rotation import fix_rotation_image
+
 try:
     from functools import cached_property
 except ImportError:
@@ -18,6 +21,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 @dataclass
 class PDF(Document):
     pages: List[int] = None
+    detect_rotation: bool = False
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -41,7 +45,11 @@ class PDF(Document):
             page = doc.load_page(page_id=page_number)
             pix = page.get_pixmap(matrix=mat)
             img = np.frombuffer(buffer=pix.samples, dtype=np.uint8).reshape((pix.height, pix.width, 3))
-            images.append(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+            # To grayscale
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Handle rotation if needed
+            final = fix_rotation_image(img=gray) if self.detect_rotation else gray
+            images.append(final)
 
         return images
 
@@ -55,8 +63,9 @@ class PDF(Document):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
         """
-        # Try to get OCRDataframe from PDF
-        self.ocr_df = PdfOCR().of(document=self)
+        if not self.detect_rotation:
+            # Try to get OCRDataframe from PDF
+            self.ocr_df = PdfOCR().of(document=self)
 
         return super().extract_tables(ocr=ocr,
                                       implicit_rows=implicit_rows,
