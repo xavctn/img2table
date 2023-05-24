@@ -65,11 +65,11 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
 def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                             char_length: float) -> Tuple[Optional[float], Optional[List[Cell]]]:
     """
-    Compute median separation between lines
+    Compute median separation between rows
     :param img: image array
     :param cc: connected components array
     :param char_length: average character length
-    :return: median separation between lines
+    :return: median separation between rows
     """
     # Create image from connected components
     black_img = np.zeros(img.shape, np.uint8)
@@ -137,7 +137,7 @@ def compute_img_metrics(img: np.ndarray) -> Tuple[Optional[float], Optional[floa
     if char_length is None:
         return None, None, None
 
-    # Compute median separation between lines
+    # Compute median separation between rows
     median_line_sep, contours = compute_median_line_sep(img=img, cc=cc_array, char_length=char_length)
 
     return char_length, median_line_sep, contours

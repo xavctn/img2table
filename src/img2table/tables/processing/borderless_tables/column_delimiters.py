@@ -45,7 +45,7 @@ class Rectangle(NamedTuple):
 def identify_trivial_delimiters(line_group: LineGroup, elements: List[Cell]) -> List[Cell]:
     """
     Get trivial whitespace delimiters spanning the entire line group height
-    :param line_group: cluster of lines
+    :param line_group: cluster of rows
     :param elements: Cell elements from image
     :return: list of trivial whitespace column delimiters
     """
@@ -220,7 +220,7 @@ def filter_coherent_dels(v_delimiters: List[Cell], elements: List[Cell]) -> List
 def get_whitespace_column_delimiters(line_group: LineGroup, segment_elements: List[Cell]) -> List[Cell]:
     """
     For a line group, identify coherent vertical delimiters
-    :param line_group: group of lines as LineGroup object
+    :param line_group: group of rows as LineGroup object
     :param segment_elements: list of Cell elements from the corresponding image segment
     :return: list of vertical column delimiters corresponding to line group
     """

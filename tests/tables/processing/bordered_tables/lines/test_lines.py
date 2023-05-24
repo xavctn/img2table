@@ -9,7 +9,7 @@ from img2table.tables.processing.bordered_tables.lines import overlapping_filter
 
 
 def test_overlapping_filter():
-    # Create lines
+    # Create rows
     lines = [Line(x1=10, x2=10, y1=10, y2=100),
              Line(x1=11, x2=11, y1=90, y2=120),
              Line(x1=12, x2=12, y1=210, y2=230),

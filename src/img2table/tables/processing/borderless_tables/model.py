@@ -96,7 +96,7 @@ class LineGroup:
         if len(self.lines) <= 1:
             return 0
 
-        # Sort lines
+        # Sort rows
         sorted_lines = sorted(self.lines, key=lambda line: line.y1 + line.y2)
 
         return np.median([nxt.v_center - prev.v_center for prev, nxt in zip(sorted_lines, sorted_lines[1:])])
@@ -106,7 +106,7 @@ class LineGroup:
         if len(self.lines) <= 1:
             return 0
 
-        # Sort lines
+        # Sort rows
         sorted_lines = sorted(self.lines, key=lambda line: line.y1 + line.y2)
 
         return np.median([nxt.y1 - prev.y2 for prev, nxt in zip(sorted_lines, sorted_lines[1:])])

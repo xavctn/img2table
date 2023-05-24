@@ -9,19 +9,19 @@ from img2table.tables.processing.borderless_tables.model import LineGroup
 
 def reprocess_line_group(line_group: LineGroup, column_delimiters: List[Cell]) -> List[Cell]:
     """
-    Get lines that correspond to column delimiters and merge overlapping lines
-    :param line_group: group of lines as LineGroup object
+    Get rows that correspond to column delimiters and merge overlapping rows
+    :param line_group: group of rows as LineGroup object
     :param column_delimiters: list of column delimiters
-    :return: list of lines
+    :return: list of rows
     """
-    # Filter lines that correspond to column delimiters height
+    # Filter rows that correspond to column delimiters height
     y_min = min([delim.y1 for delim in column_delimiters])
     y_max = max([delim.y2 for delim in column_delimiters])
     filtered_lines = [line for line in line_group.lines if line.y1 >= y_min and line.y2 <= y_max]
 
     filtered_lines = sorted(filtered_lines, key=lambda l: l.v_center)
 
-    # Merge overlapping lines
+    # Merge overlapping rows
     seq = iter(filtered_lines)
     line = next(seq)
     new_lines = [Cell(x1=line.x1, y1=line.y1, x2=line.x2, y2=line.y2)]
@@ -40,8 +40,8 @@ def reprocess_line_group(line_group: LineGroup, column_delimiters: List[Cell]) -
 
 def get_table(lines: List[Cell], column_delimiters: List[Cell]) -> Optional[Table]:
     """
-    Create table object from lines and column delimiters
-    :param lines: list of lines
+    Create table object from rows and column delimiters
+    :param lines: list of rows
     :param column_delimiters: list of column delimiters
     :return: Table object if relevant
     """
@@ -73,8 +73,8 @@ def get_table(lines: List[Cell], column_delimiters: List[Cell]) -> Optional[Tabl
 
 def create_table(line_group: LineGroup, column_delimiters: List[Cell]) -> Optional[Table]:
     """
-    Create table from lines and columns delimiters
-    :param line_group: group of lines as LineGroup object
+    Create table from rows and columns delimiters
+    :param line_group: group of rows as LineGroup object
     :param column_delimiters: list of column delimiters
     :return: Table object if relevant
     """
@@ -82,7 +82,7 @@ def create_table(line_group: LineGroup, column_delimiters: List[Cell]) -> Option
     if len(column_delimiters) == 0:
         return None
 
-    # Reprocess lines
+    # Reprocess rows
     reprocessed_lines = reprocess_line_group(line_group=line_group,
                                              column_delimiters=column_delimiters)
 

@@ -5,10 +5,10 @@ import numpy as np
 
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.column_delimiters import get_whitespace_column_delimiters
-from img2table.tables.processing.borderless_tables.lines import identify_line_groups
-from img2table.tables.processing.borderless_tables.segment_image import segment_image
-from img2table.tables.processing.borderless_tables.table import identify_table
+from img2table.tables.processing.borderless_tables_v2.column_delimiters import identify_column_groups
+from img2table.tables.processing.borderless_tables_v2.rows import detect_delimiter_group_rows
+from img2table.tables.processing.borderless_tables_v2.segment_image import segment_image
+from img2table.tables.processing.borderless_tables_v2.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
 
 
@@ -53,25 +53,20 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     # In each segment, create groups of rows and identify tables
     tables = list()
     for seg in img_segments:
-        # Identify line groups in segment
-        seg_line_groups = identify_line_groups(segment=seg,
-                                               char_length=char_length,
-                                               median_line_sep=median_line_sep)
+        # Identify column groups in segment
+        column_groups = identify_column_groups(segment=seg,
+                                               char_length=char_length)
 
-        # For each line group, identify column delimiters and create tables
-        for line_gp in seg_line_groups.line_groups:
-            # Get column delimiters
-            col_delimiters = get_whitespace_column_delimiters(line_group=line_gp,
-                                                              segment_elements=seg_line_groups.elements)
+        for column_group in column_groups:
+            # Identify potential table rows
+            table_rows = detect_delimiter_group_rows(delimiter_group=column_group)
 
-            # Create table
-            table = identify_table(line_group=line_gp,
-                                   column_delimiters=col_delimiters,
-                                   lines=lines,
-                                   elements=seg_line_groups.elements)
-
-            if table:
-                tables.append(table)
+            if table_rows:
+                # Create table from column group and rows
+                borderless_table = identify_table(columns=column_group,
+                                                  table_rows=table_rows,
+                                                  lines=lines)
+                tables.append(borderless_table)
 
     return deduplicate_tables(identified_tables=tables,
                               existing_tables=existing_tables)

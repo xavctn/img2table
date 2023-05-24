@@ -137,7 +137,7 @@ def process_headers(table: Table, lines: List[Line], elements: List[Cell]) -> Ta
     """
     Detect headers in table from rows and elements
     :param table: Table object
-    :param lines: list of rows
+    :param lines: list of lines
     :param elements: list of elements
     :return: table with processed headers
     """

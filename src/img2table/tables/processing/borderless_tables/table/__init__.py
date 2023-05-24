@@ -15,11 +15,11 @@ def identify_table(line_group: LineGroup, column_delimiters: List[Cell], lines: 
     Identify potential tables from line group and column delimiters
     :param line_group: group of line as LineGroup object
     :param column_delimiters: list of column delimiters
-    :param lines: list of lines in image
+    :param lines: list of rows in image
     :param elements: list of elements from image
     :return: Table object if relevant
     """
-    # Create table from lines and columns delimiters
+    # Create table from rows and columns delimiters
     table = create_table(line_group=line_group,
                          column_delimiters=column_delimiters)
 

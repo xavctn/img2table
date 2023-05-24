@@ -78,7 +78,7 @@ class OCRDataframe:
                           .sort([pl.col("y1"), pl.col("x1")])
                           )
 
-        # Concatenate all lines
+        # Concatenate all rows
         text_lines = (df_text_parent.select(pl.col('value'))
                       .collect(streaming=True)
                       .get_column('value')

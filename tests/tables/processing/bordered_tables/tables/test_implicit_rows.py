@@ -18,7 +18,7 @@ def test_handle_implicit_rows_table():
 
     result = handle_implicit_rows_table(img=img, table=table)
 
-    # Check that 2 more lines have been created
+    # Check that 2 more rows have been created
     assert result.nb_rows == table.nb_rows + 2
 
 
@@ -30,5 +30,5 @@ def test_handle_implicit_rows():
 
     result = handle_implicit_rows(img=img, tables=[table])
 
-    # Check that 2 more lines have been created
+    # Check that 2 more rows have been created
     assert result[0].nb_rows == table.nb_rows + 2

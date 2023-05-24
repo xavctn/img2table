@@ -7,17 +7,17 @@ from img2table.tables.processing.borderless_tables.model import TableLine, LineG
 
 def identify_lines(elements: List[Cell], ref_size: int) -> List[TableLine]:
     """
-    Identify lines from Cell elements
+    Identify rows from Cell elements
     :param elements: list of cells
     :param ref_size: reference distance between two line centers
-    :return: list of table lines
+    :return: list of table rows
     """
     if len(elements) == 0:
         return []
 
     elements = sorted(elements, key=lambda c: c.y1 + c.y2)
 
-    # Group elements in lines
+    # Group elements in rows
     seq = iter(elements)
     tb_lines = [TableLine(cells=[next(seq)])]
     for cell in seq:
@@ -25,16 +25,16 @@ def identify_lines(elements: List[Cell], ref_size: int) -> List[TableLine]:
             tb_lines.append(TableLine(cells=[]))
         tb_lines[-1].add(cell)
 
-    # Remove overlapping lines
+    # Remove overlapping rows
     dedup_lines = list()
     for line in tb_lines:
-        # Get number of overlapping lines
+        # Get number of overlapping rows
         overlap_lines = [l for l in tb_lines if line.overlaps(l) and not line == l]
 
         if len(overlap_lines) <= 1:
             dedup_lines.append(line)
 
-    # Merge lines that corresponds
+    # Merge rows that corresponds
     merged_lines = [[l for l in dedup_lines if line.overlaps(l)] for line in dedup_lines]
     merged_lines = [line.pop() if len(line) == 1 else line[0].merge(line[1]) for line in merged_lines]
 
@@ -43,16 +43,16 @@ def identify_lines(elements: List[Cell], ref_size: int) -> List[TableLine]:
 
 def create_h_pos_groups(lines: List[TableLine]) -> List[List[TableLine]]:
     """
-    Create group of lines based on their horizontal position
+    Create group of rows based on their horizontal position
     :param lines: list of TableLine objects
-    :return: groups of lines
+    :return: groups of rows
     """
-    # Loop over all lines to create relationships between horizontally aligned lines
+    # Loop over all rows to create relationships between horizontally aligned rows
     clusters = list()
     for i in range(len(lines)):
         for j in range(i, len(lines)):
             h_coherent = min(lines[i].x2, lines[j].x2) - max(lines[i].x1, lines[j].x1) > 0
-            # If lines are horizontally coherent, find matching clusters
+            # If rows are horizontally coherent, find matching clusters
             if h_coherent:
                 matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
                 if matching_clusters:
@@ -62,7 +62,7 @@ def create_h_pos_groups(lines: List[TableLine]) -> List[List[TableLine]]:
                 else:
                     clusters.append({i, j})
 
-    # Return groups of lines
+    # Return groups of rows
     line_groups = [[lines[idx] for idx in cl] for cl in clusters]
 
     return line_groups
@@ -70,18 +70,18 @@ def create_h_pos_groups(lines: List[TableLine]) -> List[List[TableLine]]:
 
 def vertically_coherent_groups(lines: List[TableLine], max_gap: float) -> List[LineGroup]:
     """
-    Cluster lines into vertically coherent groups
-    :param lines: list of lines as TableLine objects
-    :param max_gap: maximum gap allowed between consecutive lines in order to be clustered in same group
+    Cluster rows into vertically coherent groups
+    :param lines: list of rows as TableLine objects
+    :param max_gap: maximum gap allowed between consecutive rows in order to be clustered in same group
     :return: list of line groups as LineGroup objects
     """
-    # Sort lines by vertical position
+    # Sort rows by vertical position
     lines = sorted(lines, key=lambda line: line.y1 + line.y2)
 
     seq = iter(lines)
     v_line_groups = [LineGroup(lines=[next(seq)])]
     for line in seq:
-        # If gap between lines is too large, split into new group
+        # If gap between rows is too large, split into new group
         if line.y1 - v_line_groups[-1].y2 > max_gap:
             v_line_groups.append(LineGroup(lines=[]))
         v_line_groups[-1].add(line)
@@ -111,7 +111,7 @@ def is_text_block(line_group: LineGroup, char_length: float) -> bool:
     :param char_length: average character length
     :return: boolean indicating if the line group is a text block
     """
-    # Get list of lines and if they are complete text
+    # Get list of rows and if they are complete text
     nb_lines_text = 0
 
     for line in line_group.lines:
@@ -132,13 +132,13 @@ def is_text_block(line_group: LineGroup, char_length: float) -> bool:
 
 def identify_line_groups(segment: ImageSegment, char_length: float, median_line_sep: float) -> ImageSegment:
     """
-    From elements of the segment, identify lines that are coherent together
+    From elements of the segment, identify rows that are coherent together
     :param segment: ImageSegment object
     :param char_length: average character length
     :param median_line_sep: median line separation
-    :return: segment with its groups of lines
+    :return: segment with its groups of rows
     """
-    # Identify lines in segment
+    # Identify rows in segment
     lines = identify_lines(elements=segment.elements,
                            ref_size=int(median_line_sep // 4))
 

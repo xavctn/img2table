@@ -46,7 +46,7 @@ def handle_implicit_rows_table(img: np.ndarray, table: Table) -> Table:
 
 def handle_implicit_rows(img: np.ndarray, tables: List[Table]) -> List[Table]:
     """
-    Detect and handle implicit lines in image tables
+    Detect and handle implicit rows in image tables
     :param img: image array
     :param tables: list of Table objects
     :return: list of Table objects updated taking into account implicit rows
