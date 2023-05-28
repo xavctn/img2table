@@ -23,46 +23,6 @@ def match_table_elements(table: Table, elements: List[Cell]) -> Table:
     return table
 
 
-def check_header_coherency(table: Table, elements: List[Cell]) -> Table:
-    """
-    Check header coherency in order to restrict table height
-    :param table: Table object
-    :param elements: list of elements
-    :return: Table with top rows coherent with an header
-    """
-    # Identify for each table cell if some elements are present
-    table = match_table_elements(table=table, elements=elements)
-
-    # Get first complete row
-    first_complete_row = table.items[0]
-    for row in table.items:
-        if min([c.content for c in row.items]):
-            first_complete_row = row
-            break
-
-    # Get all next rows in final rows
-    final_rows = [row for row in table.items if row.y1 >= first_complete_row.y1]
-
-    # Check if other rows are coherent
-    prev_rows = [row for row in table.items if row.y1 < first_complete_row.y1]
-    prev_rows = sorted(prev_rows, key=lambda r: r.y1, reverse=True)
-
-    if prev_rows:
-        complete_indices = set(range(table.nb_columns))
-        for row in prev_rows:
-            # Check if the row completeness is coherent with the previous ones
-            row_indices = set([idx for idx, cell in enumerate(row.items) if cell.content])
-            if len(row_indices.difference(complete_indices)) > 0:
-                break
-            final_rows.insert(0, row)
-            complete_indices = row_indices
-
-        # Create final table
-        return Table(rows=final_rows)
-
-    return table
-
-
 def identify_table_lines(table: Table, lines: List[Line]) -> List[int]:
     """
     Identify horizontal rows that correspond to the table
@@ -77,10 +37,11 @@ def identify_table_lines(table: Table, lines: List[Line]) -> List[int]:
     y_lines = dict()
     y_values = sorted(list(set([row.y1 for row in table.items] + [row.y2 for row in table.items])))
     for line in h_lines:
-        matching_y = [y for y in y_values
-                      if abs(line.y1 - y) / (table.height / table.nb_rows) <= 0.25]
+        matching_y = sorted([y for y in y_values
+                             if abs(line.y1 - y) / (table.height / table.nb_rows) <= 0.25],
+                            key=lambda y: abs(line.y1 - y))
         if matching_y:
-            y_val = matching_y.pop()
+            y_val = matching_y.pop(0)
             y_lines[y_val] = y_lines.get(y_val, []) + [line]
 
     # Return y values where the line represent at least 75% of the table width
@@ -98,6 +59,30 @@ def identify_table_lines(table: Table, lines: List[Line]) -> List[int]:
     return final_lines
 
 
+def check_header_coherency(header_rows: List[Row]) -> bool:
+    """
+    Check if detected header is coherent
+    :param header_rows: list of rows creating the header
+    :return: boolean indicating if the header is coherent
+    """
+    # Sort rows
+    header_rows = sorted(header_rows, key=lambda r: r.y1, reverse=True)
+
+    # Check if all columns of first header row are complete (except first one that can be missing)
+    if not min([c.content for c in header_rows[0].items[1:]]):
+        return False
+
+    # Check coherent completeness of following rows
+    complete_idx = set(list(range(header_rows[0].nb_columns)))
+    for row in header_rows:
+        complete_idx_row = {idx for idx, c in enumerate(row.items) if c.content}
+        if len(complete_idx_row.difference(complete_idx)) > 0:
+            return False
+        complete_idx = complete_idx_row
+
+    return True
+
+
 def headers_from_lines(table: Table, lines: List[Line]) -> Table:
     """
     Detect potential headers from horizontal rows in image
@@ -108,7 +93,7 @@ def headers_from_lines(table: Table, lines: List[Line]) -> Table:
     # Identify horizontal rows that correspond to the table
     y_values = identify_table_lines(table=table, lines=lines)
 
-    # Create dict of rows indicating if all cells are complete
+    # Create dict of rows indicating if all cells are complete (except the first one that can be missing in the header)
     dict_row_completeness = {(row.y1, row.y2): min([c.content for c in row.items]) for row in table.items}
 
     # Get rows that are in the top part of the table
@@ -120,9 +105,12 @@ def headers_from_lines(table: Table, lines: List[Line]) -> Table:
         if max([v for k, v in dict_row_completeness.items() if k[0] < top_lines[0]] + [False]):
             return table
 
-        # Check if the first line of the header is complete
-        first_row_complete = [v for k, v in dict_row_completeness.items() if k[0] < top_lines[1]][-1]
-        if first_row_complete:
+        # Check if the header is coherent
+        header_rows = [row for row in table.items
+                       if top_lines[0] <= (row.y1 + row.y2) / 2 <= top_lines[1]]
+        coherent_header = check_header_coherency(header_rows=header_rows)
+
+        if coherent_header:
             # Create new header by replacing rows
             final_rows = [row for row in table.items if row.y1 >= top_lines[1]]
             new_row = Row(cells=[Cell(x1=c.x1, x2=c.x2, y1=top_lines[0], y2=top_lines[1])
@@ -142,7 +130,7 @@ def process_headers(table: Table, lines: List[Line], elements: List[Cell]) -> Ta
     :return: table with processed headers
     """
     # Check header coherency
-    table = check_header_coherency(table=table, elements=elements)
+    table = match_table_elements(table=table, elements=elements)
 
     # Get headers from line
     table_headers = headers_from_lines(table=table, lines=lines)
