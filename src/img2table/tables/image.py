@@ -21,7 +21,7 @@ from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
-from img2table.tables.processing.borderless_tables_v2 import identify_borderless_tables
+from img2table.tables.processing.borderless_tables import identify_borderless_tables
 from img2table.tables.processing.prepare_image import prepare_image
 from img2table.tables.processing.text.titles import get_title_tables
 

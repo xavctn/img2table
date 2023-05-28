@@ -3,8 +3,8 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2 import detect_delimiter_group_rows
-from img2table.tables.processing.borderless_tables_v2.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables import detect_delimiter_group_rows
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
 
 def test_detect_delimiter_group_rows():

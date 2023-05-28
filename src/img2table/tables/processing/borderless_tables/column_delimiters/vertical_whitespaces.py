@@ -4,7 +4,7 @@ from typing import List
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 def get_vertical_whitespaces(segment: ImageSegment) -> List[Cell]:

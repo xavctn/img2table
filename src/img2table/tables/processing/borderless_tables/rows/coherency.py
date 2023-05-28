@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
 
 @dataclass

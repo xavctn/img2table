@@ -1,10 +1,10 @@
 # coding: utf-8
 from typing import List
 
-from img2table.tables.processing.borderless_tables_v2.column_delimiters.column_groups import create_delimiter_groups
-from img2table.tables.processing.borderless_tables_v2.column_delimiters.vertical_whitespaces import \
+from img2table.tables.processing.borderless_tables.column_delimiters.column_groups import create_delimiter_groups
+from img2table.tables.processing.borderless_tables.column_delimiters.vertical_whitespaces import \
     get_relevant_vertical_whitespaces
-from img2table.tables.processing.borderless_tables_v2.model import ImageSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
 def identify_column_groups(segment: ImageSegment, char_length: float) -> List[DelimiterGroup]:

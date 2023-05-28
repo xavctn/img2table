@@ -1,9 +1,9 @@
 # coding: utf-8
 from typing import List
 
-from img2table.tables.processing.borderless_tables_v2.model import DelimiterGroup, TableRow
-from img2table.tables.processing.borderless_tables_v2.rows.coherency import check_coherency_rows
-from img2table.tables.processing.borderless_tables_v2.rows.delimiter_group_rows import identify_delimiter_group_rows
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.rows.coherency import check_coherency_rows
+from img2table.tables.processing.borderless_tables.rows.delimiter_group_rows import identify_delimiter_group_rows
 
 
 def detect_delimiter_group_rows(delimiter_group: DelimiterGroup) -> List[TableRow]:

@@ -11,22 +11,24 @@ from img2table.tables.processing.borderless_tables.model import ImageSegment
 from img2table.tables.processing.common import is_contained_cell, merge_contours
 
 
-def create_image_segments(img: np.ndarray, median_line_sep: float) -> List[ImageSegment]:
+def create_image_segments(img: np.ndarray, median_line_sep: float, char_length: float) -> List[ImageSegment]:
     """
     Create segmentation of the image into specific parts
     :param img: image array
     :param median_line_sep: median line separation
+    :param char_length: average character length
     :return: list of image segments as Cell objects
     """
     # Reprocess images
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     thresh = cv2.Canny(blur, 0, 0)
 
-    # Define kernel size by using median line separation
-    kernel_size = round(median_line_sep / 3)
+    # Define kernel by using median line separation and character length
+    kernel_size = (max(int(2 * char_length), round(median_line_sep / 3)),
+                   round(median_line_sep / 3))
 
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
     dilate = cv2.dilate(thresh, kernel, iterations=4)
 
     # Create new image by adding black borders
@@ -100,7 +102,7 @@ def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[
         segment_elements = [cnt for cnt in elements if is_contained_cell(inner_cell=cnt, outer_cell=seg)]
         seg.set_elements(elements=segment_elements)
 
-    return img_segments
+    return [seg for seg in img_segments if len(seg.elements) > 0]
 
 
 def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[ImageSegment]:
@@ -114,7 +116,8 @@ def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median
     """
     # Create image segments
     image_segments = create_image_segments(img=img,
-                                           median_line_sep=median_line_sep)
+                                           median_line_sep=median_line_sep,
+                                           char_length=char_length)
 
     # Detect elements corresponding to each segment
     image_segments = get_segment_elements(img=img,

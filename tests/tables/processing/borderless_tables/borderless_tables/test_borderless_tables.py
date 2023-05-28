@@ -15,11 +15,12 @@ def test_identify_borderless_tables():
     lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
 
     result = identify_borderless_tables(img=img,
-                                        char_length=8.44,
-                                        median_line_sep=51,
+                                        char_length=7.24,
+                                        median_line_sep=66,
                                         lines=lines,
                                         existing_tables=[])
 
-    assert len(result) == 2
-    assert (result[0].nb_columns, result[0].nb_rows) == (3, 6)
-    assert (result[1].nb_columns, result[1].nb_rows) == (2, 2)
+    assert len(result) == 1
+    assert result[0].nb_rows == 16
+    assert result[0].nb_columns == 8
+    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (93, 45, 1233, 1060)

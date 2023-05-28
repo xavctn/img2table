@@ -3,9 +3,9 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.column_delimiters.vertical_whitespaces import \
+from img2table.tables.processing.borderless_tables.column_delimiters.vertical_whitespaces import \
     get_vertical_whitespaces, adjacent_whitespaces, identify_coherent_v_whitespaces, get_relevant_vertical_whitespaces
-from img2table.tables.processing.borderless_tables_v2.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 def test_get_vertical_whitespaces():

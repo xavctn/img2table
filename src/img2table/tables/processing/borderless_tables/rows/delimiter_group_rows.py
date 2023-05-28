@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import polars as pl
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.model import TableRow, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import TableRow, DelimiterGroup
 
 
 def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optional[float]:

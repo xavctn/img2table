@@ -3,8 +3,8 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.model import DelimiterGroup, TableRow
-from img2table.tables.processing.borderless_tables_v2.rows.coherency import identify_content_alignment, Alignment, \
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.rows.coherency import identify_content_alignment, Alignment, \
     is_line_coherent, check_extremity_lines, check_coherency_rows
 
 

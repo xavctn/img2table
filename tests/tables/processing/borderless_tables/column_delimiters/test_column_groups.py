@@ -3,9 +3,9 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables_v2.column_delimiters.column_groups import \
+from img2table.tables.processing.borderless_tables.column_delimiters.column_groups import \
     vertically_coherent_delimiters, group_delimiters, deduplicate_groups, get_coherent_height, create_delimiter_groups
-from img2table.tables.processing.borderless_tables_v2.model import ImageSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
 def test_vertically_coherent_delimiters():

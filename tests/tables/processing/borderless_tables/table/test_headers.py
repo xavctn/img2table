@@ -3,8 +3,8 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.table.headers import match_table_elements, check_header_coherency, \
-    identify_table_lines, headers_from_lines, process_headers
+from img2table.tables.processing.borderless_tables.table.headers import match_table_elements, \
+    check_header_coherency, identify_table_lines, headers_from_lines, process_headers
 
 
 def test_match_table_elements():

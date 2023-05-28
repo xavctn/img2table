@@ -1,33 +1,29 @@
 # coding: utf-8
-from typing import List, Optional
+from typing import List
 
-from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.model import LineGroup
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 from img2table.tables.processing.borderless_tables.table.headers import process_headers
-from img2table.tables.processing.borderless_tables.table.table_creation import create_table
+from img2table.tables.processing.borderless_tables.table.table_creation import get_table
 
 
-def identify_table(line_group: LineGroup, column_delimiters: List[Cell], lines: List[Line],
-                   elements: List[Cell]) -> Optional[Table]:
+def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], lines: List[Line]) -> Table:
     """
-    Identify potential tables from line group and column delimiters
-    :param line_group: group of line as LineGroup object
-    :param column_delimiters: list of column delimiters
-    :param lines: list of rows in image
-    :param elements: list of elements from image
-    :return: Table object if relevant
+    Identify table from column delimiters and rows
+    :param columns: column delimiters group
+    :param table_rows: list of table rows corresponding to columns
+    :param lines: list of detected solid rows in image
+    :return: Table object
     """
     # Create table from rows and columns delimiters
-    table = create_table(line_group=line_group,
-                         column_delimiters=column_delimiters)
-
-    if table is None:
-        return table
+    table = get_table(columns=columns,
+                      table_rows=table_rows)
 
     # Identify headers
-    table_headers = process_headers(table=table, lines=lines, elements=elements)
+    table_headers = process_headers(table=table,
+                                    lines=lines,
+                                    elements=columns.elements)
 
     # Reset table content
     for id_row, row in enumerate(table_headers.items):
