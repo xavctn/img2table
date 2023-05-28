@@ -22,6 +22,7 @@ from img2table.tables.objects.extraction import ExtractedTable
 class PDF(Document):
     pages: List[int] = None
     detect_rotation: bool = False
+    pdf_text_extraction: bool = True
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -31,7 +32,9 @@ class PDF(Document):
                 raise TypeError("All values in pages argument should be integers")
         return value
 
-    def validate__images(self, value, **_) -> Optional[List[int]]:
+    def validate_pdf_text_extraction(self, value, **_) -> int:
+        if not isinstance(value, bool):
+            raise TypeError(f"Invalid type {type(value)} for pdf_text_extraction argument")
         return value
 
     @cached_property
@@ -63,7 +66,7 @@ class PDF(Document):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
         """
-        if not self.detect_rotation:
+        if not self.detect_rotation and self.pdf_text_extraction:
             # Try to get OCRDataframe from PDF
             self.ocr_df = PdfOCR().of(document=self)
 
