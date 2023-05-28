@@ -21,7 +21,7 @@ class LineSpan:
 @dataclass
 class Alignment:
     type: str
-    value: int
+    value: float
     delim_left: Cell
     delim_right: Cell
 
