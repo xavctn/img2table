@@ -19,6 +19,9 @@ def test_validators():
     with pytest.raises(TypeError) as e_info:
         pdf = PDF(src="img", pages=["12"])
 
+    with pytest.raises(TypeError) as e_info:
+        pdf = PDF(src="img", pages=[1], detect_rotation="a")
+
 
 def test_load_pdf():
     # Load from path
