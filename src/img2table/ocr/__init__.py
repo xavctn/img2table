@@ -21,3 +21,8 @@ try:
     from img2table.ocr.paddle import PaddleOCR
 except ImportError:
     pass
+
+try:
+    from img2table.ocr.easyocr import EasyOCR
+except ImportError:
+    pass

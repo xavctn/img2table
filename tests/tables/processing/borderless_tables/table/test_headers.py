@@ -3,8 +3,8 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.table.headers import match_table_elements, check_header_coherency, \
-    identify_table_lines, headers_from_lines, process_headers
+from img2table.tables.processing.borderless_tables.table.headers import match_table_elements, \
+    check_header_coherency, identify_table_lines, headers_from_lines, process_headers
 
 
 def test_match_table_elements():
@@ -54,46 +54,21 @@ def test_match_table_elements():
 
 
 def test_check_header_coherency():
-    table = Table(rows=[Row(cells=[Cell(x1=0, x2=10, y1=0, y2=10),
-                                   Cell(x1=10, x2=20, y1=0, y2=10),
-                                   Cell(x1=20, x2=30, y1=0, y2=10)]),
-                        Row(cells=[Cell(x1=0, x2=10, y1=10, y2=20),
-                                   Cell(x1=10, x2=20, y1=10, y2=20),
-                                   Cell(x1=20, x2=30, y1=10, y2=20)]),
-                        Row(cells=[Cell(x1=0, x2=10, y1=20, y2=30),
-                                   Cell(x1=10, x2=20, y1=20, y2=30),
-                                   Cell(x1=20, x2=30, y1=20, y2=30)]),
-                        Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40),
-                                   Cell(x1=10, x2=20, y1=30, y2=40),
-                                   Cell(x1=20, x2=30, y1=30, y2=40)]),
-                        Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100),
-                                   Cell(x1=10, x2=20, y1=40, y2=100),
-                                   Cell(x1=20, x2=30, y1=40, y2=100)]),
-                        ])
+    header_rows = [Row(cells=[Cell(x1=0, x2=10, y1=10, y2=20, content=False),
+                              Cell(x1=10, x2=20, y1=10, y2=20, content=True),
+                              Cell(x1=20, x2=30, y1=10, y2=20, content=False)]),
+                   Row(cells=[Cell(x1=0, x2=10, y1=20, y2=30, content=True),
+                              Cell(x1=10, x2=20, y1=20, y2=30, content=True),
+                              Cell(x1=20, x2=30, y1=20, y2=30, content=True)])]
+    assert check_header_coherency(header_rows=header_rows)
 
-    elements = [Cell(x1=0, x2=10, y1=0, y2=10),
-                Cell(x1=10, x2=20, y1=10, y2=20),
-                Cell(x1=0, x2=10, y1=20, y2=30), Cell(x1=10, x2=20, y1=20, y2=30), Cell(x1=20, x2=30, y1=20, y2=30),
-                Cell(x1=0, x2=10, y1=30, y2=40), Cell(x1=10, x2=20, y1=30, y2=40), Cell(x1=20, x2=30, y1=30, y2=40),
-                Cell(x1=0, x2=10, y1=40, y2=100), Cell(x1=20, x2=30, y1=40, y2=100)]
-
-    result = check_header_coherency(table=table, elements=elements)
-
-    expected = Table(rows=[Row(cells=[Cell(x1=0, x2=10, y1=10, y2=20, content=False),
-                                      Cell(x1=10, x2=20, y1=10, y2=20, content=True),
-                                      Cell(x1=20, x2=30, y1=10, y2=20, content=False)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=20, y2=30, content=True),
-                                      Cell(x1=10, x2=20, y1=20, y2=30, content=True),
-                                      Cell(x1=20, x2=30, y1=20, y2=30, content=True)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40, content=True),
-                                      Cell(x1=10, x2=20, y1=30, y2=40, content=True),
-                                      Cell(x1=20, x2=30, y1=30, y2=40, content=True)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100, content=True),
-                                      Cell(x1=10, x2=20, y1=40, y2=100, content=False),
-                                      Cell(x1=20, x2=30, y1=40, y2=100, content=True)]),
-                           ])
-
-    assert result == expected
+    header_rows = [Row(cells=[Cell(x1=0, x2=10, y1=10, y2=20, content=True),
+                              Cell(x1=10, x2=20, y1=10, y2=20, content=True),
+                              Cell(x1=20, x2=30, y1=10, y2=20, content=False)]),
+                   Row(cells=[Cell(x1=0, x2=10, y1=20, y2=30, content=False),
+                              Cell(x1=10, x2=20, y1=20, y2=30, content=True),
+                              Cell(x1=20, x2=30, y1=20, y2=30, content=True)])]
+    assert not check_header_coherency(header_rows=header_rows)
 
 
 def test_identify_table_lines():
@@ -172,9 +147,9 @@ def test_process_headers():
                         Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40),
                                    Cell(x1=10, x2=20, y1=30, y2=40),
                                    Cell(x1=20, x2=30, y1=30, y2=40)]),
-                        Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100),
-                                   Cell(x1=10, x2=20, y1=40, y2=100),
-                                   Cell(x1=20, x2=30, y1=40, y2=100)]),
+                        Row(cells=[Cell(x1=0, x2=10, y1=40, y2=200),
+                                   Cell(x1=10, x2=20, y1=40, y2=200),
+                                   Cell(x1=20, x2=30, y1=40, y2=200)]),
                         ])
 
     elements = [Cell(x1=0, x2=10, y1=0, y2=10),
@@ -199,9 +174,9 @@ def test_process_headers():
                            Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40, content=True),
                                       Cell(x1=10, x2=20, y1=30, y2=40, content=True),
                                       Cell(x1=20, x2=30, y1=30, y2=40, content=True)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100, content=True),
-                                      Cell(x1=10, x2=20, y1=40, y2=100, content=False),
-                                      Cell(x1=20, x2=30, y1=40, y2=100, content=True)]),
+                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=200, content=True),
+                                      Cell(x1=10, x2=20, y1=40, y2=200, content=False),
+                                      Cell(x1=20, x2=30, y1=40, y2=200, content=True)]),
                            ])
 
     assert result == expected

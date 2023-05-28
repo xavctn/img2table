@@ -9,12 +9,12 @@ from img2table.tables.processing.bordered_tables.cells.identification import get
 
 def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
     """
-    Identify cells from horizontal and vertical lines
-    :param horizontal_lines: list of horizontal lines
-    :param vertical_lines: list of vertical lines
+    Identify cells from horizontal and vertical rows
+    :param horizontal_lines: list of horizontal rows
+    :param vertical_lines: list of vertical rows
     :return: list of all cells in image
     """
-    # Create dataframe with cells from horizontal and vertical lines
+    # Create dataframe with cells from horizontal and vertical rows
     df_cells = get_cells_dataframe(horizontal_lines=horizontal_lines,
                                    vertical_lines=vertical_lines)
     

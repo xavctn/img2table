@@ -26,6 +26,7 @@ The library can be installed via pip:
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
 > <code>pip install img2table[paddle-gpu]</code>: For usage with Paddle OCR - GPU (Python <= 3.10 only)<br>
+> <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
 > <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
@@ -186,6 +187,30 @@ ocr = PaddleOCR(lang="en")
 <br>
 </details>
 
+
+<details>
+<summary>EasyOCR<a name="easyocr"></a></summary>
+<br>
+
+<a href="https://github.com/JaidedAI/EasyOCR">EasyOCR</a> is an open-source OCR based on Deep Learning models.<br>
+At first use, relevant languages models will be downloaded.
+
+```python
+from img2table.ocr import EasyOCR
+
+ocr = EasyOCR(lang=["en"])
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>lang : list, optional, default <code>["en"]</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in EasyOCR for text extraction, check <a href="https://www.jaided.ai/easyocr">documentation for available languages</a></dd>
+></dl>
+
+*Released in version 0.1.2*
+<br>
+</details>
+
 <details>
 <summary>Google Vision<a name="vision"></a></summary>
 <br>
@@ -292,10 +317,12 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
+>    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 ></dl>
+
+<b>NB</b>: Borderless table extraction can, by design, only extract tables with 3 or more columns.
 
 *Borderless table extraction released in version 0.0.14*
 
@@ -401,10 +428,6 @@ can be found are not returned.
 <li>
 The library is tailored for usage on documents with white/light background. 
 Effectiveness can not be guaranteed on other type of documents. 
-</li>
-<li>
-Borderless tables extraction is still in alpha stage and might be inconsistent on complex cases.
-Improvements to the algorithm will be released in future versions.
 </li>
 <li>
 Table detection using only OpenCV processing can have some limitations. If the library fails to detect tables, 

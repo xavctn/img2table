@@ -49,7 +49,7 @@ class TableImage:
     def white_img(self) -> np.ndarray:
         white_img = copy.deepcopy(self.img)
 
-        # Draw white lines on detected lines
+        # Draw white rows on detected rows
         for l in self.lines:
             if l.horizontal:
                 cv2.rectangle(white_img, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (255, 255, 255),
@@ -70,7 +70,7 @@ class TableImage:
         minLinLength = maxLineGap = round(0.33 * self.median_line_sep) if self.median_line_sep else self.dpi // 20
         kernel_size = round(0.66 * self.median_line_sep) if self.median_line_sep else self.dpi // 10
 
-        # Detect lines in image
+        # Detect rows in image
         h_lines, v_lines = detect_lines(image=self.img,
                                         contours=self.contours,
                                         char_length=self.char_length,
@@ -82,11 +82,11 @@ class TableImage:
                                         kernel_size=kernel_size)
         self.lines = h_lines + v_lines
 
-        # Create cells from lines
+        # Create cells from rows
         cells = get_cells(horizontal_lines=h_lines,
                           vertical_lines=v_lines)
 
-        # Create tables from lines
+        # Create tables from rows
         self.tables = get_tables(cells=cells)
 
         # If necessary, detect implicit rows

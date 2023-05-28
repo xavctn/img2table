@@ -56,7 +56,7 @@ class Line(TableObject):
         _y2 = max(self.y1, self.y2)
         self.x1, self.x2, self.y1, self.y2 = _x1, _x2, _y1, _y2
 
-        # Correct "almost" horizontal or vertical lines
+        # Correct "almost" horizontal or vertical rows
         if abs(self.angle) <= 5:
             y_val = round((self.y1 + self.y2) / 2)
             self.y2 = self.y1 = y_val

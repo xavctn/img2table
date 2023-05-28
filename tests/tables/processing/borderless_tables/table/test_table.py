@@ -1,47 +1,30 @@
 # coding: utf-8
+
+import json
+
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.objects.row import Row
-from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables import identify_table
-from img2table.tables.processing.borderless_tables.model import LineGroup, TableLine
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
 
 def test_identify_table():
-    line_group = LineGroup(lines=[TableLine(cells=[Cell(x1=0, x2=30, y1=0, y2=10)]),
-                                  TableLine(cells=[Cell(x1=0, x2=30, y1=10, y2=20)]),
-                                  TableLine(cells=[Cell(x1=0, x2=30, y1=20, y2=30)]),
-                                  TableLine(cells=[Cell(x1=0, x2=30, y1=30, y2=40)]),
-                                  TableLine(cells=[Cell(x1=0, x2=30, y1=40, y2=100)])])
+    with open("test_data/delimiter_group.json", "r") as f:
+        data = json.load(f)
+    delimiter_group = DelimiterGroup(delimiters=[Cell(**c) for c in data.get('delimiters')],
+                                     elements=[Cell(**c) for c in data.get('elements')])
 
-    column_delimiters = [Cell(x1=5, x2=15, y1=0, y2=100), Cell(x1=15, x2=25, y1=0, y2=100)]
+    with open("test_data/rows.json", "r") as f:
+        table_rows = [TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)]
 
-    elements = [Cell(x1=0, x2=10, y1=0, y2=10),
-                Cell(x1=10, x2=20, y1=10, y2=20),
-                Cell(x1=0, x2=10, y1=20, y2=30), Cell(x1=10, x2=20, y1=20, y2=30), Cell(x1=20, x2=30, y1=20, y2=30),
-                Cell(x1=0, x2=10, y1=30, y2=40), Cell(x1=10, x2=20, y1=30, y2=40), Cell(x1=20, x2=30, y1=30, y2=40),
-                Cell(x1=0, x2=10, y1=40, y2=100), Cell(x1=20, x2=30, y1=40, y2=100)]
+    with open("test_data/lines.json", 'r') as f:
+        data = json.load(f)
+    lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
 
-    lines = [Line(x1=0, x2=25, y1=12, y2=12),
-             Line(x1=0, x2=11, y1=31, y2=31),
-             Line(x1=13, x2=26, y1=29, y2=29),
-             Line(x1=13, x2=26, y1=38, y2=38),
-             Line(x1=17, x2=17, y1=2, y2=23)]
-
-    result = identify_table(line_group=line_group,
-                            column_delimiters=column_delimiters,
-                            elements=elements,
+    result = identify_table(columns=delimiter_group,
+                            table_rows=table_rows,
                             lines=lines)
 
-    expected = Table(rows=[Row(cells=[Cell(x1=0, x2=10, y1=10, y2=30),
-                                      Cell(x1=10, x2=20, y1=10, y2=30),
-                                      Cell(x1=20, x2=30, y1=10, y2=30)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=30, y2=40),
-                                      Cell(x1=10, x2=20, y1=30, y2=40),
-                                      Cell(x1=20, x2=30, y1=30, y2=40)]),
-                           Row(cells=[Cell(x1=0, x2=10, y1=40, y2=100),
-                                      Cell(x1=10, x2=20, y1=40, y2=100),
-                                      Cell(x1=20, x2=30, y1=40, y2=100)]),
-                           ])
-
-    assert result == expected
+    assert result.nb_rows == 16
+    assert result.nb_columns == 8
+    assert (result.x1, result.y1, result.x2, result.y2) == (93, 45, 1233, 1060)
