@@ -14,7 +14,7 @@ paddlepaddle; python_version < '3.11'
 paddleocr>=2.0.6; python_version < '3.11'
 
 # EasyOCR
-easyocr
+easyocr >= 1/7.0
 
 # Test dependencies
 pytest >= 6
