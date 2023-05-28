@@ -21,7 +21,7 @@ def convert_np_types(obj: Any):
         return list(convert_np_types(element) for element in obj)
     elif isinstance(obj, np.int32):
         return int(obj)
-    elif isinstance(obj, np.float64):
+    elif isinstance(obj, (np.float64, float)):
         return round(float(obj), 1)
     else:
         return obj
