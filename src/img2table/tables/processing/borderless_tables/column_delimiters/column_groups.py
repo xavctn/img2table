@@ -60,13 +60,55 @@ def deduplicate_groups(delimiter_groups: List[DelimiterGroup]) -> List[Delimiter
     return dedup_delimiter_groups
 
 
-def get_coherent_height(delimiter_group: DelimiterGroup, segment: ImageSegment,
-                        delimiters: List[Cell]) -> DelimiterGroup:
+def get_complete_group(delimiter_group: DelimiterGroup, delimiters: List[Cell]) -> DelimiterGroup:
+    """
+    Add relevant delimiters to the group by checking intertwined and edge delimiters
+    :param delimiter_group: group of delimiters
+    :param delimiters: list of all delimiters
+    :return: processed delimiter group
+    """
+    # Identify other delimiters within the group that could match
+    inside_delimiters = [Cell(x1=d.x1, y1=max(d.y1, delimiter_group.y1), x2=d.x2, y2=min(d.y2, delimiter_group.y2))
+                         for d in delimiters
+                         if d.x1 > delimiter_group.x1 and d.x2 < delimiter_group.x2
+                         and min(d.y2, delimiter_group.y2) - max(d.y1, delimiter_group.y1) >= 0.75 * delimiter_group.height]
+
+    # Add inside delimiters to group
+    for delim in inside_delimiters:
+        if delim not in delimiter_group.delimiters:
+            delimiter_group.add(delim)
+
+    # Get previous left and next right delimiter
+    matching_delimiters = sorted([d for d in delimiters
+                                  if min(d.y2, delimiter_group.y2) - max(d.y1, delimiter_group.y1) > 0],
+                                 key=lambda d: (d.x1, d.height))
+
+    # Check left delimiter
+    if [d for d in matching_delimiters if d.x2 < delimiter_group.x1]:
+        left_delim = [d for d in matching_delimiters if d.x2 < delimiter_group.x1][-1]
+        if min(left_delim.y2, delimiter_group.y2) - max(left_delim.y1, delimiter_group.y1) >= 0.75 * delimiter_group.height:
+            delimiter_group.add(Cell(x1=left_delim.x1,
+                                     y1=max(left_delim.y1, delimiter_group.y1),
+                                     x2=left_delim.x2,
+                                     y2=min(left_delim.y2, delimiter_group.y2)))
+
+    # Check right delimiter
+    if [d for d in matching_delimiters if d.x1 > delimiter_group.x2]:
+        right_delim = [d for d in matching_delimiters if d.x1 > delimiter_group.x2][0]
+        if min(right_delim.y2, delimiter_group.y2) - max(right_delim.y1, delimiter_group.y1) >= 0.75 * delimiter_group.height:
+            delimiter_group.add(Cell(x1=right_delim.x1,
+                                     y1=max(right_delim.y1, delimiter_group.y1),
+                                     x2=right_delim.x2,
+                                     y2=min(right_delim.y2, delimiter_group.y2)))
+
+    return delimiter_group
+
+
+def get_coherent_height(delimiter_group: DelimiterGroup, segment: ImageSegment) -> DelimiterGroup:
     """
     Identify height for a delimiter group based on position of elements within the image
     :param delimiter_group: delimiter group
     :param segment: Image segment object
-    :param delimiters: list of vertical delimiters as Cell objects
     :return: processed delimiter group
     """
     # Get elements that correspond to the delimiter group
@@ -111,16 +153,6 @@ def get_coherent_height(delimiter_group: DelimiterGroup, segment: ImageSegment,
     delimiter_group = DelimiterGroup(delimiters=processed_delimiters,
                                      elements=delim_group_elements)
 
-    # Identify other delimiters that could match
-    other_delimiters = [Cell(x1=d.x1, y1=max(d.y1, delimiter_group.y1), x2=d.x2, y2=min(d.y2, delimiter_group.y2))
-                        for d in delimiters
-                        if d.x1 > delimiter_group.x1 and d.x2 < delimiter_group.x2
-                        and min(d.y2, delimiter_group.y2) - max(d.y1, delimiter_group.y1) >= 0.75 * delimiter_group.height]
-
-    for delim in other_delimiters:
-        if delim not in delimiter_group.delimiters:
-            delimiter_group.add(delim)
-
     return delimiter_group
 
 
@@ -139,8 +171,12 @@ def create_delimiter_groups(delimiters: List[Cell], segment: ImageSegment) -> Li
 
     # Reprocess delimiter groups height
     processed_delim_groups = [get_coherent_height(delimiter_group=gp,
-                                                  segment=segment,
-                                                  delimiters=delimiters)
+                                                  segment=segment)
                               for gp in deduplicated_groups]
 
-    return processed_delim_groups
+    # Complete delimiter groups with other matching delimiters
+    final_delimiter_groups = [get_complete_group(delimiter_group=gp,
+                                                 delimiters=delimiters)
+                              for gp in processed_delim_groups]
+
+    return final_delimiter_groups

@@ -74,6 +74,44 @@ def adjacent_whitespaces(w_1: Cell, w_2: Cell) -> bool:
     return x_coherent and y_coherent
 
 
+def process_tiny_whitespaces(v_whitespaces: List[Cell], char_length: float) -> List[Cell]:
+    """
+    Reprocess vertical whitespaces that are too small in width by resizing them according to adjacent whitespaces
+    :param v_whitespaces: list of whitespaces
+    :param char_length: average character length in image
+    :return: list of processed delimiters
+    """
+    final_ws = list()
+    for ws in v_whitespaces:
+        # Identify tiny whitespaces
+        if ws.width <= 0.5 * char_length:
+            # Try to find whitespaces directly to the left and to the right
+            left_ws = sorted([w for w in v_whitespaces if w.x2 == ws.x1 if min(w.y2, ws.y2) - max(w.y1, ws.y1) > 0],
+                             key=lambda w: min(w.y2, ws.y2) - max(w.y1, ws.y1),
+                             reverse=True)
+            right_ws = sorted([w for w in v_whitespaces if w.x1 == ws.x2 if min(w.y2, ws.y2) - max(w.y1, ws.y1) > 0],
+                              key=lambda w: min(w.y2, ws.y2) - max(w.y1, ws.y1),
+                              reverse=True)
+
+            # If possible, resize the whitespace with the left and right corresponding whitespaces
+            if len(left_ws) > 0 and len(right_ws) > 0:
+                delim = Cell(x1=ws.x1,
+                             x2=ws.x2,
+                             y1=max(ws.y1, min(left_ws[0].y1, right_ws[0].y1)),
+                             y2=min(ws.y2, max(left_ws[0].y2, right_ws[0].y2)))
+                final_ws.append(delim)
+            elif len(left_ws + right_ws) > 0:
+                delim = Cell(x1=ws.x1,
+                             x2=ws.x2,
+                             y1=max(ws.y1, (left_ws + right_ws)[0].y1),
+                             y2=min(ws.y2, (left_ws + right_ws)[0].y2))
+                final_ws.append(delim)
+        else:
+            final_ws.append(ws)
+
+    return final_ws
+
+
 def identify_coherent_v_whitespaces(v_whitespaces: List[Cell], char_length: float) -> List[Cell]:
     """
     From vertical whitespaces, identify the most relevant ones according to height, width and relative positions
@@ -81,6 +119,10 @@ def identify_coherent_v_whitespaces(v_whitespaces: List[Cell], char_length: floa
     :param char_length: average character width in image
     :return: list of relevant vertical delimiters
     """
+    # Filter delimiters by size
+    v_whitespaces = process_tiny_whitespaces(v_whitespaces=v_whitespaces,
+                                             char_length=char_length)
+
     # Create vertical delimiters groups
     v_groups = cluster_items(items=v_whitespaces,
                              clustering_func=adjacent_whitespaces)
@@ -92,9 +134,6 @@ def identify_coherent_v_whitespaces(v_whitespaces: List[Cell], char_length: floa
     # Group once again delimiters and keep only highest one in group
     v_delim_groups = cluster_items(items=v_delims,
                                    clustering_func=adjacent_whitespaces)
-
-    # Filter delimiters in each group by width
-    v_delim_groups = [[d for d in gp if d.width >= 0.5 * char_length] for gp in v_delim_groups]
 
     # For each group, select a delimiter that has the largest height
     final_delims = list()

@@ -8,9 +8,11 @@ export PYTHONPATH := $(DIR)/src
 venv:
 	python -m venv ./venv || true
 	. $(VENV); python -m pip install pip wheel --upgrade;
+	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 	. $(VENV); python -m pip install -r requirements-dev.txt
 
 update: venv
+	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 	. $(VENV); python -m pip install -r requirements-dev.txt
 
 # Test commands
@@ -29,8 +31,7 @@ update-examples:
 
 # Build commands
 build: venv
-	. $(VENV);
-	python setup.py sdist bdist_wheel
+	. $(VENV); python setup.py sdist bdist_wheel
 
 
 .PHONY: venv
