@@ -104,7 +104,7 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     df_bbox_delimiters = (df_bbox_v.sort(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox", "x1"])
                           .groupby(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
                           .agg(pl.col('x1').alias('dels'))
-                          .filter(pl.col("dels").arr.lengths() >= 2)
+                          .filter(pl.col("dels").list.lengths() >= 2)
                           )
 
     # Create new cells based on vertical delimiters
