@@ -31,19 +31,27 @@ class DelimiterGroup:
 
     @property
     def x1(self) -> int:
-        return min([d.x1 for d in self.delimiters])
+        if self.delimiters:
+            return min([d.x1 for d in self.delimiters])
+        return 0
 
     @property
     def y1(self) -> int:
-        return min([d.y1 for d in self.delimiters])
+        if self.delimiters:
+            return min([d.y1 for d in self.delimiters])
+        return 0
 
     @property
     def x2(self) -> int:
-        return max([d.x2 for d in self.delimiters])
+        if self.delimiters:
+            return max([d.x2 for d in self.delimiters])
+        return 0
 
     @property
     def y2(self) -> int:
-        return max([d.y2 for d in self.delimiters])
+        if self.delimiters:
+            return max([d.y2 for d in self.delimiters])
+        return 0
 
     @property
     def bbox(self) -> Cell:

@@ -20,6 +20,7 @@ def identify_column_groups(segment: ImageSegment, char_length: float) -> List[De
 
     # Get delimiter groups that can correspond to columns
     delimiter_groups = create_delimiter_groups(delimiters=vertical_ws,
-                                               segment=segment)
+                                               segment=segment,
+                                               char_length=char_length)
 
     return [gp for gp in delimiter_groups if len(gp.delimiters) >= 4]

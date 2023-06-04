@@ -1,16 +1,17 @@
 # coding: utf-8
 
-from typing import List
+from typing import List, Union
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
-def get_vertical_whitespaces(segment: ImageSegment) -> List[Cell]:
+def get_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], pct: float = 0.25) -> List[Cell]:
     """
     Identify vertical whitespaces in segment
     :param segment: image segment
+    :param pct: minimum percentage of the segment height for a vertical whitespace
     :return: list of vertical whitespaces as Cell objects
     """
     # Get min/max height of elements in segment
@@ -29,14 +30,14 @@ def get_vertical_whitespaces(segment: ImageSegment) -> List[Cell]:
 
         if rng_elements:
             # Check top and bottom gaps
-            if rng_elements[0].y1 - segment.y1 >= 0.25 * segment.height:
+            if rng_elements[0].y1 - segment.y1 >= pct * segment.height:
                 v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=rng_elements[0].y1))
-            if segment.y2 - rng_elements[-1].y2 >= 0.25 * segment.height:
+            if segment.y2 - rng_elements[-1].y2 >= pct * segment.height:
                 v_whitespaces.append(Cell(x1=x_min, y1=rng_elements[-1].y2, x2=x_max, y2=segment.y2))
 
             # Check middle gaps
             for el_top, el_bottom in zip(rng_elements, rng_elements[1:]):
-                if el_bottom.y1 - el_top.y2 >= 0.25 * segment.height:
+                if el_bottom.y1 - el_top.y2 >= pct * segment.height:
                     v_whitespaces.append(Cell(x1=x_min, y1=el_top.y2, x2=x_max, y2=el_bottom.y1))
         else:
             v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=segment.y2))
@@ -149,18 +150,24 @@ def identify_coherent_v_whitespaces(v_whitespaces: List[Cell], char_length: floa
             closest_del = sorted(tallest_delimiters, key=lambda d: abs(d.x1 + d.x2 - x_center)).pop(0)
             final_delims.append(closest_del)
 
-    return final_delims
+    # Add all whitespaces of the largest height
+    max_height_ws = [ws for ws in v_whitespaces if ws.height == max([w.height for w in v_whitespaces])]
+
+    return list(set(final_delims + max_height_ws))
 
 
-def get_relevant_vertical_whitespaces(segment: ImageSegment, char_length: float) -> List[Cell]:
+def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], char_length: float,
+                                      pct: float = 0.25) -> List[Cell]:
     """
     Identify vertical whitespaces that can be column delimiters
     :param segment: image segment
     :param char_length: average character width in image
+    :param pct: minimum percentage of the segment height for a vertical whitespace
     :return: list of vertical whitespaces that can be column delimiters
     """
     # Identify vertical whitespaces
-    v_whitespaces = get_vertical_whitespaces(segment=segment)
+    v_whitespaces = get_vertical_whitespaces(segment=segment,
+                                             pct=pct)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces,
