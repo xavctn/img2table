@@ -4,7 +4,8 @@ import json
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.column_delimiters.vertical_whitespaces import \
-    get_vertical_whitespaces, adjacent_whitespaces, identify_coherent_v_whitespaces, get_relevant_vertical_whitespaces
+    get_vertical_whitespaces, adjacent_whitespaces, identify_coherent_v_whitespaces, get_relevant_vertical_whitespaces, \
+    process_tiny_whitespaces
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
@@ -31,6 +32,18 @@ def test_adjacent_whitespaces():
     assert adjacent_whitespaces(c_1, c_2)
     assert adjacent_whitespaces(c_1, c_3)
     assert not adjacent_whitespaces(c_1, c_4)
+
+
+def test_process_tiny_whitespaces():
+    v_whitespaces = [Cell(x1=0, x2=20, y1=10, y2=100),
+                     Cell(x1=20, x2=22, y1=0, y2=500),
+                     Cell(x1=22, x2=42, y1=53, y2=112)]
+
+    result = process_tiny_whitespaces(v_whitespaces=v_whitespaces, char_length=10)
+
+    assert result == [Cell(x1=0, x2=20, y1=10, y2=100),
+                      Cell(x1=20, x2=22, y1=10, y2=112),
+                      Cell(x1=22, x2=42, y1=53, y2=112)]
 
 
 def test_identify_coherent_v_whitespaces():
@@ -66,4 +79,4 @@ def test_get_relevant_vertical_whitespaces():
     result = get_relevant_vertical_whitespaces(segment=img_segment,
                                                char_length=7.24)
 
-    assert len(result) == 9
+    assert len(result) == 10

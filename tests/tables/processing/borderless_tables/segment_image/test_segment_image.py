@@ -16,7 +16,7 @@ def test_create_image_segments():
                                    median_line_sep=66,
                                    char_length=7.24)
 
-    assert result == [ImageSegment(x1=53, y1=0, x2=1277, y2=1173)]
+    assert result == [ImageSegment(x1=56, y1=0, x2=1273, y2=1173)]
 
 
 def test_get_segment_elements():

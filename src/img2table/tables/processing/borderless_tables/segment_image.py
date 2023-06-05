@@ -5,6 +5,7 @@ from typing import List
 import cv2
 import numpy as np
 
+from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.model import ImageSegment
@@ -20,7 +21,7 @@ def create_image_segments(img: np.ndarray, median_line_sep: float, char_length: 
     :return: list of image segments as Cell objects
     """
     # Reprocess images
-    blur = cv2.GaussianBlur(img, (5, 5), 0)
+    blur = cv2.medianBlur(img, 5)
     thresh = cv2.Canny(blur, 0, 0)
 
     # Define kernel by using median line separation and character length
@@ -53,7 +54,16 @@ def create_image_segments(img: np.ndarray, median_line_sep: float, char_length: 
     img_segments = merge_contours(contours=list_cnts_cell,
                                   vertically=None)
 
-    return [ImageSegment(x1=seg.x1, y1=seg.y1, x2=seg.x2, y2=seg.y2) for seg in img_segments]
+    # Merge segments that are vertically coherent
+    cl_f = lambda s1, s2: min(s1.y2, s2.y2) - max(s1.y1, s2.y1) >= 0.5 * min(s1.height, s2.height)
+    segment_groups = cluster_items(items=img_segments,
+                                   clustering_func=cl_f)
+
+    return [ImageSegment(x1=min([seg.x1 for seg in seg_gp]),
+                         y1=min([seg.y1 for seg in seg_gp]),
+                         x2=max([seg.x2 for seg in seg_gp]),
+                         y2=max([seg.y2 for seg in seg_gp]))
+            for seg_gp in segment_groups]
 
 
 def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], char_length: float,

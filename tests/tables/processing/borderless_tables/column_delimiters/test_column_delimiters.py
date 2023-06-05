@@ -20,6 +20,6 @@ def test_identify_column_groups():
                                     char_length=7.24)
 
     assert len(result) == 1
-    assert len(result[0].delimiters) == 9
+    assert len(result[0].delimiters) == 10
     assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (53, 45, 1277, 1147)
     assert len(result[0].elements) == 164

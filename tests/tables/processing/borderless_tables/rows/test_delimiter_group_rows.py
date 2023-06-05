@@ -3,9 +3,10 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 from img2table.tables.processing.borderless_tables.rows.delimiter_group_rows import \
-    get_delimiter_group_row_separation, identify_rows, identify_delimiter_group_rows
+    get_delimiter_group_row_separation, identify_rows, identify_delimiter_group_rows, aligned_rows, overlapping_rows, \
+    not_overlapping_rows, score_row_group, get_rows_from_overlapping_cluster
 
 
 def test_get_delimiter_group_row_separation():
@@ -17,6 +18,60 @@ def test_get_delimiter_group_row_separation():
     result = get_delimiter_group_row_separation(delimiter_group=delimiter_group)
 
     assert result == 66
+
+
+def test_aligned_rows():
+    r_1 = Cell(x1=0, x2=10, y1=0, y2=10)
+    r_2 = Cell(x1=0, x2=10, y1=2, y2=8)
+    r_3 = Cell(x1=0, x2=10, y1=9, y2=16)
+
+    assert aligned_rows(ref_size=3, r_1=r_1, r_2=r_2)
+    assert not aligned_rows(ref_size=3, r_1=r_1, r_2=r_3)
+    assert not aligned_rows(ref_size=3, r_1=r_2, r_2=r_3)
+
+
+def test_overlapping_rows():
+    tb_row_1 = TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)])
+    tb_row_2 = TableRow(cells=[Cell(x1=0, x2=10, y1=8, y2=40)])
+    tb_row_3 = TableRow(cells=[Cell(x1=0, x2=10, y1=36, y2=67)])
+
+    assert overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_2)
+    assert not overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_3)
+    assert not overlapping_rows(tb_row_1=tb_row_2, tb_row_2=tb_row_3)
+
+
+def test_not_overlapping_rows():
+    tb_row_1 = TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)])
+    tb_row_2 = TableRow(cells=[Cell(x1=0, x2=10, y1=8, y2=40)])
+    tb_row_3 = TableRow(cells=[Cell(x1=0, x2=10, y1=36, y2=67)])
+
+    assert not not_overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_2)
+    assert not_overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_3)
+    assert not not_overlapping_rows(tb_row_1=tb_row_2, tb_row_2=tb_row_3)
+
+
+def test_score_row_group():
+    row_group = [TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)]),
+                 TableRow(cells=[Cell(x1=0, x2=10, y1=18, y2=43),
+                                 Cell(x1=0, x2=10, y1=19, y2=45)])
+                 ]
+
+    result = score_row_group(row_group=row_group,
+                             height=100,
+                             max_elements=5)
+
+    assert round(result, 2) == 0.27
+
+
+def test_get_rows_from_overlapping_cluster():
+    row_cluster = [TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)]),
+                   TableRow(cells=[Cell(x1=20, x2=100, y1=0, y2=8)]),
+                   TableRow(cells=[Cell(x1=20, x2=100, y1=11, y2=20), Cell(x1=20, x2=100, y1=11, y2=20)])]
+
+    result = get_rows_from_overlapping_cluster(row_cluster=row_cluster)
+
+    assert result == [TableRow(cells=[Cell(x1=20, x2=100, y1=0, y2=8)]),
+                      TableRow(cells=[Cell(x1=20, x2=100, y1=11, y2=20), Cell(x1=20, x2=100, y1=11, y2=20)])]
 
 
 def test_identify_rows():

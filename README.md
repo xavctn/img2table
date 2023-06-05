@@ -25,7 +25,7 @@ The library can be installed via pip:
 
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
-> <code>pip install img2table[paddle-gpu]</code>: For usage with Paddle OCR - GPU (Python <= 3.10 only)<br>
+> <code>pip install img2table[paddlegpu]</code>: For usage with Paddle OCR - GPU (Python <= 3.10 only)<br>
 > <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>

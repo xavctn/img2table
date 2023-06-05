@@ -4,7 +4,8 @@ import json
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.column_delimiters.column_groups import \
-    vertically_coherent_delimiters, group_delimiters, deduplicate_groups, get_coherent_height, create_delimiter_groups
+    vertically_coherent_delimiters, group_delimiters, deduplicate_groups, get_coherent_height, create_delimiter_groups, \
+    check_elements_vs_delimiter_group, get_complete_group, get_full_delimiters
 from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
@@ -76,11 +77,66 @@ def test_get_coherent_height():
     delimiter_group = DelimiterGroup(delimiters=delimiters)
 
     result = get_coherent_height(delimiter_group=delimiter_group,
-                                 segment=img_segment,
-                                 delimiters=delimiters)
+                                 segment=img_segment)
 
     assert (result.x1, result.y1, result.x2, result.y2) == (53, 45, 1277, 1147)
     assert len(result.elements) == 164
+
+
+def test_check_elements_vs_delimiter_group():
+    delimiter_group = DelimiterGroup(delimiters=[Cell(x1=0, x2=10, y1=0, y2=100)],
+                                     elements=[Cell(x1=0, x2=10, y1=10, y2=20),
+                                               Cell(x1=0, x2=10, y1=30, y2=40),
+                                               Cell(x1=0, x2=10, y1=50, y2=60)])
+
+    elements = [Cell(x1=0, x2=10, y1=10, y2=20),
+                Cell(x1=0, x2=10, y1=50, y2=60)]
+
+    assert check_elements_vs_delimiter_group(delimiter_group=delimiter_group,
+                                             elements=elements)
+
+    elements = [Cell(x1=0, x2=10, y1=10, y2=20),
+                Cell(x1=0, x2=10, y1=50, y2=60),
+                Cell(x1=0, x2=10, y1=80, y2=90)]
+
+    assert not check_elements_vs_delimiter_group(delimiter_group=delimiter_group,
+                                                 elements=elements)
+
+
+def test_get_complete_group():
+    delimiter_group = DelimiterGroup(delimiters=[Cell(x1=50, x2=60, y1=0, y2=100),
+                                                 Cell(x1=100, x2=110, y1=0, y2=100)],
+                                     elements=[Cell(x1=50, x2=60, y1=10, y2=20),
+                                               Cell(x1=50, x2=60, y1=30, y2=40),
+                                               Cell(x1=50, x2=60, y1=50, y2=60)])
+
+    delimiters = [Cell(x1=20, x2=30, y1=0, y2=100),
+                  Cell(x1=50, x2=60, y1=0, y2=100),
+                  Cell(x1=70, x2=80, y1=0, y2=100),
+                  Cell(x1=100, x2=110, y1=0, y2=100),
+                  Cell(x1=120, x2=130, y1=0, y2=100),
+                  Cell(x1=140, x2=150, y1=0, y2=100)]
+
+    segment = ImageSegment(x1=0, y1=0, x2=150, y2=150,
+                           elements=[Cell(x1=31, x2=38, y1=10, y2=20),
+                                     Cell(x1=50, x2=60, y1=10, y2=20),
+                                     Cell(x1=50, x2=60, y1=30, y2=40),
+                                     Cell(x1=50, x2=60, y1=50, y2=60),
+                                     Cell(x1=112, x2=118, y1=32, y2=42),
+                                     Cell(x1=140, x2=150, y1=73, y2=86)])
+
+    result = get_complete_group(delimiter_group=delimiter_group,
+                                delimiters=delimiters,
+                                segment=segment)
+
+    assert result == DelimiterGroup(delimiters=[Cell(x1=20, x2=30, y1=0, y2=100),
+                                                Cell(x1=50, x2=60, y1=0, y2=100),
+                                                Cell(x1=70, x2=80, y1=0, y2=100),
+                                                Cell(x1=100, x2=110, y1=0, y2=100)],
+                                    elements=[Cell(x1=31, x2=38, y1=10, y2=20),
+                                              Cell(x1=50, x2=60, y1=10, y2=20),
+                                              Cell(x1=50, x2=60, y1=30, y2=40),
+                                              Cell(x1=50, x2=60, y1=50, y2=60)])
 
 
 def test_create_delimiter_groups():
@@ -103,9 +159,10 @@ def test_create_delimiter_groups():
                   Cell(x1=776, y1=45, x2=841, y2=1147)]
 
     result = create_delimiter_groups(segment=img_segment,
-                                     delimiters=delimiters)
+                                     delimiters=delimiters,
+                                     char_length=7.24)
 
     assert len(result) == 1
-    assert len(result[0].delimiters) == 9
+    assert len(result[0].delimiters) == 10
     assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (53, 45, 1277, 1147)
     assert len(result[0].elements) == 164
