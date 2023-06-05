@@ -69,6 +69,9 @@ class DelimiterGroup:
     def area(self) -> int:
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
+    def add(self, delim: Cell):
+        self.delimiters.append(delim)
+
     def __eq__(self, other):
         if isinstance(other, DelimiterGroup):
             try:
