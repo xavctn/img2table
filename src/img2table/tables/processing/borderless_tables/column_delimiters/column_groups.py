@@ -264,7 +264,7 @@ def create_delimiter_groups(delimiters: List[Cell], segment: ImageSegment, char_
     complete_delimiter_groups = [get_complete_group(delimiter_group=gp,
                                                     delimiters=delimiters,
                                                     segment=segment)
-                                 for gp in processed_delim_groups]
+                                 for gp in processed_delim_groups if len(gp.elements) > 0]
 
     # Identify exhaustive list of delimiters based on only delimiter group area
     return [get_full_delimiters(delimiter_group=gp, char_length=char_length)

@@ -23,4 +23,4 @@ def identify_column_groups(segment: ImageSegment, char_length: float) -> List[De
                                                segment=segment,
                                                char_length=char_length)
 
-    return [gp for gp in delimiter_groups if len(gp.delimiters) >= 4]
+    return [gp for gp in delimiter_groups if len(gp.delimiters) >= 4 and len(gp.elements) > 0]

@@ -69,8 +69,15 @@ class DelimiterGroup:
     def area(self) -> int:
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
-    def add(self, delimiter: Cell):
-        self.delimiters.append(delimiter)
+    def __eq__(self, other):
+        if isinstance(other, DelimiterGroup):
+            try:
+                assert set(self.delimiters) == set(other.delimiters)
+                assert set(self.elements) == set(other.elements)
+                return True
+            except AssertionError:
+                return False
+        return False
 
 
 @dataclass
@@ -101,17 +108,6 @@ class TableRow:
     def height(self) -> int:
         return self.y2 - self.y1
 
-    @property
-    def size(self) -> int:
-        return len(self.cells)
-
-    @property
-    def cell(self) -> Cell:
-        return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
-
-    def add(self, c: Cell):
-        self.cells.append(c)
-
     def overlaps(self, other: "TableRow") -> bool:
         # Compute y overlap
         y_top = max(self.y1, other.y1)
@@ -123,7 +119,13 @@ class TableRow:
         return TableRow(cells=self.cells + other.cells)
 
     def __eq__(self, other):
-        return self.cells == other.cells
+        if isinstance(other, TableRow):
+            try:
+                assert set(self.cells) == set(other.cells)
+                return True
+            except AssertionError:
+                return False
+        return False
 
     def __hash__(self):
         return hash(f"{self.x1},{self.y1},{self.x2},{self.y2}")

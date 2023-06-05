@@ -22,5 +22,5 @@ def test_identify_borderless_tables():
 
     assert len(result) == 1
     assert result[0].nb_rows == 16
-    assert result[0].nb_columns == 8
+    assert result[0].nb_columns == 9
     assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (93, 45, 1233, 1060)
