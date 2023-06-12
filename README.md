@@ -25,7 +25,6 @@ The library can be installed via pip:
 
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
-> <code>pip install img2table[paddlegpu]</code>: For usage with Paddle OCR - GPU (Python <= 3.10 only)<br>
 > <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
@@ -185,6 +184,17 @@ ocr = PaddleOCR(lang="en")
 >    <dt>lang : str, optional, default <code>"en"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Paddle for text extraction, check <a href="https://github.com/Mushroomcat9998/PaddleOCR/blob/main/doc/doc_en/multi_languages_en.md#5-support-languages-and-abbreviations">documentation for available languages</a></dd>
 ></dl>
+
+<br>
+<b>NB:</b> For usage of PaddleOCR with GPU, the CUDA specific version of paddlepaddle-gpu has to be installed by the user manually 
+as stated in this <a href="https://github.com/PaddlePaddle/PaddleOCR/issues/7993">issue</a>.
+
+```bash
+# Example of installation with CUDA 11.8
+pip install paddlepaddle-gpu==2.5.0rc1.post118 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
+pip install paddleocr img2table
+```
+
 
 *Released in version 0.0.13*
 <br>
