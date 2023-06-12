@@ -25,8 +25,8 @@ def create_image_segments(img: np.ndarray, median_line_sep: float, char_length: 
     thresh = cv2.Canny(blur, 0, 0)
 
     # Define kernel by using median line separation and character length
-    kernel_size = (max(int(2 * char_length), int(round(median_line_sep / 3))),
-                   int(round(median_line_sep / 3)))
+    kernel_size = (max(int(2 * char_length), int(round(median_line_sep / 3)), 1),
+                   max(int(round(median_line_sep / 3)), 1))
 
     # Dilate to combine adjacent text contours
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
@@ -90,7 +90,8 @@ def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[
             cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 2 * l.thickness)
 
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(1.5 * char_length), int(median_line_sep // 6)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,
+                                       (max(int(1.5 * char_length), 1), max(int(median_line_sep // 6), 1)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs

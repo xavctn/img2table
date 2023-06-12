@@ -80,7 +80,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                       (255, 255, 255), -1)
 
     # Dilate image
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(round(char_length)), 1))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(char_length)), 1), 1))
     dilate = cv2.dilate(black_img, kernel, iterations=1)
 
     # Find and map contours
