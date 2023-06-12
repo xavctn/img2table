@@ -25,8 +25,8 @@ def create_image_segments(img: np.ndarray, median_line_sep: float, char_length: 
     thresh = cv2.Canny(blur, 0, 0)
 
     # Define kernel by using median line separation and character length
-    kernel_size = (max(int(2 * char_length), round(median_line_sep / 3)),
-                   round(median_line_sep / 3))
+    kernel_size = (max(int(2 * char_length), int(round(median_line_sep / 3))),
+                   int(round(median_line_sep / 3)))
 
     # Dilate to combine adjacent text contours
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)

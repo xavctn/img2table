@@ -24,7 +24,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
     # Mask on areas with dark background
-    blur_size = int(2 * char_length) + 1 - int(2 * char_length) % 2 if char_length else 11
+    blur_size = max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11
     blur = cv2.medianBlur(img, blur_size)
     mask = cv2.inRange(blur, 0, 100)
 
@@ -51,7 +51,7 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
     """
     ### Horizontal case
     # Create dilated image
-    h_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (int(char_length // 2), 1)))
+    h_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(char_length // 2), 1), 1)))
 
     # Get rows with at least 2 times the average number of white pixels
     white_rows = np.where(np.mean(thresh, axis=1) > 2 * np.mean(thresh))[0].tolist()
@@ -71,7 +71,7 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
 
     ### Vertical case
     # Create dilated image
-    v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, int(char_length // 2))))
+    v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(char_length // 2), 1))))
 
     # Get columns with at least 2 times the average number of white pixels
     white_cols = np.where(np.mean(thresh, axis=0) > 2 * np.mean(thresh))[0].tolist()
@@ -142,13 +142,13 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
 
         # Create rows from sub clusters
         for sub_cl in sub_clusters:
-            y_value = round(np.average([l.y1 for l in sub_cl],
-                                       weights=list(map(lambda l: l.length, sub_cl))))
+            y_value = int(round(np.average([l.y1 for l in sub_cl],
+                                           weights=list(map(lambda l: l.length, sub_cl)))))
             thickness = min(max(1, max(map(lambda l: l.y2, sub_cl)) - min(map(lambda l: l.y1, sub_cl))), 5)
             line = Line(x1=min(map(lambda l: l.x1, sub_cl)),
                         x2=max(map(lambda l: l.x2, sub_cl)),
-                        y1=y_value,
-                        y2=y_value,
+                        y1=int(y_value),
+                        y2=int(y_value),
                         thickness=thickness)
 
             if line.length > 0:

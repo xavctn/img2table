@@ -29,7 +29,6 @@ from img2table.tables.processing.text.titles import get_title_tables
 @dataclass
 class TableImage:
     img: np.ndarray
-    dpi: int = 200
     ocr_df: "OCRDataframe" = None
     min_confidence: int = 50
     char_length: float = None
@@ -67,8 +66,8 @@ class TableImage:
         :return:
         """
         # Compute parameters for line detection
-        minLinLength = maxLineGap = round(0.33 * self.median_line_sep) if self.median_line_sep else self.dpi // 20
-        kernel_size = round(0.66 * self.median_line_sep) if self.median_line_sep else self.dpi // 10
+        minLinLength = maxLineGap = int(round(0.33 * self.median_line_sep)) if self.median_line_sep else 10
+        kernel_size = int(round(0.66 * self.median_line_sep)) if self.median_line_sep else 20
 
         # Detect rows in image
         h_lines, v_lines = detect_lines(image=self.img,

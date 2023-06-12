@@ -58,10 +58,10 @@ class Line(TableObject):
 
         # Correct "almost" horizontal or vertical rows
         if abs(self.angle) <= 5:
-            y_val = round((self.y1 + self.y2) / 2)
+            y_val = int(round((self.y1 + self.y2) / 2))
             self.y2 = self.y1 = y_val
         elif abs(self.angle - 90) <= 5:
-            x_val = round((self.x1 + self.x2) / 2)
+            x_val = int(round((self.x1 + self.x2) / 2))
             self.x2 = self.x1 = x_val
 
         return self

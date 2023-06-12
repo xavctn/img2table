@@ -13,7 +13,6 @@ def test_table_image():
     ocr_df = OCRDataframe(pl.read_csv("test_data/ocr.csv", separator=";", encoding="utf-8").lazy())
 
     tb_image = TableImage(img=image,
-                          dpi=200,
                           ocr_df=ocr_df,
                           min_confidence=50)
 
