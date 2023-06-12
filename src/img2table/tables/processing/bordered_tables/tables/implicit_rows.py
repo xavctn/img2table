@@ -36,7 +36,7 @@ def handle_implicit_rows_table(img: np.ndarray, table: Table) -> Table:
                                      merge_vertically=True)
 
         # Compute vertical delimiters
-        vertical_delimiters = sorted([round((cnt_1.y2 + cnt_2.y1) / 2) for cnt_1, cnt_2 in zip(contours, contours[1:])])
+        vertical_delimiters = sorted([int(round((cnt_1.y2 + cnt_2.y1) / 2)) for cnt_1, cnt_2 in zip(contours, contours[1:])])
 
         # Split row into multiple rows from vertical delimiters
         list_splitted_rows += row.split_in_rows(vertical_delimiters=vertical_delimiters)

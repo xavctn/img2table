@@ -74,7 +74,7 @@ class Table(TableObject):
 
             for id_row, id_next in gaps:
                 # Normalize y value between rows
-                y_gap = round((self.items[id_row].y2 + self.items[id_next].y1) / 2)
+                y_gap = int(round((self.items[id_row].y2 + self.items[id_next].y1) / 2))
 
                 # Put y value in both rows
                 for c in self.items[id_row].items:
@@ -101,7 +101,7 @@ class Table(TableObject):
 
             for id_col, id_next in gaps:
                 # Normalize x value between columns
-                x_gap = round(np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items]) / 2)
+                x_gap = int(round(np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items]) / 2))
 
                 # Put y value in both columns
                 for row in self.items:

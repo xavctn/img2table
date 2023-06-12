@@ -18,7 +18,7 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow]) -> Table:
     lines = sorted(table_rows, key=lambda l: l.v_center)
     y_min = min([line.y1 for line in lines])
     y_max = max([line.y2 for line in lines])
-    v_delims = [y_min] + [round((up.y2 + down.y1) / 2) for up, down in zip(lines, lines[1:])] + [y_max]
+    v_delims = [y_min] + [int(round((up.y2 + down.y1) / 2)) for up, down in zip(lines, lines[1:])] + [y_max]
 
     # Create cells for table
     list_cells = list()
