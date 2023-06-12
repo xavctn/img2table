@@ -101,7 +101,7 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
         return []
 
     # Identify if rows are horizontal
-    horizontal = all(map(lambda l: l.horizontal, lines))
+    horizontal = np.mean([l.horizontal for l in lines]) > 0.5
 
     # If not horizontal, transpose all rows
     if not horizontal:
