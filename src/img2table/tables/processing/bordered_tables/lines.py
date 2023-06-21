@@ -24,7 +24,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
 
     # Mask on areas with dark background
-    blur_size = max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11
+    blur_size = min(255, max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11)
     blur = cv2.medianBlur(img, blur_size)
     mask = cv2.inRange(blur, 0, 100)
 
