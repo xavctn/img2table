@@ -23,7 +23,7 @@ def test_vision_endpoint_content(mock_vision):
     with open(os.path.join(MOCK_DIR, "vision.json"), "r") as f:
         response = json.load(f)
 
-    result_map_response = content.map_response(response=response, page=0)
+    result_map_response = content.map_response(response=response, page=0, height=417, width=1365)
     assert result_map_response == expected[0]
 
     # Test for get_content method
@@ -42,7 +42,7 @@ def test_vision_api_content(mock_vision):
     with open(os.path.join(MOCK_DIR, "vision.pkl"), "rb") as f:
         response = pickle.load(f)
 
-    result_map_response = content.map_response(response=response)
+    result_map_response = content.map_response(response=response, shapes=[(417, 1365)])
     assert result_map_response == expected
 
     # Test for get_content method
