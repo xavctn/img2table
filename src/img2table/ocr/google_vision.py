@@ -3,7 +3,7 @@ import base64
 import binascii
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 import cv2
 import numpy as np
@@ -42,11 +42,13 @@ class VisionEndpointContent(VisionContent):
         self.api_key = api_key
 
     @staticmethod
-    def map_response(response: Dict, page: int) -> List[Dict]:
+    def map_response(response: Dict, page: int, width: int, height: int) -> List[Dict]:
         """
         Extract test_data from API endpoint response
         :param response: json response from Google API endpoint
         :param page: page number
+        :param width: image width
+        :param height: image height
         :return: list of OCR elements
         """
         elements = list()
@@ -54,6 +56,12 @@ class VisionEndpointContent(VisionContent):
             for id_par, par in enumerate(block.get('paragraphs')):
                 id_line = 0
                 for id_word, word in enumerate(par.get('words')):
+                    # Compute x and y replacement values
+                    x_avg = np.mean([el.get('x') for el in word.get('boundingBox').get('vertices') if el.get('x')])
+                    x_repl = sorted([0, width], key=lambda val: abs(val - x_avg)).pop(0)
+                    y_avg = np.mean([el.get('y') for el in word.get('boundingBox').get('vertices') if el.get('y')])
+                    y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
+
                     d_el = {
                         "page": page,
                         "class": "ocrx_word",
@@ -61,10 +69,10 @@ class VisionEndpointContent(VisionContent):
                         "parent": f"line_{id_block}_{id_par}_{id_line}",
                         "value": ''.join([sym.get('text') for sym in word.get('symbols')]),
                         "confidence": round(100 * word.get('confidence')),
-                        "x1": min(map(lambda el: el.get('x'), word.get('boundingBox').get('vertices'))),
-                        "x2": max(map(lambda el: el.get('x'), word.get('boundingBox').get('vertices'))),
-                        "y1": min(map(lambda el: el.get('y'), word.get('boundingBox').get('vertices'))),
-                        "y2": max(map(lambda el: el.get('y'), word.get('boundingBox').get('vertices')))
+                        "x1": min(map(lambda el: el.get('x', x_repl), word.get('boundingBox').get('vertices'))),
+                        "x2": max(map(lambda el: el.get('x', x_repl), word.get('boundingBox').get('vertices'))),
+                        "y1": min(map(lambda el: el.get('y', y_repl), word.get('boundingBox').get('vertices'))),
+                        "y2": max(map(lambda el: el.get('y', y_repl), word.get('boundingBox').get('vertices')))
                     }
 
                     # Check for break
@@ -108,7 +116,7 @@ class VisionEndpointContent(VisionContent):
                             timeout=self.timeout)
         response = req.json()
 
-        return self.map_response(response=response, page=page)
+        return self.map_response(response=response, page=page, width=img.shape[1], height=img.shape[0])
 
     def get_content(self, document: Document) -> List[List[Dict]]:
         """
@@ -136,19 +144,45 @@ class VisionAPIContent(VisionContent):
         self.client = vision.ImageAnnotatorClient()
 
     @staticmethod
-    def map_response(response: vision_v1.types.BatchAnnotateImagesResponse) -> List[List[Dict]]:
+    def map_response(response: vision_v1.types.BatchAnnotateImagesResponse,
+                     shapes: List[Tuple[int, int]]) -> List[List[Dict]]:
         """
         Extract data from API endpoint response object
         :param response: API endpoint response object
+        :param shapes: list of images shapes
         :return: list of OCR elements by pages
         """
         elements = list()
         for id_page, page in enumerate(response.responses):
+            # Get image shape
+            height, width = shapes[id_page]
+
             page_elements = list()
             for id_block, block in enumerate(page.full_text_annotation.pages[0].blocks):
                 for id_par, par in enumerate(block.paragraphs):
                     id_line = 0
                     for id_word, word in enumerate(par.words):
+                        # Compute x and y replacement values
+                        x_avg = np.mean([el.x for el in word.bounding_box.vertices if hasattr(el, 'x')])
+                        x_repl = sorted([0, width], key=lambda val: abs(val - x_avg)).pop(0)
+                        y_avg = np.mean([el.y for el in word.bounding_box.vertices if hasattr(el, 'y')])
+                        y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
+
+                        # Compute x and y values in bounding box
+                        x_vals = list()
+                        for vertex in word.bounding_box.vertices:
+                            try:
+                                x_vals.append(vertex.x or x_repl)
+                            except AttributeError:
+                                x_vals.append(x_repl)
+
+                        y_vals = list()
+                        for vertex in word.bounding_box.vertices:
+                            try:
+                                y_vals.append(vertex.y or y_repl)
+                            except AttributeError:
+                                y_vals.append(y_repl)
+
                         d_el = {
                             "page": id_page,
                             "class": "ocrx_word",
@@ -156,10 +190,10 @@ class VisionAPIContent(VisionContent):
                             "parent": f"line_{id_block}_{id_par}_{id_line}",
                             "value": ''.join([sym.text for sym in word.symbols]),
                             "confidence": round(100 * word.confidence),
-                            "x1": min(map(lambda el: el.x, word.bounding_box.vertices)),
-                            "x2": max(map(lambda el: el.x, word.bounding_box.vertices)),
-                            "y1": min(map(lambda el: el.y, word.bounding_box.vertices)),
-                            "y2": max(map(lambda el: el.y, word.bounding_box.vertices))
+                            "x1": min(x_vals),
+                            "x2": max(x_vals),
+                            "y1": min(y_vals),
+                            "y2": max(y_vals)
                         }
 
                         # Check for break
@@ -185,11 +219,13 @@ class VisionAPIContent(VisionContent):
         :param document: Document object
         :return: list of OCR elements by page
         """
-        reqs = list()
+        reqs, shapes = list(), list()
         for img in document.images:
             # Create image object
             image = vision_v1.Image()
             image.content = binascii.a2b_base64(self.img_to_b64(img=img))
+
+            shapes.append(img.shape[:2])
 
             # Create request
             request = vision_v1.AnnotateImageRequest()
@@ -202,7 +238,7 @@ class VisionAPIContent(VisionContent):
         result = self.client.batch_annotate_images(requests=reqs,
                                                    timeout=self.timeout)
 
-        return self.map_response(response=result)
+        return self.map_response(response=result, shapes=shapes)
 
 
 class VisionOCR(OCRInstance):
