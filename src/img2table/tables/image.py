@@ -2,6 +2,7 @@
 import copy
 from dataclasses import dataclass
 
+from img2table.ocr.data import OCRDataframe
 from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.objects.cell import Cell
 
@@ -91,7 +92,8 @@ class TableImage:
         # If necessary, detect implicit rows
         if implicit_rows:
             self.tables = handle_implicit_rows(img=self.white_img,
-                                               tables=self.tables)
+                                               tables=self.tables,
+                                               contours=self.contours)
 
         # If ocr_df is available, get tables content
         if self.ocr_df is not None:

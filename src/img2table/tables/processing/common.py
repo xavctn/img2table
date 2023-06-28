@@ -30,11 +30,8 @@ def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tu
     x_right = min(inner_cell.x2, outer_cell.x2)
     y_bottom = min(inner_cell.y2, outer_cell.y2)
 
-    if x_right < x_left or y_bottom < y_top:
-        return False
-
     # Compute intersection area as well as inner cell area
-    intersection_area = (x_right - x_left) * (y_bottom - y_top)
+    intersection_area = max(0, (x_right - x_left)) * max(0, (y_bottom - y_top))
 
     return intersection_area / inner_cell.area >= percentage
 
