@@ -21,7 +21,7 @@ class TesseractOCR(OCRInstance):
     """
     Tesseract-OCR instance
     """
-    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tesspath_dir: Optional[str] = None, tessdata_dir: Optional[str] = None):
+    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None, tesspath_dir: Optional[str] = None):
         """
         Initialization of Tesseract OCR instance
         :param n_threads: number of concurrent threads used for Tesseract
@@ -51,7 +51,7 @@ class TesseractOCR(OCRInstance):
         
         # Allows to customize path for tesseract
         if tesspath_dir :
-            env['PATH'] = tesspath_dir
+            env["PATH"] = tesspath_dir
         self.env = env
 
         # Check if Tesseract is available
