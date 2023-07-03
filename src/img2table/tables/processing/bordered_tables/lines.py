@@ -20,8 +20,12 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     """
     # Get threshold on image and binary image
     blur = cv2.GaussianBlur(img, (3, 3), 0)
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
-    binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+
+    thresh_kernel = max(int(round(char_length)), 1) if char_length else 21
+    thresh_kernel = thresh_kernel + 1 if thresh_kernel % 2 == 0 else thresh_kernel
+
+    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
+    binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
 
     # Mask on areas with dark background
     blur_size = min(255, max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11)
@@ -195,7 +199,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     )
     # - horizontal case
     hor_int = (
-        (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.4)
+        (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.33)
         * pl.max([(pl.min([pl.col('x2'), pl.col('x2_line')]) - pl.max([pl.col('x1'), pl.col('x1_line')])), pl.lit(0)])
     )
     df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
@@ -208,7 +212,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
                 )
 
     # Identify rows that intersect contours
-    intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.5)
+    intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.25)
                           .collect(streaming=True)
                           .get_column('line_id')
                           .to_list()

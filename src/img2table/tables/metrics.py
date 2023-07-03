@@ -20,8 +20,8 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     # Connected components
     _, _, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
 
-    # Remove connected components with less than 15 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 15
+    # Remove connected components with less than 5 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
     stats = stats[mask_pixels]
 
     if len(stats) == 0:
@@ -46,8 +46,8 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     mask_ar = mask_lower_ar & mask_upper_ar
 
     # Filter connected components according to their area
-    mask_lower_area = lower_bound < stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
-    mask_upper_area = upper_bound > stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
+    mask_lower_area = lower_bound <= stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
+    mask_upper_area = upper_bound >= stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_area = mask_lower_area & mask_upper_area
 
     # Filter connected components from mask
@@ -80,7 +80,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                       (255, 255, 255), -1)
 
     # Dilate image
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(char_length)), 1), 1))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(1.25 * char_length)), 1), 1))
     dilate = cv2.dilate(black_img, kernel, iterations=1)
 
     # Find and map contours

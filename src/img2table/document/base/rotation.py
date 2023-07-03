@@ -24,8 +24,8 @@ def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.nda
     # Connected components
     _, _, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
 
-    # Remove connected components with less than 15 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 15
+    # Remove connected components with less than 5 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
     stats = stats[mask_pixels]
 
     # Compute median width and height
