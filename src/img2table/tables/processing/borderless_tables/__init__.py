@@ -3,11 +3,12 @@ from typing import List
 
 import numpy as np
 
+from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.column_delimiters import identify_column_groups
+from img2table.tables.processing.borderless_tables.image_segmentation import segment_image
 from img2table.tables.processing.borderless_tables.rows import detect_delimiter_group_rows
-from img2table.tables.processing.borderless_tables.segment_image import segment_image
 from img2table.tables.processing.borderless_tables.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
 
@@ -34,13 +35,14 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
 
 
 def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
-                               existing_tables: List[Table]) -> List[Table]:
+                               contours: List[Cell], existing_tables: List[Table]) -> List[Table]:
     """
     Identify borderless tables in image
     :param img: image array
     :param lines: list of rows detected in image
     :param char_length: average character length
     :param median_line_sep: median line separation
+    :param contours: list of image contours
     :param existing_tables: list of detected bordered tables
     :return: list of detected borderless tables
     """
@@ -48,7 +50,8 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     img_segments = segment_image(img=img,
                                  lines=lines,
                                  char_length=char_length,
-                                 median_line_sep=median_line_sep)
+                                 median_line_sep=median_line_sep,
+                                 contours=contours)
 
     # In each segment, create groups of rows and identify tables
     tables = list()

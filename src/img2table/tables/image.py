@@ -115,6 +115,7 @@ class TableImage:
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,
+                                                        contours=self.contours,
                                                         existing_tables=self.tables)
 
             # If ocr_df is available, get tables content
