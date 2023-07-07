@@ -262,7 +262,7 @@ def identify_remaining_segments(existing_segments: List[Cell], height: int, widt
 
 
 def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: float,
-                          contours: List[Cell]) -> Iterator[Cell]:
+                          contours: List[Cell]) -> List[Cell]:
     """
     Create image segments by identifying columns
     :param img: image array
@@ -307,10 +307,13 @@ def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: 
                                                 height=img.shape[0],
                                                 width=img.shape[1])
 
+    final_segments = list()
     for seg in img_segments:
         # Get included contours
         included_contours = [c for c in contours
                              if c.x1 >= seg.x1 and c.x2 <= seg.x2 and c.y1 >= seg.y1 and c.y2 <= seg.y2]
 
         if included_contours:
-            yield seg
+            final_segments.append(seg)
+
+    return final_segments
