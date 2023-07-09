@@ -24,7 +24,7 @@ def create_image_segments(img: np.ndarray, area: Cell, median_line_sep: float, c
     cropped_img = img[area.y1:area.y2, area.x1:area.x2]
 
     # Reprocess images
-    blur = cv2.medianBlur(cropped_img, 3)
+    blur = cv2.medianBlur(cropped_img, 5)
     thresh = cv2.Canny(blur, 0, 0)
 
     # Define kernel by using median line separation and character length

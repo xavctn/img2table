@@ -18,8 +18,8 @@ def test_table_image():
 
     result = tb_image.extract_tables(implicit_rows=True)
 
-    assert result[0].bbox == BBox(x1=35, y1=20, x2=770, y2=327)
+    assert result[0].bbox == BBox(x1=36, y1=20, x2=770, y2=326)
     assert (len(result[0].content), len(result[0].content[0])) == (6, 3)
 
-    assert result[1].bbox == BBox(x1=962, y1=20, x2=1154, y2=123)
+    assert result[1].bbox == BBox(x1=962, y1=21, x2=1154, y2=122)
     assert (len(result[1].content), len(result[1].content[0])) == (2, 2)

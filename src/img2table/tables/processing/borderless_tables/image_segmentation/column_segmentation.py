@@ -4,7 +4,7 @@ import random
 from dataclasses import dataclass
 from functools import partial
 from queue import PriorityQueue
-from typing import List, Iterator
+from typing import List
 
 import cv2
 import numpy as np
