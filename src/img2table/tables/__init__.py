@@ -14,7 +14,7 @@ def cluster_items(items: List[Any], clustering_func: Callable) -> List[List[Any]
     for i in range(len(items)):
         for j in range(i, len(items)):
             # Check if both items corresponds according to the clustering function
-            corresponds = clustering_func(items[i], items[j])
+            corresponds = clustering_func(items[i], items[j]) or (items[i] == items[j])
 
             # If both items correspond, find matching clusters or create a new one
             if corresponds:

@@ -60,18 +60,27 @@ def cluster_to_table(cluster_cells: List[Cell]) -> Table:
     # Create rows and cells
     list_rows = list()
     for y_top, y_bottom in zip(v_delims, v_delims[1:]):
+        # Get matching cell
+        matching_cells = [c for c in cluster_cells
+                          if min(c.y2, y_bottom) - max(c.y1, y_top) >= 0.9 * (y_bottom - y_top)]
         list_cells = list()
         for x_left, x_right in zip(h_delims, h_delims[1:]):
             # Create default cell
             default_cell = Cell(x1=x_left, y1=y_top, x2=x_right, y2=y_bottom)
 
             # Check cells that contain the default cell
-            containing_cells = sorted([c for c in cluster_cells
+            containing_cells = sorted([c for c in matching_cells
                                        if is_contained_cell(inner_cell=default_cell, outer_cell=c, percentage=0.9)],
                                       key=lambda c: c.area)
 
-            # Append either a cell that contain the default cell, or the default cell itself
-            list_cells.append(containing_cells.pop(0) if containing_cells else default_cell)
+            # Append either a cell that contain the default cell
+            if containing_cells:
+                list_cells.append(containing_cells.pop(0))
+            else:
+                # Get x value of closest matching cells
+                x_value = sorted([x_val for cell in matching_cells for x_val in [cell.x1, cell.x2]],
+                                 key=lambda x: min(abs(x - x_left), abs(x - x_right))).pop(0)
+                list_cells.append(Cell(x1=x_value, y1=y_top, x2=x_value, y2=y_bottom))
 
         list_rows.append(Row(cells=list_cells))
 

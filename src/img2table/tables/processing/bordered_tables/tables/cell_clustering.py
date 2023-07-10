@@ -17,7 +17,7 @@ def adjacent_cells(cell_1: Cell, cell_2: Cell) -> bool:
                  abs(cell_1.x1 - cell_2.x2),
                  abs(cell_1.x1 - cell_2.x1),
                  abs(cell_1.x2 - cell_2.x2))
-    if overlapping_y > 5 and diff_x / max(cell_1.width, cell_2.width) <= 0.05:
+    if overlapping_y > 5 and diff_x <= min(min(cell_1.width, cell_2.width) * 0.05, 5):
         return True
 
     # Check correspondence on horizontal borders
@@ -26,7 +26,7 @@ def adjacent_cells(cell_1: Cell, cell_2: Cell) -> bool:
                  abs(cell_1.y1 - cell_2.y2),
                  abs(cell_1.y1 - cell_2.y1),
                  abs(cell_1.y2 - cell_2.y2))
-    if overlapping_x > 5 and diff_y / max(cell_1.height, cell_2.height) <= 0.05:
+    if overlapping_x > 5 and diff_y <= min(min(cell_1.height, cell_2.height) * 0.05, 5):
         return True
 
     return False

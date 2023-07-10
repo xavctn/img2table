@@ -74,6 +74,9 @@ def get_coherent_height(delimiter_group: DelimiterGroup, segment: ImageSegment) 
                       and el.x1 >= min([d.x2 for d in delimiter_group.delimiters])
                       and el.x2 <= max([d.x1 for d in delimiter_group.delimiters])]
 
+    if len(delim_elements) == 0:
+        return delimiter_group
+
     # Group elements in rows
     seq = iter(sorted(delim_elements, key=lambda el: (el.y1, el.y2)))
     lines = [[next(seq)]]

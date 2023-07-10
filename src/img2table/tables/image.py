@@ -101,7 +101,7 @@ class TableImage:
             self.tables = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
                            for table in self.tables]
 
-        self.tables = [table for table in self.tables if table.nb_rows * table.nb_columns > 1]
+        self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2]
 
     def extract_borderless_tables(self):
         """
@@ -115,6 +115,7 @@ class TableImage:
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,
+                                                        contours=self.contours,
                                                         existing_tables=self.tables)
 
             # If ocr_df is available, get tables content
