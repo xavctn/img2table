@@ -15,6 +15,9 @@ def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optio
     :param delimiter_group: column delimiters group
     :return: median row separation in pixels
     """
+    if len(delimiter_group.elements) == 0:
+        return None
+
     # Create dataframe with delimiter group elements
     list_elements = [{"id": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
                      for idx, el in enumerate(delimiter_group.elements)]

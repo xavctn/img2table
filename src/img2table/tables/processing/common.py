@@ -42,6 +42,9 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
     :param contours: list of contours as Cell objects
     :return: list of merged contours
     """
+    if len(contours) == 0:
+        return []
+
     # Create dataframe with contours
     df_cnt = pl.LazyFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
                                 for idx, c in enumerate(contours)])

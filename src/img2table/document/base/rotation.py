@@ -66,6 +66,9 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     :param n_max: maximum number of returned angles
     :return: list of angle values
     """
+    if len(centroids) == 0:
+        return [0]
+
     # Create dataframe with centroids
     df_centroids = pl.LazyFrame(data=centroids, schema=['x1', 'y1'])
 

@@ -91,6 +91,9 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
         x, y, w, h = cv2.boundingRect(cnt)
         contours.append({"id": idx, "x1": x, "y1": y, "x2": x + w, "y2": y + h})
 
+    if len(contours) == 0:
+        return None, []
+
     # Create contours dataframe
     df_contours = pl.LazyFrame(data=contours)
 
