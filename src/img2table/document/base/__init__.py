@@ -1,10 +1,7 @@
 # coding: utf-8
 import io
 from dataclasses import dataclass
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
+from functools import cached_property
 from pathlib import Path
 from typing import Union, Iterator, Dict, List, Optional
 

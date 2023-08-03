@@ -1,9 +1,5 @@
 # coding: utf-8
 from dataclasses import dataclass
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
 
 import polars as pl
 

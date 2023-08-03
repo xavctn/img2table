@@ -1,20 +1,15 @@
 # coding: utf-8
 import copy
 from dataclasses import dataclass
-
-from img2table.ocr.data import OCRDataframe
-from img2table.tables.metrics import compute_img_metrics
-from img2table.tables.objects.cell import Cell
-
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
+from functools import cached_property
 from typing import List
 
 import cv2
 import numpy as np
 
+from img2table.ocr.data import OCRDataframe
+from img2table.tables.metrics import compute_img_metrics
+from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.extraction import ExtractedTable
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table

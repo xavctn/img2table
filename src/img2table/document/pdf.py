@@ -1,12 +1,6 @@
 # coding: utf-8
 from dataclasses import dataclass
-
-from img2table.document.base.rotation import fix_rotation_image
-
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
+from functools import cached_property
 from typing import Dict, List, Optional
 
 import cv2
@@ -14,6 +8,7 @@ import fitz
 import numpy as np
 
 from img2table.document.base import Document
+from img2table.document.base.rotation import fix_rotation_image
 from img2table.ocr.pdf import PdfOCR
 from img2table.tables.objects.extraction import ExtractedTable
 
