@@ -38,8 +38,8 @@ def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
     cross_h_lines = cross_h_lines.filter(matching_condition)
 
     # Create cell bbox from horizontal rows
-    df_bbox = (cross_h_lines.select([pl.max([pl.col('x1'), pl.col('x1_')]).alias('x1_bbox'),
-                                     pl.min([pl.col('x2'), pl.col('x2_')]).alias('x2_bbox'),
+    df_bbox = (cross_h_lines.select([pl.max_horizontal(['x1', 'x1_']).alias('x1_bbox'),
+                                     pl.min_horizontal(['x2', 'x2_']).alias('x2_bbox'),
                                      pl.col('y1').alias("y1_bbox"),
                                      pl.col('y1_').alias('y2_bbox')]
                                     )
@@ -83,8 +83,8 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     df_bbox = get_potential_cells_from_h_lines(df_h_lines=df_h_lines)
 
     # Cross join with vertical rows
-    df_bbox = df_bbox.with_columns(pl.max([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.025,
-                                           pl.lit(5.0)]).round(0).alias('h_margin')
+    df_bbox = df_bbox.with_columns(pl.max_horizontal([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.025,
+                                                      pl.lit(5.0)]).round(0).alias('h_margin')
                                    )
     df_bbox_v = df_bbox.join(df_v_lines, how='cross')
 
@@ -94,8 +94,8 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     df_bbox_v = df_bbox_v.filter(horizontal_cond)
 
     # Check vertical overlapping
-    df_bbox_v = (df_bbox_v.with_columns((pl.min([pl.col('y2'), pl.col('y2_bbox')])
-                                         - pl.max([pl.col('y1'), pl.col('y1_bbox')])).alias('overlapping')
+    df_bbox_v = (df_bbox_v.with_columns((pl.min_horizontal(['y2', 'y2_bbox'])
+                                         - pl.max_horizontal(['y1', 'y1_bbox'])).alias('overlapping')
                                         )
                  .filter(pl.col('overlapping') / (pl.col('y2_bbox') - pl.col('y1_bbox')) >= 0.8)
                  )

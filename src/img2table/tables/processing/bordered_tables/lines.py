@@ -181,7 +181,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
 
     # Create dataframe containing rows
     df_lines = (pl.LazyFrame(data=[line.dict for line in lines])
-                .with_columns([pl.max([pl.col('width'), pl.col('height')]).alias('length'),
+                .with_columns([pl.max_horizontal([pl.col('width'), pl.col('height')]).alias('length'),
                                (pl.col('x1') == pl.col('x2')).alias('vertical')]
                               )
                 .with_row_count(name="line_id")
@@ -195,12 +195,12 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     # - vertical case
     vert_int = (
         (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.45)
-        * pl.max([(pl.min([pl.col('y2'), pl.col('y2_line')]) - pl.max([pl.col('y1'), pl.col('y1_line')])), pl.lit(0)])
+        * pl.max_horizontal([(pl.min_horizontal(['y2', 'y2_line']) - pl.max_horizontal(['y1', 'y1_line'])), pl.lit(0)])
     )
     # - horizontal case
     hor_int = (
         (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.33)
-        * pl.max([(pl.min([pl.col('x2'), pl.col('x2_line')]) - pl.max([pl.col('x1'), pl.col('x1_line')])), pl.lit(0)])
+        * pl.max_horizontal([(pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])), pl.lit(0)])
     )
     df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
                                                   + (1 - pl.col('vertical')) * hor_int).alias('intersection')

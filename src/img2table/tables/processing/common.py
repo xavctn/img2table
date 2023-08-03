@@ -56,11 +56,11 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
                 )
 
     # Compute intersection area between contours and identify if the smallest contour overlaps the largest one
-    x_left = pl.max(pl.col('x1'), pl.col('x1_right'))
-    x_right = pl.min(pl.col('x2'), pl.col('x2_right'))
-    y_top = pl.max(pl.col('y1'), pl.col('y1_right'))
-    y_bottom = pl.min(pl.col('y2'), pl.col('y2_right'))
-    intersection = pl.max(x_right - x_left, 0) * pl.max(y_bottom - y_top, 0)
+    x_left = pl.max_horizontal('x1', 'x1_right')
+    x_right = pl.min_horizontal('x2', 'x2_right')
+    y_top = pl.max_horizontal('y1', 'y1_right')
+    y_bottom = pl.min_horizontal('y2', 'y2_right')
+    intersection = pl.max_horizontal(x_right - x_left, 0) * pl.max_horizontal(y_bottom - y_top, 0)
 
     df_cross = (df_cross.with_columns(intersection.alias('intersection'))
                 .with_columns((pl.col('intersection') / pl.col('area') >= 0.25).alias('overlaps'))
@@ -78,10 +78,10 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
 
     df_final = (df_cnt.join(deleted_contours, on="id", how="anti")
                 .join(df_overlap, on='id', how='left')
-                .select([pl.min(pl.col('x1'), pl.col('x1_overlap')).alias('x1'),
-                         pl.max(pl.col('x2'), pl.col('x2_overlap')).alias('x2'),
-                         pl.min(pl.col('y1'), pl.col('y1_overlap')).alias('y1'),
-                         pl.max(pl.col('y2'), pl.col('y2_overlap')).alias('y2'),
+                .select([pl.min_horizontal('x1', 'x1_overlap').alias('x1'),
+                         pl.max_horizontal('x2', 'x2_overlap').alias('x2'),
+                         pl.min_horizontal('y1', 'y1_overlap').alias('y1'),
+                         pl.max_horizontal('y2', 'y2_overlap').alias('y2'),
                          ])
                 )
 

@@ -84,7 +84,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                  .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
                  .with_columns(pl.when(pl.col('angle').abs() <= 45)
                                .then(pl.col('angle'))
-                               .otherwise(pl.min(pl.col('angle') + 90, 90 - pl.col('angle')) * -pl.col('angle').sign())
+                               .otherwise(pl.min_horizontal(pl.col('angle') + 90, 90 - pl.col('angle')) * -pl.col('angle').sign())
                                .alias('angle')
                                )
                  )

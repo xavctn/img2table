@@ -26,8 +26,7 @@ def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optio
     # Cross join to get corresponding elements and filter on elements that corresponds horizontally
     df_h_elms = (df_elements.join(df_elements, how='cross')
                  .filter(pl.col('id') != pl.col('id_right'))
-                 .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
-                         - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
+                 .filter(pl.min_horizontal(['x2', 'x2_right']) - pl.max_horizontal(['x1', 'x1_right']) > 0)
                  )
 
     # Get element which is directly below

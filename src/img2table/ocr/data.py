@@ -45,10 +45,10 @@ class OCRDataframe:
                                            pl.lit(bbox[2]).alias('x2_bbox'),
                                            pl.lit(bbox[3]).alias('y2_bbox')]
                                           )
-                    .with_columns([pl.max([pl.col('x1'), pl.col('x1_bbox')]).alias('x_left'),
-                                   pl.max([pl.col('y1'), pl.col('y1_bbox')]).alias('y_top'),
-                                   pl.min([pl.col('x2'), pl.col('x2_bbox')]).alias('x_right'),
-                                   pl.min([pl.col('y2'), pl.col('y2_bbox')]).alias('y_bottom'),
+                    .with_columns([pl.max_horizontal(['x1', 'x1_bbox']).alias('x_left'),
+                                   pl.max_horizontal(['y1', 'y1_bbox']).alias('y_top'),
+                                   pl.min_horizontal(['x2', 'x2_bbox']).alias('x_right'),
+                                   pl.min_horizontal(['y2', 'y2_bbox']).alias('y_bottom'),
                                    ])
                     )
 
@@ -112,10 +112,10 @@ class OCRDataframe:
         df_word_cells = df_words.join(other=df_cells, how="cross")
 
         # Compute coordinates of intersection
-        df_word_cells = df_word_cells.with_columns([pl.max([pl.col('x1'), pl.col('x1_w')]).alias('x_left'),
-                                                    pl.max([pl.col('y1'), pl.col('y1_w')]).alias('y_top'),
-                                                    pl.min([pl.col('x2'), pl.col('x2_w')]).alias('x_right'),
-                                                    pl.min([pl.col('y2'), pl.col('y2_w')]).alias('y_bottom'),
+        df_word_cells = df_word_cells.with_columns([pl.max_horizontal(['x1', 'x1_w']).alias('x_left'),
+                                                    pl.max_horizontal(['y1', 'y1_w']).alias('y_top'),
+                                                    pl.min_horizontal(['x2', 'x2_w']).alias('x_right'),
+                                                    pl.min_horizontal(['y2', 'y2_w']).alias('y_bottom'),
                                                     ])
 
         # Filter where intersection is not empty

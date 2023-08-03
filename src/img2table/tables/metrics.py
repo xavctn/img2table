@@ -100,8 +100,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
     # Cross join to get corresponding contours and filter on contours that corresponds horizontally
     df_h_cnts = (df_contours.join(df_contours, how='cross')
                  .filter(pl.col('id') != pl.col('id_right'))
-                 .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
-                         - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
+                 .filter(pl.min_horizontal(['x2', 'x2_right']) - pl.max_horizontal(['x1', 'x1_right']) > 0)
                  )
 
     # Get contour which is directly below

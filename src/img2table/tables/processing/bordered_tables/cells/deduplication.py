@@ -33,15 +33,15 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     ### Compute indicator if the first cell is contained in second cell
     # Compute coordinates of intersection
-    df_cross_cells = df_cross_cells.with_columns([pl.max([pl.col('x1'), pl.col('x1_')]).alias('x_left'),
-                                                  pl.max([pl.col('y1'), pl.col('y1_')]).alias('y_top'),
-                                                  pl.min([pl.col('x2'), pl.col('x2_')]).alias('x_right'),
-                                                  pl.min([pl.col('y2'), pl.col('y2_')]).alias('y_bottom'),
+    df_cross_cells = df_cross_cells.with_columns([pl.max_horizontal(['x1', 'x1_']).alias('x_left'),
+                                                  pl.max_horizontal(['y1', 'y1_']).alias('y_top'),
+                                                  pl.min_horizontal(['x2', 'x2_']).alias('x_right'),
+                                                  pl.min_horizontal(['y2', 'y2_']).alias('y_bottom'),
                                                   ])
 
     # Compute area of intersection
-    df_cross_cells = df_cross_cells.with_columns((pl.max([pl.col('x_right') - pl.col('x_left'), pl.lit(0)])
-                                                  * pl.max([pl.col('y_bottom') - pl.col('y_top'), pl.lit(0)])
+    df_cross_cells = df_cross_cells.with_columns((pl.max_horizontal([pl.col('x_right') - pl.col('x_left'), pl.lit(0)])
+                                                  * pl.max_horizontal([pl.col('y_bottom') - pl.col('y_top'), pl.lit(0)])
                                                   ).alias('int_area')
                                                  )
 
@@ -57,20 +57,20 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     df_cross_cells = (df_cross_cells
                       .with_columns([(pl.col('x_right') - pl.col('x_left')).alias('overlapping_x'),
                                      (pl.col('y_bottom') - pl.col('y_top')).alias('overlapping_y')])
-                      .with_columns(pl.min([(pl.col(_1) - pl.col(_2)).abs()
-                                            for _1, _2 in itertools.product(['x1', 'x2'], ['x1_', 'x2_'])]
-                                           ).alias('diff_x'))
-                      .with_columns(pl.min([(pl.col(_1) - pl.col(_2)).abs()
-                                            for _1, _2 in itertools.product(['y1', 'y2'], ['y1_', 'y2_'])]
-                                           ).alias('diff_y'))
+                      .with_columns(pl.min_horizontal([(pl.col(_1) - pl.col(_2)).abs()
+                                                       for _1, _2 in itertools.product(['x1', 'x2'], ['x1_', 'x2_'])]
+                                                      ).alias('diff_x'))
+                      .with_columns(pl.min_horizontal([(pl.col(_1) - pl.col(_2)).abs()
+                                                       for _1, _2 in itertools.product(['y1', 'y2'], ['y1_', 'y2_'])]
+                                                      ).alias('diff_y'))
                       )
 
     # Create column indicating if both cells are adjacent and  column indicating if the right cell is redundant with
     # the left cell
     condition_adjacent = (((pl.col("overlapping_y") > 5)
-                           & (pl.col("diff_x") / pl.max([pl.col("width"), pl.col("width_")]) <= 0.05))
+                           & (pl.col("diff_x") / pl.max_horizontal(["width", "width_"]) <= 0.05))
                           | ((pl.col("overlapping_x") > 5)
-                             & (pl.col("diff_y") / pl.max([pl.col("height"), pl.col("height_")]) <= 0.05))
+                             & (pl.col("diff_y") / pl.max_horizontal(["height", "height_"]) <= 0.05))
                           )
     df_cross_cells = (df_cross_cells.with_columns(condition_adjacent.alias('adjacent'))
                       .with_columns((pl.col('contained') & pl.col('adjacent')).alias('redundant'))
