@@ -21,7 +21,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
                    .rename({col: f"{col}_" for col in df_cells.columns})
                    )
 
-    if df_cells.collect(streaming=True).height == 0:
+    if df_cells.collect().height == 0:
         return df_cells
 
     # Cross join to get cells pairs and filter on right cells bigger than right cells
@@ -78,7 +78,7 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     # Get list of redundant cells and remove them from original cell dataframe
     redundant_cells = (df_cross_cells.filter(pl.col('redundant'))
-                       .collect(streaming=True)
+                       .collect()
                        .get_column('index_')
                        .unique()
                        .to_list()

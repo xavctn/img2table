@@ -86,7 +86,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
                 )
 
     # Map results to cells
-    return [Cell(**d) for d in df_final.collect(streaming=True).to_dicts()]
+    return [Cell(**d) for d in df_final.collect().to_dicts()]
 
 
 def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:

@@ -17,47 +17,44 @@ def compute_table_median_row_sep(table: Table, contours: List[Cell]) -> Optional
     :param contours: list of image contours as cell objects
     :return: median row separation
     """
-    try:
-        # Create dataframe with contours
-        list_elements = [{"id": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
-                         for idx, el in enumerate(contours)]
-        df_elements = pl.LazyFrame(data=list_elements)
+    # Create dataframe with contours
+    list_elements = [{"id": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
+                     for idx, el in enumerate(contours)]
+    df_elements = pl.LazyFrame(data=list_elements)
 
-        # Filter on elements that are within the table
-        df_elements_table = df_elements.filter((pl.col('x1') >= table.x1) & (pl.col('x2') <= table.x2)
-                                               & (pl.col('y1') >= table.y1) & (pl.col('y2') <= table.y2))
+    # Filter on elements that are within the table
+    df_elements_table = df_elements.filter((pl.col('x1') >= table.x1) & (pl.col('x2') <= table.x2)
+                                           & (pl.col('y1') >= table.y1) & (pl.col('y2') <= table.y2))
 
-        # Cross join to get corresponding elements and filter on elements that corresponds horizontally
-        df_h_elms = (df_elements_table.join(df_elements_table, how='cross')
-                     .filter(pl.col('id') != pl.col('id_right'))
-                     .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
-                             - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
+    # Cross join to get corresponding elements and filter on elements that corresponds horizontally
+    df_h_elms = (df_elements_table.join(df_elements_table, how='cross')
+                 .filter(pl.col('id') != pl.col('id_right'))
+                 .filter(pl.min([pl.col('x2'), pl.col('x2_right')])
+                         - pl.max([pl.col('x1'), pl.col('x1_right')]) > 0)
+                 )
+
+    # Get element which is directly below
+    df_elms_below = (df_h_elms.filter(pl.col('y1') < pl.col('y1_right'))
+                     .sort(['id', 'y1_right'])
+                     .with_columns(pl.lit(1).alias('ones'))
+                     .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
+                     .filter(pl.col('rk') == 1)
                      )
 
-        # Get element which is directly below
-        df_elms_below = (df_h_elms.filter(pl.col('y1') < pl.col('y1_right'))
-                         .sort(['id', 'y1_right'])
-                         .with_columns(pl.lit(1).alias('ones'))
-                         .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
-                         .filter(pl.col('rk') == 1)
-                         )
-
-        if df_elms_below.collect(streaming=True).height == 0:
-            return None
-
-        # Compute median vertical distance between elements
-        median_v_dist = (df_elms_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
-                                                      - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
-                         .select(pl.median('y_diff'))
-                         .collect(streaming=True)
-                         .to_dicts()
-                         .pop()
-                         .get('y_diff')
-                         )
-
-        return median_v_dist
-    except pl.PolarsPanicError:
+    if df_elms_below.collect().height == 0:
         return None
+
+    # Compute median vertical distance between elements
+    median_v_dist = (df_elms_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
+                                                  - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
+                     .select(pl.median('y_diff'))
+                     .collect()
+                     .to_dicts()
+                     .pop()
+                     .get('y_diff')
+                     )
+
+    return median_v_dist
 
 
 def handle_implicit_rows_table(img: np.ndarray, table: Table, contours: List[Cell], margin: int = 5) -> Table:

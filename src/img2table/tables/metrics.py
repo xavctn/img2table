@@ -112,14 +112,14 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                      .filter(pl.col('rk') == 1)
                      )
 
-    if df_cnts_below.collect(streaming=True).height == 0:
+    if df_cnts_below.collect().height == 0:
         return None, [Cell(x1=c.get('x1'), y1=c.get('y1'), x2=c.get('x2'), y2=c.get('y2')) for c in contours]
 
     # Compute median vertical distance between contours
     median_v_dist = (df_cnts_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
                                                    - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
                      .select(pl.median('y_diff'))
-                     .collect(streaming=True)
+                     .collect()
                      .to_dicts()
                      .pop()
                      .get('y_diff')

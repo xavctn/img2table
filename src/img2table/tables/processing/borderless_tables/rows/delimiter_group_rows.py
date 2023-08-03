@@ -38,14 +38,14 @@ def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optio
                      .filter(pl.col('rk') == 1)
                      )
 
-    if df_elms_below.collect(streaming=True).height == 0:
+    if df_elms_below.collect().height == 0:
         return None
 
     # Compute median vertical distance between elements
     median_v_dist = (df_elms_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
                                                   - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
                      .select(pl.median('y_diff'))
-                     .collect(streaming=True)
+                     .collect()
                      .to_dicts()
                      .pop()
                      .get('y_diff')

@@ -176,7 +176,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     df_cnts = pl.LazyFrame(data=[{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in contours])
 
     # If there are no rows or no contours, do nothing
-    if len(lines) == 0 or df_cnts.collect(streaming=True).height == 0:
+    if len(lines) == 0 or df_cnts.collect().height == 0:
         return lines
 
     # Create dataframe containing rows
@@ -213,7 +213,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
 
     # Identify rows that intersect contours
     intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.25)
-                          .collect(streaming=True)
+                          .collect()
                           .get_column('line_id')
                           .to_list()
                           )
