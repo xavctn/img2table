@@ -195,8 +195,6 @@ pip install paddlepaddle-gpu==2.5.0rc1.post118 -f https://www.paddlepaddle.org.c
 pip install paddleocr img2table
 ```
 
-
-*Released in version 0.0.13*
 <br>
 </details>
 
@@ -220,7 +218,6 @@ ocr = EasyOCR(lang=["en"])
 >    <dd style="font-style: italic;">Lang parameter used in EasyOCR for text extraction, check <a href="https://www.jaided.ai/easyocr">documentation for available languages</a></dd>
 ></dl>
 
-*Released in version 0.1.2*
 <br>
 </details>
 
@@ -330,7 +327,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
+>    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 ></dl>
