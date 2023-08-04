@@ -334,8 +334,6 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 <b>NB</b>: Borderless table extraction can, by design, only extract tables with 3 or more columns.
 
-*Borderless table extraction released in version 0.0.14*
-
 #### Method return
 
 The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is used to model extracted tables from documents.
