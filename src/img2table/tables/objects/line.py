@@ -42,7 +42,8 @@ class Line(TableObject):
                 "y1": self.y1,
                 "y2": self.y2,
                 "width": self.width,
-                "height": self.height}
+                "height": self.height,
+                "thickness": self.thickness}
 
     @property
     def transpose(self) -> "Line":
