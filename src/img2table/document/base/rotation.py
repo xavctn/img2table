@@ -224,18 +224,18 @@ def rotate_img_with_border(img: np.ndarray, angle: float,
     return rotated_img
 
 
-def fix_rotation_image(img: np.ndarray) -> np.ndarray:
+def fix_rotation_image(img: np.ndarray) -> Tuple[np.ndarray, bool]:
     """
     Fix rotation of input image (based on https://www.mdpi.com/2079-9292/9/1/55) by at most 45 degrees
     :param img: image array
-    :return: rotated image array
+    :return: rotated image array and boolean indicating if the image has been rotated
     """
     # Get connected components of the images
     cc_centroids, ref_height, thresh = get_connected_components(img=img)
 
     # Check number of centroids
     if len(cc_centroids) < 2:
-        return img
+        return img, False
 
     # Compute most likely angles from connected components
     angles = get_relevant_angles(centroids=cc_centroids, ref_height=ref_height)
@@ -244,6 +244,6 @@ def fix_rotation_image(img: np.ndarray) -> np.ndarray:
 
     if abs(skew_angle) >= 0.25:
         # Rotate image with borders
-        return rotate_img_with_border(img=img, angle=skew_angle)
+        return rotate_img_with_border(img=img, angle=skew_angle), True
 
-    return img
+    return img, False

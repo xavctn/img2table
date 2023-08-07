@@ -1,7 +1,7 @@
 # coding: utf-8
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import cv2
 import numpy as np
@@ -165,11 +165,81 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     return final_lines
 
 
-def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
+def create_lines_from_intersection(line_dict: Dict) -> List[Line]:
+    """
+    Create list of lines from detected line and its intersecting elements
+    :param line_dict: dictionary containing line and its intersecting elements
+    :return: list of relevant line objects
+    """
+    # Get intersection segments
+    inter_segs = [(inter_cnt.get('y1'), inter_cnt.get('y2')) if line_dict.get('vertical')
+                  else (inter_cnt.get('x1'), inter_cnt.get('x2'))
+                  for inter_cnt in line_dict.get('intersecting') or []
+                  ]
+
+    if len(inter_segs) == 0:
+        # If no elements intersect the line, return it
+        return [Line(x1=line_dict.get('x1_line'),
+                     x2=line_dict.get('x2_line'),
+                     y1=line_dict.get('y1_line'),
+                     y2=line_dict.get('y2_line'),
+                     thickness=line_dict.get('thickness'))
+                ]
+    
+    # Vertical case
+    if line_dict.get('vertical'):
+        # Get x and y values of the line
+        x, y_min, y_max = line_dict.get('x1_line'), line_dict.get('y1_line'), line_dict.get('y2_line')
+        # Create y range of the line
+        y_range = list(range(y_min, y_max + 1))
+
+        # For each intersecting elements, remove common coordinates with the line
+        for inter_seg in inter_segs:
+            y_range = [y for y in y_range if not inter_seg[0] <= y <= inter_seg[1]]
+
+        if y_range:
+            # Create list of lists of consecutive y values from the range
+            seq = iter(y_range)
+            line_y_gps = [[next(seq)]]
+            for y in seq:
+                if y > line_y_gps[-1][-1] + 1:
+                    line_y_gps.append([])
+                line_y_gps[-1].append(y)
+
+            return [Line(x1=x, x2=x, y1=min(y_gp), y2=max(y_gp), thickness=line_dict.get('thickness'))
+                    for y_gp in line_y_gps]
+        return []
+    # Horizontal case
+    else:
+        # Get x and y values of the line
+        y, x_min, x_max = line_dict.get('y1_line'), line_dict.get('x1_line'), line_dict.get('x2_line')
+        # Create x range of the line
+        x_range = list(range(x_min, x_max + 1))
+
+        # For each intersecting elements, remove common coordinates with the line
+        for inter_seg in inter_segs:
+            x_range = [x for x in x_range if not inter_seg[0] <= x <= inter_seg[1]]
+
+        if x_range:
+            # Create list of lists of consecutive x values from the range
+            seq = iter(x_range)
+            line_x_gps = [[next(seq)]]
+            for x in seq:
+                if x > line_x_gps[-1][-1] + 1:
+                    line_x_gps.append([])
+                line_x_gps[-1].append(x)
+
+            return [Line(y1=y, y2=y, x1=min(x_gp), x2=max(x_gp), thickness=line_dict.get('thickness'))
+                    for x_gp in line_x_gps]
+        return []
+
+
+def remove_word_lines(lines: List[Line], contours: List[Cell], char_length: Optional[float]) -> List[Line]:
     """
     Remove rows that corresponds to contours in image
     :param lines: list of rows
     :param contours: list of image contours as cell objects
+    :param char_length: average character length
     :return: list of rows not intersecting with words
     """
     # Get contours dataframe
@@ -193,32 +263,41 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
 
     # Compute intersection between contours bbox and rows
     # - vertical case
+    if char_length:
+        max_vert_dist = (pl.col('x2') - pl.col('x1')) * pl.max_horizontal(0.45, 0.5 - 0.5 * char_length / (
+                    pl.col('x2') - pl.col('x1')))
+    else:
+        max_vert_dist = (pl.col('x2') - pl.col('x1')) * 0.45
     vert_int = (
-        (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.45)
-        * pl.max_horizontal([(pl.min_horizontal(['y2', 'y2_line']) - pl.max_horizontal(['y1', 'y1_line'])), pl.lit(0)])
+            (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() < max_vert_dist)
+            & ((pl.min_horizontal(['y2', 'y2_line']) - pl.max_horizontal(['y1', 'y1_line'])) > 0)
     )
     # - horizontal case
     hor_int = (
-        (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.33)
-        * pl.max_horizontal([(pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])), pl.lit(0)])
+            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.33)
+            & ((pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])) > 0)
     )
-    df_words_lines = df_words_lines.with_columns((pl.col('vertical') * vert_int
-                                                  + (1 - pl.col('vertical')) * hor_int).alias('intersection')
-                                                 )
+    
+    df_words_lines = df_words_lines.with_columns(
+        ((pl.col('vertical') & vert_int) | ((~pl.col('vertical')) & hor_int)).alias('intersection')
+        )
+    
+    # Get lines together with elements that intersect the line
+    line_elements = (df_words_lines.filter(pl.col('intersection'))
+                     .groupby(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
+                     .agg(pl.struct("x1", "y1", "x2", "y2").alias('intersecting'))
+                     .join(df_words_lines.select(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"]),
+                           on=["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"],
+                           how='outer')
+                     .unique(subset=["x1_line", "y1_line", "x2_line", "y2_line"])
+                     .collect()
+                     .to_dicts()
+                     )
 
-    # Compute total intersection for each line
-    df_inter = (df_words_lines.groupby(['line_id', 'length'])
-                .agg(pl.col('intersection').sum().alias('intersection'))
-                )
+    # Create lines from line elements
+    final_lines = [line for line_dict in line_elements for line in create_lines_from_intersection(line_dict=line_dict)]
 
-    # Identify rows that intersect contours
-    intersecting_lines = (df_inter.filter(pl.col('intersection') / pl.col('length') > 0.25)
-                          .collect()
-                          .get_column('line_id')
-                          .to_list()
-                          )
-
-    return [line for idx, line in enumerate(lines) if idx not in intersecting_lines]
+    return final_lines
 
 
 def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
@@ -271,6 +350,7 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
 
         # If possible, remove rows that corresponds to words
         if contours is not None:
-            merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
+            merged_lines = remove_word_lines(lines=merged_lines, contours=contours, char_length=char_length)
+            merged_lines = [l for l in merged_lines if max(l.length, l.width) >= minLinLength]
 
         yield merged_lines
