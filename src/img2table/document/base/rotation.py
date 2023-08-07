@@ -235,7 +235,7 @@ def fix_rotation_image(img: np.ndarray) -> Tuple[np.ndarray, bool]:
 
     # Check number of centroids
     if len(cc_centroids) < 2:
-        return img
+        return img, False
 
     # Compute most likely angles from connected components
     angles = get_relevant_angles(centroids=cc_centroids, ref_height=ref_height)

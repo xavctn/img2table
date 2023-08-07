@@ -56,7 +56,7 @@ def test_fix_rotation_image():
     for angle in range(-30, 30, 3):
         # Create test image by rotating it
         test_img = rotate_img_with_border(img=img.copy(), angle=angle)
-        result = crop_to_orig_img(img=fix_rotation_image(img=test_img),
+        result = crop_to_orig_img(img=fix_rotation_image(img=test_img)[0],
                                   orig_img=img)
 
         # Compute similarity between original image and result
