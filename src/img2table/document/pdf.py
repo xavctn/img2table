@@ -18,6 +18,7 @@ class PDF(Document):
     pages: List[int] = None
     detect_rotation: bool = False
     pdf_text_extraction: bool = True
+    _rotated: bool = False
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -30,6 +31,9 @@ class PDF(Document):
     def validate_pdf_text_extraction(self, value, **_) -> int:
         if not isinstance(value, bool):
             raise TypeError(f"Invalid type {type(value)} for pdf_text_extraction argument")
+        return value
+
+    def validate__rotated(self, value, **_) -> int:
         return value
 
     @cached_property
@@ -46,7 +50,10 @@ class PDF(Document):
             # To grayscale
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # Handle rotation if needed
-            final = fix_rotation_image(img=gray) if self.detect_rotation else gray
+            if self.detect_rotation:
+                final, self._rotated = fix_rotation_image(img=gray)
+            else:
+                final, self._rotated = gray, False
             images.append(final)
 
         return images
@@ -61,7 +68,7 @@ class PDF(Document):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
         """
-        if not self.detect_rotation and self.pdf_text_extraction:
+        if not self._rotated and self.pdf_text_extraction:
             # Try to get OCRDataframe from PDF
             self.ocr_df = PdfOCR().of(document=self)
 
@@ -69,3 +76,12 @@ class PDF(Document):
                                       implicit_rows=implicit_rows,
                                       borderless_tables=borderless_tables,
                                       min_confidence=min_confidence)
+
+
+if __name__ == '__main__':
+    path = r"C:\Users\xavca\Downloads\New1.pdf"
+    doc = PDF(path, detect_rotation=True)
+
+    tables = doc.extract_tables()
+
+    print(tables)
