@@ -78,9 +78,9 @@ class Table(TableObject):
 
                 # Put y value in both rows
                 for c in self.items[id_row].items:
-                    setattr(c, "y2", y_gap)
+                    setattr(c, "y2", max(c.y2, y_gap))
                 for c in self.items[id_next].items:
-                    setattr(c, "y1", y_gap)
+                    setattr(c, "y1", min(c.y1, y_gap))
 
         # Remove rows
         for idx in reversed(row_ids):
@@ -103,10 +103,10 @@ class Table(TableObject):
                 # Normalize x value between columns
                 x_gap = int(round(np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items]) / 2))
 
-                # Put y value in both columns
+                # Put x value in both columns
                 for row in self.items:
-                    setattr(row.items[id_col], "x2", x_gap)
-                    setattr(row.items[id_next], "x1", x_gap)
+                    setattr(row.items[id_col], "x2", max(row.items[id_col].x2, x_gap))
+                    setattr(row.items[id_next], "x1", min(row.items[id_next].x1, x_gap))
 
         # Remove columns
         for idx in reversed(col_ids):

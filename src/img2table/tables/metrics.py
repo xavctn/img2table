@@ -73,11 +73,12 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
     """
     # Create image from connected components
     black_img = np.zeros(img.shape, np.uint8)
-    for c in cc:
-        cv2.rectangle(black_img,
-                      (c[cv2.CC_STAT_LEFT], c[cv2.CC_STAT_TOP]),
-                      (c[cv2.CC_STAT_LEFT] + c[cv2.CC_STAT_WIDTH], c[cv2.CC_STAT_TOP] + c[cv2.CC_STAT_HEIGHT]),
-                      (255, 255, 255), -1)
+    cells_cc = [Cell(x1=c[cv2.CC_STAT_LEFT],
+                     y1=c[cv2.CC_STAT_TOP],
+                     x2=c[cv2.CC_STAT_LEFT] + c[cv2.CC_STAT_WIDTH],
+                     y2=c[cv2.CC_STAT_TOP] + c[cv2.CC_STAT_HEIGHT]) for c in cc]
+    for cell in cells_cc:
+        cv2.rectangle(black_img, (cell.x1, cell.y1), (cell.x2, cell.y2), (255, 255, 255), -1)
 
     # Dilate image
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(1.25 * char_length)), 1), 1))
@@ -124,7 +125,19 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                      .get('y_diff')
                      )
 
-    return median_v_dist, [Cell(x1=c.get('x1'), y1=c.get('y1'), x2=c.get('x2'), y2=c.get('y2')) for c in contours]
+    # Recompute contours
+    final_contours = list()
+    for cnt in contours:
+        matching_cells = [c for c in cells_cc if c.x1 >= cnt.get('x1') and c.x2 <= cnt.get('x2')
+                          and c.y1 >= cnt.get('y1') and c.y2 <= cnt.get('y2')]
+        if matching_cells:
+            final_contours.append(Cell(x1=min([c.x1 for c in matching_cells]),
+                                       y1=min([c.y1 for c in matching_cells]),
+                                       x2=max([c.x2 for c in matching_cells]),
+                                       y2=max([c.y2 for c in matching_cells]))
+                                  )
+
+    return median_v_dist, final_contours
 
 
 def compute_img_metrics(img: np.ndarray) -> Tuple[Optional[float], Optional[float], Optional[List[Cell]]]:

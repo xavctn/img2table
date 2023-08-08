@@ -76,12 +76,3 @@ class PDF(Document):
                                       implicit_rows=implicit_rows,
                                       borderless_tables=borderless_tables,
                                       min_confidence=min_confidence)
-
-
-if __name__ == '__main__':
-    path = r"C:\Users\xavca\Downloads\New1.pdf"
-    doc = PDF(path, detect_rotation=True)
-
-    tables = doc.extract_tables()
-
-    print(tables)

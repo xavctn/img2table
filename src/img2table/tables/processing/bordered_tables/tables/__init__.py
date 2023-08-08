@@ -7,10 +7,11 @@ from img2table.tables.processing.bordered_tables.tables.cell_clustering import c
 from img2table.tables.processing.bordered_tables.tables.table_creation import cluster_to_table, normalize_table_cells
 
 
-def get_tables(cells: List[Cell]) -> List[Table]:
+def get_tables(cells: List[Cell], elements: List[Cell]) -> List[Table]:
     """
     Identify and create Table object from list of image cells
     :param cells: list of cells found in image
+    :param elements: list of image elements
     :return: list of Table objects inferred from cells
     """
     # Cluster cells into tables
@@ -21,7 +22,7 @@ def get_tables(cells: List[Cell]) -> List[Table]:
                            for cluster_cells in list_cluster_cells]
 
     # Create tables from cells clusters
-    tables = [cluster_to_table(cluster_cells=cluster_cells)
-              for cluster_cells in clusters_normalized]
+    tables = [cluster_to_table(cluster_cells=norm_cluster, elements=elements)
+              for norm_cluster in clusters_normalized]
 
-    return tables
+    return [tb for tb in tables if min(tb.nb_rows, tb.nb_columns) >= 2]

@@ -10,8 +10,10 @@ from img2table.tables.processing.bordered_tables.tables import get_tables
 def test_get_tables():
     with open("test_data/cells.json", 'r') as f:
         cells = [Cell(**el) for el in json.load(f)]
+    with open("test_data/contours.json", "r") as f:
+        contours = [Cell(**el) for el in json.load(f)]
 
-    result = get_tables(cells=cells)
+    result = get_tables(cells=cells, elements=contours)
 
     with open("test_data/expected.json", "r") as f:
         expected = [Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in tb])

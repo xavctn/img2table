@@ -39,6 +39,6 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow]) -> Table:
             list_cells.append(cell)
 
     # Create table object
-    table = cluster_to_table(list_cells)
+    table = cluster_to_table(cluster_cells=list_cells, elements=columns.elements)
 
     return table

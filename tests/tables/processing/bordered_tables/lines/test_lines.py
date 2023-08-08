@@ -65,11 +65,11 @@ def test_remove_word_lines():
     lines = [Line(x1=10, x2=10, y1=10, y2=100),
              Line(x1=975, x2=975, y1=40, y2=60)]
 
-    result = remove_word_lines(lines=lines, contours=contours, char_length=8.44)
+    result = remove_word_lines(lines=lines, contours=contours)
 
     assert result == [Line(x1=10, x2=10, y1=10, y2=100),
                       Line(x1=975, y1=40, x2=975, y2=40),
-                      Line(x1=975, y1=57, x2=975, y2=60)]
+                      Line(x1=975, y1=56, x2=975, y2=60)]
 
 
 def test_detect_lines():

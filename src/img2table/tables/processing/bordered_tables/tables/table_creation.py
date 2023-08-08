@@ -45,10 +45,45 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
     return normalized_cells
 
 
-def cluster_to_table(cluster_cells: List[Cell]) -> Table:
+def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
+    """
+    Remove empty/unnecessary rows and columns from the table, based on elements
+    :param table: input Table object
+    :param elements: list of image elements
+    :return: processed table
+    """
+    # Identify elements corresponding to each cell
+    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.9)]
+                          for c in set([c for row in table.items for c in row.items])
+                          }
+
+    # Check for empty rows and remove if necessary
+    empty_rows = list()
+    for idx, row in enumerate(table.items):
+        if all(map(lambda c: len(dict_element_cells.get(c)) == 0, row.items)):
+            empty_rows.append(idx)
+    table.remove_rows(row_ids=empty_rows)
+
+    # Update elements corresponding to each cell
+    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.9)]
+                          for c in set([c for row in table.items for c in row.items])
+                          }
+
+    # Check for empty columns and remove if necessary
+    empty_cols = list()
+    for idx in range(table.nb_columns):
+        if all(map(lambda c: len(dict_element_cells.get(c)) == 0, [row.items[idx] for row in table.items])):
+            empty_cols.append(idx)
+    table.remove_columns(col_ids=empty_cols)
+
+    return table
+
+
+def cluster_to_table(cluster_cells: List[Cell], elements: List[Cell]) -> Table:
     """
     Convert a cell cluster to a Table object
     :param cluster_cells: list of cells that form a table
+    :param elements: list of image elements
     :return: table with rows inferred from table cells
     """
     # Get list of vertical delimiters
@@ -84,4 +119,10 @@ def cluster_to_table(cluster_cells: List[Cell]) -> Table:
 
         list_rows.append(Row(cells=list_cells))
 
-    return Table(rows=list_rows)
+    # Create table
+    table = Table(rows=list_rows)
+
+    # Remove empty/unnecessary rows and columns from the table, based on elements
+    processed_table = remove_unwanted_elements(table=table, elements=elements)
+
+    return processed_table

@@ -11,7 +11,7 @@ from img2table.tables.processing.bordered_tables.tables.implicit_rows import han
 
 
 def test_compute_table_median_row_sep():
-    with open("test_data/contours.json", "r") as f:
+    with open("test_data/contours_implicit.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
 
     with open("test_data/implicit_table.json", 'r') as f:
@@ -20,7 +20,7 @@ def test_compute_table_median_row_sep():
     result = compute_table_median_row_sep(table=table,
                                           contours=contours)
 
-    assert round(result, 2) == 51.0
+    assert round(result, 2) == 55.5
 
 
 def test_handle_implicit_rows_table():
@@ -29,7 +29,7 @@ def test_handle_implicit_rows_table():
     with open("test_data/implicit_table.json", 'r') as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
 
-    with open("test_data/contours.json", "r") as f:
+    with open("test_data/contours_implicit.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
 
     result = handle_implicit_rows_table(img=img,
@@ -46,7 +46,7 @@ def test_handle_implicit_rows():
     with open("test_data/implicit_table.json", 'r') as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
 
-    with open("test_data/contours.json", "r") as f:
+    with open("test_data/contours_implicit.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
 
     result = handle_implicit_rows(img=img,

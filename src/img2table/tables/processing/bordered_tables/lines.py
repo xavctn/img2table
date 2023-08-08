@@ -78,7 +78,7 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
     v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(char_length // 2), 1))))
 
     # Get columns with at least 2 times the average number of white pixels
-    white_cols = np.where(np.mean(thresh, axis=0) > 2 * np.mean(thresh))[0].tolist()
+    white_cols = np.where(np.mean(thresh, axis=0) > 3 * np.mean(thresh))[0].tolist()
 
     # Split into consecutive groups of columns and keep only small ones to avoid targeting text columns
     white_cols_cl = [list(map(itemgetter(1), g))
@@ -197,6 +197,15 @@ def create_lines_from_intersection(line_dict: Dict) -> List[Line]:
         for inter_seg in inter_segs:
             y_range = [y for y in y_range if not inter_seg[0] <= y <= inter_seg[1]]
 
+        # If overlap is minimal, do not affect the line
+        if len(y_range) / (y_max - y_min + 1) >= 0.8:
+            return [Line(x1=line_dict.get('x1_line'),
+                         x2=line_dict.get('x2_line'),
+                         y1=line_dict.get('y1_line'),
+                         y2=line_dict.get('y2_line'),
+                         thickness=line_dict.get('thickness'))
+                    ]
+
         if y_range:
             # Create list of lists of consecutive y values from the range
             seq = iter(y_range)
@@ -234,12 +243,11 @@ def create_lines_from_intersection(line_dict: Dict) -> List[Line]:
         return []
 
 
-def remove_word_lines(lines: List[Line], contours: List[Cell], char_length: Optional[float]) -> List[Line]:
+def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     """
     Remove rows that corresponds to contours in image
     :param lines: list of rows
     :param contours: list of image contours as cell objects
-    :param char_length: average character length
     :return: list of rows not intersecting with words
     """
     # Get contours dataframe
@@ -263,18 +271,13 @@ def remove_word_lines(lines: List[Line], contours: List[Cell], char_length: Opti
 
     # Compute intersection between contours bbox and rows
     # - vertical case
-    if char_length:
-        max_vert_dist = (pl.col('x2') - pl.col('x1')) * pl.max_horizontal(0.45, 0.5 - 0.5 * char_length / (
-                    pl.col('x2') - pl.col('x1')))
-    else:
-        max_vert_dist = (pl.col('x2') - pl.col('x1')) * 0.45
     vert_int = (
-            (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() < max_vert_dist)
+            (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.5)
             & ((pl.min_horizontal(['y2', 'y2_line']) - pl.max_horizontal(['y1', 'y1_line'])) > 0)
     )
     # - horizontal case
     hor_int = (
-            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) < 0.33)
+            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) <= 0.33)
             & ((pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])) > 0)
     )
     
@@ -350,7 +353,7 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
 
         # If possible, remove rows that corresponds to words
         if contours is not None:
-            merged_lines = remove_word_lines(lines=merged_lines, contours=contours, char_length=char_length)
+            merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
             merged_lines = [l for l in merged_lines if max(l.length, l.width) >= minLinLength]
 
         yield merged_lines
