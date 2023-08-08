@@ -24,7 +24,7 @@ Thanks to its design, it provides a practical and lighter alternative to Neural 
 The library can be installed via pip:
 
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
-> <code>pip install img2table[paddle]</code>: For usage with Paddle OCR (Python <= 3.10 only)<br>
+> <code>pip install img2table[paddle]</code>: For usage with Paddle OCR<br>
 > <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
@@ -194,6 +194,9 @@ as stated in this <a href="https://github.com/PaddlePaddle/PaddleOCR/issues/7993
 pip install paddlepaddle-gpu==2.5.0rc1.post118 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
 pip install paddleocr img2table
 ```
+
+If you get the following error running on Ubuntu <code>ImportError: cannot import name 'PaddleOCR' from 'img2table.ocr'</code>,
+please check this <a href="https://github.com/PaddlePaddle/PaddleOCR/discussions/9989">Paddle issue</a> for a working solution.
 
 <br>
 </details>
