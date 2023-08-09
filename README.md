@@ -196,7 +196,7 @@ pip install paddleocr img2table
 ```
 
 If you get the following error running on Ubuntu <code>ImportError: cannot import name 'PaddleOCR' from 'img2table.ocr'</code>,
-please check this <a href="https://github.com/PaddlePaddle/PaddleOCR/discussions/9989">Paddle issue</a> for a working solution.
+please check this <a href="https://github.com/PaddlePaddle/PaddleOCR/discussions/9989#discussioncomment-6642037">Paddle issue</a> for a working solution.
 
 <br>
 </details>
