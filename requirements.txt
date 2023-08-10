@@ -1,7 +1,7 @@
 polars[pandas]>=0.18.7
 pyarrow>=7
 numpy
-pymupdf>=1.21
+pymupdf>=1.19.1
 opencv-python
 beautifulsoup4
 xlsxwriter>=3.0.6
