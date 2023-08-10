@@ -1,7 +1,6 @@
 # coding: utf-8
 
 import json
-import sys
 
 import cv2
 import polars as pl
@@ -11,7 +10,6 @@ from img2table.document.image import Image
 from img2table.ocr.data import OCRDataframe
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="No support for PaddleOCR")
 def test_validators():
     from img2table.ocr import PaddleOCR
 
@@ -19,7 +17,6 @@ def test_validators():
         ocr = PaddleOCR(lang=12)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="No support for PaddleOCR")
 def test_paddle_hocr():
     from img2table.ocr import PaddleOCR
 
@@ -34,7 +31,6 @@ def test_paddle_hocr():
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="No support for PaddleOCR")
 def test_paddle_content():
     from img2table.ocr import PaddleOCR
 
@@ -49,7 +45,6 @@ def test_paddle_content():
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="No support for PaddleOCR")
 def test_paddle_ocr_df():
     from img2table.ocr import PaddleOCR
 
@@ -65,7 +60,6 @@ def test_paddle_ocr_df():
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="No support for PaddleOCR")
 def test_paddle_document():
     from img2table.ocr import PaddleOCR
 
