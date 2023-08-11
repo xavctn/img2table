@@ -162,6 +162,8 @@ ocr = TesseractOCR(n_threads=1,
 *Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
 <br>
+*For Windows users getting environment variable errors, you can check this [tutorial](https://linuxhint.com/install-tesseract-windows/)*
+<br>
 </details>
 
 <details>
