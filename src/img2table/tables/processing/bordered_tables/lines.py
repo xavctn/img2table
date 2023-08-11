@@ -197,15 +197,6 @@ def create_lines_from_intersection(line_dict: Dict) -> List[Line]:
         for inter_seg in inter_segs:
             y_range = [y for y in y_range if not inter_seg[0] <= y <= inter_seg[1]]
 
-        # If overlap is minimal, do not affect the line
-        if len(y_range) / (y_max - y_min + 1) >= 0.8:
-            return [Line(x1=line_dict.get('x1_line'),
-                         x2=line_dict.get('x2_line'),
-                         y1=line_dict.get('y1_line'),
-                         y2=line_dict.get('y2_line'),
-                         thickness=line_dict.get('thickness'))
-                    ]
-
         if y_range:
             # Create list of lists of consecutive y values from the range
             seq = iter(y_range)
