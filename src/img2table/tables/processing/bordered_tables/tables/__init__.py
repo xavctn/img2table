@@ -25,4 +25,4 @@ def get_tables(cells: List[Cell], elements: List[Cell]) -> List[Table]:
     tables = [cluster_to_table(cluster_cells=norm_cluster, elements=elements)
               for norm_cluster in clusters_normalized]
 
-    return [tb for tb in tables if min(tb.nb_rows, tb.nb_columns) >= 2]
+    return [tb for tb in tables if tb.nb_rows * tb.nb_columns >= 2]
