@@ -170,8 +170,6 @@ Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions
 <summary>PaddleOCR<a name="paddle"></a></summary>
 <br>
 
-*Available for Python versions <= 3.10*
-
 <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> is an open-source OCR based on Deep Learning models.<br>
 At first use, relevant languages models will be downloaded.
 
@@ -225,6 +223,30 @@ ocr = EasyOCR(lang=["en"])
 
 <br>
 </details>
+
+<details>
+<summary>docTR<a name="docTR"></a></summary>
+<br>
+
+<a href="https://github.com/mindee/doctr">docTR</a> is an open-source OCR based on Deep Learning models.<br>
+*In order to be used, docTR has to be installed by the user beforehand. Installation procedures are detailed in
+the package documentation*
+
+```python
+from img2table.ocr import DocTR
+
+ocr = DocTR(detect_language=False)
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>detect_language : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Parameter indicating if language prediction is run on the document</dd>
+></dl>
+
+<br>
+</details>
+
 
 <details>
 <summary>Google Vision<a name="vision"></a></summary>
