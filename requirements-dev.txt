@@ -17,6 +17,10 @@ paddleocr>=2.0.6
 easyocr >= 1.7.0
 pillow<10
 
+# docTR
+python-doctr
+rapidfuzz==2.15.1
+
 # Test dependencies
 pytest >= 6
 pytest-cov
