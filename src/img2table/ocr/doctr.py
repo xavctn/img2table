@@ -1,13 +1,16 @@
 # coding: utf-8
 
+import typing
+
 import cv2
-import doctr
 import polars as pl
-from doctr.models import ocr_predictor
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
+
+if typing.TYPE_CHECKING:
+    import doctr
 
 
 class DocTR(OCRInstance):
@@ -18,15 +21,20 @@ class DocTR(OCRInstance):
         """
         Initialization of EasyOCR instance
         """
+        try:
+            from doctr.models import ocr_predictor
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install doctr to use this class.")
+
         self.model = ocr_predictor(pretrained=True, detect_language=detect_language)
 
-    def content(self, document: Document) -> doctr.io.elements.Document:
+    def content(self, document: Document) -> "doctr.io.elements.Document":
         # Get OCR of all images
         ocrs = self.model([cv2.cvtColor(img, cv2.COLOR_GRAY2RGB) for img in document.images])
 
         return ocrs
 
-    def to_ocr_dataframe(self, content: doctr.io.elements.Document) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: "doctr.io.elements.Document") -> OCRDataframe:
         """
         Convert docTR Document object to OCRDataframe object
         :param content: docTR Document object

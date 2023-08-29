@@ -5,7 +5,7 @@ import pickle
 import subprocess
 from typing import NamedTuple, Dict
 
-import azure
+import azure.cognitiveservices.vision.computervision
 import boto3
 import pytest
 import requests

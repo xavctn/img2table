@@ -1,18 +1,19 @@
 # coding: utf-8
 import os
 import time
+import typing
 from io import BytesIO
 from typing import List, Optional
 
 import cv2
 import polars as pl
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from azure.cognitiveservices.vision.computervision.models import ReadOperationResult, OperationStatusCodes
-from msrest.authentication import CognitiveServicesCredentials
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
+
+if typing.TYPE_CHECKING:
+    from azure.cognitiveservices.vision.computervision.models import ReadOperationResult
 
 
 class AzureOCR(OCRInstance):
@@ -26,6 +27,12 @@ class AzureOCR(OCRInstance):
         :param endpoint: Azure Cognitive Services endpoint
         :param subscription_key: Azure Cognitive Services subscription key
         """
+        try:
+            from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+            from msrest.authentication import CognitiveServicesCredentials
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[azure]' to use this class.")
+
         # Validation on endpoint variable
         if not (isinstance(endpoint, str) or endpoint is None):
             raise TypeError(f"Invalid type {type(endpoint)} for endpoint argument")
@@ -47,12 +54,17 @@ class AzureOCR(OCRInstance):
         self.client = ComputerVisionClient(endpoint=endpoint,
                                            credentials=CognitiveServicesCredentials(subscription_key=subscription_key))
 
-    def content(self, document: Document) -> List[ReadOperationResult]:
+    def content(self, document: Document) -> List["ReadOperationResult"]:
         """
         Extract document text using Azure OCR API
         :param document: Document object
         :return: list of Azure OCR API results
         """
+        try:
+            from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[azure]' to use this class.")
+
         # Create list of file-like images
         images = list()
         for image in document.images:
@@ -71,7 +83,7 @@ class AzureOCR(OCRInstance):
 
         return results
 
-    def to_ocr_dataframe(self, content: List[ReadOperationResult]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: List["ReadOperationResult"]) -> OCRDataframe:
         """
         Convert list of OCR results by page to OCRDataframe object
         :param content: list of OCR results by page

@@ -13,10 +13,6 @@ from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    from paddleocr import PaddleOCR as OCR
-
 
 class PaddleOCR(OCRInstance):
     """
@@ -27,6 +23,13 @@ class PaddleOCR(OCRInstance):
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle
         """
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                from paddleocr import PaddleOCR as OCR
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[paddle]' to use this class.")
+
         if isinstance(lang, str):
             self.lang = lang
         else:
