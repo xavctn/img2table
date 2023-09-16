@@ -7,13 +7,24 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
-def get_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], pct: float = 0.25) -> List[Cell]:
+def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool = True,
+                    pct: float = 0.25) -> List[Cell]:
     """
-    Identify vertical whitespaces in segment
+    Identify whitespaces in segment
     :param segment: image segment
-    :param pct: minimum percentage of the segment height for a vertical whitespace
-    :return: list of vertical whitespaces as Cell objects
+    :param vertical: boolean indicating if vertical or horizontal whitespaces are identified
+    :param pct: minimum percentage of the segment height/width to account for a whitespace
+    :return: list of vertical or horizontal whitespaces as Cell objects
     """
+    # Flip object coordinates in horizontal case
+    if not vertical:
+        flipped_elements = [Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements]
+        segment = ImageSegment(x1=segment.y1,
+                               y1=segment.x1,
+                               x2=segment.y2,
+                               y2=segment.x2,
+                               elements=flipped_elements)
+
     # Get min/max height of elements in segment
     y_min, y_max = min([el.y1 for el in segment.elements]), max([el.y2 for el in segment.elements])
 
@@ -58,6 +69,10 @@ def get_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], pct: 
                                  x2=max([w.x2 for w in cl]),
                                  y2=min(max([w.y2 for w in cl]), y_max))
                             for cl in merged_v_whitespaces]
+
+    # Flip object coordinates in horizontal case
+    if not vertical:
+        merged_v_whitespaces = [Cell(x1=ws.y1, y1=ws.x1, x2=ws.y2, y2=ws.x2) for ws in merged_v_whitespaces]
 
     return merged_v_whitespaces
 
@@ -166,8 +181,9 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
     :return: list of vertical whitespaces that can be column delimiters
     """
     # Identify vertical whitespaces
-    v_whitespaces = get_vertical_whitespaces(segment=segment,
-                                             pct=pct)
+    v_whitespaces = get_whitespaces(segment=segment,
+                                    vertical=True,
+                                    pct=pct)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces,

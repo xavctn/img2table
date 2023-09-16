@@ -12,6 +12,12 @@ class ImageSegment:
     x2: int
     y2: int
     elements: List[Cell] = None
+    whitespaces: List[Cell] = None
+    position: int = None
+
+    @property
+    def width(self) -> int:
+        return self.x2 - self.x1
 
     @property
     def height(self) -> int:
@@ -19,6 +25,9 @@ class ImageSegment:
 
     def set_elements(self, elements: List[Cell]):
         self.elements = elements
+
+    def set_whitespaces(self, whitespaces: List[Cell]):
+        self.whitespaces = whitespaces
 
     def __hash__(self):
         return hash(repr(self))

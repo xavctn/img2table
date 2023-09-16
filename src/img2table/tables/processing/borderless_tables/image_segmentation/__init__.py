@@ -7,7 +7,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.image_segmentation.column_segmentation import segment_image_columns
 from img2table.tables.processing.borderless_tables.image_segmentation.segment_elements import get_segment_elements
-from img2table.tables.processing.borderless_tables.image_segmentation.segmentation import create_image_segments
+from img2table.tables.processing.borderless_tables.image_segmentation.table_segments import get_table_segments
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
@@ -28,19 +28,19 @@ def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median
                                             char_length=char_length,
                                             contours=contours)
 
-    # Identify segments in image
-    img_segments = [seg for col_seg in column_segments
-                    for seg in create_image_segments(img=img,
-                                                     area=col_seg,
-                                                     median_line_sep=median_line_sep,
-                                                     char_length=char_length)]
+    # Set segment elements
+    column_segments = get_segment_elements(img=img,
+                                           lines=lines,
+                                           img_segments=column_segments,
+                                           char_length=char_length,
+                                           median_line_sep=median_line_sep,
+                                           blur_size=3)
 
-    # Detect elements corresponding to each segment
-    img_segments = get_segment_elements(img=img,
-                                        lines=lines,
-                                        img_segments=img_segments,
-                                        char_length=char_length,
-                                        median_line_sep=median_line_sep,
-                                        blur_size=3)
+    # Within each column, identify segments that can correspond to tables
+    tb_segments = [table_segment for col_segment in column_segments
+                   for table_segment in get_table_segments(segment=col_segment,
+                                                           char_length=char_length,
+                                                           median_line_sep=median_line_sep)
+                   ]
 
-    return img_segments
+    return tb_segments

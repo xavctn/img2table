@@ -2,9 +2,8 @@
 from typing import List
 
 from img2table.tables.processing.borderless_tables.column_delimiters.column_groups import create_delimiter_groups
-from img2table.tables.processing.borderless_tables.column_delimiters.vertical_whitespaces import \
-    get_relevant_vertical_whitespaces
 from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.whitespaces import get_relevant_vertical_whitespaces
 
 
 def identify_column_groups(segment: ImageSegment, char_length: float) -> List[DelimiterGroup]:
@@ -16,7 +15,8 @@ def identify_column_groups(segment: ImageSegment, char_length: float) -> List[De
     """
     # Identify vertical whitespaces in segment
     vertical_ws = get_relevant_vertical_whitespaces(segment=segment,
-                                                    char_length=char_length)
+                                                    char_length=char_length,
+                                                    pct=0.5)
 
     # Get delimiter groups that can correspond to columns
     delimiter_groups = create_delimiter_groups(delimiters=vertical_ws,
