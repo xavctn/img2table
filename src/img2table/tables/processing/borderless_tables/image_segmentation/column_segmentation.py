@@ -270,6 +270,7 @@ def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: 
     :param char_length: average character length
     :param median_line_sep: median line separation
     :param contours: list of image contours
+    :param h_margin: horizontal margin for final segments
     :return: list of segments corresponding to image
     """
     # Get column groups
@@ -315,7 +316,10 @@ def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: 
                              if c.x1 >= seg.x1 and c.x2 <= seg.x2 and c.y1 >= seg.y1 and c.y2 <= seg.y2]
 
         if included_contours:
-            column_seg = ImageSegment(x1=seg.x1, y1=seg.y1, x2=seg.x2, y2=seg.y2)
+            column_seg = ImageSegment(x1=max(seg.x1 - int(char_length), 0),
+                                      y1=max(seg.y1 - int(char_length), 0),
+                                      x2=min(seg.x2 + int(char_length), img.shape[1]),
+                                      y2=min(seg.y2 + int(char_length), img.shape[0]))
             final_segments.append(column_seg)
 
     return final_segments

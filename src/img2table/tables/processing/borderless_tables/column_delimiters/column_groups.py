@@ -7,6 +7,7 @@ import numpy as np
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import DelimiterGroup, ImageSegment
+from img2table.tables.processing.borderless_tables.whitespaces import get_relevant_vertical_whitespaces
 
 
 def vertically_coherent_delimiters(d_1: Cell, d_2: Cell) -> bool:
@@ -234,8 +235,6 @@ def get_full_delimiters(delimiter_group: DelimiterGroup, char_length: float) -> 
     :param char_length: average character width in image
     :return: delimiter group with all relevant delimiters
     """
-    from img2table.tables.processing.borderless_tables.column_delimiters import get_relevant_vertical_whitespaces
-
     whitespaces = get_relevant_vertical_whitespaces(segment=delimiter_group,
                                                     char_length=char_length,
                                                     pct=0.75)
