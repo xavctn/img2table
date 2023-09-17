@@ -2,7 +2,7 @@
 import cv2
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.image_segmentation import create_image_segments
+from img2table.tables.processing.borderless_tables.layout import create_image_segments
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 

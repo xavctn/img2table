@@ -34,6 +34,35 @@ class ImageSegment:
 
 
 @dataclass
+class TableSegment:
+    table_areas: List[ImageSegment]
+
+    @property
+    def x1(self) -> int:
+        return min([tb_area.x1 for tb_area in self.table_areas])
+
+    @property
+    def y1(self) -> int:
+        return min([tb_area.y1 for tb_area in self.table_areas])
+
+    @property
+    def x2(self) -> int:
+        return max([tb_area.x2 for tb_area in self.table_areas])
+
+    @property
+    def y2(self) -> int:
+        return max([tb_area.y2 for tb_area in self.table_areas])
+
+    @property
+    def elements(self) -> List[Cell]:
+        return [el for tb_area in self.table_areas for el in tb_area.elements]
+
+    @property
+    def whitespaces(self) -> List[Cell]:
+        return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
+
+
+@dataclass
 class DelimiterGroup:
     delimiters: List[Cell]
     elements: List[Cell] = field(default_factory=lambda: [])
@@ -129,6 +158,12 @@ class TableRow:
 
     def merge(self, other: "TableRow") -> "TableRow":
         return TableRow(cells=self.cells + other.cells)
+
+    def set_y_top(self, y_value: int):
+        self.cells = [Cell(x1=c.x1, y1=y_value, x2=c.x2, y2=c.y2) for c in self.cells]
+
+    def set_y_bottom(self, y_value: int):
+        self.cells = [Cell(x1=c.x1, y1=c.y1, x2=c.x2, y2=y_value) for c in self.cells]
 
     def __eq__(self, other):
         if isinstance(other, TableRow):

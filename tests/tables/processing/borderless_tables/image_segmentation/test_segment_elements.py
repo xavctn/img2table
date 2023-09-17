@@ -4,7 +4,7 @@ import json
 import cv2
 
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables.image_segmentation import get_segment_elements
+from img2table.tables.processing.borderless_tables.layout import get_segment_elements
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 

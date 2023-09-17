@@ -191,6 +191,12 @@ def identify_delimiter_group_rows(delimiter_group: DelimiterGroup) -> Tuple[List
         # Identify rows
         group_lines = identify_rows(elements=delimiter_group.elements,
                                     ref_size=int(group_median_row_sep // 3))
+
+        # Adjust height of first / last row
+        if group_lines:
+            group_lines[0].set_y_top(delimiter_group.y1)
+            group_lines[-1].set_y_bottom(delimiter_group.y2)
+
         return group_lines, group_median_row_sep
 
     return [], group_median_row_sep

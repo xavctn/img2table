@@ -4,7 +4,7 @@ import json
 import cv2
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.image_segmentation.column_segmentation import same_column, \
+from img2table.tables.processing.borderless_tables.layout.column_segmentation import same_column, \
     coherent_columns, intertwined_col_groups, ColumnGroup, get_image_columns, identify_remaining_segments, \
     segment_image_columns
 

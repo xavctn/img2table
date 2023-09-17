@@ -5,14 +5,14 @@ import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables.image_segmentation.column_segmentation import segment_image_columns
-from img2table.tables.processing.borderless_tables.image_segmentation.segment_elements import get_segment_elements
-from img2table.tables.processing.borderless_tables.image_segmentation.table_segments import get_table_segments
-from img2table.tables.processing.borderless_tables.model import ImageSegment
+from img2table.tables.processing.borderless_tables.layout.column_segmentation import segment_image_columns
+from img2table.tables.processing.borderless_tables.layout.segment_elements import get_segment_elements
+from img2table.tables.processing.borderless_tables.layout.table_segments import get_table_segments
+from img2table.tables.processing.borderless_tables.model import TableSegment
 
 
 def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
-                  contours: List[Cell]) -> List[ImageSegment]:
+                  contours: List[Cell]) -> List[TableSegment]:
     """
     Segment image and its elements
     :param img: image array

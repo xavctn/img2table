@@ -7,7 +7,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.column_delimiters import identify_column_groups
-from img2table.tables.processing.borderless_tables.image_segmentation import segment_image
+from img2table.tables.processing.borderless_tables.layout import segment_image
 from img2table.tables.processing.borderless_tables.rows import detect_delimiter_group_rows
 from img2table.tables.processing.borderless_tables.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
@@ -46,21 +46,22 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     :param existing_tables: list of detected bordered tables
     :return: list of detected borderless tables
     """
-    # Segment image
-    img_segments = segment_image(img=img,
-                                 lines=lines,
-                                 char_length=char_length,
-                                 median_line_sep=median_line_sep,
-                                 contours=contours)
+    # Segment image and identify parts that can correspond to tables
+    table_segments = segment_image(img=img,
+                                   lines=lines,
+                                   char_length=char_length,
+                                   median_line_sep=median_line_sep,
+                                   contours=contours)
 
     # In each segment, create groups of rows and identify tables
     tables = list()
-    for seg in img_segments:
+    for table_segment in table_segments:
         # Identify column groups in segment
-        column_groups = identify_column_groups(segment=seg,
-                                               char_length=char_length)
+        column_group = identify_column_groups(table_segment=table_segment,
+                                              char_length=char_length,
+                                              median_line_sep=median_line_sep)
 
-        for column_group in column_groups:
+        if column_group:
             # Identify potential table rows
             table_rows = detect_delimiter_group_rows(delimiter_group=column_group)
 
@@ -68,8 +69,10 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
                 # Create table from column group and rows
                 borderless_table = identify_table(columns=column_group,
                                                   table_rows=table_rows,
-                                                  lines=lines)
-                tables.append(borderless_table)
+                                                  contours=contours)
+
+                if borderless_table:
+                    tables.append(borderless_table)
 
     return deduplicate_tables(identified_tables=tables,
                               existing_tables=existing_tables)
