@@ -16,6 +16,6 @@ def test_detect_delimiter_group_rows():
     result = detect_delimiter_group_rows(delimiter_group=delimiter_group)
 
     with open("test_data/rows.json", "r") as f:
-        expected = sorted([TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)], key=lambda r: r.y1)[:-1]
+        expected = sorted([TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)], key=lambda r: r.y1)
 
     assert set(result) == set(expected)

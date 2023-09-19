@@ -69,7 +69,8 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
                 # Create table from column group and rows
                 borderless_table = identify_table(columns=column_group,
                                                   table_rows=table_rows,
-                                                  contours=contours)
+                                                  contours=contours,
+                                                  lines=lines)
 
                 if borderless_table:
                     tables.append(borderless_table)
