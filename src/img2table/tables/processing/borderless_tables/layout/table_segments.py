@@ -81,7 +81,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
             middle_ws = [ws for ws in v_ws if ws.x1 != seg_area.x1 and ws.x2 != seg_area.x2]
 
             # If there can be at least 3 columns in area, it is a possible table area
-            if len(middle_ws) >= 2:
+            if len(middle_ws) >= 1:
                 # Add edges whitespaces
                 left_ws = Cell(x1=seg_area.x1,
                                y1=seg_area.y1,
@@ -113,7 +113,10 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     # Compute vertical difference
     v_diff = min(abs(tb_area_1.y2 - tb_area_2.y1), abs(tb_area_2.y2 - tb_area_1.y1))
 
-    # If areas are not consecutive or with two much separation, not coherent
+    if max(len(tb_area_1.whitespaces), len(tb_area_2.whitespaces)) < 4:
+        return False
+
+    # If areas are not consecutive or with too much separation, not coherent
     if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 3 * median_line_sep:
         return False
 
@@ -183,6 +186,7 @@ def get_table_segments(segment: ImageSegment, char_length: float, median_line_se
         tb_areas_gps[-1].append(tb_area)
         
     # Create image segments corresponding to potential table
-    table_segments = [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps]
+    table_segments = [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps
+                      if len(tb_area_gp) > 1 or len(tb_area_gp[0].whitespaces) > 3]
 
     return table_segments

@@ -39,6 +39,13 @@ def test_get_table_areas():
                                           Cell(x1=40, y1=25, x2=50, y2=35),
                                           Cell(x1=60, y1=25, x2=64, y2=35)],
                              position=2),
+                ImageSegment(x1=6, y1=40, x2=64, y2=50,
+                             elements=[Cell(x1=10, y1=40, x2=20, y2=50),
+                                       Cell(x1=50, y1=40, x2=60, y2=50)],
+                             whitespaces=[Cell(x1=6, y1=40, x2=10, y2=50),
+                                          Cell(x1=20, y1=40, x2=50, y2=50),
+                                          Cell(x1=60, y1=40, x2=64, y2=50)],
+                             position=3),
                 ImageSegment(x1=6, y1=100, x2=64, y2=110,
                              elements=[Cell(x1=10, y1=100, x2=20, y2=110),
                                        Cell(x1=30, y1=100, x2=40, y2=110),
@@ -56,8 +63,7 @@ def test_get_table_areas():
                                           Cell(x1=20, y1=200, x2=30, y2=210),
                                           Cell(x1=40, y1=200, x2=50, y2=210),
                                           Cell(x1=60, y1=200, x2=64, y2=210)],
-                             position=5)
-                ]
+                             position=5)]
 
     assert result == expected
 
@@ -162,7 +168,14 @@ def test_get_table_segments():
                                                                     Cell(x1=20, y1=25, x2=30, y2=35),
                                                                     Cell(x1=40, y1=25, x2=50, y2=35),
                                                                     Cell(x1=60, y1=25, x2=64, y2=35)],
-                                                       position=2)]),
+                                                       position=2),
+                                          ImageSegment(x1=6, y1=40, x2=64, y2=50,
+                                                       elements=[Cell(x1=10, y1=40, x2=20, y2=50),
+                                                                 Cell(x1=50, y1=40, x2=60, y2=50)],
+                                                       whitespaces=[Cell(x1=6, y1=40, x2=10, y2=50),
+                                                                    Cell(x1=20, y1=40, x2=50, y2=50),
+                                                                    Cell(x1=60, y1=40, x2=64, y2=50)],
+                                                       position=3)]),
                 TableSegment(table_areas=[ImageSegment(x1=6, y1=100, x2=64, y2=110,
                                                        elements=[Cell(x1=10, y1=100, x2=20, y2=110),
                                                                  Cell(x1=30, y1=100, x2=40, y2=110),

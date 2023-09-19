@@ -1,5 +1,5 @@
 # coding: utf-8
-from typing import List
+from typing import List, Optional
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -10,7 +10,7 @@ from img2table.tables.processing.borderless_tables.table.table_creation import g
 
 
 def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], lines: List[Line],
-                   contours: List[Cell]) -> Table:
+                   contours: List[Cell]) -> Optional[Table]:
     """
     Identify table from column delimiters and rows
     :param columns: column delimiters group
@@ -24,9 +24,12 @@ def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], lines: L
                       table_rows=table_rows,
                       contours=contours)
 
-    # Process headers in table
-    table_headers = process_headers(table=table,
-                                    lines=lines,
-                                    elements=contours)
+    if table:
+        # Process headers in table
+        table_headers = process_headers(table=table,
+                                        lines=lines,
+                                        elements=contours)
 
-    return table_headers
+        return table_headers
+
+    return None
