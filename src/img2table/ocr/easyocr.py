@@ -3,7 +3,6 @@
 from typing import List, Tuple
 
 import polars as pl
-from easyocr import Reader
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
@@ -19,6 +18,11 @@ class EasyOCR(OCRInstance):
         Initialization of EasyOCR instance
         :param lang: lang parameter used in EasyOCR
         """
+        try:
+            from easyocr import Reader
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[easyocr]' to use this class.")
+
         if isinstance(lang, list):
             if all([isinstance(l, str) for l in lang]):
                 self.lang = lang

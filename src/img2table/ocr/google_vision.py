@@ -2,6 +2,7 @@
 import base64
 import binascii
 import os
+import typing
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional, Dict, Tuple
 
@@ -9,11 +10,13 @@ import cv2
 import numpy as np
 import polars as pl
 import requests
-from google.cloud import vision, vision_v1
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
+
+if typing.TYPE_CHECKING:
+    from google.cloud import vision_v1
 
 
 class VisionContent:
@@ -140,11 +143,16 @@ class VisionAPIContent(VisionContent):
         Document content class from Google Vision using direct requests to endpoint
         :param timeout: requests timeout in seconds
         """
+        try:
+            from google.cloud import vision
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.")
+
         super(VisionAPIContent, self).__init__(timeout=timeout)
         self.client = vision.ImageAnnotatorClient()
 
     @staticmethod
-    def map_response(response: vision_v1.types.BatchAnnotateImagesResponse,
+    def map_response(response: "vision_v1.types.BatchAnnotateImagesResponse",
                      shapes: List[Tuple[int, int]]) -> List[List[Dict]]:
         """
         Extract data from API endpoint response object
@@ -152,6 +160,8 @@ class VisionAPIContent(VisionContent):
         :param shapes: list of images shapes
         :return: list of OCR elements by pages
         """
+        from google.cloud import vision_v1
+
         elements = list()
         for id_page, page in enumerate(response.responses):
             # Get image shape
@@ -219,6 +229,11 @@ class VisionAPIContent(VisionContent):
         :param document: Document object
         :return: list of OCR elements by page
         """
+        try:
+            from google.cloud import vision_v1
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.")
+
         reqs, shapes = list(), list()
         for img in document.images:
             # Create image object

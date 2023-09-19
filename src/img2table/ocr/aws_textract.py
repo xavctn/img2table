@@ -2,7 +2,6 @@
 
 from typing import List, Iterator, Optional, Dict
 
-import boto3
 import cv2
 import numpy as np
 import polars as pl
@@ -25,6 +24,11 @@ class TextractOCR(OCRInstance):
         :param aws_session_token: AWS temporary session token
         :param region: AWS server region
         """
+        try:
+            import boto3
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[aws]' to use this class.")
+
         if not any(map(lambda v: v is None, [aws_access_key_id, aws_secret_access_key, aws_session_token])):
             self.client = boto3.client(service_name='textract',
                                        aws_access_key_id=aws_access_key_id,
