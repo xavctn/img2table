@@ -4,12 +4,12 @@ import json
 import cv2
 
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables.image_segmentation import get_segment_elements
+from img2table.tables.processing.borderless_tables.layout import get_segment_elements
 from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 def test_get_segment_elements():
-    img = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
     img_segments = [ImageSegment(x1=61, y1=92, x2=390, y2=652)]
 
     with open("test_data/lines.json", 'r') as f:
@@ -23,4 +23,4 @@ def test_get_segment_elements():
                                   char_length=4.66,
                                   median_line_sep=16)
 
-    assert len(result[0].elements) == 67
+    assert len(result[0].elements) == 5

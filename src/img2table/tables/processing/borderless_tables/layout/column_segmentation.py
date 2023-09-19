@@ -11,6 +11,7 @@ import numpy as np
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
+from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 @dataclass
@@ -262,7 +263,7 @@ def identify_remaining_segments(existing_segments: List[Cell], height: int, widt
 
 
 def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: float,
-                          contours: List[Cell]) -> List[Cell]:
+                          contours: List[Cell]) -> List[ImageSegment]:
     """
     Create image segments by identifying columns
     :param img: image array
@@ -278,7 +279,7 @@ def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: 
 
     # If no column group has been found, return a segment corresponding to the image
     if len(column_groups) == 0:
-        return [Cell(x1=0, y1=0, x2=img.shape[1], y2=img.shape[0])]
+        return [ImageSegment(x1=0, y1=0, x2=img.shape[1], y2=img.shape[0])]
 
     # Identify segments outside of columns
     top_segment = Cell(x1=0,
@@ -314,6 +315,10 @@ def segment_image_columns(img: np.ndarray, char_length: float, median_line_sep: 
                              if c.x1 >= seg.x1 and c.x2 <= seg.x2 and c.y1 >= seg.y1 and c.y2 <= seg.y2]
 
         if included_contours:
-            final_segments.append(seg)
+            column_seg = ImageSegment(x1=max(seg.x1 - int(char_length), 0),
+                                      y1=max(seg.y1 - int(char_length), 0),
+                                      x2=min(seg.x2 + int(char_length), img.shape[1]),
+                                      y2=min(seg.y2 + int(char_length), img.shape[0]))
+            final_segments.append(column_seg)
 
     return final_segments

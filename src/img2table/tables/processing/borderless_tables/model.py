@@ -12,6 +12,12 @@ class ImageSegment:
     x2: int
     y2: int
     elements: List[Cell] = None
+    whitespaces: List[Cell] = None
+    position: int = None
+
+    @property
+    def width(self) -> int:
+        return self.x2 - self.x1
 
     @property
     def height(self) -> int:
@@ -20,8 +26,40 @@ class ImageSegment:
     def set_elements(self, elements: List[Cell]):
         self.elements = elements
 
+    def set_whitespaces(self, whitespaces: List[Cell]):
+        self.whitespaces = whitespaces
+
     def __hash__(self):
         return hash(repr(self))
+
+
+@dataclass
+class TableSegment:
+    table_areas: List[ImageSegment]
+
+    @property
+    def x1(self) -> int:
+        return min([tb_area.x1 for tb_area in self.table_areas])
+
+    @property
+    def y1(self) -> int:
+        return min([tb_area.y1 for tb_area in self.table_areas])
+
+    @property
+    def x2(self) -> int:
+        return max([tb_area.x2 for tb_area in self.table_areas])
+
+    @property
+    def y2(self) -> int:
+        return max([tb_area.y2 for tb_area in self.table_areas])
+
+    @property
+    def elements(self) -> List[Cell]:
+        return [el for tb_area in self.table_areas for el in tb_area.elements]
+
+    @property
+    def whitespaces(self) -> List[Cell]:
+        return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
 
 
 @dataclass
@@ -120,6 +158,12 @@ class TableRow:
 
     def merge(self, other: "TableRow") -> "TableRow":
         return TableRow(cells=self.cells + other.cells)
+
+    def set_y_top(self, y_value: int):
+        self.cells = [Cell(x1=c.x1, y1=y_value, x2=c.x2, y2=c.y2) for c in self.cells]
+
+    def set_y_bottom(self, y_value: int):
+        self.cells = [Cell(x1=c.x1, y1=c.y1, x2=c.x2, y2=y_value) for c in self.cells]
 
     def __eq__(self, other):
         if isinstance(other, TableRow):

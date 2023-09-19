@@ -7,11 +7,12 @@ from img2table.tables.processing.bordered_tables.tables import cluster_to_table
 from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
 
-def get_table(columns: DelimiterGroup, table_rows: List[TableRow]) -> Table:
+def get_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: List[Cell]) -> Table:
     """
     Create table object from column delimiters and rows
     :param columns: column delimiters group
     :param table_rows: list of table rows
+    :param contours: list of image contours
     :return: Table object
     """
     # Compute vertical delimiters from rows
@@ -39,6 +40,6 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow]) -> Table:
             list_cells.append(cell)
 
     # Create table object
-    table = cluster_to_table(cluster_cells=list_cells, elements=columns.elements)
+    table = cluster_to_table(cluster_cells=list_cells, elements=contours)
 
-    return table
+    return table if table.nb_columns >= 3 and table.nb_rows >= 3 else None

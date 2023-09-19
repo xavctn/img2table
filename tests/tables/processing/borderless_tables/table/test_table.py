@@ -14,6 +14,9 @@ def test_identify_table():
     delimiter_group = DelimiterGroup(delimiters=[Cell(**c) for c in data.get('delimiters')],
                                      elements=[Cell(**c) for c in data.get('elements')])
 
+    with open("test_data/contours.json", 'r') as f:
+        contours = [Cell(**el) for el in json.load(f)]
+
     with open("test_data/rows.json", "r") as f:
         table_rows = [TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)]
 
@@ -23,7 +26,8 @@ def test_identify_table():
 
     result = identify_table(columns=delimiter_group,
                             table_rows=table_rows,
-                            lines=lines)
+                            lines=lines,
+                            contours=contours)
 
     assert result.nb_rows == 16
     assert result.nb_columns == 8

@@ -53,7 +53,7 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     :return: processed table
     """
     # Identify elements corresponding to each cell
-    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.9)]
+    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.6)]
                           for c in set([c for row in table.items for c in row.items])
                           }
 
@@ -65,7 +65,7 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     table.remove_rows(row_ids=empty_rows)
 
     # Update elements corresponding to each cell
-    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.9)]
+    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.6)]
                           for c in set([c for row in table.items for c in row.items])
                           }
 
