@@ -7,6 +7,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.layout.column_segmentation import same_column, \
     coherent_columns, intertwined_col_groups, ColumnGroup, get_image_columns, identify_remaining_segments, \
     segment_image_columns
+from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 def test_same_column():
@@ -74,7 +75,7 @@ def test_identify_remaining_segments():
 def test_segment_image_columns():
     img = cv2.imread("test_data/test.bmp", 0)
 
-    with open("test_data/contours.json", 'r') as f:
+    with open("test_data/contours_columns.json", 'r') as f:
         contours = [Cell(**el) for el in json.load(f)]
 
     result = segment_image_columns(img=img,
@@ -82,5 +83,5 @@ def test_segment_image_columns():
                                    char_length=4.66,
                                    contours=contours)
 
-    assert result == [Cell(x1=61, y1=91, x2=390, y2=961),
-                      Cell(x1=390, y1=91, x2=750, y2=961)]
+    assert result == [ImageSegment(x1=57, y1=87, x2=394, y2=965),
+                      ImageSegment(x1=386, y1=87, x2=754, y2=965)]

@@ -2,16 +2,20 @@
 from typing import List
 
 from img2table.tables.objects.cell import Cell
+from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.table.headers import process_headers
 from img2table.tables.processing.borderless_tables.table.table_creation import get_table
 
 
-def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: List[Cell]) -> Table:
+def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], lines: List[Line],
+                   contours: List[Cell]) -> Table:
     """
     Identify table from column delimiters and rows
     :param columns: column delimiters group
     :param table_rows: list of table rows corresponding to columns
+    :param lines: list of lines in image
     :param contours: list of image contours
     :return: Table object
     """
@@ -20,4 +24,9 @@ def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], contours
                       table_rows=table_rows,
                       contours=contours)
 
-    return table
+    # Process headers in table
+    table_headers = process_headers(table=table,
+                                    lines=lines,
+                                    elements=contours)
+
+    return table_headers
