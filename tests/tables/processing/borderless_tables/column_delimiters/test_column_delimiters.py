@@ -4,22 +4,29 @@ import json
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables import identify_column_groups
-from img2table.tables.processing.borderless_tables.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment, DelimiterGroup
 
 
 def test_identify_column_groups():
-    with open("test_data/image_segment.json", "r") as f:
+    with open("test_data/table_segment.json", "r") as f:
         data = json.load(f)
-    img_segment = ImageSegment(x1=data.get('x1'),
-                               y1=data.get('y1'),
-                               x2=data.get('x2'),
-                               y2=data.get('y2'),
-                               elements=[Cell(**c) for c in data.get('elements')])
 
-    result = identify_column_groups(segment=img_segment,
-                                    char_length=7.24)
+    table_segment = TableSegment(table_areas=[
+        ImageSegment(x1=tb.get('x1'), y1=tb.get('y1'), x2=tb.get('x2'), y2=tb.get('y2'),
+                     elements=[Cell(**el) for el in tb.get('elements')],
+                     whitespaces=[Cell(**el) for el in tb.get('whitespaces')],
+                     position=tb.get('position'))
+        for tb in data.get("table_areas")
+    ])
 
-    assert len(result) == 1
-    assert len(result[0].delimiters) == 10
-    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (53, 45, 1277, 1147)
-    assert len(result[0].elements) == 164
+    result = identify_column_groups(table_segment=table_segment,
+                                    char_length=14,
+                                    median_line_sep=85.75)
+
+    with open("test_data/delimiter_group.json", "r") as f:
+        data = json.load(f)
+        expected = DelimiterGroup(delimiters=[Cell(**d) for d in data.get('delimiters')],
+                                  elements=[Cell(**el) for el in data.get('elements')])
+
+    assert result == expected
+

@@ -59,7 +59,7 @@ def corresponding_whitespaces(ws_1: Cell, ws_2: Cell, char_length: float, median
     :param median_line_sep: median line separation
     :return: boolean indicating if whitespaces can correspond vertically
     """
-    if min(abs(ws_2.y2 - ws_2.y1), abs(ws_1.y2 - ws_2.y1),
+    if min(abs(ws_2.y2 - ws_1.y1), abs(ws_1.y2 - ws_2.y1),
            abs(ws_1.y1 - ws_2.y1), abs(ws_2.y2 - ws_1.y2)) > 3 * median_line_sep:
         return False
 
@@ -94,21 +94,23 @@ def identify_missing_vertical_whitespaces(unused_ws: List[Cell], char_length: fl
     return new_ws
 
 
-def distance_to_elements(x: int, elements: List[Cell]) -> float:
+def distance_to_elements(x: int, elements: List[Cell]) -> Tuple[int, float]:
     """
     Compute distance metrics of elements to an x value
     :param x: x value
     :param elements: elements
-    :return: distance
+    :return: distance / number of avoided elements
     """
     distance_elements = 0
+    number_avoided_elements = 0
     for el in elements:
         if el.x1 <= x <= el.x2:
             distance_elements -= min(abs(el.x1 - x), abs(el.x2 - x)) ** 1 / 3
         else:
+            number_avoided_elements += 1
             distance_elements += min(abs(el.x1 - x), abs(el.x2 - x)) ** 1 / 3
 
-    return distance_elements
+    return number_avoided_elements, distance_elements
 
 
 def get_coherent_whitespace_position(ws: Cell, elements: List[Cell]) -> Cell:
