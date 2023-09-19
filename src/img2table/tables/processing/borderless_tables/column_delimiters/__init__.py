@@ -32,3 +32,5 @@ def identify_column_groups(table_segment: TableSegment, char_length: float,
 
     if len(delimiter_group.delimiters) >= 4 and len(delimiter_group.elements) > 0:
         return delimiter_group
+    else:
+        return None

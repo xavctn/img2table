@@ -30,6 +30,11 @@ def identify_table(columns: DelimiterGroup, table_rows: List[TableRow], lines: L
                                         lines=lines,
                                         elements=contours)
 
+        # Reset table content
+        for id_row, row in enumerate(table_headers.items):
+            for id_col, col in enumerate(row.items):
+                table_headers.items[id_row].items[id_col].content = None
+
         return table_headers
 
     return None
