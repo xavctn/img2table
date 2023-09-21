@@ -102,7 +102,7 @@ class Document(Validations):
         workbook = xlsxwriter.Workbook(dest, {'in_memory': True})
 
         # Create generic cell format
-        cell_format = workbook.add_format({'align': 'center', 'valign': 'vcenter'})
+        cell_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'text_wrap': True})
         cell_format.set_border()
 
         # For each extracted table, create a corresponding worksheet and populate it
