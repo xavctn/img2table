@@ -17,7 +17,7 @@ def get_coherent_ws_height(vertical_ws: List[Cell], unused_ws: List[Cell],
     :return: tuple containing list of vertical whitespaces and list of unused whitespaces resized
     """
     # Define relevant ws
-    relevant_ws = [ws for ws in unused_ws if ws.height >= 0.75 * max([w.height for w in vertical_ws])]
+    relevant_ws = [ws for ws in unused_ws if ws.height >= 0.66 * max([w.height for w in vertical_ws])]
     relevant_ws += vertical_ws
 
     # Group elements in rows
