@@ -84,7 +84,7 @@ def identify_missing_vertical_whitespaces(unused_ws: List[Cell], char_length: fl
     new_ws = list()
     # Check if clusters can create a new vertical whitespace
     for cl in ws_clusters:
-        if max([ws.y2 for ws in cl]) - min([ws.y1 for ws in cl]) >= 0.75 * ref_height:
+        if max([ws.y2 for ws in cl]) - min([ws.y1 for ws in cl]) >= 0.66 * ref_height:
             v_ws = Cell(x1=min([ws.x1 for ws in cl]),
                         y1=min([ws.y1 for ws in cl]),
                         x2=max([ws.x2 for ws in cl]),

@@ -105,7 +105,7 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
         return []
 
     # Identify if rows are horizontal
-    horizontal = np.mean([l.horizontal for l in lines]) > 0.5
+    horizontal = np.average([l.horizontal for l in lines], weights=[l.length for l in lines]) > 0.5
 
     # If not horizontal, transpose all rows
     if not horizontal:
@@ -278,7 +278,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     
     # Get lines together with elements that intersect the line
     line_elements = (df_words_lines.filter(pl.col('intersection'))
-                     .groupby(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
+                     .group_by(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
                      .agg(pl.struct("x1", "y1", "x2", "y2").alias('intersecting'))
                      .join(df_words_lines.select(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"]),
                            on=["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"],

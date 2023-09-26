@@ -73,11 +73,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
 
         if area_elements:
             # Identify vertical whitespaces in the area
-            v_ws = get_relevant_vertical_whitespaces(segment=seg_area, char_length=char_length)
-            v_ws = [ws for ws in v_ws if
-                    (ws.height >= max(0.25 * seg_area.height, char_length) and ws.area > 0
-                     and (ws.y1 == seg_area.y1 or ws.y2 == seg_area.y2))
-                    or (ws.height >= 0.5 * max(0.55 * seg_area.height, 2 * char_length))]
+            v_ws = get_relevant_vertical_whitespaces(segment=seg_area, char_length=char_length, pct=0.5)
 
             # Identify number of whitespaces that are not on borders
             middle_ws = [ws for ws in v_ws if ws.x1 != seg_area.x1 and ws.x2 != seg_area.x2]

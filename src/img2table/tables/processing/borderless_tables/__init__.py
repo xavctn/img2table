@@ -50,8 +50,7 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     table_segments = segment_image(img=img,
                                    lines=lines,
                                    char_length=char_length,
-                                   median_line_sep=median_line_sep,
-                                   contours=contours)
+                                   median_line_sep=median_line_sep)
 
     # In each segment, create groups of rows and identify tables
     tables = list()
