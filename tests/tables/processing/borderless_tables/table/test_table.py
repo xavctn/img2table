@@ -27,7 +27,9 @@ def test_identify_table():
     result = identify_table(columns=delimiter_group,
                             table_rows=table_rows,
                             lines=lines,
-                            contours=contours)
+                            contours=contours,
+                            median_line_sep=16,
+                            char_length=4.66)
 
     assert result.nb_rows == 16
     assert result.nb_columns == 8

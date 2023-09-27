@@ -177,34 +177,6 @@ def is_column_section(ws_group: List[Cell]) -> bool:
     return max(col_widths) / min(col_widths) <= 1.5
 
 
-def intertwined_col_groups(col_gp: List[Cell], columns: List[Cell]) -> bool:
-    """
-    Identify if a column is intertwined within a column group
-    :param col_gp: column group
-    :param columns: list of columns
-    :return: boolean if a column is intertwined within a column group
-    """
-    # Get column group coordinates
-    x1, x2 = min([ws.x2 for ws in col_gp]), max([ws.x1 for ws in col_gp])
-    y1, y2 = min([ws.y1 for ws in col_gp]), max([ws.y2 for ws in col_gp])
-
-    # Get columns that do not belong to column group
-    other_cols = [col for col in columns if col not in col_gp]
-
-    for col in other_cols:
-        # Check if column is intertwined
-        y_overlap = min(y2, col.y2) - max(y1, col.y1)
-        y_matches = y_overlap / min(y2 - y1, col.height) >= 0.1
-
-        x_overlap = min(x2, col.x2) - max(x1, col.x1)
-        x_matches = x_overlap / min(x2 - x1, col.width) >= 0.2
-
-        if x_matches and y_matches:
-            return True
-
-    return False
-
-
 def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell]) -> List[List[Cell]]:
     """
     Identify groups of whitespaces that correspond to document columns
@@ -238,11 +210,6 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
     for col_gp in seq:
         if not any([set(col_gp).intersection(set(gp)) == set(col_gp) for gp in dedup_col_groups]):
             dedup_col_groups.append(col_gp)
-
-    # Remove groups if there are intertwined columns within it
-    dedup_col_groups = [col_gp for col_gp in dedup_col_groups
-                        if not intertwined_col_groups(col_gp=col_gp,
-                                                      columns=vertical_ws)]
 
     return dedup_col_groups
 
