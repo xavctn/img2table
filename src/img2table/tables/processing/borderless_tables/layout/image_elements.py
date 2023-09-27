@@ -6,21 +6,19 @@ import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables.model import ImageSegment
-from img2table.tables.processing.common import is_contained_cell, merge_contours
+from img2table.tables.processing.common import merge_contours
 
 
-def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[ImageSegment], char_length: float,
-                         median_line_sep: float, blur_size: int = 3) -> List[ImageSegment]:
+def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
+                       median_line_sep: float, blur_size: int = 3) -> List[Cell]:
     """
-    Identify image elements that correspond to each segment
+    Identify image elements
     :param img: image array
     :param lines: list of image rows
-    :param img_segments: list of ImageSegment objects
     :param char_length: average character length
     :param median_line_sep: median line separation
     :param blur_size: kernel size for blurring operation
-    :return: list of ImageSegment objects with corresponding elements
+    :return: list of image elements
     """
     # Reprocess image
     blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
@@ -52,9 +50,4 @@ def get_segment_elements(img: np.ndarray, lines: List[Line], img_segments: List[
     elements = merge_contours(contours=elements,
                               vertically=None)
 
-    # Get elements corresponding to each image segment
-    for seg in img_segments:
-        segment_elements = [cnt for cnt in elements if is_contained_cell(inner_cell=cnt, outer_cell=seg)]
-        seg.set_elements(elements=segment_elements)
-
-    return [seg for seg in img_segments if len(seg.elements) > 0]
+    return elements

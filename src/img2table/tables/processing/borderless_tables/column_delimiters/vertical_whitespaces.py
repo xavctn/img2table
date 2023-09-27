@@ -133,7 +133,7 @@ def get_vertical_whitespaces(table_segment: TableSegment, char_length: float) ->
     # Filter whitespaces by height
     max_height = max([ws.height for ws in vertical_ws])
     vertical_ws = [ws for ws in vertical_ws
-                   if (ws.height >= 0.75 * max_height and ws.width >= 0.5 * char_length) or ws.height == max_height]
+                   if (ws.height >= 0.66 * max_height and ws.width >= 0.5 * char_length) or ws.height == max_height]
 
     # Identify segment whitespaces that are unused
     unused_ws = [ws for ws in table_segment.whitespaces

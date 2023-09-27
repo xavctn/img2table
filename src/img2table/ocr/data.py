@@ -65,7 +65,7 @@ class OCRDataframe:
 
         # Group text by parents
         df_text_parent = (df_words_contained
-                          .groupby('parent')
+                          .group_by('parent')
                           .agg([pl.col('x1').min(),
                                 pl.col('x2').max(),
                                 pl.col('y1').min(),
@@ -131,15 +131,15 @@ class OCRDataframe:
 
         # Group text by parent
         df_text_parent = (df_words_contained
-                          .groupby(['row', 'col', 'parent'])
+                          .group_by(['row', 'col', 'parent'])
                           .agg([pl.col('x1').min(),
                                 pl.col('x2').max(),
                                 pl.col('y1').min(),
                                 pl.col('y2').max(),
-                                pl.col('value').apply(lambda x: ' '.join(x), return_dtype=str).alias('value')])
+                                pl.col('value').map_elements(lambda x: ' '.join(x), return_dtype=str).alias('value')])
                           .sort([pl.col("row"), pl.col("col"), pl.col('y1'), pl.col('x1')])
-                          .groupby(['row', 'col'])
-                          .agg(pl.col('value').apply(lambda x: '\n'.join(x).strip(), return_dtype=str).alias('text'))
+                          .group_by(['row', 'col'])
+                          .agg(pl.col('value').map_elements(lambda x: '\n'.join(x).strip(), return_dtype=str).alias('text'))
                           )
 
         # Implement found values to table cells content

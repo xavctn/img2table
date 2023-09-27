@@ -17,7 +17,7 @@ def get_coherent_ws_height(vertical_ws: List[Cell], unused_ws: List[Cell],
     :return: tuple containing list of vertical whitespaces and list of unused whitespaces resized
     """
     # Define relevant ws
-    relevant_ws = [ws for ws in unused_ws if ws.height >= 0.75 * max([w.height for w in vertical_ws])]
+    relevant_ws = [ws for ws in unused_ws if ws.height >= 0.66 * max([w.height for w in vertical_ws])]
     relevant_ws += vertical_ws
 
     # Group elements in rows
@@ -84,7 +84,7 @@ def identify_missing_vertical_whitespaces(unused_ws: List[Cell], char_length: fl
     new_ws = list()
     # Check if clusters can create a new vertical whitespace
     for cl in ws_clusters:
-        if max([ws.y2 for ws in cl]) - min([ws.y1 for ws in cl]) >= 0.75 * ref_height:
+        if max([ws.y2 for ws in cl]) - min([ws.y1 for ws in cl]) >= 0.66 * ref_height:
             v_ws = Cell(x1=min([ws.x1 for ws in cl]),
                         y1=min([ws.y1 for ws in cl]),
                         x2=max([ws.x2 for ws in cl]),

@@ -3,41 +3,38 @@ from typing import List
 
 import numpy as np
 
-from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables.layout.column_segmentation import segment_image_columns
-from img2table.tables.processing.borderless_tables.layout.segment_elements import get_segment_elements
+from img2table.tables.processing.borderless_tables.layout.column_segments import segment_image_columns
+from img2table.tables.processing.borderless_tables.layout.image_elements import get_image_elements
 from img2table.tables.processing.borderless_tables.layout.table_segments import get_table_segments
-from img2table.tables.processing.borderless_tables.model import TableSegment
+from img2table.tables.processing.borderless_tables.model import TableSegment, ImageSegment
 
 
-def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
-                  contours: List[Cell]) -> List[TableSegment]:
+def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[TableSegment]:
     """
     Segment image and its elements
     :param img: image array
     :param lines: list of Line objects of the image
     :param char_length: average character length
     :param median_line_sep: median line separation
-    :param contours: list of image contours
     :return: list of ImageSegment objects with corresponding elements
     """
-    # Segment image using columns
-    column_segments = segment_image_columns(img=img,
-                                            median_line_sep=median_line_sep,
-                                            char_length=char_length,
-                                            contours=contours)
+    # Identify image elements
+    img_elements = get_image_elements(img=img,
+                                      lines=lines,
+                                      char_length=char_length,
+                                      median_line_sep=median_line_sep)
 
-    # Set segment elements
-    column_segments = get_segment_elements(img=img,
-                                           lines=lines,
-                                           img_segments=column_segments,
-                                           char_length=char_length,
-                                           median_line_sep=median_line_sep,
-                                           blur_size=3)
+    # Identify column segments
+    y_min, y_max = min([el.y1 for el in img_elements]), max([el.y2 for el in img_elements])
+    image_segment = ImageSegment(x1=0, y1=y_min, x2=img.shape[1], y2=y_max, elements=img_elements)
+
+    col_segments = segment_image_columns(image_segment=image_segment,
+                                         char_length=char_length,
+                                         lines=lines)
 
     # Within each column, identify segments that can correspond to tables
-    tb_segments = [table_segment for col_segment in column_segments
+    tb_segments = [table_segment for col_segment in col_segments
                    for table_segment in get_table_segments(segment=col_segment,
                                                            char_length=char_length,
                                                            median_line_sep=median_line_sep)

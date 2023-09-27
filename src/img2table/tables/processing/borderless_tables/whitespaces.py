@@ -41,20 +41,23 @@ def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool
 
         if rng_elements:
             # Check top and bottom gaps
-            if rng_elements[0].y1 - segment.y1 >= pct * segment.height:
+            if rng_elements[0].y1 - y_min >= pct * (y_max - y_min):
                 v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=rng_elements[0].y1))
-            if segment.y2 - rng_elements[-1].y2 >= pct * segment.height:
+            if y_max - rng_elements[-1].y2 >= pct * (y_max - y_min):
                 v_whitespaces.append(Cell(x1=x_min, y1=rng_elements[-1].y2, x2=x_max, y2=segment.y2))
 
             # Check middle gaps
             for el_top, el_bottom in zip(rng_elements, rng_elements[1:]):
-                if el_bottom.y1 - el_top.y2 >= pct * segment.height:
+                if el_bottom.y1 - el_top.y2 >= pct * (y_max - y_min):
                     v_whitespaces.append(Cell(x1=x_min, y1=el_top.y2, x2=x_max, y2=el_bottom.y1))
         else:
             v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=segment.y2))
 
     # Merge consecutive corresponding whitespaces
     v_whitespaces = sorted(v_whitespaces, key=lambda w: (w.y1, w.y2, w.x1))
+
+    if len(v_whitespaces) == 0:
+        return []
 
     seq = iter(v_whitespaces)
     merged_v_whitespaces = [[next(seq)]]

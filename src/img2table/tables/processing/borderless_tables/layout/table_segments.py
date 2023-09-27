@@ -73,9 +73,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
 
         if area_elements:
             # Identify vertical whitespaces in the area
-            v_ws = get_relevant_vertical_whitespaces(segment=seg_area, char_length=char_length)
-            v_ws = [ws for ws in v_ws if ws.height >= max(0.25 * seg_area.height, char_length) and ws.area > 0
-                    and (ws.y1 == seg_area.y1 or ws.y2 == seg_area.y2)]
+            v_ws = get_relevant_vertical_whitespaces(segment=seg_area, char_length=char_length, pct=0.5)
 
             # Identify number of whitespaces that are not on borders
             middle_ws = [ws for ws in v_ws if ws.x1 != seg_area.x1 and ws.x2 != seg_area.x2]
@@ -125,16 +123,19 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
         dict_ws_coherency = {
             idx_1: [ws_2 for ws_2 in tb_area_2.whitespaces
                     if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) > 0]
-            for idx_1, ws_1 in enumerate(tb_area_1.whitespaces) if ws_1.width >= char_length
+            for idx_1, ws_1 in enumerate(tb_area_1.whitespaces) if ws_1.width >= 0.5 * char_length
         }
     else:
         dict_ws_coherency = {
             idx_2: [ws_1 for ws_1 in tb_area_1.whitespaces
                     if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) > 0]
-            for idx_2, ws_2 in enumerate(tb_area_2.whitespaces) if ws_2.width >= char_length
+            for idx_2, ws_2 in enumerate(tb_area_2.whitespaces) if ws_2.width >= 0.5 * char_length
         }
 
-    return np.mean([int(len(v) == 1) for v in dict_ws_coherency.values()]) >= 0.75
+    # Compute threshold for coherency
+    threshold = 1 if min(len(tb_area_1.whitespaces), len(tb_area_2.whitespaces)) < 4 else 0.75
+
+    return np.mean([int(len(v) == 1) for v in dict_ws_coherency.values()]) >= threshold
 
 
 def table_segment_from_group(table_segment_group: List[ImageSegment]) -> ImageSegment:

@@ -69,7 +69,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
     # Identify relevant contours: no contours is overlapping it
     deleted_contours = df_cross.filter(pl.col('overlaps')).select('id').unique()
     df_overlap = (df_cross.filter(pl.col('overlaps'))
-                  .groupby(pl.col('id_right').alias('id'))
+                  .group_by(pl.col('id_right').alias('id'))
                   .agg(pl.min('x1').alias('x1_overlap'),
                        pl.max('x2').alias('x2_overlap'),
                        pl.min('y1').alias('y1_overlap'),
