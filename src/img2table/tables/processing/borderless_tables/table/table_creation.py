@@ -7,6 +7,31 @@ from img2table.tables.processing.bordered_tables.tables import cluster_to_table
 from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
 
+def get_coherent_columns_dimensions(columns: DelimiterGroup, table_rows: List[TableRow]) -> DelimiterGroup:
+    """
+    Identify columns that encapsulate at least one row
+    :param columns: column delimiters group
+    :param table_rows: list of table rows
+    :return: relevant columns according to table rows
+    """
+    original_delimiters = sorted(columns.delimiters, key=lambda delim: delim.x1 + delim.x2)
+
+    # Get horizontal dimensions of rows
+    x_min, x_max = min([row.x1 for row in table_rows]), max([row.x2 for row in table_rows])
+
+    # Identify left and right delimiters
+    left_delim = [delim for delim in original_delimiters if delim.x2 <= x_min][-1]
+    right_delim = [delim for delim in original_delimiters if delim.x1 >= x_max][0]
+
+    # Identify middle delimiters
+    middle_delimiters = [delim for delim in original_delimiters if delim.x1 >= x_min and delim.x2 <= x_max]
+
+    # Create new delimiter group
+    delim_group = DelimiterGroup(delimiters=[left_delim] + middle_delimiters + [right_delim])
+
+    return delim_group
+
+
 def get_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: List[Cell]) -> Table:
     """
     Create table object from column delimiters and rows
@@ -15,6 +40,10 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: Lis
     :param contours: list of image contours
     :return: Table object
     """
+    # Identify coherent column delimiters in relationship to table rows
+    coherent_columns = get_coherent_columns_dimensions(columns=columns,
+                                                       table_rows=table_rows)
+
     # Compute vertical delimiters from rows
     lines = sorted(table_rows, key=lambda l: l.v_center)
     y_min = min([line.y1 for line in lines])
@@ -25,7 +54,7 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: Lis
     list_cells = list()
     for y_top, y_bottom in zip(v_delims, v_delims[1:]):
         # Identify delimiters that correspond vertically to rows
-        line_delims = [d for d in columns.delimiters if
+        line_delims = [d for d in coherent_columns.delimiters if
                        min(d.y2, y_bottom) - max(d.y1, y_top) > (y_bottom - y_top) // 2]
 
         # Sort line delimiters and compute horizontal delimiters
