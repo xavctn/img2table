@@ -136,10 +136,10 @@ class OCRDataframe:
                                 pl.col('x2').max(),
                                 pl.col('y1').min(),
                                 pl.col('y2').max(),
-                                pl.col('value').apply(lambda x: ' '.join(x), return_dtype=str).alias('value')])
+                                pl.col('value').map_elements(lambda x: ' '.join(x), return_dtype=str).alias('value')])
                           .sort([pl.col("row"), pl.col("col"), pl.col('y1'), pl.col('x1')])
                           .group_by(['row', 'col'])
-                          .agg(pl.col('value').apply(lambda x: '\n'.join(x).strip(), return_dtype=str).alias('text'))
+                          .agg(pl.col('value').map_elements(lambda x: '\n'.join(x).strip(), return_dtype=str).alias('text'))
                           )
 
         # Implement found values to table cells content
