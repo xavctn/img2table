@@ -376,12 +376,12 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 
 > <h4>Attributes</h4>
 ><dl>
->    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L12" target="_self">BBox</a></code></dt>
+>    <dt>bbox : <code>BBox</code></dt>
 >    <dd style="font-style: italic;">Table bounding box</dd>
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
->    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L20" target="_self">TableCell</a></code> objects as values</dd>
+>    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code>TableCell</code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>
