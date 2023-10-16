@@ -176,13 +176,16 @@ At first use, relevant languages models will be downloaded.
 ```python
 from img2table.ocr import PaddleOCR
 
-ocr = PaddleOCR(lang="en")
+ocr = PaddleOCR(lang="en",
+                kw={"kwarg": kw_value, ...})
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>lang : str, optional, default <code>"en"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Paddle for text extraction, check <a href="https://github.com/Mushroomcat9998/PaddleOCR/blob/main/doc/doc_en/multi_languages_en.md#5-support-languages-and-abbreviations">documentation for available languages</a></dd>
+>    <dt>kw : dict, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the PaddleOCR constructor.</dd>
 ></dl>
 
 <br>
@@ -212,13 +215,16 @@ At first use, relevant languages models will be downloaded.
 ```python
 from img2table.ocr import EasyOCR
 
-ocr = EasyOCR(lang=["en"])
+ocr = EasyOCR(lang=["en"],
+              kw={"kwarg": kw_value, ...})
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>lang : list, optional, default <code>["en"]</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in EasyOCR for text extraction, check <a href="https://www.jaided.ai/easyocr">documentation for available languages</a></dd>
+>    <dt>kw : dict, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the EasyOCR <code>Reader</code> constructor.</dd>
 ></dl>
 
 <br>
@@ -235,13 +241,16 @@ the package documentation*
 ```python
 from img2table.ocr import DocTR
 
-ocr = DocTR(detect_language=False)
+ocr = DocTR(detect_language=False,
+            kw={"kwarg": kw_value, ...})
 ```
 
 > <h4>Parameters</h4>
 ><dl>
 >    <dt>detect_language : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Parameter indicating if language prediction is run on the document</dd>
+>    <dt>kw : dict, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the docTR <code>ocr_predictor</code> method.</dd>
 ></dl>
 
 <br>
@@ -367,12 +376,12 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 
 > <h4>Attributes</h4>
 ><dl>
->    <dt>bbox : <code><a href="/src/img2table/tables/objects/extraction.py#L12" target="_self">BBox</a></code></dt>
+>    <dt>bbox : <code>BBox</code></dt>
 >    <dd style="font-style: italic;">Table bounding box</dd>
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
->    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code><a href="/src/img2table/tables/objects/extraction.py#L20" target="_self">TableCell</a></code> objects as values</dd>
+>    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code>TableCell</code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 ></dl>

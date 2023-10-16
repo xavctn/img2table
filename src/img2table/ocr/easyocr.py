@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import polars as pl
 
@@ -13,10 +13,11 @@ class EasyOCR(OCRInstance):
     """
     EAsyOCR instance
     """
-    def __init__(self, lang: List[str] = ['en']):
+    def __init__(self, lang: List[str] = ['en'], kw: Dict = None):
         """
         Initialization of EasyOCR instance
         :param lang: lang parameter used in EasyOCR
+        :param kw: dictionary containing kwargs for EasyOCR constructor
         """
         try:
             from easyocr import Reader
@@ -29,7 +30,12 @@ class EasyOCR(OCRInstance):
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
-        self.reader = Reader(self.lang, verbose=False)
+        # Create kwargs dict for constructor
+        kw = kw or {}
+        kw["lang_list"] = self.lang
+        kw["verbose"] = kw.get("verbose") or False
+
+        self.reader = Reader(**kw)
 
     def content(self, document: Document) -> List[List[Tuple]]:
         # Get OCR of all images
