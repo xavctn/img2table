@@ -65,7 +65,9 @@ class PaddleOCR(OCRInstance):
             except PermissionError:
                 pass
 
-        return [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result.pop()]
+        # Get result
+        ocr_result = ocr_result.pop()
+        return [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result] if ocr_result else []
 
     def content(self, document: Document) -> List[List]:
         # Get OCR of all images
