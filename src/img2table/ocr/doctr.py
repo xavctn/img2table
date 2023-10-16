@@ -17,7 +17,7 @@ class DocTR(OCRInstance):
     """
     DocTR instance
     """
-    def __init__(self, detect_language: bool = False):
+    def __init__(self, detect_language: bool = False, kw: typing.Dict = None):
         """
         Initialization of EasyOCR instance
         """
@@ -26,7 +26,12 @@ class DocTR(OCRInstance):
         except ModuleNotFoundError:
             raise ModuleNotFoundError("Missing dependencies, please install doctr to use this class.")
 
-        self.model = ocr_predictor(pretrained=True, detect_language=detect_language)
+        # Create kwargs dict for constructor
+        kw = kw or {}
+        kw["detect_language"] = detect_language
+        kw["pretrained"] = kw.get("pretrained") if kw.get("pretrained") is not None else True
+
+        self.model = ocr_predictor(**kw)
 
     def content(self, document: Document) -> "doctr.io.elements.Document":
         # Get OCR of all images

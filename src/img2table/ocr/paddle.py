@@ -3,7 +3,7 @@
 import os
 import warnings
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import List, Dict
 
 import cv2
 import numpy as np
@@ -18,10 +18,11 @@ class PaddleOCR(OCRInstance):
     """
     Paddle-OCR instance
     """
-    def __init__(self, lang: str = 'en'):
+    def __init__(self, lang: str = 'en', kw: Dict = None):
         """
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle
+        :param kw: dictionary containing kwargs for PaddleOCR constructor
         """
         try:
             with warnings.catch_warnings():
@@ -35,7 +36,13 @@ class PaddleOCR(OCRInstance):
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
-        self.ocr = OCR(lang=self.lang, use_angle_cls=False, show_log=False)
+        # Create kwargs dict for constructor
+        kw = kw or {}
+        kw["lang"] = self.lang
+        kw["use_angle_cls"] = kw.get("use_angle_cls") or False
+        kw["show_log"] = kw.get("show_log") or False
+
+        self.ocr = OCR(**kw)
 
     def hocr(self, image: np.ndarray) -> List:
         """
