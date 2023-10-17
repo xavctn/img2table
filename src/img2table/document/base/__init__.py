@@ -1,15 +1,25 @@
 # coding: utf-8
 import io
+import typing
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Union, Iterator, Dict, List, Optional
+from typing import Union, Dict, List, Optional
 
 import numpy as np
 import xlsxwriter
 
 from img2table import Validations
 from img2table.tables.objects.extraction import ExtractedTable
+
+if typing.TYPE_CHECKING:
+    from img2table.ocr.base import OCRInstance
+    from img2table.tables.objects.table import Table
+
+
+@dataclass
+class MockDocument:
+    images: List[np.ndarray]
 
 
 @dataclass
@@ -31,6 +41,9 @@ class Document(Validations):
         # Initialize ocr_df
         self.ocr_df = None
 
+        if not hasattr(self, "pages"):
+            self.pages = None
+
         if isinstance(self.pages, list):
             self.pages = sorted(self.pages)
 
@@ -46,8 +59,51 @@ class Document(Validations):
                 return f.read()
 
     @property
-    def images(self) -> Iterator[np.ndarray]:
+    def images(self) -> List[np.ndarray]:
         raise NotImplementedError
+
+    def get_table_content(self, tables: Dict[int, List["Table"]], ocr: "OCRInstance",
+                          min_confidence: int) -> Dict[int, List[ExtractedTable]]:
+        """
+        Retrieve table content with OCR
+        :param tables: dictionary containing extracted tables by page
+        :param ocr: OCRInstance object used to extract table content
+        :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
+        :return: dictionary with page number as key and list of extracted tables as values
+        """
+        # Get pages where tables have been detected
+        table_pages = [k for k, v in tables.items() if len(v) > 0]
+
+        if (self.ocr_df is None and ocr is None) or len(table_pages) == 0:
+            return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
+
+        # Create document containing only pages
+        ocr_doc = MockDocument(images=[self.images[page] for page in table_pages])
+
+        # Get OCRDataFrame object
+        if self.ocr_df is None and ocr is not None:
+            self.ocr_df = ocr.of(document=ocr_doc)
+
+        # Retrieve table contents with ocr
+        for idx, page in enumerate(table_pages):
+            ocr_df_page = self.ocr_df.page(page_number=idx)
+            # Get table content
+            tables[page] = [table.get_content(ocr_df=ocr_df_page, min_confidence=min_confidence)
+                            for table in tables[page]]
+
+            # Filter relevant tables
+            tables[page] = [table for table in tables[page] if max(table.nb_rows, table.nb_columns) >= 2]
+
+            # Retrieve titles
+            from img2table.tables.processing.text.titles import get_title_tables
+            tables[page] = get_title_tables(img=self.images[page],
+                                            tables=tables[page],
+                                            ocr_df=ocr_df_page)
+
+        # Reset OCR
+        self.ocr_df = None
+
+        return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, borderless_tables: bool = False,
                        min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
@@ -59,24 +115,21 @@ class Document(Validations):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
         """
-        # If possible, apply ocr to document
-        if self.ocr_df is None and ocr is not None:
-            self.ocr_df = ocr.of(document=self)
-
         # Extract tables from document
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
-                                  ocr_df=self.ocr_df.page(page_number=idx) if self.ocr_df else None,
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows,
                                                                                 borderless_tables=borderless_tables)
                   for idx, img in enumerate(self.images)}
 
+        # Update table content with OCR if possible
+        tables = self.get_table_content(tables=tables,
+                                        ocr=ocr,
+                                        min_confidence=min_confidence)
+
         # If pages have been defined, modify tables keys
         if self.pages:
             tables = {self.pages[k]: v for k, v in tables.items()}
-
-        # Reset ocr_df attribute
-        self.ocr_df = None
 
         return tables
 
