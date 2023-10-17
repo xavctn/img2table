@@ -7,10 +7,8 @@ from typing import List
 import cv2
 import numpy as np
 
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.extraction import ExtractedTable
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
@@ -19,13 +17,11 @@ from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
 from img2table.tables.processing.prepare_image import prepare_image
-from img2table.tables.processing.text.titles import get_title_tables
 
 
 @dataclass
 class TableImage:
     img: np.ndarray
-    ocr_df: "OCRDataframe" = None
     min_confidence: int = 50
     char_length: float = None
     median_line_sep: float = None
@@ -90,12 +86,6 @@ class TableImage:
                                                tables=self.tables,
                                                contours=self.contours)
 
-        # If ocr_df is available, get tables content
-        if self.ocr_df is not None:
-            # Get content
-            self.tables = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
-                           for table in self.tables]
-
         self.tables = [tb for tb in self.tables if tb.nb_rows * tb.nb_columns >= 2]
 
     def extract_borderless_tables(self):
@@ -113,16 +103,10 @@ class TableImage:
                                                         contours=self.contours,
                                                         existing_tables=self.tables)
 
-            # If ocr_df is available, get tables content
-            if self.ocr_df is not None:
-                # Get content
-                borderless_tbs = [table.get_content(ocr_df=self.ocr_df, min_confidence=self.min_confidence)
-                                  for table in borderless_tbs]
-
             # Add to tables
             self.tables += [tb for tb in borderless_tbs if min(tb.nb_rows, tb.nb_columns) >= 2]
 
-    def extract_tables(self, implicit_rows: bool = False, borderless_tables: bool = False) -> List[ExtractedTable]:
+    def extract_tables(self, implicit_rows: bool = False, borderless_tables: bool = False) -> List[Table]:
         """
         Identify and extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are splitted
@@ -136,8 +120,4 @@ class TableImage:
             # Extract borderless tables
             self.extract_borderless_tables()
 
-        # If ocr_df is available, get tables titles
-        if self.ocr_df is not None:
-            self.tables = get_title_tables(img=self.img, tables=self.tables, ocr_df=self.ocr_df)
-
-        return [table.extracted_table for table in self.tables]
+        return self.tables
