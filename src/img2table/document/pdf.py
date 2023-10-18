@@ -62,7 +62,13 @@ class PDF(Document):
     def get_table_content(self, tables: Dict[int, List[Table]], ocr: "OCRInstance",
                           min_confidence: int) -> Dict[int, List[ExtractedTable]]:
         if not self._rotated and self.pdf_text_extraction:
+            # Get pages where tables have been detected
+            table_pages = [self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0]
+
+            # Create PDF object for OCR
+            pdf_ocr = PDF(src=self.bytes, pages=table_pages)
+
             # Try to get OCRDataframe from PDF
-            self.ocr_df = PdfOCR().of(document=self)
+            self.ocr_df = PdfOCR().of(document=pdf_ocr)
 
         return super(PDF, self).get_table_content(tables=tables, ocr=ocr, min_confidence=min_confidence)
