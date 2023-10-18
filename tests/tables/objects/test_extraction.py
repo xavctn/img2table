@@ -5,7 +5,7 @@ from io import BytesIO
 from xlsxwriter import Workbook
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.extraction import create_all_rectangles, CellPosition, TableCell, BBox
+from img2table.tables.objects.extraction import create_all_rectangles, CellPosition, TableCell, BBox, CellSpan
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
 
@@ -22,7 +22,19 @@ def test_create_all_rectangles():
 
     result = create_all_rectangles(cell_positions=cell_positions)
 
-    assert result == [(0, 0, 1, 3), (2, 2, 3, 3)]
+    assert result == [CellSpan(top_row=0, bottom_row=3, col_left=0, col_right=1, value='Test'),
+                      CellSpan(top_row=2, bottom_row=3, col_left=2, col_right=3, value='Test')]
+
+
+def test_table_html():
+    with open("test_data/expected_tables.json", "r") as f:
+        table = [Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in tb])
+                 for tb in json.load(f)].pop()
+
+    with open("test_data/table.html", "r") as f:
+        expected = f.read()
+
+    assert table.extracted_table.html == expected
 
 
 def test_extracted_table_worksheet():

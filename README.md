@@ -384,6 +384,8 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 >    <dd style="font-style: italic;">Dict with row indexes as keys and list of <code>TableCell</code> objects as values</dd>
 >    <dt>df : <code>pd.DataFrame</code></dt>
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
+>    <dt>html : <code>str</code></dt>
+>    <dd style="font-style: italic;">HTML representation of the table</dd>
 ></dl>
 
 <h5 style="color:grey">Images</h5>
