@@ -21,7 +21,7 @@ class TesseractOCR(OCRInstance):
     """
     Tesseract-OCR instance
     """
-    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None):
+    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None, tesseract_cmd: str = "tesseract"):
         """
         Initialization of Tesseract OCR instance
         :param n_threads: number of concurrent threads used for Tesseract
@@ -49,15 +49,16 @@ class TesseractOCR(OCRInstance):
         if tessdata_dir:
             env["TESSDATA_PREFIX"] = tessdata_dir
         self.env = env
+        self.tesseract_cmd = tesseract_cmd
 
         # Check if Tesseract is available
-        cmd_tess = subprocess.run("tesseract --version", env=self.env, shell=True)
+        cmd_tess = subprocess.run(f"{self.tesseract_cmd} --version", env=self.env, shell=True)
         if cmd_tess.returncode != 0:
-            raise EnvironmentError("Tesseract not found in environment. Check variables and PATH")
+            raise EnvironmentError("Tesseract not found in environment. Check variables and PATH or set tesseract_cmd argument.")
 
         # Check if requested languages are available
         try:
-            lang_tess = subprocess.check_output("tesseract --list-langs", env=self.env, shell=True).decode()
+            lang_tess = subprocess.check_output(f"{self.tesseract_cmd} --list-langs", env=self.env, shell=True).decode()
             for lang in self.lang.split('+'):
                 if not any([re.search(fr"\b{lang}\b", line) is not None for line in lang_tess.splitlines()]):
                     raise EnvironmentError(f"Tesseract '{lang}' trainned data cannot be located")
@@ -76,7 +77,7 @@ class TesseractOCR(OCRInstance):
             cv2.imwrite(tmp_file, image)
 
             # Get hOCR
-            hocr = subprocess.check_output(f"tesseract {tmp_file} stdout --psm {self.psm} -l {self.lang} hocr",
+            hocr = subprocess.check_output(f"{self.tesseract_cmd} {tmp_file} stdout --psm {self.psm} -l {self.lang} hocr",
                                            env=self.env,
                                            stderr=subprocess.STDOUT,
                                            shell=True)
