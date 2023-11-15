@@ -1,7 +1,7 @@
 # coding: utf-8
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 import cv2
 import numpy as np
@@ -46,52 +46,59 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     return thresh
 
 
-def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
+def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> Tuple[np.ndarray, List[Cell]]:
     """
     Dilate specific rows/columns of the threshold image in order to detect dotted rows
     :param thresh: threshold image array
     :param char_length: average character length in image
     :return: threshold image with dilated dotted rows
     """
+    # Compute non-null thresh and its average value
+    non_null_thresh = thresh[:, np.max(thresh, axis=0) > 0]
+    non_null_thresh = non_null_thresh[np.max(non_null_thresh, axis=1) > 0, :]
+    w_mean = np.mean(non_null_thresh)
+
     ### Horizontal case
     # Create dilated image
-    h_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(char_length // 2), 1), 1)))
+    h_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(char_length), 1), 1)))
 
     # Get rows with at least 2 times the average number of white pixels
-    white_rows = np.where(np.mean(thresh, axis=1) > 2 * np.mean(thresh))[0].tolist()
+    h_non_null = np.where(np.max(thresh, axis=1) > 0)[0]
+    white_rows = np.where(np.mean(thresh[:, min(h_non_null):max(h_non_null)], axis=1) > 4 * w_mean)[0].tolist()
 
     # Split into consecutive groups of rows and keep only small ones to avoid targeting text rows
     white_rows_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_rows), lambda i_x: i_x[0] - i_x[1])]
-    white_rows_final = [idx for cl in white_rows_cl for idx in cl if len(cl) < char_length / 3]
+    white_rows_final = [idx for cl in white_rows_cl for idx in cl if len(cl) < 0.5 * char_length]
 
     # Keep only dilated image on specific rows
     mask = np.ones(thresh.shape[0], dtype=bool)
     mask[white_rows_final] = False
     h_dilated[mask, :] = 0
 
-    # Update threshold image
-    thresh = np.maximum(thresh, h_dilated)
-
     ### Vertical case
     # Create dilated image
-    v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(char_length // 2), 1))))
+    v_dilated = cv2.dilate(thresh, cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(char_length), 1))))
 
     # Get columns with at least 2 times the average number of white pixels
-    white_cols = np.where(np.mean(thresh, axis=0) > 3 * np.mean(thresh))[0].tolist()
+    v_non_null = np.where(np.max(thresh, axis=0) > 0)[0]
+    white_cols = np.where(np.mean(thresh[min(v_non_null):max(v_non_null), :], axis=0) > 5 * w_mean)[0].tolist()
 
     # Split into consecutive groups of columns and keep only small ones to avoid targeting text columns
     white_cols_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_cols), lambda i_x: i_x[0] - i_x[1])]
-    white_cols_final = [idx for cl in white_cols_cl for idx in cl if len(cl) < char_length / 3]
+    white_cols_final = [idx for cl in white_cols_cl for idx in cl if len(cl) < char_length]
 
     # Keep only dilated image on specific columns
     mask = np.ones(thresh.shape[1], dtype=bool)
     mask[white_cols_final] = False
     v_dilated[:, mask] = 0
 
-    # Update threshold image
-    return np.maximum(thresh, v_dilated)
+    # Update thresh
+    new_thresh = np.maximum(thresh, h_dilated)
+    new_thresh = np.maximum(new_thresh, v_dilated)
+
+    return new_thresh
 
 
 def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
@@ -268,7 +275,7 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     )
     # - horizontal case
     hor_int = (
-            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) <= 0.33)
+            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) <= 0.4)
             & ((pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])) > 0)
     )
     
@@ -342,7 +349,7 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
         # Merge rows
         merged_lines = overlapping_filter(lines=lines, max_gap=gap)
 
-        # If possible, remove rows that corresponds to words
+        # If possible, remove rows that correspond to words
         if contours is not None:
             merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
             merged_lines = [l for l in merged_lines if max(l.length, l.width) >= minLinLength]

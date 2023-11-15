@@ -26,7 +26,7 @@ def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
 
     # Mask rows
     for l in lines:
-        if l.horizontal and l.length >= 20 * char_length:
+        if l.horizontal and l.length >= 10 * char_length:
             cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
         elif l.vertical and l.length >= 5 * char_length:
             cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 2 * l.thickness)
@@ -49,5 +49,8 @@ def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
     # Merge elements
     elements = merge_contours(contours=elements,
                               vertically=None)
+
+    # Filter elements that are too small
+    elements = [el for el in elements if max(el.height, el.width) >= 2 * char_length]
 
     return elements
