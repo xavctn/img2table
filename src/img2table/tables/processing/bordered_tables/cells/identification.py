@@ -49,14 +49,14 @@ def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
     # Deduplicate on upper bound
     df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
                .with_columns(pl.lit(1).alias('ones'))
-               .with_columns(pl.col('ones').cumsum().over(["x1_bbox", "x2_bbox", "y1_bbox"]).alias('cell_rk'))
+               .with_columns(pl.col('ones').cum_sum().over(["x1_bbox", "x2_bbox", "y1_bbox"]).alias('cell_rk'))
                .filter(pl.col('cell_rk') == 1)
                )
 
     # Deduplicate on lower bound
     df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y2_bbox", "y1_bbox"], descending=[False, False, False, True])
                .with_columns(pl.lit(1).alias('ones'))
-               .with_columns(pl.col('ones').cumsum().over(["x1_bbox", "x2_bbox", "y2_bbox"]).alias('cell_rk'))
+               .with_columns(pl.col('ones').cum_sum().over(["x1_bbox", "x2_bbox", "y2_bbox"]).alias('cell_rk'))
                .filter(pl.col('cell_rk') == 1)
                .drop(['ones', 'cell_rk'])
                )

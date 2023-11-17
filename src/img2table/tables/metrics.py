@@ -110,7 +110,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
     df_cnts_below = (df_h_cnts.filter(pl.col('y1') < pl.col('y1_right'))
                      .sort(['id', 'y1_right'])
                      .with_columns(pl.lit(1).alias('ones'))
-                     .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
+                     .with_columns(pl.col('ones').cum_sum().over(["id"]).alias('rk'))
                      .filter(pl.col('rk') == 1)
                      )
 
