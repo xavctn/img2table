@@ -56,7 +56,7 @@ def identify_table_lines(table: Table, lines: List[Line]) -> List[int]:
         if total_length / table.width >= 0.75:
             final_lines.append(k)
 
-    return final_lines
+    return sorted(final_lines)
 
 
 def check_header_coherency(header_rows: List[Row]) -> bool:

@@ -388,6 +388,19 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 >    <dd style="font-style: italic;">HTML representation of the table</dd>
 ></dl>
 
+<br>
+
+In order to access bounding boxes at the cell level, you can use the following code snippet :
+```python
+for id_row, row in enumerate(table.content.values()):
+    for id_col, cell in enumerate(row):
+        x1 = cell.bbox.x1
+        y1 = cell.bbox.y1
+        x2 = cell.bbox.x2
+        y2 = cell.bbox.y2
+        value = cell.value
+```
+
 <h5 style="color:grey">Images</h5>
 
 `extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 

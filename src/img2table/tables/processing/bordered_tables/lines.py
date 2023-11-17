@@ -1,7 +1,7 @@
 # coding: utf-8
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict
 
 import cv2
 import numpy as np
@@ -46,11 +46,12 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     return thresh
 
 
-def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> Tuple[np.ndarray, List[Cell]]:
+def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[Cell]) -> np.ndarray:
     """
     Dilate specific rows/columns of the threshold image in order to detect dotted rows
     :param thresh: threshold image array
     :param char_length: average character length in image
+    :param contours: list of image contours as cell objects
     :return: threshold image with dilated dotted rows
     """
     # Compute non-null thresh and its average value
@@ -69,7 +70,19 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> Tuple[np.ndar
     # Split into consecutive groups of rows and keep only small ones to avoid targeting text rows
     white_rows_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_rows), lambda i_x: i_x[0] - i_x[1])]
-    white_rows_final = [idx for cl in white_rows_cl for idx in cl if len(cl) < 0.5 * char_length]
+
+    # Filter clusters with contours
+    filtered_rows_cl = list()
+    for row_cl in white_rows_cl:
+        # Compute percentage of white pixels in rows
+        pct_w_pixels = np.mean(thresh[row_cl, :]) / 255
+        # Compute percentage of rows covered by contours
+        pct_contours = len({x for cnt in contours for x in range(cnt.x1, cnt.x2 + 1)
+                            if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) > 0}) / thresh.shape[1]
+        if 0.66 * pct_w_pixels >= pct_contours:
+            filtered_rows_cl.append(row_cl)
+
+    white_rows_final = [idx for cl in filtered_rows_cl for idx in cl]
 
     # Keep only dilated image on specific rows
     mask = np.ones(thresh.shape[0], dtype=bool)
@@ -82,12 +95,24 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> Tuple[np.ndar
 
     # Get columns with at least 2 times the average number of white pixels
     v_non_null = np.where(np.max(thresh, axis=0) > 0)[0]
-    white_cols = np.where(np.mean(thresh[min(v_non_null):max(v_non_null), :], axis=0) > 5 * w_mean)[0].tolist()
+    white_cols = np.where(np.mean(thresh[min(v_non_null):max(v_non_null), :], axis=0) > 4 * w_mean)[0].tolist()
 
     # Split into consecutive groups of columns and keep only small ones to avoid targeting text columns
     white_cols_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_cols), lambda i_x: i_x[0] - i_x[1])]
-    white_cols_final = [idx for cl in white_cols_cl for idx in cl if len(cl) < char_length]
+
+    # Filter clusters with contours
+    filtered_cols_cl = list()
+    for col_cl in white_cols_cl:
+        # Compute percentage of white pixels in columns
+        pct_w_pixels = np.mean(thresh[:, col_cl]) / 255
+        # Compute percentage of columns covered by contours
+        pct_contours = len({y for cnt in contours for y in range(cnt.y1, cnt.y2 + 1)
+                            if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) > 0}) / thresh.shape[0]
+        if 0.66 * pct_w_pixels >= pct_contours:
+            filtered_cols_cl.append(col_cl)
+
+    white_cols_final = [idx for cl in filtered_cols_cl for idx in cl]
 
     # Keep only dilated image on specific columns
     mask = np.ones(thresh.shape[1], dtype=bool)
@@ -325,7 +350,7 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
 
     if char_length is not None:
         # Process threshold image in order to detect dotted rows
-        thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length)
+        thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length, contours=contours)
 
     # Identify both vertical and horizontal rows
     for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:

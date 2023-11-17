@@ -62,14 +62,15 @@ def test_create_lines_from_intersection():
 def test_remove_word_lines():
     with open("test_data/contours.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
-    lines = [Line(x1=10, x2=10, y1=10, y2=100),
-             Line(x1=975, x2=975, y1=40, y2=60)]
+    lines = [Line(x1=10, x2=10, y1=10, y2=100, thickness=1),
+             Line(x1=975, x2=975, y1=40, y2=60, thickness=1)]
 
     result = remove_word_lines(lines=lines, contours=contours)
 
-    assert result == [Line(x1=10, x2=10, y1=10, y2=100),
-                      Line(x1=975, y1=40, x2=975, y2=40),
-                      Line(x1=975, y1=56, x2=975, y2=60)]
+    result = sorted(result, key=lambda l: (l.x1, l.y1, l.x2, l.y2))
+    assert result == [Line(x1=10, x2=10, y1=10, y2=100, thickness=1),
+                      Line(x1=975, y1=40, x2=975, y2=40, thickness=1),
+                      Line(x1=975, y1=56, x2=975, y2=60, thickness=1)]
 
 
 def test_detect_lines():
