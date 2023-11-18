@@ -104,7 +104,7 @@ class TableImage:
                                                         existing_tables=self.tables)
 
             # Add to tables
-            self.tables += [tb for tb in borderless_tbs if min(tb.nb_rows, tb.nb_columns) >= 2]
+            self.tables += [tb for tb in borderless_tbs if tb.nb_rows >= 2 and tb.nb_columns >= 3]
 
     def extract_tables(self, implicit_rows: bool = False, borderless_tables: bool = False) -> List[Table]:
         """

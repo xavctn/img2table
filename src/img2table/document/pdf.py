@@ -1,4 +1,5 @@
 # coding: utf-8
+import typing
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Dict, List, Optional
@@ -10,8 +11,10 @@ import numpy as np
 from img2table.document.base import Document
 from img2table.document.base.rotation import fix_rotation_image
 from img2table.ocr.pdf import PdfOCR
-from img2table.tables.objects.extraction import ExtractedTable
-from img2table.tables.objects.table import Table
+
+if typing.TYPE_CHECKING:
+    from img2table.tables.objects.extraction import ExtractedTable
+    from img2table.tables.objects.table import Table
 
 
 @dataclass
@@ -59,8 +62,8 @@ class PDF(Document):
 
         return images
 
-    def get_table_content(self, tables: Dict[int, List[Table]], ocr: "OCRInstance",
-                          min_confidence: int) -> Dict[int, List[ExtractedTable]]:
+    def get_table_content(self, tables: Dict[int, List["Table"]], ocr: "OCRInstance",
+                          min_confidence: int) -> Dict[int, List["ExtractedTable"]]:
         if not self._rotated and self.pdf_text_extraction:
             # Get pages where tables have been detected
             table_pages = [self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0]

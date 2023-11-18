@@ -32,6 +32,13 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     mask_width = img.shape[1] > stats[:, cv2.CC_STAT_WIDTH]
     mask_img = mask_width & mask_height
 
+    # Filter components based on aspect ratio
+    mask_lower_ar = 0.5 < stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
+    mask_upper_ar = 2 > stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
+    mask_ar = mask_lower_ar & mask_upper_ar
+
+    stats = stats[mask_img & mask_ar]
+
     # Compute median width and height
     median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])
     median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT])
@@ -40,18 +47,13 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     upper_bound = 4 * median_width * median_height
     lower_bound = 0.25 * median_width * median_height
 
-    # Filter components based on aspect ratio
-    mask_lower_ar = 0.2 < stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
-    mask_upper_ar = 5 > stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
-    mask_ar = mask_lower_ar & mask_upper_ar
-
     # Filter connected components according to their area
     mask_lower_area = lower_bound <= stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_upper_area = upper_bound >= stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_area = mask_lower_area & mask_upper_area
 
     # Filter connected components from mask
-    stats = stats[mask_img & mask_area & mask_ar]
+    stats = stats[mask_area]
 
     if len(stats) > 0:
         # Compute average character length
@@ -81,7 +83,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
         cv2.rectangle(black_img, (cell.x1, cell.y1), (cell.x2, cell.y2), (255, 255, 255), -1)
 
     # Dilate image
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(1.25 * char_length)), 1), 1))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (max(int(round(char_length)), 1), 1))
     dilate = cv2.dilate(black_img, kernel, iterations=1)
 
     # Find and map contours
@@ -108,7 +110,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
     df_cnts_below = (df_h_cnts.filter(pl.col('y1') < pl.col('y1_right'))
                      .sort(['id', 'y1_right'])
                      .with_columns(pl.lit(1).alias('ones'))
-                     .with_columns(pl.col('ones').cumsum().over(["id"]).alias('rk'))
+                     .with_columns(pl.col('ones').cum_sum().over(["id"]).alias('rk'))
                      .filter(pl.col('rk') == 1)
                      )
 

@@ -16,5 +16,5 @@ def test_table_image():
     assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (36, 20, 770, 326)
     assert (result[0].nb_rows, result[0].nb_columns) == (6, 3)
 
-    assert (result[1].x1, result[1].y1, result[1].x2, result[1].y2) == (962, 21, 1154, 122)
+    assert (result[1].x1, result[1].y1, result[1].x2, result[1].y2) == (962, 21, 1154, 123)
     assert (result[1].nb_rows, result[1].nb_columns) == (2, 2)
