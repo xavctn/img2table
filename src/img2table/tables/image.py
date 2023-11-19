@@ -78,7 +78,10 @@ class TableImage:
                           vertical_lines=v_lines)
 
         # Create tables from rows
-        self.tables = get_tables(cells=cells, elements=self.contours)
+        self.tables = get_tables(cells=cells,
+                                 elements=self.contours,
+                                 lines=self.lines,
+                                 char_length=self.char_length)
 
         # If necessary, detect implicit rows
         if implicit_rows:
