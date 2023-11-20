@@ -6,6 +6,7 @@ import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
+from img2table.tables.processing.bordered_tables.lines import threshold_dark_areas
 from img2table.tables.processing.common import merge_contours
 
 
@@ -22,18 +23,19 @@ def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
     """
     # Reprocess image
     blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
-    thresh = cv2.Canny(blur, 85, 255)
+    thresh = threshold_dark_areas(img=blur,
+                                  char_length=char_length)
 
     # Mask rows
     for l in lines:
-        if l.horizontal and l.length >= 10 * char_length:
+        if l.horizontal and l.length >= 3 * char_length:
             cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
-        elif l.vertical and l.length >= 5 * char_length:
-            cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 2 * l.thickness)
+        elif l.vertical and l.length >= 2 * char_length:
+            cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 3 * l.thickness)
 
     # Dilate to combine adjacent text contours
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,
-                                       (max(int(1.5 * char_length), 1), max(int(median_line_sep // 6), 1)))
+                                       (max(int(char_length), 1), max(int(median_line_sep // 6), 1)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs
@@ -51,6 +53,6 @@ def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
                               vertically=None)
 
     # Filter elements that are too small
-    elements = [el for el in elements if max(el.height, el.width) >= 2 * char_length]
+    elements = [el for el in elements if min(el.height, el.width) >= char_length]
 
     return elements

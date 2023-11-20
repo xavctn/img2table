@@ -102,7 +102,7 @@ def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: List
     """
     # Identify vertical whitespaces in segment that represent at least half of the image segment
     v_ws = get_whitespaces(segment=image_segment, vertical=True, pct=0.5)
-    v_ws = [ws for ws in v_ws if ws.width >= 0.5 * char_length or ws.x1 == image_segment.x1 or ws.x2 == image_segment.x2]
+    v_ws = [ws for ws in v_ws if ws.width >= char_length or ws.x1 == image_segment.x1 or ws.x2 == image_segment.x2]
 
     if len(v_ws) == 0:
         return []
@@ -174,7 +174,7 @@ def is_column_section(ws_group: List[Cell]) -> bool:
     ws_group = sorted(ws_group, key=lambda ws: ws.x1 + ws.x2)
     col_widths = [r_ws.x1 - l_ws.x2 for l_ws, r_ws in zip(ws_group, ws_group[1:])]
 
-    return max(col_widths) / min(col_widths) <= 1.5
+    return max(col_widths) / min(col_widths) <= 1.25
 
 
 def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell]) -> List[List[Cell]]:
@@ -201,11 +201,19 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
                         key=len,
                         reverse=True)
 
-    if len(col_groups) == 0:
+    # Get groups that contain all relevant whitespaces
+    filtered_col_groups = list()
+    for col_gp in col_groups:
+        y_min, y_max = min([ws.y1 for ws in col_gp]), max([ws.y2 for ws in col_gp])
+        matching_ws = [ws for ws in vertical_ws if min(ws.y2, y_max) - max(ws.y1, y_min) > 0.2 * ws.height]
+        if len(set(matching_ws).difference(set(col_gp))) == 0:
+            filtered_col_groups.append(col_gp)
+
+    if len(filtered_col_groups) == 0:
         return []
 
     # Deduplicate column groups
-    seq = iter(col_groups)
+    seq = iter(filtered_col_groups)
     dedup_col_groups = [next(seq)]
     for col_gp in seq:
         if not any([set(col_gp).intersection(set(gp)) == set(col_gp) for gp in dedup_col_groups]):
