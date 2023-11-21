@@ -14,4 +14,5 @@ def test_cluster_cells_in_tables():
     with open("test_data/cells_clustered.json", 'r') as f:
         expected = [[Cell(**el) for el in cluster] for cluster in json.load(f)]
 
-    assert result == expected
+    assert all([cl in result for cl in expected])
+    assert all([cl in expected for cl in result])

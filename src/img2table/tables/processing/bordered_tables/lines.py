@@ -283,11 +283,10 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     df_cnts = pl.LazyFrame(data=[{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in contours])
 
     # Create dataframe containing rows
-    df_lines = (pl.LazyFrame(data=[line.dict for line in lines])
+    df_lines = (pl.LazyFrame(data=[{**line.dict, **{"id_line": idx}} for idx, line in enumerate(lines)])
                 .with_columns([pl.max_horizontal([pl.col('width'), pl.col('height')]).alias('length'),
                                (pl.col('x1') == pl.col('x2')).alias('vertical')]
                               )
-                .with_row_count(name="line_id")
                 .rename({"x1": "x1_line", "x2": "x2_line", "y1": "y1_line", "y2": "y2_line"})
                 )
 
@@ -312,20 +311,20 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     
     # Get lines together with elements that intersect the line
     line_elements = (df_words_lines.filter(pl.col('intersection'))
-                     .group_by(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
+                     .group_by(["id_line", "x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
                      .agg(pl.struct("x1", "y1", "x2", "y2").alias('intersecting'))
-                     .join(df_words_lines.select(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"]),
-                           on=["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"],
-                           how='outer')
-                     .unique(subset=["x1_line", "y1_line", "x2_line", "y2_line"])
+                     .unique(subset=["id_line"])
                      .collect()
                      .to_dicts()
                      )
 
     # Create lines from line elements
-    final_lines = [line for line_dict in line_elements for line in create_lines_from_intersection(line_dict=line_dict)]
+    kept_lines = [line for id_line, line in enumerate(lines)
+                  if id_line not in [el.get('id_line') for el in line_elements]]
+    reprocessed_lines = [line for line_dict in line_elements
+                         for line in create_lines_from_intersection(line_dict=line_dict)]
 
-    return final_lines
+    return kept_lines + reprocessed_lines
 
 
 def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
