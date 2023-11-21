@@ -9,16 +9,15 @@ from img2table.tables.processing.borderless_tables.layout import get_image_eleme
 
 
 def test_get_image_elements():
-    img = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
+    thresh = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)
     lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
 
-    result = get_image_elements(img=img,
+    result = get_image_elements(thresh=thresh,
                                 lines=lines,
-                                blur_size=3,
-                                char_length=5.04,
+                                char_length=6.01,
                                 median_line_sep=16)
 
     with open("test_data/elements.json", "r") as f:

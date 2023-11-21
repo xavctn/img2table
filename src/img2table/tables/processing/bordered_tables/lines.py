@@ -328,12 +328,12 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     return final_lines
 
 
-def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
+def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
                  theta: float = np.pi / 180, threshold: int = 50, minLinLength: int = 290, maxLineGap: int = 6,
                  kernel_size: int = 20) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical rows on image
-    :param image: image array
+    :param thresh: thresholded image array
     :param contours: list of image contours as cell objects
     :param char_length: average character length
     :param rho: rho parameter for Hough line transform
@@ -344,12 +344,6 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
     :param kernel_size: kernel size to filter on horizontal / vertical rows
     :return: horizontal and vertical rows
     """
-    # Create copy of image
-    img = image.copy()
-
-    # Apply thresholding
-    thresh = threshold_dark_areas(img=img, char_length=char_length)
-
     if char_length is not None:
         # Process threshold image in order to detect dotted rows
         thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length, contours=contours)

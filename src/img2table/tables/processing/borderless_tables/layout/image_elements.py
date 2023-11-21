@@ -6,26 +6,19 @@ import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.bordered_tables.lines import threshold_dark_areas
 from img2table.tables.processing.common import merge_contours
 
 
-def get_image_elements(img: np.ndarray, lines: List[Line], char_length: float,
-                       median_line_sep: float, blur_size: int = 3) -> List[Cell]:
+def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float,
+                       median_line_sep: float,) -> List[Cell]:
     """
     Identify image elements
-    :param img: image array
+    :param thresh: thresholded image array
     :param lines: list of image rows
     :param char_length: average character length
     :param median_line_sep: median line separation
-    :param blur_size: kernel size for blurring operation
     :return: list of image elements
     """
-    # Reprocess image
-    blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
-    thresh = threshold_dark_areas(img=blur,
-                                  char_length=char_length)
-
     # Mask rows
     for l in lines:
         if l.horizontal and l.length >= 3 * char_length:

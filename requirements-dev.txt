@@ -28,6 +28,7 @@ pytest-xdist
 openpyxl
 sewar
 pipdeptree
+pyinstrument
 
 # Examples dependencies
 jupyter

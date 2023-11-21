@@ -10,24 +10,24 @@ from img2table.tables.processing.borderless_tables.layout.table_segments import 
 from img2table.tables.processing.borderless_tables.model import TableSegment, ImageSegment
 
 
-def segment_image(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[TableSegment]:
+def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[TableSegment]:
     """
     Segment image and its elements
-    :param img: image array
+    :param thresh: thresholded image array
     :param lines: list of Line objects of the image
     :param char_length: average character length
     :param median_line_sep: median line separation
     :return: list of ImageSegment objects with corresponding elements
     """
     # Identify image elements
-    img_elements = get_image_elements(img=img,
+    img_elements = get_image_elements(thresh=thresh,
                                       lines=lines,
                                       char_length=char_length,
                                       median_line_sep=median_line_sep)
 
     # Identify column segments
     y_min, y_max = min([el.y1 for el in img_elements]), max([el.y2 for el in img_elements])
-    image_segment = ImageSegment(x1=0, y1=y_min, x2=img.shape[1], y2=y_max, elements=img_elements)
+    image_segment = ImageSegment(x1=0, y1=y_min, x2=thresh.shape[1], y2=y_max, elements=img_elements)
 
     col_segments = segment_image_columns(image_segment=image_segment,
                                          char_length=char_length,
