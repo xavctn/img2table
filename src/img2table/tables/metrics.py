@@ -64,6 +64,38 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
         return None, None
 
 
+def recompute_contours(cells_cc: List[Cell], df_contours: pl.LazyFrame) -> List[Cell]:
+    """
+    Recompute contours identified with original cells from connected components
+    :param cells_cc: list of cells from connected components
+    :param df_contours: dataframe containing contours
+    :return: list of final contours
+    """
+    # Create dataframes for cells
+    df_cells = pl.LazyFrame([{"x1_c": c.x1, "y1_c": c.y1, "x2_c": c.x2, "y2_c": c.y2}
+                             for c in cells_cc])
+
+    # Cross join and filters cells contained in contours
+    df_contained_cells = (
+        df_contours.join(df_cells, how="cross")
+        .filter(pl.col("x1_c") >= pl.col("x1"),
+                pl.col("y1_c") >= pl.col("y1"),
+                pl.col("x2_c") <= pl.col("x2"),
+                pl.col("y2_c") <= pl.col("y2"))
+        .group_by("id")
+        .agg(pl.min("x1_c").alias("x1"),
+             pl.min("y1_c").alias("y1"),
+             pl.max("x2_c").alias("x2"),
+             pl.max("y2_c").alias("y2"))
+    )
+
+    # Create final contours
+    final_contours = [Cell(x1=row.get('x1'), y1=row.get('y1'), x2=row.get('x2'), y2=row.get('y2'))
+                      for row in df_contained_cells.collect().to_dicts()]
+
+    return final_contours
+
+
 def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                             char_length: float) -> Tuple[Optional[float], Optional[List[Cell]]]:
     """
@@ -128,16 +160,8 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
                      )
 
     # Recompute contours
-    final_contours = list()
-    for cnt in contours:
-        matching_cells = [c for c in cells_cc if c.x1 >= cnt.get('x1') and c.x2 <= cnt.get('x2')
-                          and c.y1 >= cnt.get('y1') and c.y2 <= cnt.get('y2')]
-        if matching_cells:
-            final_contours.append(Cell(x1=min([c.x1 for c in matching_cells]),
-                                       y1=min([c.y1 for c in matching_cells]),
-                                       x2=max([c.x2 for c in matching_cells]),
-                                       y2=max([c.y2 for c in matching_cells]))
-                                  )
+    final_contours = recompute_contours(cells_cc=cells_cc,
+                                        df_contours=df_contours)
 
     return median_v_dist, final_contours
 

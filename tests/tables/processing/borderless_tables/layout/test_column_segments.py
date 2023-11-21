@@ -41,9 +41,9 @@ def test_get_vertical_ws():
                              char_length=5.04,
                              lines=lines)
 
-    expected = [Cell(x1=0, y1=49, x2=51, y2=967),
-                Cell(x1=398, y1=64, x2=405, y2=967),
-                Cell(x1=732, y1=49, x2=768, y2=967)]
+    expected = [Cell(x1=0, y1=49, x2=52, y2=966),
+                Cell(x1=397, y1=63, x2=407, y2=966),
+                Cell(x1=731, y1=49, x2=768, y2=966)]
 
     assert result == expected
 
