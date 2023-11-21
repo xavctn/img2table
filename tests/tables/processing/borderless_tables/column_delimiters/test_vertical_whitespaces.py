@@ -36,8 +36,7 @@ def test_get_vertical_whitespaces():
         for tb in data.get("table_areas")
     ])
 
-    vertical_ws, unused_ws = get_vertical_whitespaces(table_segment=table_segment,
-                                                      char_length=14)
+    vertical_ws, unused_ws = get_vertical_whitespaces(table_segment=table_segment)
 
     assert len(vertical_ws) == 4
     assert len(unused_ws) == 0

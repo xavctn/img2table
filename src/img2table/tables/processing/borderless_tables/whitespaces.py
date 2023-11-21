@@ -57,11 +57,11 @@ def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool
         else:
             v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=segment.y2))
 
-    # Merge consecutive corresponding whitespaces
-    v_whitespaces = sorted(v_whitespaces, key=lambda w: (w.y1, w.y2, w.x1))
-
     if len(v_whitespaces) == 0:
         return []
+
+    # Merge consecutive corresponding whitespaces
+    v_whitespaces = sorted(v_whitespaces, key=lambda w: (w.y1, w.y2, w.x1))
 
     seq = iter(v_whitespaces)
     merged_v_whitespaces = [[next(seq)]]

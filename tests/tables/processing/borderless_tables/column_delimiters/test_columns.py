@@ -28,7 +28,7 @@ def test_corresponding_whitespaces():
 
     assert corresponding_whitespaces(ws_1=ws_1, ws_2=ws_2, char_length=10, median_line_sep=20)
     assert not corresponding_whitespaces(ws_1=ws_1, ws_2=ws_3, char_length=10, median_line_sep=20)
-    assert corresponding_whitespaces(ws_1=ws_2, ws_2=ws_3, char_length=10, median_line_sep=20)
+    assert not corresponding_whitespaces(ws_1=ws_2, ws_2=ws_3, char_length=10, median_line_sep=20)
 
 
 def test_identify_missing_vertical_whitespaces():
@@ -41,8 +41,7 @@ def test_identify_missing_vertical_whitespaces():
                                                    median_line_sep=20,
                                                    ref_height=150)
 
-    expected = [Cell(x1=50, y1=12, x2=66, y2=156),
-                Cell(x1=212, y1=28, x2=313, y2=212)]
+    expected = [Cell(x1=212, y1=28, x2=313, y2=212)]
 
     assert result == expected
 

@@ -72,8 +72,7 @@ def test_identify_column_groups():
 
     vertical_ws = [Cell(x1=0, y1=49, x2=51, y2=967),
                    Cell(x1=398, y1=64, x2=405, y2=967),
-                   Cell(x1=732, y1=49, x2=768, y2=967),
-                   Cell(x1=293, y1=148, x2=343, y2=838)]
+                   Cell(x1=732, y1=49, x2=768, y2=967)]
 
     result = identify_column_groups(image_segment=image_segment,
                                     vertical_ws=vertical_ws)

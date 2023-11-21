@@ -19,16 +19,28 @@ def test_segment_image():
                            char_length=5.04,
                            median_line_sep=16)
 
-    assert len(result) == 3
+    assert len(result) == 6
 
-    assert len(result[0].elements) == 42
+    assert len(result[0].elements) == 31
     assert len(result[0].table_areas) == 1
-    assert len(result[0].whitespaces) == 6
+    assert len(result[0].whitespaces) == 13
 
-    assert len(result[1].elements) == 37
+    assert len(result[1].elements) == 48
     assert len(result[1].table_areas) == 1
     assert len(result[1].whitespaces) == 6
 
     assert len(result[2].elements) == 40
     assert len(result[2].table_areas) == 1
-    assert len(result[2].whitespaces) == 7
+    assert len(result[2].whitespaces) == 5
+
+    assert len(result[3].elements) == 36
+    assert len(result[3].table_areas) == 1
+    assert len(result[3].whitespaces) == 7
+
+    assert len(result[4].elements) == 34
+    assert len(result[4].table_areas) == 1
+    assert len(result[4].whitespaces) == 4
+
+    assert len(result[5].elements) == 36
+    assert len(result[5].table_areas) == 1
+    assert len(result[5].whitespaces) == 7

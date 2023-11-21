@@ -217,6 +217,6 @@ def get_table_segments(segment: ImageSegment, char_length: float, median_line_se
         
     # Create image segments corresponding to potential table
     table_segments = [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps
-                      if len(tb_area_gp) > 1 or len(tb_area_gp[0].whitespaces) > 3]
+                      if max([len(tb_area.whitespaces) for tb_area in tb_area_gp]) > 3]
 
     return table_segments

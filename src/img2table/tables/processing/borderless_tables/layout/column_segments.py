@@ -205,7 +205,8 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
     filtered_col_groups = list()
     for col_gp in col_groups:
         y_min, y_max = min([ws.y1 for ws in col_gp]), max([ws.y2 for ws in col_gp])
-        matching_ws = [ws for ws in vertical_ws if min(ws.y2, y_max) - max(ws.y1, y_min) > 0.2 * ws.height]
+        matching_ws = [ws for ws in vertical_ws if min(ws.y2, y_max) - max(ws.y1, y_min) > 0.2 * ws.height
+                       and len({ws.x1, ws.x2}.intersection({image_segment.x1, image_segment.x2})) == 0]
         if len(set(matching_ws).difference(set(col_gp))) == 0:
             filtered_col_groups.append(col_gp)
 
