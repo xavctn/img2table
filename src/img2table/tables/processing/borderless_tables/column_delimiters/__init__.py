@@ -17,8 +17,7 @@ def identify_column_groups(table_segment: TableSegment, char_length: float,
     :return: delimiter group that can correspond to columns
     """
     # Identify vertical whitespaces in the table segment
-    vertical_ws, unused_ws = get_vertical_whitespaces(table_segment=table_segment,
-                                                      char_length=char_length)
+    vertical_ws, unused_ws = get_vertical_whitespaces(table_segment=table_segment)
 
     if len(vertical_ws) == 0 or len(table_segment.elements) == 0:
         return None

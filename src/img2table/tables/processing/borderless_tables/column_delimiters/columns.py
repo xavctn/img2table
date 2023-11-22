@@ -60,7 +60,7 @@ def corresponding_whitespaces(ws_1: Cell, ws_2: Cell, char_length: float, median
     :return: boolean indicating if whitespaces can correspond vertically
     """
     if min(abs(ws_2.y2 - ws_1.y1), abs(ws_1.y2 - ws_2.y1),
-           abs(ws_1.y1 - ws_2.y1), abs(ws_2.y2 - ws_1.y2)) > 3 * median_line_sep:
+           abs(ws_1.y1 - ws_2.y1), abs(ws_2.y2 - ws_1.y2)) > 2 * median_line_sep:
         return False
 
     return min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= -char_length / 2
@@ -146,6 +146,48 @@ def get_coherent_whitespace_position(ws: Cell, elements: List[Cell]) -> Cell:
     return Cell(x1=x_ws, y1=ws.y1, x2=x_ws, y2=ws.y2)
 
 
+def filter_coherent_delimiters(delimiters: List[Cell], elements: List[Cell]) -> List[Cell]:
+    # Check delimiters coherency (i.e) if it adds value
+    filtered_delims = list()
+    for delim in delimiters:
+        left_delims = sorted([d for d in delimiters if d != delim and d.x2 < delim.x1
+                              and min(delim.y2, d.y2) - max(delim.y1, d.y1) > 0
+                              and d.height >= delim.height],
+                             key=lambda d: d.x2)
+        right_delims = sorted([d for d in delimiters if d != delim and d.x1 > delim.x2
+                               and min(delim.y2, d.y2) - max(delim.y1, d.y1) > 0
+                               and d.height >= delim.height],
+                              key=lambda d: d.x1,
+                              reverse=True)
+        if len(right_delims) > 0 and len(left_delims) > 0:
+            left_delim, right_delim = left_delims.pop(), right_delims.pop()
+            # Get elements between delimiters
+            left_els = [el for el in elements if el.x1 >= left_delim.x2 and el.x2 <= delim.x1
+                        and min(el.y2, min(delim.y2, left_delim.y2)) - max(el.y1, max(delim.y1, left_delim.y1)) > 0]
+            right_els = [el for el in elements if el.x1 >= delim.x2 and el.x2 <= right_delim.x1
+                         and min(el.y2, min(delim.y2, right_delim.y2)) - max(el.y1, max(delim.y1, right_delim.y1)) > 0]
+            if len(left_els) * len(right_els) > 0:
+                filtered_delims.append(delim)
+        elif len(right_delims) > 0:
+            right_delim = right_delims.pop()
+            # Get elements between delimiters
+            right_els = [el for el in elements if el.x1 >= delim.x2 and el.x2 <= right_delim.x1
+                         and min(el.y2, min(delim.y2, right_delim.y2)) - max(el.y1, max(delim.y1, right_delim.y1)) > 0]
+            if len(right_els) > 0:
+                filtered_delims.append(delim)
+        elif len(left_delims) > 0:
+            left_delim = left_delims.pop()
+            # Get elements between delimiters
+            left_els = [el for el in elements if el.x1 >= left_delim.x2 and el.x2 <= delim.x1
+                        and min(el.y2, min(delim.y2, left_delim.y2)) - max(el.y1, max(delim.y1, left_delim.y1)) > 0]
+            if len(left_els) > 0:
+                filtered_delims.append(delim)
+        else:
+            filtered_delims.append(delim)
+
+    return filtered_delims
+
+
 def get_column_whitespaces(vertical_ws: List[Cell], unused_ws: List[Cell],
                            table_segment: TableSegment, char_length: float, median_line_sep: float) -> DelimiterGroup:
     """
@@ -174,10 +216,14 @@ def get_column_whitespaces(vertical_ws: List[Cell], unused_ws: List[Cell],
                                                               elements=table_segment.elements)
                              for ws in vertical_ws + missing_ws]))
 
+    # Filtered useful delimiters
+    useful_delims = filter_coherent_delimiters(delimiters=final_delims,
+                                               elements=table_segment.elements)
+
     # Create delimiter group
-    x1_del, x2_del = min([d.x1 for d in final_delims]), max([d.x2 for d in final_delims])
-    y1_del, y2_del = min([d.y1 for d in final_delims]), max([d.y2 for d in final_delims])
-    delimiter_group = DelimiterGroup(delimiters=final_delims,
+    x1_del, x2_del = min([d.x1 for d in useful_delims]), max([d.x2 for d in useful_delims])
+    y1_del, y2_del = min([d.y1 for d in useful_delims]), max([d.y2 for d in useful_delims])
+    delimiter_group = DelimiterGroup(delimiters=useful_delims,
                                      elements=[el for el in table_segment.elements if el.x1 >= x1_del
                                                and el.x2 <= x2_del and el.y1 >= y1_del and el.y2 <= y2_del])
 

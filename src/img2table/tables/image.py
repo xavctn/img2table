@@ -12,7 +12,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
-from img2table.tables.processing.bordered_tables.lines import detect_lines
+from img2table.tables.processing.bordered_tables.lines import detect_lines, threshold_dark_areas
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
@@ -25,6 +25,7 @@ class TableImage:
     min_confidence: int = 50
     char_length: float = None
     median_line_sep: float = None
+    thresh: np.ndarray = None
     contours: List[Cell] = None
     lines: List[Line] = None
     tables: List[Table] = None
@@ -57,12 +58,15 @@ class TableImage:
         :param implicit_rows: boolean indicating if implicit rows are splitted
         :return:
         """
+        # Apply thresholding
+        self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
+
         # Compute parameters for line detection
         minLinLength = maxLineGap = max(int(round(0.33 * self.median_line_sep)), 1) if self.median_line_sep else 10
         kernel_size = max(int(round(0.66 * self.median_line_sep)), 1) if self.median_line_sep else 20
 
         # Detect rows in image
-        h_lines, v_lines = detect_lines(image=self.img,
+        h_lines, v_lines = detect_lines(thresh=self.thresh,
                                         contours=self.contours,
                                         char_length=self.char_length,
                                         rho=0.3,
@@ -99,7 +103,7 @@ class TableImage:
         # Median line separation needs to be not null to extract borderless tables
         if self.median_line_sep is not None:
             # Extract borderless tables
-            borderless_tbs = identify_borderless_tables(img=self.img,
+            borderless_tbs = identify_borderless_tables(thresh=self.thresh,
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,

@@ -3,7 +3,6 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables import identify_table
 from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
 
@@ -20,13 +19,8 @@ def test_identify_table():
     with open("test_data/rows.json", "r") as f:
         table_rows = [TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)]
 
-    with open("test_data/lines.json", 'r') as f:
-        data = json.load(f)
-    lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
-
     result = identify_table(columns=delimiter_group,
                             table_rows=table_rows,
-                            lines=lines,
                             contours=contours,
                             median_line_sep=16,
                             char_length=4.66)

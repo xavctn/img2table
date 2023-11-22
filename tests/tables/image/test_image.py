@@ -12,6 +12,7 @@ def test_table_image():
                           min_confidence=50)
 
     result = tb_image.extract_tables(implicit_rows=True)
+    result = sorted(result, key=lambda tb: tb.x1 + tb.x2)
 
     assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (36, 20, 770, 326)
     assert (result[0].nb_rows, result[0].nb_columns) == (6, 3)

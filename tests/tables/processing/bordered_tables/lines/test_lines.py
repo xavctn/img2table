@@ -74,17 +74,17 @@ def test_remove_word_lines():
 
 
 def test_detect_lines():
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    thresh = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
     with open("test_data/contours.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
 
-    h_lines, v_lines = detect_lines(image=img,
+    h_lines, v_lines = detect_lines(thresh=thresh,
                                     rho=0.3,
                                     threshold=10,
                                     minLinLength=10,
                                     maxLineGap=10,
                                     contours=contours,
-                                    char_length=8.44)
+                                    char_length=8.85)
 
     with open("test_data/expected.json", 'r') as f:
         data = json.load(f)

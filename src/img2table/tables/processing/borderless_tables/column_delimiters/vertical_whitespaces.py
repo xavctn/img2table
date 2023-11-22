@@ -102,11 +102,10 @@ def deduplicate_whitespaces(vertical_whitespaces: List[VertWS], elements: List[C
     return [ws for ws in dedup_ws if ws not in ws_to_del]
 
 
-def get_vertical_whitespaces(table_segment: TableSegment, char_length: float) -> Tuple[List[Cell], List[Cell]]:
+def get_vertical_whitespaces(table_segment: TableSegment) -> Tuple[List[Cell], List[Cell]]:
     """
     Identify vertical whitespaces as well as unused whitespaces in table segment
     :param table_segment: TableSegment object
-    :param char_length: average character length
     :return: tuple containing list of vertical whitespaces and list of unused whitespaces
     """
     # Identify all whitespaces x values
@@ -132,8 +131,7 @@ def get_vertical_whitespaces(table_segment: TableSegment, char_length: float) ->
 
     # Filter whitespaces by height
     max_height = max([ws.height for ws in vertical_ws])
-    vertical_ws = [ws for ws in vertical_ws
-                   if (ws.height >= 0.66 * max_height and ws.width >= 0.5 * char_length) or ws.height == max_height]
+    vertical_ws = [ws for ws in vertical_ws if ws.height >= 0.66 * max_height]
 
     # Identify segment whitespaces that are unused
     unused_ws = [ws for ws in table_segment.whitespaces

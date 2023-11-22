@@ -2,6 +2,7 @@
 from typing import List
 
 import numpy as np
+import polars as pl
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
@@ -53,27 +54,32 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     :return: processed table
     """
     # Identify elements corresponding to each cell
-    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.6)]
-                          for c in set([c for row in table.items for c in row.items])
-                          }
+    df_elements = pl.LazyFrame([{"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
+                                for el in elements])
+    df_cells = pl.LazyFrame([{"id_row": id_row, "id_col": id_col,  "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
+                             for id_row, row in enumerate(table.items)
+                             for id_col, c in enumerate(row.items)])
+    df_cells_elements = (
+        df_cells.join(df_elements, how="cross")
+        .with_columns((pl.min_horizontal(['x2', 'x2_el']) - pl.max_horizontal(['x1', 'x1_el'])).alias("x_overlap"),
+                      (pl.min_horizontal(['y2', 'y2_el']) - pl.max_horizontal(['y1', 'y1_el'])).alias("y_overlap"))
+        .filter(pl.col('x_overlap') > 0,
+                pl.col('y_overlap') > 0)
+        .with_columns((pl.col('x_overlap') * pl.col('y_overlap')).alias('area_intersection'))
+        .filter(pl.col('area_intersection') / pl.col('area_el') >= 0.6)
+        .select("id_row", "id_col")
+        .unique()
+        .collect()
+    )
 
-    # Check for empty rows and remove if necessary
-    empty_rows = list()
-    for idx, row in enumerate(table.items):
-        if all(map(lambda c: len(dict_element_cells.get(c)) == 0, row.items)):
-            empty_rows.append(idx)
+    # Identify empty rows and empty columns
+    empty_rows = [id_row for id_row in range(table.nb_rows)
+                  if id_row not in [rec.get('id_row') for rec in df_cells_elements.to_dicts()]]
+    empty_cols = [id_col for id_col in range(table.nb_columns)
+                  if id_col not in [rec.get('id_col') for rec in df_cells_elements.to_dicts()]]
+
+    # Remove empty rows and empty columns
     table.remove_rows(row_ids=empty_rows)
-
-    # Update elements corresponding to each cell
-    dict_element_cells = {c: [el for el in elements if is_contained_cell(inner_cell=el, outer_cell=c, percentage=0.6)]
-                          for c in set([c for row in table.items for c in row.items])
-                          }
-
-    # Check for empty columns and remove if necessary
-    empty_cols = list()
-    for idx in range(table.nb_columns):
-        if all(map(lambda c: len(dict_element_cells.get(c)) == 0, [row.items[idx] for row in table.items])):
-            empty_cols.append(idx)
     table.remove_columns(col_ids=empty_cols)
 
     return table

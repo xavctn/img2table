@@ -7,13 +7,14 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
 
 
-def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool = True,
+def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool = True, min_width: float = 0,
                     pct: float = 0.25) -> List[Cell]:
     """
     Identify whitespaces in segment
     :param segment: image segment
     :param vertical: boolean indicating if vertical or horizontal whitespaces are identified
     :param pct: minimum percentage of the segment height/width to account for a whitespace
+    :param min_width: minimum width of the detected whitespaces
     :return: list of vertical or horizontal whitespaces as Cell objects
     """
     # Flip object coordinates in horizontal case
@@ -35,6 +36,9 @@ def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool
     # Identify vertical whitespaces
     v_whitespaces = list()
     for x_min, x_max in zip(x_vals, x_vals[1:]):
+        if x_max - x_min < min_width:
+            continue
+
         # Identify elements in this range
         rng_elements = sorted([el for el in segment.elements if min(el.x2, x_max) - max(el.x1, x_min) > 0],
                               key=lambda el: el.y1 + el.y2)
@@ -53,11 +57,11 @@ def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool
         else:
             v_whitespaces.append(Cell(x1=x_min, y1=segment.y1, x2=x_max, y2=segment.y2))
 
-    # Merge consecutive corresponding whitespaces
-    v_whitespaces = sorted(v_whitespaces, key=lambda w: (w.y1, w.y2, w.x1))
-
     if len(v_whitespaces) == 0:
         return []
+
+    # Merge consecutive corresponding whitespaces
+    v_whitespaces = sorted(v_whitespaces, key=lambda w: (w.y1, w.y2, w.x1))
 
     seq = iter(v_whitespaces)
     merged_v_whitespaces = [[next(seq)]]
@@ -186,7 +190,8 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
     # Identify vertical whitespaces
     v_whitespaces = get_whitespaces(segment=segment,
                                     vertical=True,
-                                    pct=pct)
+                                    pct=pct,
+                                    min_width=0.5 * char_length)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces,

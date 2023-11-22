@@ -77,8 +77,9 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
         # Compute percentage of white pixels in rows
         pct_w_pixels = np.mean(thresh[row_cl, :]) / 255
         # Compute percentage of rows covered by contours
-        pct_contours = len({x for cnt in contours for x in range(cnt.x1, cnt.x2 + 1)
-                            if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) > 0}) / thresh.shape[1]
+        covered_contours = [cnt for cnt in contours if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) > 0]
+        pct_contours = sum(map(lambda cnt: cnt.width, covered_contours)) / thresh.shape[1]
+
         if 0.66 * pct_w_pixels >= pct_contours:
             filtered_rows_cl.append(row_cl)
 
@@ -107,8 +108,9 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
         # Compute percentage of white pixels in columns
         pct_w_pixels = np.mean(thresh[:, col_cl]) / 255
         # Compute percentage of columns covered by contours
-        pct_contours = len({y for cnt in contours for y in range(cnt.y1, cnt.y2 + 1)
-                            if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) > 0}) / thresh.shape[0]
+        covered_contours = [cnt for cnt in contours if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) > 0]
+        pct_contours = sum(map(lambda cnt: cnt.height, covered_contours)) / thresh.shape[0]
+
         if 0.66 * pct_w_pixels >= pct_contours:
             filtered_cols_cl.append(col_cl)
 
@@ -273,19 +275,18 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     :param contours: list of image contours as cell objects
     :return: list of rows not intersecting with words
     """
+    # If there are no rows or no contours, do nothing
+    if len(lines) == 0 or len(contours) == 0:
+        return lines
+
     # Get contours dataframe
     df_cnts = pl.LazyFrame(data=[{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in contours])
 
-    # If there are no rows or no contours, do nothing
-    if len(lines) == 0 or df_cnts.collect().height == 0:
-        return lines
-
     # Create dataframe containing rows
-    df_lines = (pl.LazyFrame(data=[line.dict for line in lines])
+    df_lines = (pl.LazyFrame(data=[{**line.dict, **{"id_line": idx}} for idx, line in enumerate(lines)])
                 .with_columns([pl.max_horizontal([pl.col('width'), pl.col('height')]).alias('length'),
                                (pl.col('x1') == pl.col('x2')).alias('vertical')]
                               )
-                .with_row_count(name="line_id")
                 .rename({"x1": "x1_line", "x2": "x2_line", "y1": "y1_line", "y2": "y2_line"})
                 )
 
@@ -310,28 +311,28 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
     
     # Get lines together with elements that intersect the line
     line_elements = (df_words_lines.filter(pl.col('intersection'))
-                     .group_by(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
+                     .group_by(["id_line", "x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
                      .agg(pl.struct("x1", "y1", "x2", "y2").alias('intersecting'))
-                     .join(df_words_lines.select(["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"]),
-                           on=["x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"],
-                           how='outer')
-                     .unique(subset=["x1_line", "y1_line", "x2_line", "y2_line"])
+                     .unique(subset=["id_line"])
                      .collect()
                      .to_dicts()
                      )
 
     # Create lines from line elements
-    final_lines = [line for line_dict in line_elements for line in create_lines_from_intersection(line_dict=line_dict)]
+    kept_lines = [line for id_line, line in enumerate(lines)
+                  if id_line not in [el.get('id_line') for el in line_elements]]
+    reprocessed_lines = [line for line_dict in line_elements
+                         for line in create_lines_from_intersection(line_dict=line_dict)]
 
-    return final_lines
+    return kept_lines + reprocessed_lines
 
 
-def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
+def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
                  theta: float = np.pi / 180, threshold: int = 50, minLinLength: int = 290, maxLineGap: int = 6,
                  kernel_size: int = 20) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical rows on image
-    :param image: image array
+    :param thresh: thresholded image array
     :param contours: list of image contours as cell objects
     :param char_length: average character length
     :param rho: rho parameter for Hough line transform
@@ -342,12 +343,6 @@ def detect_lines(image: np.ndarray, contours: Optional[List[Cell]], char_length:
     :param kernel_size: kernel size to filter on horizontal / vertical rows
     :return: horizontal and vertical rows
     """
-    # Create copy of image
-    img = image.copy()
-
-    # Apply thresholding
-    thresh = threshold_dark_areas(img=img, char_length=char_length)
-
     if char_length is not None:
         # Process threshold image in order to detect dotted rows
         thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length, contours=contours)

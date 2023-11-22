@@ -19,8 +19,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
     :return: list of table areas of segment
     """
     # Identify horizontal whitespaces in segment that represent at least half of median line separation
-    h_ws = get_whitespaces(segment=segment, vertical=False, pct=1)
-    h_ws = [ws for ws in h_ws if ws.height >= 0.5 * median_line_sep]
+    h_ws = get_whitespaces(segment=segment, vertical=False, pct=1, min_width=0.5 * median_line_sep)
 
     # Handle case where no whitespaces have been found by creating "fake" ws at the top or bottom
     if len(h_ws) == 0:
@@ -91,12 +90,34 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
                                 y2=seg_area.y2)
                 v_ws = [ws for ws in v_ws
                         if not is_contained_cell(inner_cell=ws, outer_cell=left_ws, percentage=0.1)
-                        and not is_contained_cell(inner_cell=ws, outer_cell=right_ws, percentage=0.1)]
+                        and not is_contained_cell(inner_cell=ws, outer_cell=right_ws, percentage=0.1)
+                        and len({ws.y1, ws.y2}.intersection({seg_area.y1, seg_area.y2})) > 0]
 
                 seg_area.set_whitespaces(whitespaces=sorted(v_ws + [left_ws, right_ws], key=lambda ws: ws.x1 + ws.x2))
                 table_areas.append(seg_area)
 
     return table_areas
+
+
+def merge_consecutive_ws(whitespaces: List[Cell]) -> List[Cell]:
+    """
+    Merge consecutive whitespaces
+    :param whitespaces: list of original whitespaces
+    :return: list of merged whitespaces
+    """
+    whitespaces = sorted(whitespaces, key=lambda ws: ws.x1 + ws.x2)
+
+    seq = iter(whitespaces)
+    ws_groups = [[next(seq)]]
+    for ws in seq:
+        if ws.x1 > ws_groups[-1][-1].x2:
+            ws_groups.append([])
+        ws_groups[-1].append(ws)
+
+    return [Cell(x1=ws_gp[0].x1, x2=ws_gp[-1].x2,
+                 y1=min([ws.y1 for ws in ws_gp]),
+                 y2=max([ws.y2 for ws in ws_gp]))
+            for ws_gp in ws_groups]
 
 
 def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_length: float, median_line_sep: float) -> bool:
@@ -111,29 +132,37 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     # Compute vertical difference
     v_diff = min(abs(tb_area_1.y2 - tb_area_2.y1), abs(tb_area_2.y2 - tb_area_1.y1))
 
-    if max(len(tb_area_1.whitespaces), len(tb_area_2.whitespaces)) < 4:
+    # If areas are not consecutive or with too much separation, not coherent
+    if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 2 * median_line_sep:
         return False
 
-    # If areas are not consecutive or with too much separation, not coherent
-    if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 3 * median_line_sep:
+    # Get relevant whitespaces
+    if tb_area_1.position < tb_area_2.position:
+        ws_tb_1 = merge_consecutive_ws([ws for ws in tb_area_1.whitespaces if ws.y2 == tb_area_1.y2])
+        ws_tb_2 = merge_consecutive_ws([ws for ws in tb_area_2.whitespaces if ws.y1 == tb_area_2.y1])
+    else:
+        ws_tb_1 = merge_consecutive_ws([ws for ws in tb_area_1.whitespaces if ws.y1 == tb_area_1.y1])
+        ws_tb_2 = merge_consecutive_ws([ws for ws in tb_area_2.whitespaces if ws.y2 == tb_area_2.y2])
+
+    if max(len(ws_tb_1), len(ws_tb_2)) < 4:
         return False
 
     # Check whitespaces coherency
-    if len(tb_area_1.whitespaces) >= len(tb_area_2.whitespaces):
+    if len(ws_tb_1) >= len(ws_tb_2):
         dict_ws_coherency = {
-            idx_1: [ws_2 for ws_2 in tb_area_2.whitespaces
-                    if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) > 0]
-            for idx_1, ws_1 in enumerate(tb_area_1.whitespaces) if ws_1.width >= 0.5 * char_length
+            idx_1: [ws_2 for ws_2 in ws_tb_2
+                    if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= 0.5 * char_length]
+            for idx_1, ws_1 in enumerate(ws_tb_1)
         }
     else:
         dict_ws_coherency = {
-            idx_2: [ws_1 for ws_1 in tb_area_1.whitespaces
-                    if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) > 0]
-            for idx_2, ws_2 in enumerate(tb_area_2.whitespaces) if ws_2.width >= 0.5 * char_length
+            idx_2: [ws_1 for ws_1 in ws_tb_1
+                    if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= 0.5 * char_length]
+            for idx_2, ws_2 in enumerate(ws_tb_2) if ws_2.width
         }
 
     # Compute threshold for coherency
-    threshold = 1 if min(len(tb_area_1.whitespaces), len(tb_area_2.whitespaces)) < 4 else 0.75
+    threshold = 1 if min(len(ws_tb_1), len(ws_tb_2)) < 4 else 0.8
 
     return np.mean([int(len(v) == 1) for v in dict_ws_coherency.values()]) >= threshold
 
@@ -188,6 +217,6 @@ def get_table_segments(segment: ImageSegment, char_length: float, median_line_se
         
     # Create image segments corresponding to potential table
     table_segments = [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps
-                      if len(tb_area_gp) > 1 or len(tb_area_gp[0].whitespaces) > 3]
+                      if max([len(tb_area.whitespaces) for tb_area in tb_area_gp]) > 3]
 
     return table_segments

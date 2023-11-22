@@ -50,7 +50,7 @@ def test_doctr_ocr_df():
     assert result == expected
 
 
-def test_easyocr_document():
+def test_doctr_document():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
 

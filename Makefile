@@ -11,9 +11,9 @@ venv:
 	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 	. $(VENV); python -m pip install -r requirements-dev.txt
 
-update: venv
+update:
 	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-	. $(VENV); python -m pip install -r requirements-dev.txt
+	. $(VENV); python -m pip install -U -r requirements-dev.txt
 
 # Test commands
 test:
