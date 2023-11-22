@@ -69,6 +69,6 @@ def get_table(columns: DelimiterGroup, table_rows: List[TableRow], contours: Lis
             list_cells.append(cell)
 
     # Create table object
-    table = cluster_to_table(cluster_cells=list_cells, elements=contours)
+    table = cluster_to_table(cluster_cells=list_cells, elements=contours, borderless=True)
 
-    return table if table.nb_columns >= 3 and table.nb_rows >= 3 else None
+    return table if table.nb_columns >= 3 and table.nb_rows >= 2 else None

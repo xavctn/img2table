@@ -85,11 +85,12 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     return table
 
 
-def cluster_to_table(cluster_cells: List[Cell], elements: List[Cell]) -> Table:
+def cluster_to_table(cluster_cells: List[Cell], elements: List[Cell], borderless: bool = False) -> Table:
     """
     Convert a cell cluster to a Table object
     :param cluster_cells: list of cells that form a table
     :param elements: list of image elements
+    :param borderless: boolean indicating if the created table is borderless
     :return: table with rows inferred from table cells
     """
     # Get list of vertical delimiters
@@ -126,7 +127,7 @@ def cluster_to_table(cluster_cells: List[Cell], elements: List[Cell]) -> Table:
         list_rows.append(Row(cells=list_cells))
 
     # Create table
-    table = Table(rows=list_rows)
+    table = Table(rows=list_rows, borderless=borderless)
 
     # Remove empty/unnecessary rows and columns from the table, based on elements
     processed_table = remove_unwanted_elements(table=table, elements=elements)

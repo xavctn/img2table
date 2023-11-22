@@ -11,7 +11,7 @@ from img2table.tables.objects.row import Row
 
 
 class Table(TableObject):
-    def __init__(self, rows: Union[Row, List[Row]]):
+    def __init__(self, rows: Union[Row, List[Row]], borderless: bool = False):
         if rows is None:
             self._items = []
         elif isinstance(rows, Row):
@@ -19,6 +19,7 @@ class Table(TableObject):
         else:
             self._items = rows
         self._title = None
+        self._borderless = borderless
 
     @property
     def items(self) -> List[Row]:

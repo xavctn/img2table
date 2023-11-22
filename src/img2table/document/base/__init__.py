@@ -103,7 +103,10 @@ class Document(Validations):
         # Reset OCR
         self.ocr_df = None
 
-        return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
+        return {k: [tb.extracted_table for tb in v
+                    if (max(tb.nb_rows, tb.nb_columns) >= 2 and not tb._borderless)
+                    or (tb.nb_rows >= 2 and tb.nb_columns >= 3)]
+                for k, v in tables.items()}
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, borderless_tables: bool = False,
                        min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
