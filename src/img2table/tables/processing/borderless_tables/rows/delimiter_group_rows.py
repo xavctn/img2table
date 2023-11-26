@@ -1,10 +1,9 @@
 # coding: utf-8
-from functools import partial
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Set
 
 import polars as pl
 
-from img2table.tables import cluster_items
+from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import TableRow, DelimiterGroup
 
@@ -53,34 +52,67 @@ def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optio
     return median_v_dist
 
 
-def aligned_rows(ref_size: int, r_1: Cell, r_2: Cell) -> bool:
+def identify_aligned_elements(df_elements: pl.DataFrame, ref_size: int) -> List[Set[int]]:
     """
-    Identify if both rows are vertically aligned
-    :param ref_size: reference distance between both row centers
-    :param r_1: first row
-    :param r_2: second row
-    :return: boolean indicating if both rows are vertically aligned
+    Identify groups of elements that are vertically aligned
+    :param df_elements: dataframe of elements
+    :param ref_size: reference distance between two line centers
+    :return: list of element sets which represent aligned elements
     """
-    # Check if rows have vertically coherent centers
-    v_coherent = abs((r_1.y1 + r_1.y2) / 2 - (r_2.y1 + r_2.y2) / 2) <= ref_size
+    # Cross join elements and filter on aligned elements
+    df_cross = (df_elements.join(df_elements, how="cross")
+                .filter(((pl.col('y1') + pl.col('y2') - pl.col('y1_right') - pl.col('y2_right')) / 2).abs() <= ref_size)
+                .filter(pl.max_horizontal(pl.col('height'), pl.col('height_right'))
+                        / pl.min_horizontal(pl.col('height'), pl.col('height_right')) <= 2)
+                .select(pl.struct(pl.min_horizontal(pl.col('idx'), pl.col('idx_right')).alias('idx_1'),
+                                  pl.max_horizontal(pl.col('idx'), pl.col('idx_right')).alias('idx_2')).alias('idxs')
+                        )
+                .unique()
+                .unnest("idxs")
+                )
+    aligned_elements = [{row.get('idx_1'), row.get('idx_2')} for row in df_cross.to_dicts()]
 
-    # Check if rows have coherent heights
-    height_coherent = max(r_1.height, r_2.height) / min(r_1.height, r_2.height) <= 2
+    # Create cluster of aligned elements
+    clusters = find_components(edges=aligned_elements)
 
-    return v_coherent and height_coherent
+    return clusters
 
 
-def overlapping_rows(tb_row_1: TableRow, tb_row_2: TableRow) -> bool:
+def identify_overlapping_row_clusters(df_elements: pl.DataFrame, clusters: List[Set[int]]) -> List[Set[int]]:
     """
-    Identify if two TableRow objects overlap vertically
-    :param tb_row_1: first TableRow object
-    :param tb_row_2: second TableRow object
-    :return: boolean indicating if both TableRow objects overlap vertically
+    Identify rows that overlap with each other and group them in cluster
+    :param df_elements: dataframe of elements
+    :param clusters: list of element sets which represent aligned elements/ rows
+    :return: list of clusters sets which represent aligned rows
     """
-    # Compute overlap
-    overlap = min(tb_row_1.y2, tb_row_2.y2) - max(tb_row_1.y1, tb_row_2.y1)
+    clusters_dict = {el_idx: cl_idx for cl_idx, cl in enumerate(clusters) for el_idx in cl}
+    df_elements = df_elements.with_columns(pl.col('idx').map_elements(clusters_dict.get).alias("cl_idx"))
 
-    return overlap / min(tb_row_1.height, tb_row_2.height) >= 0.5
+    df_clusters = (df_elements.group_by("cl_idx")
+                   .agg(pl.col("x1").min().alias('x1'),
+                        pl.col("y1").min().alias('y1'),
+                        pl.col("x2").max().alias('x2'),
+                        pl.col("y2").max().alias('y2'))
+                   .with_columns((pl.col("y2") - pl.col("y1")).alias('height'))
+                   )
+
+    df_cross = (df_clusters.join(df_clusters, how='cross')
+                .with_columns((pl.min_horizontal(pl.col("y2"), pl.col("y2_right"))
+                               - pl.max_horizontal(pl.col("y1"), pl.col("y1_right"))).alias('overlap')
+                             )
+                .filter(pl.col('overlap') / pl.min_horizontal(pl.col("height"), pl.col("height_right")) >= 0.5)
+                .select(pl.struct(pl.min_horizontal(pl.col('cl_idx'), pl.col('cl_idx_right')).alias('idx_1'),
+                                  pl.max_horizontal(pl.col('cl_idx'), pl.col('cl_idx_right')).alias('idx_2')).alias('idxs')
+                        )
+                .unique()
+                .unnest("idxs")
+                )
+    aligned_rows = [{row.get('idx_1'), row.get('idx_2')} for row in df_cross.to_dicts()]
+
+    # Create cluster of aligned rows
+    row_clusters = find_components(edges=aligned_rows)
+
+    return row_clusters
 
 
 def not_overlapping_rows(tb_row_1: TableRow, tb_row_2: TableRow) -> bool:
@@ -154,13 +186,22 @@ def identify_rows(elements: List[Cell], ref_size: int) -> List[TableRow]:
     if len(elements) == 0:
         return []
 
-    # Group elements into rows
-    f_cluster_partial = partial(aligned_rows, ref_size)
-    tb_rows = [TableRow(cells=cl) for cl in cluster_items(items=elements, clustering_func=f_cluster_partial)]
+    # Create dataframe with elements
+    df_elements = (pl.DataFrame([{"idx": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
+                                 for idx, el in enumerate(elements)])
+                   .with_columns((pl.col('y2') - pl.col('y1')).alias('height'))
+                   )
+
+    # Identify clusters of elements that represent rows
+    element_clusters = identify_aligned_elements(df_elements=df_elements,
+                                                 ref_size=ref_size)
 
     # Identify overlapping rows
-    overlap_row_clusters = cluster_items(items=tb_rows,
-                                         clustering_func=overlapping_rows)
+    row_clusters = identify_overlapping_row_clusters(df_elements=df_elements,
+                                                     clusters=element_clusters)
+
+    overlap_row_clusters = [[TableRow(cells=[elements[idx] for idx in element_clusters[cl_idx]]) for cl_idx in row_cl]
+                            for row_cl in row_clusters]
 
     # Get relevant rows in each cluster
     relevant_rows = [row for cl in overlap_row_clusters

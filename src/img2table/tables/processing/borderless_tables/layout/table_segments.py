@@ -20,6 +20,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
     """
     # Identify horizontal whitespaces in segment that represent at least half of median line separation
     h_ws = get_whitespaces(segment=segment, vertical=False, pct=1, min_width=0.5 * median_line_sep)
+    h_ws = sorted(h_ws, key=lambda ws: ws.y1)
 
     # Handle case where no whitespaces have been found by creating "fake" ws at the top or bottom
     if len(h_ws) == 0:
@@ -46,12 +47,12 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
                        x2=max([ws.x2 for ws in h_ws]),
                        y1=segment.y2,
                        y2=segment.y2)
-        h_ws.insert(-1, down_ws)
+        h_ws.append(down_ws)
 
     # Check in areas between horizontal whitespaces in order to identify if they can correspond to tables
     table_areas = list()
-    h_ws = sorted(h_ws, key=lambda ws: ws.y1)
     idx = 0
+
     for up, down in zip(h_ws, h_ws[1:]):
         idx += 1
         # Get the delimited area

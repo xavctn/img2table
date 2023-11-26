@@ -3,6 +3,7 @@ from typing import List, Set
 
 import polars as pl
 
+from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
 
 
@@ -51,6 +52,7 @@ def get_adjacent_cells(cells: List[Cell]) -> List[Set[int]]:
         )
         .select("idx", "idx_right")
         .unique()
+        .sort(by=['idx', 'idx_right'])
         .collect()
     )
 
@@ -70,15 +72,7 @@ def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
     adjacent_cells = get_adjacent_cells(cells=cells)
 
     # Loop over couples to create clusters
-    clusters = list()
-    for adj_couple in adjacent_cells:
-        matching_clusters = [idx for idx, cl in enumerate(clusters) if adj_couple.intersection(cl)]
-        if matching_clusters:
-            remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
-            new_cluster = adj_couple.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
-            clusters = remaining_clusters + [new_cluster]
-        else:
-            clusters.append(adj_couple)
+    clusters = find_components(edges=adjacent_cells)
 
     # Return list of cell objects
     list_table_cells = [[cells[idx] for idx in cl] for cl in clusters]

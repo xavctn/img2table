@@ -1,7 +1,6 @@
 # coding: utf-8
 import typing
 from dataclasses import dataclass
-from functools import cached_property
 from typing import Dict, List, Optional
 
 import cv2
@@ -23,6 +22,7 @@ class PDF(Document):
     detect_rotation: bool = False
     pdf_text_extraction: bool = True
     _rotated: bool = False
+    _images: List[np.ndarray] = None
 
     def validate_pages(self, value, **_) -> Optional[List[int]]:
         if value is not None:
@@ -40,8 +40,14 @@ class PDF(Document):
     def validate__rotated(self, value, **_) -> int:
         return value
 
-    @cached_property
+    def validate__images(self, value, **_) -> int:
+        return value
+
+    @property
     def images(self) -> List[np.ndarray]:
+        if self._images is not None:
+            return self._images
+
         mat = fitz.Matrix(200 / 72, 200 / 72)
         doc = fitz.Document(stream=self.bytes, filetype='pdf')
 
@@ -60,6 +66,7 @@ class PDF(Document):
                 final, self._rotated = gray, False
             images.append(final)
 
+        self._images = images
         return images
 
     def get_table_content(self, tables: Dict[int, List["Table"]], ocr: "OCRInstance",
@@ -67,9 +74,13 @@ class PDF(Document):
         if not self._rotated and self.pdf_text_extraction:
             # Get pages where tables have been detected
             table_pages = [self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0]
+            images = [self.images[k] for k, v in tables.items() if len(v) > 0]
 
             # Create PDF object for OCR
-            pdf_ocr = PDF(src=self.bytes, pages=table_pages)
+            pdf_ocr = PDF(src=self.bytes,
+                          pages=table_pages,
+                          _images=images,
+                          _rotated=self._rotated)
 
             # Try to get OCRDataframe from PDF
             self.ocr_df = PdfOCR().of(document=pdf_ocr)

@@ -29,7 +29,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
 
     # Mask on areas with dark background
     blur_size = min(255, max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11)
-    blur = cv2.medianBlur(img, blur_size)
+    blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
     mask = cv2.inRange(blur, 0, 100)
 
     # Get contours of dark areas
@@ -319,8 +319,8 @@ def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
                      )
 
     # Create lines from line elements
-    kept_lines = [line for id_line, line in enumerate(lines)
-                  if id_line not in [el.get('id_line') for el in line_elements]]
+    modified_lines = {el.get('id_line') for el in line_elements}
+    kept_lines = [line for id_line, line in enumerate(lines) if id_line not in modified_lines]
     reprocessed_lines = [line for line_dict in line_elements
                          for line in create_lines_from_intersection(line_dict=line_dict)]
 

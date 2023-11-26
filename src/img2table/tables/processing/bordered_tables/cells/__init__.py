@@ -1,8 +1,6 @@
 # coding: utf-8
 from typing import List
 
-import polars as pl
-
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.bordered_tables.cells.deduplication import deduplicate_cells

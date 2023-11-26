@@ -6,7 +6,6 @@ import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.common import merge_contours
 
 
 def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float,
@@ -40,10 +39,6 @@ def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
         elements.append(Cell(x1=x, y1=y, x2=x + w, y2=y + h))
-
-    # Merge elements
-    elements = merge_contours(contours=elements,
-                              vertically=None)
 
     # Filter elements that are too small
     elements = [el for el in elements if min(el.height, el.width) >= char_length]

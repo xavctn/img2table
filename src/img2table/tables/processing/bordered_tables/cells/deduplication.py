@@ -4,7 +4,7 @@ import itertools
 import polars as pl
 
 
-def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
+def deduplicate_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
     """
     Deduplicate nested cells in order to keep the smallest ones
     :param df_cells: dataframe containing cells
@@ -67,10 +67,8 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     # Create column indicating if both cells are adjacent and  column indicating if the right cell is redundant with
     # the left cell
-    condition_adjacent = (((pl.col("overlapping_y") > 5)
-                           & (pl.col("diff_x") / pl.max_horizontal(["width", "width_"]) <= 0.05))
-                          | ((pl.col("overlapping_x") > 5)
-                             & (pl.col("diff_y") / pl.max_horizontal(["height", "height_"]) <= 0.05))
+    condition_adjacent = (((pl.col("overlapping_y") > 5) & (pl.col("diff_x") == 0))
+                          | ((pl.col("overlapping_x") > 5) & (pl.col("diff_y") == 0))
                           )
     df_cross_cells = (df_cross_cells.with_columns(condition_adjacent.alias('adjacent'))
                       .with_columns((pl.col('contained') & pl.col('adjacent')).alias('redundant'))
@@ -89,15 +87,3 @@ def deduplicate_nested_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
                       )
 
     return df_final_cells
-
-
-def deduplicate_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
-    """
-    Deduplicate cells dataframe
-    :param df_cells: dataframe containing cells
-    :return: dataframe with deduplicated cells
-    """
-    # Deduplicate nested cells
-    deduplicated_cells = deduplicate_nested_cells(df_cells=df_cells)
-
-    return deduplicated_cells
