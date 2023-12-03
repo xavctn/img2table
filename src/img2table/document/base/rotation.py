@@ -94,7 +94,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                           .count()
                           .sort(by=['count', pl.col('angle').abs()], descending=[True, False])
                           .limit(n_max)
-                          .collect()
+                          .collect(streaming=True)
                           .to_dicts()
                           )
 

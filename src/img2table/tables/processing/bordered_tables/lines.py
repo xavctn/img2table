@@ -39,7 +39,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
 
-        margin = int(char_length)
+        margin = int(char_length) if char_length else 21
         if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
             thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
 
