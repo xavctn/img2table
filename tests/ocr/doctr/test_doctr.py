@@ -58,4 +58,4 @@ def test_doctr_document():
 
     expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
-    assert result.df.collect().frame_equal(expected.df.collect())
+    assert result.df.collect().equals(expected.df.collect())

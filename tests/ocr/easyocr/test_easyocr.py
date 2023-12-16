@@ -65,4 +65,4 @@ def test_easyocr_document():
 
     expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
 
-    assert result.df.drop("confidence").collect(streaming=True).frame_equal(expected.df.drop("confidence").collect(streaming=True))
+    assert result.df.drop("confidence").collect(streaming=True).equals(expected.df.drop("confidence").collect(streaming=True))

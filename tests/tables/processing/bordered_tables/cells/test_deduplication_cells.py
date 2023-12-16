@@ -10,4 +10,4 @@ def test_deduplicate_cells():
     result = deduplicate_cells(df_cells=df_cells).collect()
     expected = pl.read_csv("test_data/expected.csv", separator=";", encoding="utf-8")
 
-    assert result.frame_equal(expected)
+    assert result.equals(expected)
