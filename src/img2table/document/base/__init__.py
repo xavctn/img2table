@@ -84,6 +84,9 @@ class Document(Validations):
         if self.ocr_df is None and ocr is not None:
             self.ocr_df = ocr.of(document=ocr_doc)
 
+        if self.ocr_df is None:
+            return {k: [] for k in tables.keys()}
+
         # Retrieve table contents with ocr
         for idx, page in enumerate(table_pages):
             ocr_df_page = self.ocr_df.page(page_number=idx)

@@ -14,7 +14,7 @@ class PdfOCR(OCRInstance):
         list_pages = list()
 
         doc = fitz.Document(stream=document.bytes, filetype='pdf')
-        for idx, page_number in enumerate(document.pages or range(doc.page_count)):
+        for idx, page_number in enumerate(document.pages):
             # Get page
             page = doc.load_page(page_id=page_number)
 

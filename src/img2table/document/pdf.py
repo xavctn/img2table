@@ -76,13 +76,14 @@ class PDF(Document):
             table_pages = [self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0]
             images = [self.images[k] for k, v in tables.items() if len(v) > 0]
 
-            # Create PDF object for OCR
-            pdf_ocr = PDF(src=self.bytes,
-                          pages=table_pages,
-                          _images=images,
-                          _rotated=self._rotated)
+            if table_pages:
+                # Create PDF object for OCR
+                pdf_ocr = PDF(src=self.bytes,
+                              pages=table_pages,
+                              _images=images,
+                              _rotated=self._rotated)
 
-            # Try to get OCRDataframe from PDF
-            self.ocr_df = PdfOCR().of(document=pdf_ocr)
+                # Try to get OCRDataframe from PDF
+                self.ocr_df = PdfOCR().of(document=pdf_ocr)
 
         return super(PDF, self).get_table_content(tables=tables, ocr=ocr, min_confidence=min_confidence)
