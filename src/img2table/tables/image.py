@@ -120,6 +120,9 @@ class TableImage:
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :return: list of identified tables
         """
+        if self.char_length is None:
+            return []
+
         # Extract bordered tables
         self.extract_bordered_tables(implicit_rows=implicit_rows)
 

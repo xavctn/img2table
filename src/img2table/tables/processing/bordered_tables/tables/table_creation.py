@@ -53,6 +53,9 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     :param elements: list of image elements
     :return: processed table
     """
+    if len(elements) == 0 or table.nb_rows == 0:
+        return Table(rows=[])
+
     # Identify elements corresponding to each cell
     df_elements = pl.LazyFrame([{"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
                                 for el in elements])
@@ -119,10 +122,13 @@ def cluster_to_table(cluster_cells: List[Cell], elements: List[Cell], borderless
             if containing_cells:
                 list_cells.append(containing_cells.pop(0))
             else:
-                # Get x value of closest matching cells
-                x_value = sorted([x_val for cell in matching_cells for x_val in [cell.x1, cell.x2]],
-                                 key=lambda x: min(abs(x - x_left), abs(x - x_right))).pop(0)
-                list_cells.append(Cell(x1=x_value, y1=y_top, x2=x_value, y2=y_bottom))
+                if matching_cells:
+                    # Get x value of the closest matching cells
+                    x_value = sorted([x_val for cell in matching_cells for x_val in [cell.x1, cell.x2]],
+                                     key=lambda x: min(abs(x - x_left), abs(x - x_right))).pop(0)
+                    list_cells.append(Cell(x1=x_value, y1=y_top, x2=x_value, y2=y_bottom))
+                else:
+                    list_cells.append(default_cell)
 
         list_rows.append(Row(cells=list_cells))
 

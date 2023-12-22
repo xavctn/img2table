@@ -8,8 +8,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float,
-                       median_line_sep: float,) -> List[Cell]:
+def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[Cell]:
     """
     Identify image elements
     :param thresh: thresholded image array
