@@ -4,7 +4,7 @@ import json
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables import identify_table
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup
 
 
 def test_identify_table():
@@ -17,14 +17,14 @@ def test_identify_table():
         contours = [Cell(**el) for el in json.load(f)]
 
     with open("test_data/rows.json", "r") as f:
-        table_rows = [TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)]
+        row_delimiters = [Cell(**c) for c in json.load(f)]
 
     result = identify_table(columns=delimiter_group,
-                            table_rows=table_rows,
+                            row_delimiters=row_delimiters,
                             contours=contours,
                             median_line_sep=16,
                             char_length=4.66)
 
-    assert result.nb_rows == 16
+    assert result.nb_rows == 17
     assert result.nb_columns == 8
-    assert (result.x1, result.y1, result.x2, result.y2) == (93, 45, 1233, 1060)
+    assert (result.x1, result.y1, result.x2, result.y2) == (53, 45, 1233, 1147)

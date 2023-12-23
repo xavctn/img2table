@@ -43,8 +43,7 @@ def test_identify_coherent_v_whitespaces():
                      Cell(x1=80, x2=90, y1=0, y2=20),
                      Cell(x1=100, x2=110, y1=0, y2=10)]
 
-    result = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces,
-                                             char_length=1)
+    result = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)
 
     expected = [Cell(x1=10, x2=20, y1=0, y2=20),
                 Cell(x1=50, x2=60, y1=0, y2=20),

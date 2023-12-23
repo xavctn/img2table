@@ -95,11 +95,10 @@ def adjacent_whitespaces(w_1: Cell, w_2: Cell) -> bool:
     return x_coherent and y_coherent
 
 
-def identify_coherent_v_whitespaces(v_whitespaces: List[Cell], char_length: float) -> List[Cell]:
+def identify_coherent_v_whitespaces(v_whitespaces: List[Cell]) -> List[Cell]:
     """
     From vertical whitespaces, identify the most relevant ones according to height, width and relative positions
     :param v_whitespaces: list of vertical whitespaces
-    :param char_length: average character width in image
     :return: list of relevant vertical delimiters
     """
     # Create vertical delimiters groups
@@ -150,7 +149,6 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
                                     min_width=0.5 * char_length)
 
     # Identify relevant vertical whitespaces that can be column delimiters
-    vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces,
-                                                      char_length=char_length)
+    vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)
 
     return vertical_delims

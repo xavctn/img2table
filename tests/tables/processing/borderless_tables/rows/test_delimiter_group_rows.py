@@ -3,69 +3,64 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup
 from img2table.tables.processing.borderless_tables.rows.delimiter_group_rows import \
-    get_delimiter_group_row_separation, identify_rows, identify_delimiter_group_rows, \
-    not_overlapping_rows, score_row_group, get_rows_from_overlapping_cluster
+    identify_delimiter_group_rows, identify_row_delimiters, filter_coherent_row_delimiters, correct_delimiter_width
 
 
-def test_get_delimiter_group_row_separation():
+def test_identify_row_delimiters():
     with open("test_data/delimiter_group.json", "r") as f:
         data = json.load(f)
     delimiter_group = DelimiterGroup(delimiters=[Cell(**c) for c in data.get('delimiters')],
                                      elements=[Cell(**c) for c in data.get('elements')])
 
-    result = get_delimiter_group_row_separation(delimiter_group=delimiter_group)
+    result = identify_row_delimiters(delimiter_group=delimiter_group)
 
-    assert result == 66
+    with open("test_data/h_whitespaces.json", "r") as f:
+        expected = [Cell(**c) for c in json.load(f)]
 
-
-def test_not_overlapping_rows():
-    tb_row_1 = TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)])
-    tb_row_2 = TableRow(cells=[Cell(x1=0, x2=10, y1=8, y2=40)])
-    tb_row_3 = TableRow(cells=[Cell(x1=0, x2=10, y1=36, y2=67)])
-
-    assert not not_overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_2)
-    assert not_overlapping_rows(tb_row_1=tb_row_1, tb_row_2=tb_row_3)
-    assert not not_overlapping_rows(tb_row_1=tb_row_2, tb_row_2=tb_row_3)
+    assert result == expected
 
 
-def test_score_row_group():
-    row_group = [TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)]),
-                 TableRow(cells=[Cell(x1=0, x2=10, y1=18, y2=43),
-                                 Cell(x1=0, x2=10, y1=19, y2=45)])
-                 ]
+def test_filter_coherent_row_delimiters():
+    row_delimiters = [Cell(x1=0, x2=100, y1=0, y2=0),
+                      Cell(x1=0, x2=80, y1=10, y2=10),
+                      Cell(x1=0, x2=100, y1=20, y2=20)]
 
-    result = score_row_group(row_group=row_group,
-                             height=100,
-                             max_elements=5)
+    delimiter_group = DelimiterGroup(delimiters=[Cell(x1=0, x2=0, y1=0, y2=20),
+                                                 Cell(x1=30, x2=30, y1=0, y2=20),
+                                                 Cell(x1=60, x2=60, y1=0, y2=20),
+                                                 Cell(x1=100, x2=100, y1=0, y2=20)],
+                                     elements=[Cell(x1=85, x2=95, y1=2, y2=7)])
 
-    assert round(result, 2) == 0.27
+    result = filter_coherent_row_delimiters(row_delimiters=row_delimiters,
+                                            delimiter_group=delimiter_group)
 
+    expected = [Cell(x1=0, x2=100, y1=0, y2=0),
+                Cell(x1=0, x2=100, y1=20, y2=20)]
 
-def test_get_rows_from_overlapping_cluster():
-    row_cluster = [TableRow(cells=[Cell(x1=0, x2=10, y1=0, y2=20)]),
-                   TableRow(cells=[Cell(x1=20, x2=100, y1=0, y2=8)]),
-                   TableRow(cells=[Cell(x1=20, x2=100, y1=11, y2=20), Cell(x1=20, x2=100, y1=11, y2=20)])]
-
-    result = get_rows_from_overlapping_cluster(row_cluster=row_cluster)
-
-    assert result == [TableRow(cells=[Cell(x1=20, x2=100, y1=0, y2=8)]),
-                      TableRow(cells=[Cell(x1=20, x2=100, y1=11, y2=20), Cell(x1=20, x2=100, y1=11, y2=20)])]
+    assert result == expected
 
 
-def test_identify_rows():
-    with open("test_data/delimiter_group.json", "r") as f:
-        elements = [Cell(**c) for c in json.load(f).get('elements')]
+def test_correct_delimiter_width():
+    row_delimiters = [Cell(x1=0, x2=100, y1=0, y2=0),
+                      Cell(x1=0, x2=80, y1=10, y2=10),
+                      Cell(x1=30, x2=100, y1=20, y2=20),
+                      Cell(x1=0, x2=100, y1=30, y2=30)]
 
-    result = identify_rows(elements=elements,
-                           ref_size=22)
+    contours = [Cell(x1=23, x2=34, y1=12, y2=18),
+                Cell(x1=86, x2=93, y1=2, y2=9),
+                Cell(x1=3, x2=17, y1=18, y2=24)]
 
-    assert len(result) == 17
-    assert min([row.y1 for row in result]) == 45
-    assert max([row.y2 for row in result]) == 1147
-    assert min([row.x1 for row in result]) == 93
-    assert max([row.x2 for row in result]) == 1233
+    result = correct_delimiter_width(row_delimiters=row_delimiters,
+                                     contours=contours)
+
+    expected = [Cell(x1=0, x2=100, y1=0, y2=0),
+                Cell(x1=0, x2=100, y1=10, y2=10),
+                Cell(x1=17, x2=100, y1=20, y2=20),
+                Cell(x1=0, x2=100, y1=30, y2=30)]
+
+    assert result == expected
 
 
 def test_identify_delimiter_group_rows():
@@ -74,11 +69,14 @@ def test_identify_delimiter_group_rows():
     delimiter_group = DelimiterGroup(delimiters=[Cell(**c) for c in data.get('delimiters')],
                                      elements=[Cell(**c) for c in data.get('elements')])
 
-    result, sep = identify_delimiter_group_rows(delimiter_group=delimiter_group)
+    with open("test_data/contours.json", 'r') as f:
+        contours = [Cell(**el) for el in json.load(f)]
 
-    assert sep == 66
-    assert len(result) == 17
-    assert min([row.y1 for row in result]) == 45
-    assert max([row.y2 for row in result]) == 1147
-    assert min([row.x1 for row in result]) == 93
-    assert max([row.x2 for row in result]) == 1233
+    result = identify_delimiter_group_rows(delimiter_group=delimiter_group,
+                                           contours=contours)
+
+    assert len(result) == 18
+    assert min([d.y1 for d in result]) == 45
+    assert max([d.y2 for d in result]) == 1147
+    assert min([d.x1 for d in result]) == 53
+    assert max([d.x2 for d in result]) == 1277

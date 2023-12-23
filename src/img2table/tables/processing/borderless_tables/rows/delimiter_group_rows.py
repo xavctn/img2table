@@ -1,243 +1,153 @@
 # coding: utf-8
-from typing import List, Optional, Tuple, Set
+from typing import List
 
-import polars as pl
-
-from img2table.tables import find_components
+from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import TableRow, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup
+from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-def get_delimiter_group_row_separation(delimiter_group: DelimiterGroup) -> Optional[float]:
-    """
-    Identify median row separation between elements of the delimiter group
-    :param delimiter_group: column delimiters group
-    :return: median row separation in pixels
-    """
-    if len(delimiter_group.elements) == 0:
-        return None
-
-    # Create dataframe with delimiter group elements
-    list_elements = [{"id": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
-                     for idx, el in enumerate(delimiter_group.elements)]
-    df_elements = pl.LazyFrame(data=list_elements)
-
-    # Cross join to get corresponding elements and filter on elements that corresponds horizontally
-    df_h_elms = (df_elements.join(df_elements, how='cross')
-                 .filter(pl.col('id') != pl.col('id_right'))
-                 .filter(pl.min_horizontal(['x2', 'x2_right']) - pl.max_horizontal(['x1', 'x1_right']) > 0)
-                 )
-
-    # Get element which is directly below
-    df_elms_below = (df_h_elms.filter(pl.col('y1') < pl.col('y1_right'))
-                     .sort(['id', 'y1_right'])
-                     .with_columns(pl.lit(1).alias('ones'))
-                     .with_columns(pl.col('ones').cum_sum().over(["id"]).alias('rk'))
-                     .filter(pl.col('rk') == 1)
-                     )
-
-    if df_elms_below.collect().height == 0:
-        return None
-
-    # Compute median vertical distance between elements
-    median_v_dist = (df_elms_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
-                                                  - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
-                     .select(pl.median('y_diff'))
-                     .collect()
-                     .to_dicts()
-                     .pop()
-                     .get('y_diff')
-                     )
-
-    return median_v_dist
-
-
-def identify_aligned_elements(df_elements: pl.DataFrame, ref_size: int) -> List[Set[int]]:
-    """
-    Identify groups of elements that are vertically aligned
-    :param df_elements: dataframe of elements
-    :param ref_size: reference distance between two line centers
-    :return: list of element sets which represent aligned elements
-    """
-    # Cross join elements and filter on aligned elements
-    df_cross = (df_elements.join(df_elements, how="cross")
-                .filter(((pl.col('y1') + pl.col('y2') - pl.col('y1_right') - pl.col('y2_right')) / 2).abs() <= ref_size)
-                .filter(pl.max_horizontal(pl.col('height'), pl.col('height_right'))
-                        / pl.min_horizontal(pl.col('height'), pl.col('height_right')) <= 2)
-                .select(pl.struct(pl.min_horizontal(pl.col('idx'), pl.col('idx_right')).alias('idx_1'),
-                                  pl.max_horizontal(pl.col('idx'), pl.col('idx_right')).alias('idx_2')).alias('idxs')
-                        )
-                .unique()
-                .unnest("idxs")
-                )
-    aligned_elements = [{row.get('idx_1'), row.get('idx_2')} for row in df_cross.to_dicts()]
-
-    # Create cluster of aligned elements
-    clusters = find_components(edges=aligned_elements)
-
-    return clusters
-
-
-def identify_overlapping_row_clusters(df_elements: pl.DataFrame, clusters: List[Set[int]]) -> List[Set[int]]:
-    """
-    Identify rows that overlap with each other and group them in cluster
-    :param df_elements: dataframe of elements
-    :param clusters: list of element sets which represent aligned elements/ rows
-    :return: list of clusters sets which represent aligned rows
-    """
-    clusters_dict = {el_idx: cl_idx for cl_idx, cl in enumerate(clusters) for el_idx in cl}
-    df_elements = df_elements.with_columns(pl.col('idx').map_elements(clusters_dict.get).alias("cl_idx"))
-
-    df_clusters = (df_elements.group_by("cl_idx")
-                   .agg(pl.col("x1").min().alias('x1'),
-                        pl.col("y1").min().alias('y1'),
-                        pl.col("x2").max().alias('x2'),
-                        pl.col("y2").max().alias('y2'))
-                   .with_columns((pl.col("y2") - pl.col("y1")).alias('height'))
-                   )
-
-    df_cross = (df_clusters.join(df_clusters, how='cross')
-                .with_columns((pl.min_horizontal(pl.col("y2"), pl.col("y2_right"))
-                               - pl.max_horizontal(pl.col("y1"), pl.col("y1_right"))).alias('overlap')
-                             )
-                .filter(pl.col('overlap') / pl.min_horizontal(pl.col("height"), pl.col("height_right")) >= 0.5)
-                .select(pl.struct(pl.min_horizontal(pl.col('cl_idx'), pl.col('cl_idx_right')).alias('idx_1'),
-                                  pl.max_horizontal(pl.col('cl_idx'), pl.col('cl_idx_right')).alias('idx_2')).alias('idxs')
-                        )
-                .unique()
-                .unnest("idxs")
-                )
-    aligned_rows = [{row.get('idx_1'), row.get('idx_2')} for row in df_cross.to_dicts()]
-
-    # Create cluster of aligned rows
-    row_clusters = find_components(edges=aligned_rows)
-
-    return row_clusters
-
-
-def not_overlapping_rows(tb_row_1: TableRow, tb_row_2: TableRow) -> bool:
-    """
-    Identify if two TableRow objects do not overlap vertically
-    :param tb_row_1: first TableRow object
-    :param tb_row_2: second TableRow object
-    :return: boolean indicating if both TableRow objects do not overlap vertically
-    """
-    # Compute overlap
-    overlap = min(tb_row_1.y2, tb_row_2.y2) - max(tb_row_1.y1, tb_row_2.y1)
-    return overlap / min(tb_row_1.height, tb_row_2.height) <= 0.1
-
-
-def score_row_group(row_group: List[TableRow], height: int, max_elements: int) -> float:
-    """
-    Score row group pertinence
-    :param row_group: group of TableRow objects
-    :param height: reference height
-    :param max_elements: reference number of elements/cells that can be included in a row group
-    :return: scoring of the row group
-    """
-    # Get y coverage of row group
-    y_total = sum([r.height for r in row_group])
-    y_overlap = sum([max(0, min(r_1.y2, r_2.y2) - max(r_1.y1, r_2.y1)) for r_1, r_2 in zip(row_group, row_group[1:])])
-    y_coverage = y_total - y_overlap
-
-    # Score row group
-    return (sum([len(r.cells) for r in row_group]) / max_elements) * (y_coverage / height)
-
-
-def get_rows_from_overlapping_cluster(row_cluster: List[TableRow]) -> List[TableRow]:
-    """
-    Identify relevant rows from a cluster of vertically overlapping rows
-    :param row_cluster: cluster of vertically overlapping TableRow objects
-    :return: relevant rows from a cluster of vertically overlapping rows
-    """
-    # Get height of row cluster
-    ref_height = max([r.y2 for r in row_cluster]) - min([r.y1 for r in row_cluster])
-
-    # Get groups of distinct rows
-    seq = iter(row_cluster)
-    distinct_rows_clusters = [[next(seq)]]
-    for row in seq:
-        for idx, cl in enumerate(distinct_rows_clusters):
-            if all([not_overlapping_rows(tb_row_1=row, tb_row_2=r) for r in cl]):
-                distinct_rows_clusters[idx].append(row)
-        distinct_rows_clusters.append([row])
-
-    # Get maximum number of elements possible in a row cluster
-    max_elements = max([sum([len(r.cells) for r in cl]) for cl in distinct_rows_clusters])
-
-    # Sort elements by score
-    scored_elements = sorted(distinct_rows_clusters,
-                             key=lambda gp: score_row_group(row_group=gp,
-                                                            height=ref_height,
-                                                            max_elements=max_elements)
-                             )
-
-    # Get cluster of rows with the largest score
-    return scored_elements.pop()
-
-
-def identify_rows(elements: List[Cell], ref_size: int) -> List[TableRow]:
-    """
-    Identify rows from Cell elements
-    :param elements: list of cells
-    :param ref_size: reference distance between two line centers
-    :return: list of table rows
-    """
-    if len(elements) == 0:
-        return []
-
-    # Create dataframe with elements
-    df_elements = (pl.DataFrame([{"idx": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
-                                 for idx, el in enumerate(elements)])
-                   .with_columns((pl.col('y2') - pl.col('y1')).alias('height'))
-                   )
-
-    # Identify clusters of elements that represent rows
-    element_clusters = identify_aligned_elements(df_elements=df_elements,
-                                                 ref_size=ref_size)
-
-    # Identify overlapping rows
-    row_clusters = identify_overlapping_row_clusters(df_elements=df_elements,
-                                                     clusters=element_clusters)
-
-    overlap_row_clusters = [[TableRow(cells=[elements[idx] for idx in element_clusters[cl_idx]]) for cl_idx in row_cl]
-                            for row_cl in row_clusters]
-
-    # Get relevant rows in each cluster
-    relevant_rows = [row for cl in overlap_row_clusters
-                     for row in get_rows_from_overlapping_cluster(cl)]
-
-    # Check for overlapping rows
-    seq = iter(sorted(relevant_rows, key=lambda r: r.y1 + r.y2))
-    final_rows = [next(seq)]
-    for row in seq:
-        if row.overlaps(final_rows[-1]):
-            final_rows[-1].merge(row)
-        else:
-            final_rows.append(row)
-
-    return final_rows
-
-
-def identify_delimiter_group_rows(delimiter_group: DelimiterGroup) -> Tuple[List[TableRow], float]:
+def identify_row_delimiters(delimiter_group: DelimiterGroup) -> List[Cell]:
     """
     Identify list of rows corresponding to the delimiter group
     :param delimiter_group: column delimiters group
-    :return: list of rows corresponding to the delimiter group
+    :return: list of rows delimiters corresponding to the delimiter group
     """
-    # Identify median row separation between elements of the delimiter group
-    group_median_row_sep = get_delimiter_group_row_separation(delimiter_group=delimiter_group)
+    # Identify vertical whitespaces
+    h_ws = get_whitespaces(segment=delimiter_group, vertical=False, pct=0.66)
 
-    if group_median_row_sep:
-        # Identify rows
-        group_lines = identify_rows(elements=delimiter_group.elements,
-                                    ref_size=int(group_median_row_sep // 3))
+    # Create horizontal delimiters groups
+    h_groups = cluster_items(items=h_ws,
+                             clustering_func=lambda w1, w2: len({w1.y1, w1.y2}.intersection({w2.y1, w2.y2})) > 0)
 
-        # Adjust height of first / last row
-        if group_lines:
-            group_lines[0].set_y_top(delimiter_group.y1)
-            group_lines[-1].set_y_bottom(delimiter_group.y2)
+    # For each group, select only delimiters that have the largest width
+    final_delims = list()
+    for gp in h_groups:
+        for delim in gp:
+            if delim.y1 == delimiter_group.y1 or delim.y2 == delimiter_group.y2:
+                continue
 
-        return group_lines, group_median_row_sep
+            # Get adjacent delimiters
+            adjacent_delims = [d for d in gp if d != delim and len({delim.y1, delim.y2}.intersection({d.y1, d.y2})) > 0]
 
-    return [], group_median_row_sep
+            if len(adjacent_delims) == 0:
+                final_delims.append(Cell(x1=delim.x1,
+                                         x2=delim.x2,
+                                         y1=(delim.y1 + delim.y2) // 2,
+                                         y2=(delim.y1 + delim.y2) // 2))
+            elif delim.width >= max([d.width for d in adjacent_delims]):
+                final_delims.append(Cell(x1=delim.x1,
+                                         x2=delim.x2,
+                                         y1=(delim.y1 + delim.y2) // 2,
+                                         y2=(delim.y1 + delim.y2) // 2))
+
+    final_delims += [Cell(x1=delimiter_group.x1, x2=delimiter_group.x2, y1=delimiter_group.y1, y2=delimiter_group.y1),
+                     Cell(x1=delimiter_group.x1, x2=delimiter_group.x2, y1=delimiter_group.y2, y2=delimiter_group.y2)]
+
+    return sorted(final_delims, key=lambda d: d.y1)
+
+
+def filter_coherent_row_delimiters(row_delimiters: List[Cell], delimiter_group: DelimiterGroup) -> List[Cell]:
+    """
+    Filter coherent row delimiters (i.e that properly delimit relevant text)
+    :param row_delimiters: list of row delimiters
+    :param delimiter_group: column delimiters group
+    :return: filtered row delimiters
+    """
+    # Get max width of delimiters
+    max_width = max(map(lambda d: d.width, row_delimiters))
+
+    delimiters_to_delete = list()
+    for idx, delim in enumerate(row_delimiters):
+        if delim.width >= 0.95 * max_width:
+            continue
+
+        # Get area above delimiter and corresponding columns
+        upper_delim = row_delimiters[idx - 1]
+        upper_area = Cell(x1=max(delim.x1, upper_delim.x1),
+                          y1=upper_delim.y2,
+                          x2=min(delim.x2, upper_delim.x2),
+                          y2=delim.y1)
+        upper_columns = sorted([col for col in delimiter_group.delimiters
+                                if min(upper_area.y2, col.y2) - max(upper_area.y1, col.y1) >= 0.8 * upper_area.height
+                                and upper_area.x1 <= col.x1 <= upper_area.x2],
+                               key=lambda c: c.x1)
+        # Get contained elements in upper area
+        upper_contained_elements = [el for el in delimiter_group.elements if el.y1 >= upper_area.y1
+                                    and el.y2 <= upper_area.y2 and el.x1 >= upper_columns[0].x2
+                                    and el.x2 <= upper_columns[-1].x1] if upper_columns else []
+
+        # Get area below delimiter and corresponding columns
+        bottom_delim = row_delimiters[idx + 1]
+        bottom_area = Cell(x1=max(delim.x1, bottom_delim.x1),
+                           y1=delim.y2,
+                           x2=min(delim.x2, bottom_delim.x2),
+                           y2=bottom_delim.y1)
+        bottom_columns = sorted([col for col in delimiter_group.delimiters
+                                 if min(bottom_area.y2, col.y2) - max(bottom_area.y1, col.y1) >= 0.8 * bottom_area.height
+                                 and bottom_area.x1 <= col.x1 <= bottom_area.x2],
+                                key=lambda c: c.x1)
+        # Get contained elements in bottom area
+        bottom_contained_elements = [el for el in delimiter_group.elements if el.y1 >= bottom_area.y1
+                                     and el.y2 <= bottom_area.y2 and el.x1 >= bottom_columns[0].x2
+                                     and el.x2 <= bottom_columns[-1].x1] if bottom_columns else []
+
+        # If one of the area is empty, the delimiter is irrelevant
+        if len(upper_contained_elements) * len(bottom_contained_elements) == 0:
+            delimiters_to_delete.append(idx)
+
+    return [d for idx, d in enumerate(row_delimiters) if idx not in delimiters_to_delete]
+
+
+def correct_delimiter_width(row_delimiters: List[Cell], contours: List[Cell]) -> List[Cell]:
+    """
+    Correct delimiter width if needed
+    :param row_delimiters: list of row delimiters
+    :param contours: list of image contours
+    :return: list of row delimiters with corrected width
+    """
+    x_min, x_max = min([d.x1 for d in row_delimiters]), max([d.x2 for d in row_delimiters])
+
+    for idx, delim in enumerate(row_delimiters):
+        if delim.width == x_max - x_min:
+            continue
+
+        # Check if there are contours on the left of the delimiter
+        left_contours = [c for c in contours if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
+                         and min(c.x2, delim.x1) - max(c.x1, x_min) > 0]
+        delim_x_min = max([c.x2 for c in left_contours] + [x_min])
+
+        # Check if there are contours on the right of the delimiter
+        right_contours = [c for c in contours if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
+                          and min(c.x2, x_max) - max(c.x1, delim.x2) > 0]
+        delim_x_max = min([c.x1 for c in right_contours] + [x_max])
+
+        # Update delimiter width
+        setattr(row_delimiters[idx], "x1", delim_x_min)
+        setattr(row_delimiters[idx], "x2", delim_x_max)
+
+    return row_delimiters
+
+
+def identify_delimiter_group_rows(delimiter_group: DelimiterGroup, contours: List[Cell]) -> List[Cell]:
+    """
+    Identify list of rows corresponding to the delimiter group
+    :param delimiter_group: column delimiters group
+    :param contours: list of image contours
+    :return: list of rows delimiters corresponding to the delimiter group
+    """
+    # Get row delimiters
+    row_delimiters = identify_row_delimiters(delimiter_group=delimiter_group)
+
+    if row_delimiters:
+        # Filter coherent delimiters
+        coherent_delimiters = filter_coherent_row_delimiters(row_delimiters=row_delimiters,
+                                                             delimiter_group=delimiter_group)
+
+        # Correct delimiters width
+        corrected_delimiters = correct_delimiter_width(row_delimiters=coherent_delimiters,
+                                                       contours=contours)
+
+        return corrected_delimiters if len(corrected_delimiters) >= 3 else []
+    return []
+
