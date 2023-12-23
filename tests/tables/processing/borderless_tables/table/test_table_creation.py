@@ -37,12 +37,12 @@ def test_get_table():
         contours = [Cell(**el) for el in json.load(f)]
 
     with open("test_data/rows.json", "r") as f:
-        table_rows = [TableRow(cells=[Cell(**c) for c in row]) for row in json.load(f)]
+        row_delimiters = [Cell(**c) for c in json.load(f)]
 
     result = get_table(columns=delimiter_group,
-                       table_rows=table_rows,
+                       row_delimiters=row_delimiters,
                        contours=contours)
 
-    assert result.nb_rows == 16
+    assert result.nb_rows == 17
     assert result.nb_columns == 8
-    assert (result.x1, result.y1, result.x2, result.y2) == (93, 45, 1233, 1060)
+    assert (result.x1, result.y1, result.x2, result.y2) == (53, 45, 1233, 1147)
