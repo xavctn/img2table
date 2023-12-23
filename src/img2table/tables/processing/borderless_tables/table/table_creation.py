@@ -6,32 +6,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup, TableRow
-
-
-def get_coherent_columns_dimensions(columns: DelimiterGroup, table_rows: List[TableRow]) -> DelimiterGroup:
-    """
-    Identify columns that encapsulate at least one row
-    :param columns: column delimiters group
-    :param table_rows: list of table rows
-    :return: relevant columns according to table rows
-    """
-    original_delimiters = sorted(columns.delimiters, key=lambda delim: delim.x1 + delim.x2)
-
-    # Get horizontal dimensions of rows
-    x_min, x_max = min([row.x1 for row in table_rows]), max([row.x2 for row in table_rows])
-
-    # Identify left and right delimiters
-    left_delim = [delim for delim in original_delimiters if delim.x2 <= x_min][-1]
-    right_delim = [delim for delim in original_delimiters if delim.x1 >= x_max][0]
-
-    # Identify middle delimiters
-    middle_delimiters = [delim for delim in original_delimiters if delim.x1 >= x_min and delim.x2 <= x_max]
-
-    # Create new delimiter group
-    delim_group = DelimiterGroup(delimiters=[left_delim] + middle_delimiters + [right_delim])
-
-    return delim_group
+from img2table.tables.processing.borderless_tables.model import DelimiterGroup
 
 
 def get_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
