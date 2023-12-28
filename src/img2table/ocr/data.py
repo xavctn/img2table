@@ -61,7 +61,7 @@ class OCRDataframe:
         )
 
         # Filter on words where its bbox is contained in area
-        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') >= 0.6)
+        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') > 0.5)
 
         # Group text by parents
         df_text_parent = (df_words_contained
@@ -127,7 +127,7 @@ class OCRDataframe:
         )
 
         # Filter on words where its bbox is contained in area
-        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') >= 0.6)
+        df_words_contained = df_areas.filter(pl.col('int_area') / pl.col('w_area') > 0.5)
 
         # Group text by parent
         df_text_parent = (df_words_contained
