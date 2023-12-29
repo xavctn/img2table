@@ -5,25 +5,16 @@ import cv2
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
 
 
-def get_image_elements(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[Cell]:
+def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: float) -> List[Cell]:
     """
     Identify image elements
     :param thresh: thresholded image array
-    :param lines: list of image rows
     :param char_length: average character length
     :param median_line_sep: median line separation
     :return: list of image elements
     """
-    # Mask rows
-    for l in lines:
-        if l.horizontal and l.length >= 3 * char_length:
-            cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
-        elif l.vertical and l.length >= 2 * char_length:
-            cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 3 * l.thickness)
-
     # Dilate to combine adjacent text contours
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,
                                        (max(int(char_length), 1), max(int(median_line_sep // 6), 1)))

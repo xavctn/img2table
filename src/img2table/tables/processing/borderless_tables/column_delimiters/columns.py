@@ -147,6 +147,12 @@ def get_coherent_whitespace_position(ws: Cell, elements: List[Cell]) -> Cell:
 
 
 def filter_coherent_delimiters(delimiters: List[Cell], elements: List[Cell]) -> List[Cell]:
+    """
+    Filter only delimiters that had value to the group
+    :param delimiters: list of delimiters
+    :param elements: list of elements contained within the delimiter group
+    :return: filtered list of delimiters
+    """
     # Check delimiters coherency (i.e) if it adds value
     filtered_delims = list()
     for delim in delimiters:
