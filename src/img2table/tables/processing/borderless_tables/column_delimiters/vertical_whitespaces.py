@@ -10,19 +10,20 @@ from img2table.tables.processing.borderless_tables.whitespaces import adjacent_w
 
 
 @dataclass
+class MatchingWS:
+    ws: Cell
+    position: int
+    top: bool
+    bottom: bool
+
+
+@dataclass
 class VertWS:
     x1: int
     x2: int
+    y1: int
+    y2: int
     whitespaces: List[Cell] = field(default_factory=lambda: [])
-    positions: List[int] = field(default_factory=lambda: [])
-
-    @property
-    def y1(self):
-        return min([ws.y1 for ws in self.whitespaces]) if self.whitespaces else 0
-
-    @property
-    def y2(self):
-        return max([ws.y2 for ws in self.whitespaces]) if self.whitespaces else 0
 
     @property
     def height(self):
@@ -35,19 +36,6 @@ class VertWS:
     @property
     def cell(self) -> Cell:
         return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
-
-    @property
-    def continuous(self):
-        if self.positions:
-            positions = sorted(self.positions)
-            return all([p2 - p1 <= 1 for p1, p2 in zip(positions, positions[1:])])
-        return False
-
-    def add_ws(self, whitespaces: List[Cell]):
-        self.whitespaces += whitespaces
-
-    def add_position(self, position: int):
-        self.positions.append(position)
 
 
 def deduplicate_whitespaces(vertical_whitespaces: List[VertWS], elements: List[Cell]) -> List[VertWS]:
@@ -108,26 +96,48 @@ def get_vertical_whitespaces(table_segment: TableSegment) -> Tuple[List[Cell], L
     :param table_segment: TableSegment object
     :return: tuple containing list of vertical whitespaces and list of unused whitespaces
     """
+    table_areas = sorted(table_segment.table_areas, key=lambda x: x.position)
+
     # Identify all whitespaces x values
     x_ws = sorted(set([ws.x1 for ws in table_segment.whitespaces] + [ws.x2 for ws in table_segment.whitespaces]))
 
     # Get vertical whitespaces
     vertical_ws = list()
     for x_left, x_right in zip(x_ws, x_ws[1:]):
-        # Create a whitespace object
-        vert_ws = VertWS(x1=x_left, x2=x_right)
-
-        for tb_area in table_segment.table_areas:
+        rng_ws = list()
+        for id_area, tb_area in enumerate(table_areas):
             # Get matching whitespaces
-            matching_ws = [ws for ws in tb_area.whitespaces if min(vert_ws.x2, ws.x2) - max(vert_ws.x1, ws.x1) > 0]
+            matching_ws = sorted([ws for ws in tb_area.whitespaces if min(x_right, ws.x2) - max(x_left, ws.x1) > 0],
+                                 key=lambda ws: ws.y1)
 
             if matching_ws:
-                vert_ws.add_position(tb_area.position)
-                vert_ws.add_ws(matching_ws)
+                for ws in matching_ws:
+                    m_ws = MatchingWS(ws=ws,
+                                      position=id_area,
+                                      top=ws.y1 == tb_area.y1,
+                                      bottom=ws.y2 == tb_area.y2)
+                    rng_ws.append(m_ws)
 
-        # If it is composed of continuous whitespaces, use them
-        if vert_ws.continuous:
-            vertical_ws.append(vert_ws)
+        if rng_ws:
+            # Create cluster of coherent ws
+            seq = iter(rng_ws)
+            ws_clusters = [[next(seq)]]
+            for m_ws in seq:
+                prev_ws = ws_clusters[-1][-1]
+
+                # If consecutive ws do not match, create a new cluster
+                if m_ws.position - prev_ws.position > 1 or not (prev_ws.bottom and m_ws.top):
+                    ws_clusters.append([])
+                ws_clusters[-1].append(m_ws)
+
+            for cl in ws_clusters:
+                # Compute vertical boundaries
+                y1 = table_areas[cl[0].position - 1].y2 if cl[0].top and cl[0].position > 0 else cl[0].ws.y1
+                y2 = table_areas[cl[-1].position + 1].y1 if cl[-1].bottom and cl[-1].position < len(table_areas) - 1 else cl[-1].ws.y2
+
+                vert_ws = VertWS(x1=x_left, x2=x_right, y1=y1, y2=y2,
+                                 whitespaces=[m_ws.ws for m_ws in cl])
+                vertical_ws.append(vert_ws)
 
     # Filter whitespaces by height
     max_height = max([ws.height for ws in vertical_ws])

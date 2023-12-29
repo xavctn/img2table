@@ -5,7 +5,7 @@ Implementation of Adaptive RLSA algorithm based on https://www.sciencedirect.com
 and text line segmentation by
 """
 
-from typing import Tuple, List
+from typing import List
 
 import cv2
 import numpy as np
@@ -106,53 +106,6 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     return rsla_img
 
 
-@njit("int32[:,:](int32[:,:],int32[:,:],int32[:,:])", fastmath=True)
-def edit_punctuation(cc_denoised: np.ndarray, cc_rlsa: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
-    """
-    Remove punctuation marks from image
-    :param cc_denoised: connected components labels array without noisy components
-    :param cc_rlsa: connected components labels array from RLSA image
-    :param cc_stats_rlsa: connected components stats array from RLSA image
-    :return: connected components labels array without punctuation marks
-    """
-    cc_punctuation = cc_denoised.copy()
-
-    for idx in range(len(cc_stats_rlsa)):
-        if idx == 0:
-            continue
-        x, y, w, h, area = cc_stats_rlsa[idx][:]
-        nb_pixels, pixels = 0, []
-        for row in range(y, y + h):
-            for col in range(x, x + w):
-                if cc_rlsa[row][col] == idx and cc_denoised[row][col] > 0:
-                    pixels.append([row, col])
-                    nb_pixels += 1
-
-        if area / nb_pixels <= 1.15:
-            for row, col in pixels:
-                cc_punctuation[row][col] = 0
-
-    return cc_punctuation
-
-
-def remove_punctuation(cc_denoised: np.ndarray, cc_stats: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Remove punctuation from image
-    :param cc_denoised: connected components labels array without noisy components
-    :param cc_stats: connected components stats array
-    :return: connected components labels array without punctuation
-    """
-    # Apply adaptive RLSA to CC
-    rsla_img = adaptive_rlsa(cc=cc_denoised, cc_stats=cc_stats, a=1.5, th=3.5, c=0.4)
-
-    # Get RLSA Connected Components
-    _, cc_rlsa, cc_stats_rlsa, _ = cv2.connectedComponentsWithStats(255 * rsla_img, 8, cv2.CV_32S)
-
-    cc_punctuation = edit_punctuation(cc_denoised=cc_denoised, cc_rlsa=cc_rlsa, cc_stats_rlsa=cc_stats_rlsa)
-
-    return cc_punctuation, cc_rlsa
-
-
 @njit("int32[:,:](int32[:,:],int32[:,:])", fastmath=True)
 def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     """
@@ -162,10 +115,8 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     :return: connected components labels array with obstacles identified
     """
     h, w = cc.shape
+    cc_obstacles = cc.copy()
 
-    white_runs = []
-    lengths = []
-    max_length = 0
     for col in range(w):
         prev_cc_position, prev_cc_label = -1, -1
         for row in range(h):
@@ -177,43 +128,12 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
             else:
                 if label != prev_cc_label:
                     length = row - prev_cc_position - 1
-                    if length > 0:
-                        wr = [col, prev_cc_position + 1, row]
-                        white_runs.append(wr)
-                        lengths.append(length)
-                        max_length = max(max_length, length)
+                    if length > h / 3:
+                        for id_row in range(prev_cc_position + 1, row):
+                            cc_obstacles[row][col] = -1
 
                 # Update counters
                 prev_cc_position, prev_cc_label = row, label
-
-        # Append last white run
-        if h - prev_cc_position - 1 > 0:
-            white_runs.append([col, prev_cc_position + 1, h])
-            lengths.append(h - prev_cc_position - 1)
-            max_length = max(max_length, h - prev_cc_position - 1)
-
-    # Get most common length
-    counts = np.zeros((max_length + 1,))
-    for idx in range(len(lengths)):
-        counts[length] += 1
-
-    argmax_lengths, max_cnt = 0, 0
-    for idx in range(len(counts)):
-        count = counts[idx]
-        if count > max_cnt:
-            argmax_lengths, max_cnt = idx, count
-
-    # Compute bounds of white run lengths to be replaced
-    upper_bound = h / 3
-    lower_bound = argmax_lengths
-
-    # Create obstacles in cc
-    cc_obstacles = cc.copy()
-    for col, start, end in white_runs:
-        length = end - start
-        if length > upper_bound or length <= lower_bound:
-            for row in range(start, end):
-                cc_obstacles[row][col] = -1
 
     return cc_obstacles
 
@@ -309,17 +229,17 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
     if len(cc_stats) <= 1:
         return thresh
 
-    # Compute average height
-    average_height = np.argmax(np.bincount(cc_stats[1:, cv2.CC_STAT_HEIGHT]))
-
     # Remove noise
-    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=average_height)
+    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=char_length)
 
-    # Remove punctuation
-    cc_punctuation, cc_rlsa = remove_punctuation(cc_denoised=cc_denoised, cc_stats=cc_stats)
+    # Apply first adaptive RLSA to CC
+    rsla_step1 = adaptive_rlsa(cc=cc_denoised, cc_stats=cc_stats, a=1.5, th=3.5, c=0.4)
+
+    # Get RLSA Connected Components
+    _, cc_rlsa_1, cc_stats_rlsa_1, _ = cv2.connectedComponentsWithStats(255 * rsla_step1, 8, cv2.CV_32S)
 
     # Identify obstacles
-    cc_obstacles = find_obstacles(cc=cc_punctuation, cc_rlsa=cc_rlsa)
+    cc_obstacles = find_obstacles(cc=cc_denoised, cc_rlsa=cc_rlsa_1)
 
     # RLSA image
     rlsa_image = adaptive_rlsa(cc=cc_obstacles, cc_stats=cc_stats, a=5, th=3.5, c=0.4)

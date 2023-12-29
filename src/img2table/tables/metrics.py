@@ -50,7 +50,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
                         inner_pixels += row - prev_position - 1
                     prev_position = row
 
-        if not inner_pixels / (2 * area) < 0.2:
+        if not inner_pixels / (2 * area) <= 0.05:
             cc_to_keep.append(idx)
 
     return cc_to_keep
@@ -78,15 +78,15 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
 
     # Filter components based on aspect ratio
     mask_ar = (np.maximum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])
-               / np.minimum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])) <= 5
+               / np.minimum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])) <= 2
 
     # Filter components based on fill ratio
     mask_fill = stats[:, cv2.CC_STAT_AREA] / (stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]) > 0.08
 
     stats = stats[mask_ar & mask_fill]
 
-    # Remove connected components with less than 5 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
+    # Remove connected components with less than 10 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
     stats = stats[mask_pixels]
 
     if len(stats) == 0:
@@ -110,7 +110,7 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
 
     if len(stats) > 0:
         # Compute average character length
-        char_length = np.argmax(np.bincount(stats[:, cv2.CC_STAT_WIDTH]))
+        char_length = np.mean(stats[:, cv2.CC_STAT_WIDTH])
 
         return char_length, stats
     else:
