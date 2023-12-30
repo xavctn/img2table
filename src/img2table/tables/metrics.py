@@ -72,9 +72,12 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     cc_to_keep = remove_dots(cc_labels=cc_labels, stats=stats)
     stats = stats[cc_to_keep, :]
 
-    # Remove connected components with less than 5 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
+    # Remove connected components with less than 10 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
     stats = stats[mask_pixels]
+
+    if len(stats) == 0:
+        return None, None
 
     # Filter components based on aspect ratio
     mask_ar = (np.maximum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])
@@ -84,10 +87,6 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     mask_fill = stats[:, cv2.CC_STAT_AREA] / (stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]) > 0.08
 
     stats = stats[mask_ar & mask_fill]
-
-    # Remove connected components with less than 10 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
-    stats = stats[mask_pixels]
 
     if len(stats) == 0:
         return None, None

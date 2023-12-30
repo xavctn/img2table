@@ -14,7 +14,8 @@ from numba import njit, prange
 from img2table.tables.objects.line import Line
 
 
-def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: int) -> np.ndarray:
+@njit("int32[:,:](int32[:,:],int32[:,:],float64)", fastmath=True, cache=True, parallel=False)
+def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) -> np.ndarray:
     """
     Remove noise from detected connected components
     :param cc: connected components labels array
@@ -22,28 +23,29 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: int) -> n
     :param average_height: average connected components' height
     :return: connected components labels array without noisy components
     """
-    # Condition on height
-    mask_height = cc_stats[:, cv2.CC_STAT_HEIGHT] < average_height / 3
-
-    # Condition on elongation
-    mask_elongation = (np.maximum(cc_stats[:, cv2.CC_STAT_HEIGHT], cc_stats[:, cv2.CC_STAT_WIDTH])
-                       / np.minimum(cc_stats[:, cv2.CC_STAT_HEIGHT], cc_stats[:, cv2.CC_STAT_WIDTH])) < 0.08
-
-    # Condition on low density
-    mask_low_density = cc_stats[:, cv2.CC_STAT_AREA] / (cc_stats[:, cv2.CC_STAT_HEIGHT] * cc_stats[:, cv2.CC_STAT_WIDTH]) < 0.08
-
-    # Create mask on noise
-    mask_noise = mask_height | mask_elongation | mask_low_density
-
-    # Create new connected components labels array without noisy components
     cc_denoised = cc.copy()
-    cc_to_remove = [idx for idx, val in enumerate(mask_noise) if val]
-    cc_denoised[np.isin(cc_denoised, cc_to_remove)] = 0
+    for idx in prange(len(cc_stats)):
+        if idx == 0:
+            continue
+
+        # Get stats
+        x, y, w, h, area = cc_stats[idx][:]
+
+        # Check removal conditions
+        cond_height = h < average_height / 3
+        cond_elongation = max(h, w) / min(h, w) < 0.08
+        cond_low_density = area / (w * h) < 0.08
+
+        if cond_height or cond_elongation or cond_low_density:
+            for row in prange(y, y + h):
+                for col in prange(x, x + w):
+                    if cc_denoised[row][col] == idx:
+                        cc_denoised[row][col] = 0
 
     return cc_denoised
 
 
-@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True, cache=True, parallel=True)
+@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True, cache=True, parallel=False)
 def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: float) -> np.ndarray:
     """
     Implementation of adaptive run-length smoothing algorithm
@@ -87,8 +89,8 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
                 # Presence of other CC
                 no_other_cc = True
                 list_ccs = [-1, 0, label, prev_cc_label]
-                for y in range(max(0, row - 2), min(row + 3, h)):
-                    for x in range(prev_cc_position + 1, col):
+                for y in prange(max(0, row - 2), min(row + 3, h)):
+                    for x in prange(prev_cc_position + 1, col):
                         if not cc[y][x] in list_ccs:
                             no_other_cc = False
 
@@ -106,12 +108,11 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     return rsla_img
 
 
-@njit("int32[:,:](int32[:,:],int32[:,:])", fastmath=True, cache=True, parallel=True)
-def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
+@njit("int32[:,:](int32[:,:])", fastmath=True, cache=True, parallel=False)
+def find_obstacles(cc: np.ndarray) -> np.ndarray:
     """
     Identify obstacles (columns, line gaps) in image
     :param cc: connected components labels array
-    :param cc_rlsa: connected components labels array from RLSA image
     :return: connected components labels array with obstacles identified
     """
     h, w = cc.shape
@@ -120,7 +121,7 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     for col in prange(w):
         prev_cc_position, prev_cc_label = -1, -1
         for row in range(h):
-            label = cc_rlsa[row][col]
+            label = cc_obstacles[row][col]
 
             # Not a CC
             if label == 0:
@@ -129,8 +130,8 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
                 if label != prev_cc_label:
                     length = row - prev_cc_position - 1
                     if length > h / 3:
-                        for id_row in range(prev_cc_position + 1, row):
-                            cc_obstacles[row][col] = -1
+                        for id_row in prange(prev_cc_position + 1, row):
+                            cc_obstacles[id_row][col] = -1
 
                 # Update counters
                 prev_cc_position, prev_cc_label = row, label
@@ -138,7 +139,7 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     return cc_obstacles
 
 
-@njit("boolean[:, :](uint8[:, :],int32[:, :])", fastmath=True, cache=True, parallel=True)
+@njit("boolean[:, :](uint8[:, :],int32[:, :])", fastmath=True, cache=True, parallel=False)
 def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
     """
     Identify image text mask
@@ -159,7 +160,7 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
 
         # Get horizontal white to black transitions
         h_tc = 0
-        for row in range(y, y + h):
+        for row in prange(y, y + h):
             prev_value = 0
             for col in range(x, x + w):
                 value = thresh[row][col]
@@ -171,7 +172,7 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
 
         # Get vertical white to black transitions
         v_tc, nb_cols = 0, 0
-        for col in range(x, x + w):
+        for col in prange(x, x + w):
             has_pixel, prev_value = 0, 0
             for row in range(y, y + h):
                 value = thresh[row][col]
@@ -201,8 +202,8 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
             is_text = True
 
         if is_text:
-            for row in range(y, y + h):
-                for col in range(x, x + w):
+            for row in prange(y, y + h):
+                for col in prange(x, x + w):
                     text_mask[row][col] = True
 
     return text_mask
@@ -232,14 +233,8 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
     # Remove noise
     cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=char_length)
 
-    # Apply first adaptive RLSA to CC
-    rsla_step1 = adaptive_rlsa(cc=cc_denoised, cc_stats=cc_stats, a=1.5, th=3.5, c=0.4)
-
-    # Get RLSA Connected Components
-    _, cc_rlsa_1, cc_stats_rlsa_1, _ = cv2.connectedComponentsWithStats(255 * rsla_step1, 8, cv2.CV_32S)
-
     # Identify obstacles
-    cc_obstacles = find_obstacles(cc=cc_denoised, cc_rlsa=cc_rlsa_1)
+    cc_obstacles = find_obstacles(cc=cc_denoised)
 
     # RLSA image
     rlsa_image = adaptive_rlsa(cc=cc_obstacles, cc_stats=cc_stats, a=5, th=3.5, c=0.4)

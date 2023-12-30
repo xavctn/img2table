@@ -1,8 +1,5 @@
 # coding: utf-8
 
-# Import to compile function
-from img2table.tables.metrics import remove_dots
-
 
 class Validations:
     def __post_init__(self):
