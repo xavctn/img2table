@@ -9,7 +9,7 @@ from typing import List
 
 import cv2
 import numpy as np
-from numba import njit
+from numba import njit, prange
 
 from img2table.tables.objects.line import Line
 
@@ -43,7 +43,7 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: int) -> n
     return cc_denoised
 
 
-@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True)
+@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True, cache=True, parallel=True)
 def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: float) -> np.ndarray:
     """
     Implementation of adaptive run-length smoothing algorithm
@@ -57,7 +57,7 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     rsla_img = (cc > 0).astype(np.uint8)
 
     h, w = cc.shape
-    for row in range(h):
+    for row in prange(h):
         prev_cc_position, prev_cc_label = -1, -1
         for col in range(w):
             label = cc[row][col]
@@ -106,7 +106,7 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     return rsla_img
 
 
-@njit("int32[:,:](int32[:,:],int32[:,:])", fastmath=True)
+@njit("int32[:,:](int32[:,:],int32[:,:])", fastmath=True, cache=True, parallel=True)
 def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     """
     Identify obstacles (columns, line gaps) in image
@@ -117,7 +117,7 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     h, w = cc.shape
     cc_obstacles = cc.copy()
 
-    for col in range(w):
+    for col in prange(w):
         prev_cc_position, prev_cc_label = -1, -1
         for row in range(h):
             label = cc_rlsa[row][col]
@@ -138,7 +138,7 @@ def find_obstacles(cc: np.ndarray, cc_rlsa: np.ndarray) -> np.ndarray:
     return cc_obstacles
 
 
-@njit("boolean[:, :](uint8[:, :],int32[:, :])", fastmath=True)
+@njit("boolean[:, :](uint8[:, :],int32[:, :])", fastmath=True, cache=True, parallel=True)
 def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
     """
     Identify image text mask
@@ -151,7 +151,7 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
     # Get average height
     Hm = np.mean(cc_stats_rlsa[1:, cv2.CC_STAT_HEIGHT])
 
-    for cc_idx in range(len(cc_stats_rlsa)):
+    for cc_idx in prange(len(cc_stats_rlsa)):
         if cc_idx == 0:
             continue
 

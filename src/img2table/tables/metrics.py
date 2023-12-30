@@ -4,12 +4,12 @@ from typing import Tuple, Optional, List
 import cv2
 import numpy as np
 import polars as pl
-from numba import njit
+from numba import njit, prange
 
 from img2table.tables.objects.cell import Cell
 
 
-@njit("List(int64)(int32[:,:],int32[:,:])", fastmath=True)
+@njit("List(int64)(int32[:,:],int32[:,:])", fastmath=True, cache=True, parallel=False)
 def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
     """
     Remove dots from connected components
@@ -19,7 +19,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
     """
     cc_to_keep = list()
 
-    for idx in range(len(stats)):
+    for idx in prange(len(stats)):
         if idx == 0:
             continue
 
@@ -32,7 +32,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
 
         # Check number of inner pixels
         inner_pixels = 0
-        for row in range(y, y + h):
+        for row in prange(y, y + h):
             prev_position = -1
             for col in range(x, x + w):
                 value = cc_labels[row][col]
@@ -41,7 +41,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
                         inner_pixels += col - prev_position - 1
                     prev_position = col
 
-        for col in range(x, x + w):
+        for col in prange(x, x + w):
             prev_position = -1
             for row in range(y, y + h):
                 value = cc_labels[row][col]
