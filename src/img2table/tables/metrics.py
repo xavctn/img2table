@@ -4,13 +4,61 @@ from typing import Tuple, Optional, List
 import cv2
 import numpy as np
 import polars as pl
+from numba import njit, prange
 
 from img2table.tables.objects.cell import Cell
 
 
+@njit("List(int64)(int32[:,:],int32[:,:])", fastmath=True, cache=True, parallel=False)
+def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> List[int]:
+    """
+    Remove dots from connected components
+    :param cc_labels: connected components' label array
+    :param stats: connected components' stats array
+    :return: list of non-dot connected components' indexes
+    """
+    cc_to_keep = list()
+
+    for idx in prange(len(stats)):
+        if idx == 0:
+            continue
+
+        x, y, w, h, area = stats[idx][:]
+
+        # If it is not squared, continue
+        if max(w, h) / min(w, h) >= 1.5:
+            cc_to_keep.append(idx)
+            continue
+
+        # Check number of inner pixels
+        inner_pixels = 0
+        for row in prange(y, y + h):
+            prev_position = -1
+            for col in range(x, x + w):
+                value = cc_labels[row][col]
+                if value == idx:
+                    if prev_position >= 0:
+                        inner_pixels += col - prev_position - 1
+                    prev_position = col
+
+        for col in prange(x, x + w):
+            prev_position = -1
+            for row in range(y, y + h):
+                value = cc_labels[row][col]
+                if value == idx:
+                    if prev_position >= 0:
+                        inner_pixels += row - prev_position - 1
+                    prev_position = row
+
+        if not inner_pixels / (2 * area) <= 0.05:
+            cc_to_keep.append(idx)
+
+    return cc_to_keep
+
+
 def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.ndarray]]:
     """
-    Compute average character length based on connected components analysis
+    Compute average character length based on connected components' analysis
     :param img: image array
     :return: tuple with average character length and connected components array
     """
@@ -18,26 +66,30 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     _, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # Connected components
-    _, _, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
+    _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
 
-    # Remove connected components with less than 5 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
+    # Remove dots
+    cc_to_keep = remove_dots(cc_labels=cc_labels, stats=stats)
+    stats = stats[cc_to_keep, :]
+
+    # Remove connected components with less than 10 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
     stats = stats[mask_pixels]
 
     if len(stats) == 0:
         return None, None
 
-    # Create mask to remove connected components corresponding to the complete image
-    mask_height = img.shape[0] > stats[:, cv2.CC_STAT_HEIGHT]
-    mask_width = img.shape[1] > stats[:, cv2.CC_STAT_WIDTH]
-    mask_img = mask_width & mask_height
-
     # Filter components based on aspect ratio
-    mask_lower_ar = 0.5 < stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
-    mask_upper_ar = 2 > stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT]
-    mask_ar = mask_lower_ar & mask_upper_ar
+    mask_ar = (np.maximum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])
+               / np.minimum(stats[:, cv2.CC_STAT_WIDTH], stats[:, cv2.CC_STAT_HEIGHT])) <= 2
 
-    stats = stats[mask_img & mask_ar]
+    # Filter components based on fill ratio
+    mask_fill = stats[:, cv2.CC_STAT_AREA] / (stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]) > 0.08
+
+    stats = stats[mask_ar & mask_fill]
+
+    if len(stats) == 0:
+        return None, None
 
     # Compute median width and height
     median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])

@@ -6,11 +6,13 @@ import numpy as np
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.layout.column_segments import segment_image_columns
 from img2table.tables.processing.borderless_tables.layout.image_elements import get_image_elements
+from img2table.tables.processing.borderless_tables.layout.rlsa import identify_text_mask
 from img2table.tables.processing.borderless_tables.layout.table_segments import get_table_segments
 from img2table.tables.processing.borderless_tables.model import TableSegment, ImageSegment
 
 
-def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float) -> List[TableSegment]:
+def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
+                  median_line_sep: float) -> List[TableSegment]:
     """
     Segment image and its elements
     :param thresh: thresholded image array
@@ -19,9 +21,13 @@ def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float, med
     :param median_line_sep: median line separation
     :return: list of ImageSegment objects with corresponding elements
     """
+    # Identify text mask
+    text_thresh = identify_text_mask(thresh=thresh,
+                                     lines=lines,
+                                     char_length=char_length)
+
     # Identify image elements
-    img_elements = get_image_elements(thresh=thresh,
-                                      lines=lines,
+    img_elements = get_image_elements(thresh=text_thresh,
                                       char_length=char_length,
                                       median_line_sep=median_line_sep)
 

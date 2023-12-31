@@ -21,7 +21,7 @@ def test_segment_image():
 
     assert len(result) == 4
 
-    assert len(result[0].elements) == 26
+    assert len(result[0].elements) == 25
     assert len(result[0].table_areas) == 1
     assert len(result[0].whitespaces) == 5
 
