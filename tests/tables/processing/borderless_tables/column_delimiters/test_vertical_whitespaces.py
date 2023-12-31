@@ -9,17 +9,17 @@ from img2table.tables.processing.borderless_tables.model import ImageSegment, Ta
 
 
 def test_deduplicate_whitespaces():
-    v_ws = [VertWS(x1=0, x2=10, whitespaces=[Cell(x1=0, x2=10, y1=0, y2=100)]),
-            VertWS(x1=10, x2=12, whitespaces=[Cell(x1=10, x2=12, y1=0, y2=80)]),
-            VertWS(x1=40, x2=50, whitespaces=[Cell(x1=40, x2=50, y1=0, y2=100)]),
-            VertWS(x1=60, x2=70, whitespaces=[Cell(x1=60, x2=70, y1=0, y2=110)])]
+    v_ws = [VertWS(x1=0, x2=10, y1=0, y2=100, whitespaces=[Cell(x1=0, x2=10, y1=0, y2=100)]),
+            VertWS(x1=10, x2=12, y1=0, y2=80, whitespaces=[Cell(x1=10, x2=12, y1=0, y2=80)]),
+            VertWS(x1=40, x2=50, y1=0, y2=100, whitespaces=[Cell(x1=40, x2=50, y1=0, y2=100)]),
+            VertWS(x1=60, x2=70, y1=0, y2=110, whitespaces=[Cell(x1=60, x2=70, y1=0, y2=110)])]
 
     elements = [Cell(x1=20, x2=30, y1=10, y2=50), Cell(x1=80, x2=100, y1=10, y2=50)]
 
     result = deduplicate_whitespaces(vertical_whitespaces=v_ws, elements=elements)
 
-    expected = [VertWS(x1=0, x2=10, whitespaces=[Cell(x1=0, x2=10, y1=0, y2=100)]),
-                VertWS(x1=60, x2=70, whitespaces=[Cell(x1=60, x2=70, y1=0, y2=110)])]
+    expected = [VertWS(x1=0, x2=10, y1=0, y2=100, whitespaces=[Cell(x1=0, x2=10, y1=0, y2=100)]),
+                VertWS(x1=60, x2=70, y1=0, y2=110, whitespaces=[Cell(x1=60, x2=70, y1=0, y2=110)])]
 
     assert result == expected
 

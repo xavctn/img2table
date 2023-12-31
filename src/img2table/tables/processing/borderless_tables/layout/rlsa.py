@@ -242,7 +242,12 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
     # Connected components of the rlsa image
     _, _, cc_stats_rlsa, _ = cv2.connectedComponentsWithStats(255 * (rlsa_image > 0).astype(np.uint8), 8, cv2.CV_32S)
 
+    # Get text mask
     text_mask = get_text_mask(thresh=thresh,
                               cc_stats_rlsa=cc_stats_rlsa)
 
-    return text_mask
+    # Filter thresholded image with the text mask
+    text_thresh = thresh.copy()
+    text_thresh[~text_mask] = 0
+
+    return text_thresh
