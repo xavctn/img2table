@@ -83,7 +83,7 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
 
                 # Compute metrics
                 length = col - prev_cc_position - 1
-                height_ratio = max(height_cc, height_prev) / min(height_cc, height_prev)
+                height_ratio = max(height_cc, height_prev) / max(min(height_cc, height_prev), 1)
                 h_overlap = min(y1_cc + height_cc, y1_prev + height_prev) - max(y1_cc, y1_prev)
 
                 # Presence of other CC
