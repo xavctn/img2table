@@ -33,8 +33,8 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) ->
 
         # Check removal conditions
         cond_height = h < average_height / 3
-        cond_elongation = max(h, w) / min(h, w) < 0.08
-        cond_low_density = area / (w * h) < 0.08
+        cond_elongation = max(h, w) / max(min(h, w), 1) < 0.08
+        cond_low_density = area / (max(w, 1) * max(h, 1)) < 0.08
 
         if cond_height or cond_elongation or cond_low_density:
             for row in prange(y, y + h):
@@ -186,7 +186,7 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
             nb_cols += has_pixel
 
         # Update metrics
-        H, R, THx, TVx, THy = h, w / h, h_tc / nb_cols, v_tc / nb_cols, h_tc / h
+        H, R, THx, TVx, THy = h, w / max(h, 1), h_tc / max(nb_cols, 1), v_tc / max(nb_cols, 1), h_tc / max(h, 1)
 
         # Apply rules to identify text elements
         is_text = False
