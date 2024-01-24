@@ -33,7 +33,7 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) ->
 
         # Check removal conditions
         cond_height = h < average_height / 3
-        cond_elongation = max(h, w) / max(min(h, w), 1) < 0.08
+        cond_elongation = max(h, w) / max(min(h, w), 1) < 0.33
         cond_low_density = area / (max(w, 1) * max(h, 1)) < 0.08
 
         if cond_height or cond_elongation or cond_low_density:
@@ -108,55 +108,67 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     return rsla_img
 
 
-@njit("int32[:,:](int32[:,:])", fastmath=True, cache=True, parallel=False)
-def find_obstacles(cc: np.ndarray) -> np.ndarray:
+@njit("boolean[:,:](uint8[:,:],float64)", fastmath=True, cache=True, parallel=False)
+def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     """
     Identify obstacles (columns, line gaps) in image
-    :param cc: connected components labels array
+    :param img: image array
+    :param min_width: minimum width of obstacles
     :return: connected components labels array with obstacles identified
     """
-    h, w = cc.shape
-    cc_obstacles = cc.copy()
+    mask_obstacles = np.full(shape=img.shape, fill_value=False)
+    min_width = np.ceil(min_width)
+    h, w = img.shape
 
-    for col in prange(w):
-        prev_cc_position, prev_cc_label = -1, -1
+    for col in prange(w - min_width):
+        prev_cc_position = -1
         for row in range(h):
-            label = cc_obstacles[row][col]
+            max_value = 0
+            for idx in prange(min_width):
+                max_value = max(max_value, img[row][col + idx])
 
             # Not a CC
-            if label == 0:
+            if max_value == 0:
                 continue
             else:
-                if label != prev_cc_label:
-                    length = row - prev_cc_position - 1
-                    if length > h / 3:
-                        for id_row in prange(prev_cc_position + 1, row):
-                            cc_obstacles[id_row][col] = -1
+                length = row - prev_cc_position - 1
+                if length > h / 5:
+                    for id_row in prange(prev_cc_position + 1, row):
+                        for idx in prange(min_width):
+                            mask_obstacles[id_row][col + idx] = True
 
                 # Update counters
-                prev_cc_position, prev_cc_label = row, label
+                prev_cc_position = row
 
-    return cc_obstacles
+        # Check ending
+        length = row + 1 - prev_cc_position - 1
+        if length > h / 5:
+            for id_row in prange(prev_cc_position + 1, row + 1):
+                for idx in prange(min_width):
+                    mask_obstacles[id_row][col + idx] = True
+
+    return mask_obstacles
 
 
-@njit("boolean[:, :](uint8[:, :],int32[:, :])", fastmath=True, cache=True, parallel=False)
-def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
+@njit("boolean[:, :](uint8[:, :],int32[:, :], float64)", fastmath=True, cache=True, parallel=False)
+def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: float) -> np.ndarray:
     """
     Identify image text mask
     :param thresh: thresholded image
     :param cc_stats_rlsa: connected components stats array
+    :param char_length: average character length
     :return: text mask array
     """
     text_mask = np.full(shape=thresh.shape, fill_value=False)
 
     # Get average height
-    Hm = np.mean(cc_stats_rlsa[1:, cv2.CC_STAT_HEIGHT])
+    Hm = np.average(cc_stats_rlsa[1:, cv2.CC_STAT_HEIGHT], weights=cc_stats_rlsa[1:, cv2.CC_STAT_AREA])
 
     for cc_idx in prange(len(cc_stats_rlsa)):
-        if cc_idx == 0:
-            continue
-
         x, y, w, h, area = cc_stats_rlsa[cc_idx][:]
+
+        if cc_idx == 0 or min(w, h) <= 2 * char_length / 3:
+            continue
 
         # Get horizontal white to black transitions
         h_tc = 0
@@ -192,13 +204,13 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
         is_text = False
         if 0.8 * Hm <= H <= 1.2 * Hm:
             is_text = True
-        elif H < 0.8 * Hm and 1.2 < THx < 3.0:
+        elif H < 0.8 * Hm and 1.2 < THx < 3.5:
             is_text = True
         elif THx < 0.2 and R > 5 and 0.95 < TVx < 1.05:
             is_text = False
         elif THx > 5 and R < 0.2 and 0.95 < THy < 1.05:
             is_text = False
-        elif H > 1.2 * Hm and 1.2 < THx < 3.0 and 1.2 < TVx < 3.5:
+        elif H > 1.2 * Hm and 1.2 < THx < 3.5 and 1.2 < TVx < 3.5:
             is_text = True
 
         if is_text:
@@ -209,20 +221,29 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray) -> np.ndarray:
     return text_mask
 
 
-def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float) -> np.ndarray:
+def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float) -> np.ndarray:
     """
     Identify text mask of the input image
-    :param thresh: thresholded image array
+    :param img: image array
     :param lines: list of image rows
     :param char_length: average character length
-    :return: thresholded image and text mask array
+    :return: thresholded image
     """
-    # Mask rows
+    # Create thresholded image
+    kernel_size = int(char_length) + 1 - (int(char_length) % 2)
+    t_sauvola = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, kernel_size, 0.2,
+                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
+    thresh = 255 * (img <= t_sauvola).astype(np.uint8)
+
+    # Mask rows in image
     for l in lines:
         if l.horizontal and l.length >= 3 * char_length:
             cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
         elif l.vertical and l.length >= 2 * char_length:
             cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 3 * l.thickness)
+
+    # Apply dilation
+    thresh = cv2.dilate(thresh, kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1)), iterations=1)
 
     # Connected components
     _, cc, cc_stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
@@ -231,10 +252,19 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
         return thresh
 
     # Remove noise
-    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=char_length)
+    average_height = np.mean(cc_stats[1:, cv2.CC_STAT_HEIGHT])
+    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=average_height)
 
-    # Identify obstacles
-    cc_obstacles = find_obstacles(cc=cc_denoised)
+    # Apply small RLSA
+    rlsa_small = adaptive_rlsa(cc=cc_denoised, cc_stats=cc_stats, a=1, th=3.5, c=0.4)
+    rlsa_small = cv2.erode(255 * (rlsa_small > 0).astype(np.uint8),
+                           kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (1, 2)))
+
+    # Identify obstacles and remove them from denoised cc array
+    mask_obstacles = find_obstacles(img=np.maximum(rlsa_small, thresh),
+                                    min_width=char_length)
+    cc_obstacles = cc_denoised.copy()
+    cc_obstacles[mask_obstacles] = -1
 
     # RLSA image
     rlsa_image = adaptive_rlsa(cc=cc_obstacles, cc_stats=cc_stats, a=5, th=3.5, c=0.4)
@@ -244,10 +274,13 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
 
     # Get text mask
     text_mask = get_text_mask(thresh=thresh,
-                              cc_stats_rlsa=cc_stats_rlsa)
+                              cc_stats_rlsa=cc_stats_rlsa,
+                              char_length=char_length)
 
-    # Filter thresholded image with the text mask
-    text_thresh = thresh.copy()
-    text_thresh[~text_mask] = 0
+    # Compute final image
+    cc_final = cc_obstacles.copy()
+    cc_final[~text_mask] = -1
+    rlsa_final = adaptive_rlsa(cc=cc_final, cc_stats=cc_stats, a=1.25, th=3.5, c=0.4)
 
-    return text_thresh
+    return cv2.erode(255 * rlsa_final.astype(np.uint8),
+                     kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (1, 2)))

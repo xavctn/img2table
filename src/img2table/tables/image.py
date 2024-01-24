@@ -103,7 +103,7 @@ class TableImage:
         # Median line separation needs to be not null to extract borderless tables
         if self.median_line_sep is not None:
             # Extract borderless tables
-            borderless_tbs = identify_borderless_tables(thresh=self.thresh,
+            borderless_tbs = identify_borderless_tables(img=self.img,
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,

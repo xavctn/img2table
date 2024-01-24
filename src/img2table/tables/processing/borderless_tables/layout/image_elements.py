@@ -16,8 +16,7 @@ def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: 
     :return: list of image elements
     """
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,
-                                       (max(int(char_length), 1), max(int(median_line_sep // 6), 1)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(median_line_sep // 6), 1)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs
@@ -28,9 +27,7 @@ def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: 
     elements = list()
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
-        elements.append(Cell(x1=x, y1=y, x2=x + w, y2=y + h))
-
-    # Filter elements that are too small
-    elements = [el for el in elements if min(el.height, el.width) >= char_length]
+        if min(h, w) >= 0.5 * char_length and max(h, w) >= char_length:
+            elements.append(Cell(x1=x, y1=y, x2=x + w, y2=y + h))
 
     return elements
