@@ -63,7 +63,7 @@ def corresponding_whitespaces(ws_1: Cell, ws_2: Cell, char_length: float, median
            abs(ws_1.y1 - ws_2.y1), abs(ws_2.y2 - ws_1.y2)) > 2 * median_line_sep:
         return False
 
-    return min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= -char_length / 2
+    return min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= 0.5 * char_length
 
 
 def identify_missing_vertical_whitespaces(unused_ws: List[Cell], char_length: float, median_line_sep: float,
