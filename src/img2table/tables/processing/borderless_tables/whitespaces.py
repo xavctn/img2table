@@ -174,7 +174,7 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
     v_whitespaces = get_whitespaces(segment=segment,
                                     vertical=True,
                                     pct=pct,
-                                    min_width=0.5 * char_length)
+                                    min_width=char_length)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)

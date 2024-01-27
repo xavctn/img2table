@@ -16,7 +16,7 @@ def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: 
     :return: list of image elements
     """
     # Dilate to combine adjacent text contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(median_line_sep // 6), 1)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, max(int(median_line_sep // 5), 1)))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
     # Find contours, highlight text areas, and extract ROIs

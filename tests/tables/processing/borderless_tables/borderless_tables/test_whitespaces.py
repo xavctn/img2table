@@ -65,4 +65,4 @@ def test_get_relevant_vertical_whitespaces():
     result = get_relevant_vertical_whitespaces(segment=img_segment,
                                                char_length=7.0)
 
-    assert len(result) == 13
+    assert len(result) == 11
