@@ -43,7 +43,7 @@ def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
                                      pl.col('y1').alias("y1_bbox"),
                                      pl.col('y1_').alias('y2_bbox')]
                                     )
-               .with_row_count(name="idx")
+               .with_row_index(name="idx")
                )
 
     # Deduplicate on upper bound
@@ -118,7 +118,7 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
                          pl.col("y2_bbox").alias("y2")
                          ])
                 .sort(['x1', 'y1', 'x2', 'y2'])
-                .with_row_count(name="index")
+                .with_row_index(name="index")
                 )
 
     return df_cells
