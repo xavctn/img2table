@@ -11,7 +11,7 @@ def test_get_image_elements():
     thresh = cv2.imread("test_data/text_thresh.bmp", cv2.IMREAD_GRAYSCALE)
 
     result = get_image_elements(thresh=thresh,
-                                char_length=6.01,
+                                char_length=6.0,
                                 median_line_sep=16)
 
     with open("test_data/elements.json", "r") as f:

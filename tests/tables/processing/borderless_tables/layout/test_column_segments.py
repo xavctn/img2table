@@ -135,11 +135,11 @@ def test_segment_image_columns():
     with open("test_data/elements.json", "r") as f:
         elements = [Cell(**el) for el in json.load(f)]
 
-    image_segment = ImageSegment(x1=0, y1=49, x2=768, y2=967,
+    image_segment = ImageSegment(x1=0, y1=0, x2=793, y2=1123,
                                  elements=elements)
 
     result = segment_image_columns(image_segment=image_segment,
-                                   char_length=5.04,
+                                   char_length=6.0,
                                    lines=lines)
 
     assert len(result) == 3
