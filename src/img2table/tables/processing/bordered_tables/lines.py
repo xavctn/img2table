@@ -19,7 +19,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     :return: threshold image
     """
     # Get threshold on image and binary image
-    blur = cv2.bilateralFilter(img, int(0.5 * char_length), 100, 100)
+    blur = cv2.GaussianBlur(img, (3, 3), 0)
 
     thresh_kernel = max(int(round(char_length)), 1) if char_length else 21
     thresh_kernel = thresh_kernel + 1 if thresh_kernel % 2 == 0 else thresh_kernel
