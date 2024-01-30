@@ -141,11 +141,12 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
     return ws_cells
 
 
-def get_relevant_height(whitespaces: List[Cell], elements: List[Cell]) -> List[Cell]:
+def get_relevant_height(whitespaces: List[Cell], elements: List[Cell], char_length: float) -> List[Cell]:
     """
     Get relevant whitespaces height relative to image elements
     :param whitespaces: list of whitespaces defining column delimiters
     :param elements: list of image elements
+    :param char_length: average character length
     :return: list of resized column delimiters
     """
     # Group elements in rows
@@ -171,11 +172,29 @@ def get_relevant_height(whitespaces: List[Cell], elements: List[Cell]) -> List[C
             y_bottom = max(y_bottom, y2_row)
 
     # Reprocess whitespaces
-    reprocessed_ws = [Cell(x1=(ws.x1 + ws.x2) // 2,
-                           y1=max(ws.y1, y_top),
-                           x2=(ws.x1 + ws.x2) // 2,
-                           y2=min(ws.y2, y_bottom))
-                      for ws in whitespaces]
+    whitespaces = sorted(whitespaces, key=lambda w: w.x1 + w.x2)
+    reprocessed_ws = list()
+    for idx, ws in enumerate(whitespaces):
+        if idx == 0:
+            # Left border
+            ws = Cell(x1=int(ws.x2 - char_length),
+                      y1=max(ws.y1, y_top),
+                      x2=int(ws.x2 - char_length),
+                      y2=min(ws.y2, y_bottom))
+        elif idx == len(whitespaces) - 1:
+            # Right border
+            ws = Cell(x1=int(ws.x1 + char_length),
+                      y1=max(ws.y1, y_top),
+                      x2=int(ws.x1 + char_length),
+                      y2=min(ws.y2, y_bottom))
+        else:
+            # Column delimiters
+            ws = Cell(x1=(ws.x1 + ws.x2) // 2,
+                      y1=max(ws.y1, y_top),
+                      x2=(ws.x1 + ws.x2) // 2,
+                      y2=min(ws.y2, y_bottom))
+
+        reprocessed_ws.append(ws)
 
     return reprocessed_ws
 
@@ -193,7 +212,8 @@ def identify_columns(table_segment: TableSegment, char_length: float) -> Optiona
 
     # Resize columns
     resized_columns = get_relevant_height(whitespaces=columns,
-                                          elements=table_segment.elements)
+                                          elements=table_segment.elements,
+                                          char_length=char_length)
 
     # Create delimiter group
     x1_del, x2_del = min([d.x1 for d in resized_columns]), max([d.x2 for d in resized_columns])

@@ -96,7 +96,7 @@ def create_all_rectangles(cell_positions: List[CellPosition]) -> List[CellSpan]:
     max_row = max(map(lambda x: x.row, cell_positions))
 
     # Get largest rectangle fully covered by cell positions
-    largest_area, area_coords, area_cell_pos = 0, None, None
+    largest_area, area_cell_pos = 0, None
     for col_left in range(min_col, max_col + 1):
         for col_right in range(col_left, max_col + 1):
             for top_row in range(min_row, max_row + 1):

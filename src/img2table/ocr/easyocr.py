@@ -25,7 +25,7 @@ class EasyOCR(OCRInstance):
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[easyocr]' to use this class.")
 
         if isinstance(lang, list):
-            if all([isinstance(l, str) for l in lang]):
+            if all([isinstance(lng, str) for lng in lang]):
                 self.lang = lang
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")

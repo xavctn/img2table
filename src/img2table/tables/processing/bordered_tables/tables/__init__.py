@@ -15,7 +15,7 @@ def get_tables(cells: List[Cell], elements: List[Cell], lines: List[Line], char_
     :param cells: list of cells found in image
     :param elements: list of image elements
     :param lines: list of image lines
-    :param elements: average character length
+    :param char_length: average character length
     :return: list of Table objects inferred from cells
     """
     # Cluster cells into tables

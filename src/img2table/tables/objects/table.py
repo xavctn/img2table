@@ -1,4 +1,5 @@
 # coding: utf-8
+import typing
 from collections import OrderedDict
 from typing import Union, List
 
@@ -8,6 +9,9 @@ from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.extraction import ExtractedTable, BBox
 from img2table.tables.objects.row import Row
+
+if typing.TYPE_CHECKING:
+    from img2table.ocr.data import OCRDataframe
 
 
 class Table(TableObject):

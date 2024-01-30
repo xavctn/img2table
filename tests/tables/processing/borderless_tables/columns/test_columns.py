@@ -40,12 +40,13 @@ def test_get_relevant_height():
     elements = [Cell(**el) for tb in data.get("table_areas") for el in tb.get('elements')]
 
     result = get_relevant_height(whitespaces=whitespaces,
-                                 elements=elements)
+                                 elements=elements,
+                                 char_length=14)
 
-    assert result == [Cell(x1=14, y1=111, x2=14, y2=626),
+    assert result == [Cell(x1=7, y1=111, x2=7, y2=626),
                       Cell(x1=321, y1=111, x2=321, y2=626),
                       Cell(x1=1708, y1=111, x2=1708, y2=626),
-                      Cell(x1=1852, y1=111, x2=1852, y2=626)]
+                      Cell(x1=1859, y1=111, x2=1859, y2=626)]
 
 
 def test_identify_columns():

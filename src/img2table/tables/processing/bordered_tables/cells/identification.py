@@ -76,8 +76,8 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
         return pl.DataFrame().lazy()
 
     # Create dataframe from horizontal and vertical rows
-    df_h_lines = pl.LazyFrame(data=[l.dict for l in horizontal_lines])
-    df_v_lines = pl.LazyFrame(data=[l.dict for l in vertical_lines])
+    df_h_lines = pl.LazyFrame(data=[line.dict for line in horizontal_lines])
+    df_v_lines = pl.LazyFrame(data=[line.dict for line in vertical_lines])
 
     # Identify potential cells bboxes from horizontal rows
     df_bbox = get_potential_cells_from_h_lines(df_h_lines=df_h_lines)

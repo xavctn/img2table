@@ -91,7 +91,7 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
                 list_ccs = [-1, 0, label, prev_cc_label]
                 for y in prange(max(0, row - 2), min(row + 3, h)):
                     for x in prange(prev_cc_position + 1, col):
-                        if not cc[y][x] in list_ccs:
+                        if cc[y][x] not in list_ccs:
                             no_other_cc = False
 
                 # Check conditions
@@ -236,11 +236,13 @@ def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float) -
     thresh = 255 * (img <= t_sauvola).astype(np.uint8)
 
     # Mask rows in image
-    for l in lines:
-        if l.horizontal and l.length >= 3 * char_length:
-            cv2.rectangle(thresh, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (0, 0, 0), 3 * l.thickness)
-        elif l.vertical and l.length >= 2 * char_length:
-            cv2.rectangle(thresh, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (0, 0, 0), 3 * l.thickness)
+    for line in lines:
+        if line.horizontal and line.length >= 3 * char_length:
+            cv2.rectangle(thresh, (line.x1 - line.thickness, line.y1), (line.x2 + line.thickness, line.y2), (0, 0, 0),
+                          3 * line.thickness)
+        elif line.vertical and line.length >= 2 * char_length:
+            cv2.rectangle(thresh, (line.x1, line.y1 - line.thickness), (line.x2, line.y2 + line.thickness), (0, 0, 0),
+                          3 * line.thickness)
 
     # Apply dilation
     thresh = cv2.dilate(thresh, kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1)), iterations=1)

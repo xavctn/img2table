@@ -60,8 +60,6 @@ def remove_dotted_lines(cc_array: np.ndarray) -> np.ndarray:
     :param cc_array: connected components' array
     :return: filtered connected components' array
     """
-    cc_to_delete = list()
-
     # Create dataframe of connected components
     df_cc = (pl.DataFrame([{"idx": idx, "x1": cc[0], "y1": cc[1], "x2": cc[0] + cc[2], "y2": cc[1] + cc[3]}
                            for idx, cc in enumerate(cc_array)])
@@ -137,7 +135,7 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     :return: tuple with average character length and connected components array
     """
     # Thresholding
-    t_sauvola = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, 15, 0.2,
+    t_sauvola = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, 11, 0.2,
                                               binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
     thresh = 255 * (img <= t_sauvola).astype(np.uint8)
 
