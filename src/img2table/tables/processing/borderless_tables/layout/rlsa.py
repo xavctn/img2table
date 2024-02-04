@@ -5,13 +5,14 @@ Implementation of Adaptive RLSA algorithm based on https://www.sciencedirect.com
 and text line segmentation by
 """
 
-from typing import List
+from typing import List, Optional
 
 import cv2
 import numpy as np
 from numba import njit, prange
 
 from img2table.tables.objects.line import Line
+from img2table.tables.objects.table import Table
 
 
 @njit("int32[:,:](int32[:,:],int32[:,:],float64)", fastmath=True, cache=True, parallel=False)
@@ -221,12 +222,14 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
     return text_mask
 
 
-def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float) -> np.ndarray:
+def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float,
+                       existing_tables: Optional[List[Table]] = None) -> np.ndarray:
     """
     Identify text mask of the input image
     :param img: image array
     :param lines: list of image rows
     :param char_length: average character length
+    :param existing_tables: list of detected bordered tables
     :return: thresholded image
     """
     # Create thresholded image
@@ -283,6 +286,10 @@ def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float) -
     cc_final = cc_obstacles.copy()
     cc_final[~text_mask] = -1
     rlsa_final = adaptive_rlsa(cc=cc_final, cc_stats=cc_stats, a=1.25, th=3.5, c=0.4)
+
+    # Remove all elements from existing tables
+    for tb in existing_tables or []:
+        rlsa_final[tb.y1:tb.y2, tb.x1:tb.x2] = 0
 
     return cv2.erode(255 * rlsa_final.astype(np.uint8),
                      kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (1, 2)))

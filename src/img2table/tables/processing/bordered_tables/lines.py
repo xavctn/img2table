@@ -29,7 +29,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
 
     # Mask on areas with dark background
     blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
-    blur = cv2.medianBlur(img, blur_size)
+    blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
     mask = cv2.inRange(blur, 0, 100)
 
     # Get contours of dark areas

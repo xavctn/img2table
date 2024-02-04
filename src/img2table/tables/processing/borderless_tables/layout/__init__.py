@@ -1,9 +1,10 @@
 # coding: utf-8
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from img2table.tables.objects.line import Line
+from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.layout.column_segments import segment_image_columns
 from img2table.tables.processing.borderless_tables.layout.image_elements import get_image_elements
 from img2table.tables.processing.borderless_tables.layout.rlsa import identify_text_mask
@@ -12,19 +13,21 @@ from img2table.tables.processing.borderless_tables.model import TableSegment, Im
 
 
 def segment_image(img: np.ndarray, lines: List[Line], char_length: float,
-                  median_line_sep: float) -> List[TableSegment]:
+                  median_line_sep: float, existing_tables: Optional[List[Table]] = None) -> List[TableSegment]:
     """
     Segment image and its elements
     :param img: image array
     :param lines: list of Line objects of the image
     :param char_length: average character length
     :param median_line_sep: median line separation
+    :param existing_tables: list of detected bordered tables
     :return: list of ImageSegment objects with corresponding elements
     """
     # Identify text mask
     text_thresh = identify_text_mask(img=img,
                                      lines=lines,
-                                     char_length=char_length)
+                                     char_length=char_length,
+                                     existing_tables=existing_tables)
 
     # Identify image elements
     img_elements = get_image_elements(thresh=text_thresh,
