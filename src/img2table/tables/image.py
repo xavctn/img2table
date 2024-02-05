@@ -42,13 +42,13 @@ class TableImage:
         white_img = copy.deepcopy(self.img)
 
         # Draw white rows on detected rows
-        for l in self.lines:
-            if l.horizontal:
-                cv2.rectangle(white_img, (l.x1 - l.thickness, l.y1), (l.x2 + l.thickness, l.y2), (255, 255, 255),
-                              3 * l.thickness)
-            elif l.vertical:
-                cv2.rectangle(white_img, (l.x1, l.y1 - l.thickness), (l.x2, l.y2 + l.thickness), (255, 255, 255),
-                              2 * l.thickness)
+        for line in self.lines:
+            if line.horizontal:
+                cv2.rectangle(white_img, (line.x1 - line.thickness, line.y1), (line.x2 + line.thickness, line.y2),
+                              (255, 255, 255), 3 * line.thickness)
+            elif line.vertical:
+                cv2.rectangle(white_img, (line.x1, line.y1 - line.thickness), (line.x2, line.y2 + line.thickness),
+                              (255, 255, 255), 2 * line.thickness)
 
         return white_img
 
@@ -103,7 +103,7 @@ class TableImage:
         # Median line separation needs to be not null to extract borderless tables
         if self.median_line_sep is not None:
             # Extract borderless tables
-            borderless_tbs = identify_borderless_tables(thresh=self.thresh,
+            borderless_tbs = identify_borderless_tables(img=self.img,
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,

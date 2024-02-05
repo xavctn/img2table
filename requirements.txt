@@ -1,4 +1,4 @@
-polars[pandas]>=0.19.14
+polars[pandas]>=0.20.4
 pyarrow>=7
 numpy
 pymupdf>=1.19.1

@@ -6,9 +6,9 @@ import numpy as np
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.column_delimiters import identify_column_groups
+from img2table.tables.processing.borderless_tables.columns import identify_columns
 from img2table.tables.processing.borderless_tables.layout import segment_image
-from img2table.tables.processing.borderless_tables.rows import detect_delimiter_group_rows
+from img2table.tables.processing.borderless_tables.rows import identify_delimiter_group_rows
 from img2table.tables.processing.borderless_tables.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
 
@@ -34,11 +34,11 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     return final_tables
 
 
-def identify_borderless_tables(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
+def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
                                contours: List[Cell], existing_tables: List[Table]) -> List[Table]:
     """
     Identify borderless tables in image
-    :param thresh: thresholded image array
+    :param img: image array
     :param lines: list of rows detected in image
     :param char_length: average character length
     :param median_line_sep: median line separation
@@ -47,23 +47,23 @@ def identify_borderless_tables(thresh: np.ndarray, lines: List[Line], char_lengt
     :return: list of detected borderless tables
     """
     # Segment image and identify parts that can correspond to tables
-    table_segments = segment_image(thresh=thresh,
+    table_segments = segment_image(img=img,
                                    lines=lines,
                                    char_length=char_length,
-                                   median_line_sep=median_line_sep)
+                                   median_line_sep=median_line_sep,
+                                   existing_tables=existing_tables)
 
     # In each segment, create groups of rows and identify tables
     tables = list()
     for table_segment in table_segments:
         # Identify column groups in segment
-        column_group = identify_column_groups(table_segment=table_segment,
-                                              char_length=char_length,
-                                              median_line_sep=median_line_sep)
+        column_group = identify_columns(table_segment=table_segment,
+                                        char_length=char_length)
 
         if column_group:
             # Identify potential table rows
-            row_delimiters = detect_delimiter_group_rows(delimiter_group=column_group,
-                                                         contours=contours)
+            row_delimiters = identify_delimiter_group_rows(delimiter_group=column_group,
+                                                           contours=contours)
 
             if row_delimiters:
                 # Create table from column group and rows

@@ -1,9 +1,10 @@
 # coding: utf-8
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
 from img2table.tables.objects.line import Line
+from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables.layout.column_segments import segment_image_columns
 from img2table.tables.processing.borderless_tables.layout.image_elements import get_image_elements
 from img2table.tables.processing.borderless_tables.layout.rlsa import identify_text_mask
@@ -11,20 +12,22 @@ from img2table.tables.processing.borderless_tables.layout.table_segments import 
 from img2table.tables.processing.borderless_tables.model import TableSegment, ImageSegment
 
 
-def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
-                  median_line_sep: float) -> List[TableSegment]:
+def segment_image(img: np.ndarray, lines: List[Line], char_length: float,
+                  median_line_sep: float, existing_tables: Optional[List[Table]] = None) -> List[TableSegment]:
     """
     Segment image and its elements
-    :param thresh: thresholded image array
+    :param img: image array
     :param lines: list of Line objects of the image
     :param char_length: average character length
     :param median_line_sep: median line separation
+    :param existing_tables: list of detected bordered tables
     :return: list of ImageSegment objects with corresponding elements
     """
     # Identify text mask
-    text_thresh = identify_text_mask(thresh=thresh,
+    text_thresh = identify_text_mask(img=img,
                                      lines=lines,
-                                     char_length=char_length)
+                                     char_length=char_length,
+                                     existing_tables=existing_tables)
 
     # Identify image elements
     img_elements = get_image_elements(thresh=text_thresh,
@@ -33,7 +36,7 @@ def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
 
     # Identify column segments
     y_min, y_max = min([el.y1 for el in img_elements]), max([el.y2 for el in img_elements])
-    image_segment = ImageSegment(x1=0, y1=y_min, x2=thresh.shape[1], y2=y_max, elements=img_elements)
+    image_segment = ImageSegment(x1=0, y1=y_min, x2=img.shape[1], y2=y_max, elements=img_elements)
 
     col_segments = segment_image_columns(image_segment=image_segment,
                                          char_length=char_length,

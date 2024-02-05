@@ -91,8 +91,8 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
 
     # Get n most represented angles
     most_likely_angles = (df_angles.group_by('angle')
-                          .count()
-                          .sort(by=['count', pl.col('angle').abs()], descending=[True, False])
+                          .len()
+                          .sort(by=['len', pl.col('angle').abs()], descending=[True, False])
                           .limit(n_max)
                           .collect(streaming=True)
                           .to_dicts()
@@ -103,7 +103,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
             return [0]
         else:
             return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                                    if angle.get('count') >= 0.25 * max([a.get('count') for a in most_likely_angles])])))
+                                    if angle.get('len') >= 0.25 * max([a.get('len') for a in most_likely_angles])])))
     return [0]
 
 

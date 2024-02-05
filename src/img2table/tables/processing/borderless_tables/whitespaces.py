@@ -133,6 +133,34 @@ def identify_coherent_v_whitespaces(v_whitespaces: List[Cell]) -> List[Cell]:
     return list(set(final_delims + max_height_ws))
 
 
+def deduplicate_whitespaces(ws: List[Cell], elements: List[Cell]):
+    """
+    Remove useless whitespaces
+    :param ws: list of whitespaces
+    :param elements: list of segment elements
+    :return: filtered whitespaces
+    """
+    # Remove consecutive whitespaces that do not have elements between them
+    dedup_ws = sorted(ws, key=lambda ws: ws.x1 + ws.x2)
+    ws_to_del = list()
+    for ws_left, ws_right in zip(dedup_ws, dedup_ws[1:]):
+        # Get common area
+        common_area = Cell(x1=ws_left.x2,
+                           y1=max(ws_left.y1, ws_right.y1),
+                           x2=ws_right.x1,
+                           y2=min(ws_left.y2, ws_right.y2))
+
+        # Identify matching elements
+        matching_elements = [el for el in elements if el.x1 >= common_area.x1 and el.x2 <= common_area.x2
+                             and el.y1 >= common_area.y1 and el.y2 <= common_area.y2]
+
+        if len(matching_elements) == 0:
+            # Add smallest element to deleted ws
+            ws_to_del.append(ws_left if ws_left.height < ws_right.height else ws_right)
+
+    return [ws for ws in dedup_ws if ws not in ws_to_del]
+
+
 def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], char_length: float,
                                       pct: float = 0.25) -> List[Cell]:
     """
@@ -146,9 +174,9 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
     v_whitespaces = get_whitespaces(segment=segment,
                                     vertical=True,
                                     pct=pct,
-                                    min_width=0.5 * char_length)
+                                    min_width=char_length)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)
 
-    return vertical_delims
+    return deduplicate_whitespaces(ws=vertical_delims, elements=segment.elements)

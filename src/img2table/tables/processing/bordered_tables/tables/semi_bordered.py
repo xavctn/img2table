@@ -31,14 +31,14 @@ def add_semi_bordered_cells(cluster: List[Cell], lines: List[Line], char_length:
     # Check that all horizontal lines are coherent on the left end
     if all([abs(l1.x1 - l2.x1) <= 0.05 * np.mean([l1.length, l2.length])
             for l1 in h_lines for l2 in h_lines]) and len(h_lines) > 0:
-        min_x_lines = max([l.x1 for l in h_lines])
+        min_x_lines = max([line.x1 for line in h_lines])
         # Update table boundaries with lines
         new_x_min = min_x_lines if x_min - min_x_lines >= 2 * char_length else x_min
 
     # Check that all horizontal lines are coherent on the right end
     if all([abs(l1.x2 - l2.x2) <= 0.05 * np.mean([l1.length, l2.length])
             for l1 in h_lines for l2 in h_lines]) and len(h_lines) > 0:
-        max_x_lines = min([l.x2 for l in h_lines])
+        max_x_lines = min([line.x2 for line in h_lines])
         # Update table boundaries with lines
         new_x_max = max_x_lines if max_x_lines - x_max >= 2 * char_length else x_max
 
@@ -51,14 +51,14 @@ def add_semi_bordered_cells(cluster: List[Cell], lines: List[Line], char_length:
     # Check that all vertical lines are coherent on the top end
     if all([abs(l1.y1 - l2.y1) <= 0.05 * np.mean([l1.length, l2.length])
             for l1 in v_lines for l2 in v_lines]) and len(v_lines) > 0:
-        min_y_lines = max([l.y1 for l in v_lines])
+        min_y_lines = max([line.y1 for line in v_lines])
         # Update table boundaries with lines
         new_y_min = min_y_lines if y_min - min_y_lines >= 2 * char_length else y_min
 
     # Check that all vertical lines are coherent on the bottom end
     if all([abs(l1.y2 - l2.y2) <= 0.05 * np.mean([l1.length, l2.length])
             for l1 in v_lines for l2 in v_lines]) and len(v_lines) > 0:
-        max_y_lines = min([l.y2 for l in v_lines])
+        max_y_lines = min([line.y2 for line in v_lines])
         # Update table boundaries with lines
         new_y_max = max_y_lines if max_y_lines - y_max >= 2 * char_length else y_max
 

@@ -137,6 +137,12 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 2 * median_line_sep:
         return False
 
+    # Condition on text height
+    avg_height_1 = np.median([el.height for el in tb_area_1.elements])
+    avg_height_2 = np.median([el.height for el in tb_area_2.elements])
+    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.25:
+        return False
+
     # Get relevant whitespaces
     if tb_area_1.position < tb_area_2.position:
         ws_tb_1 = merge_consecutive_ws([ws for ws in tb_area_1.whitespaces if ws.y2 == tb_area_1.y2])

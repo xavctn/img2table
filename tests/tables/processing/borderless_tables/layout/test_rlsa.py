@@ -12,15 +12,15 @@ from img2table.tables.processing.borderless_tables.layout.rlsa import identify_t
 def test_identify_text_mask():
     config.DISABLE_JIT = True
 
-    thresh = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)
     lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
 
-    result = identify_text_mask(thresh=thresh,
+    result = identify_text_mask(img=img,
                                 lines=lines,
-                                char_length=6.01)
+                                char_length=6.0)
 
     expected = cv2.imread("test_data/text_thresh.bmp", cv2.IMREAD_GRAYSCALE)
 
