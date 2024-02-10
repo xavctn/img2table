@@ -40,7 +40,7 @@ def normalize_table_cells(cluster_cells: List[Cell]) -> List[Cell]:
                                y1=sorted(v_delims, key=lambda d: abs(d - cell.y1)).pop(0),
                                y2=sorted(v_delims, key=lambda d: abs(d - cell.y2)).pop(0))
         # Check if cell is not empty
-        if cell.area > 0:
+        if normalized_cell.area > 0:
             normalized_cells.append(normalized_cell)
 
     return normalized_cells

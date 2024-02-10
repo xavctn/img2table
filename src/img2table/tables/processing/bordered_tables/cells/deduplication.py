@@ -81,7 +81,7 @@ def deduplicate_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
                        .unique()
                        .to_list()
                        )
-    df_final_cells = (df_cells.with_row_count(name="cnt")
+    df_final_cells = (df_cells.with_row_index(name="cnt")
                       .filter(~pl.col('cnt').is_in(redundant_cells))
                       .drop('cnt')
                       )

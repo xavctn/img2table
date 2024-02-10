@@ -1,4 +1,5 @@
 # coding: utf-8
+import typing
 from dataclasses import dataclass
 from functools import cached_property
 from typing import List
@@ -9,6 +10,9 @@ import numpy as np
 from img2table.document.base import Document
 from img2table.document.base.rotation import fix_rotation_image
 from img2table.tables.objects.extraction import ExtractedTable
+
+if typing.TYPE_CHECKING:
+    from img2table.ocr.base import OCRInstance
 
 
 @dataclass

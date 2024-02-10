@@ -1,5 +1,6 @@
 # coding: utf-8
 
+
 class Validations:
     def __post_init__(self):
         """Run validation methods if declared.

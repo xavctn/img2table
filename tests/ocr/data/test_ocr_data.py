@@ -30,7 +30,7 @@ def test_get_text_cell():
                                   min_confidence=50,
                                   page_number=0)
 
-    assert result == "Use these data to create\nChecklist for a Data Table."
+    assert result == "http://www.landspeed.com/lsrinfo.asp.)\nUse these data to create\nChecklist for a Data Table."
 
 
 def test_get_text_table():

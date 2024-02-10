@@ -12,6 +12,7 @@ from img2table.document.base.rotation import fix_rotation_image
 from img2table.ocr.pdf import PdfOCR
 
 if typing.TYPE_CHECKING:
+    from img2table.ocr.base import OCRInstance
     from img2table.tables.objects.extraction import ExtractedTable
     from img2table.tables.objects.table import Table
 

@@ -131,10 +131,16 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     :return: boolean indicating if the two table areas are coherent
     """
     # Compute vertical difference
-    v_diff = min(abs(tb_area_1.y2 - tb_area_2.y1), abs(tb_area_2.y2 - tb_area_1.y1))
+    v_diff = max(tb_area_1.y1, tb_area_2.y1) - min(tb_area_1.y2, tb_area_2.y2)
 
     # If areas are not consecutive or with too much separation, not coherent
     if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 2 * median_line_sep:
+        return False
+
+    # Condition on text height
+    avg_height_1 = np.median([el.height for el in tb_area_1.elements])
+    avg_height_2 = np.median([el.height for el in tb_area_2.elements])
+    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.25:
         return False
 
     # Get relevant whitespaces
@@ -148,18 +154,18 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     if max(len(ws_tb_1), len(ws_tb_2)) < 4:
         return False
 
-    # Check whitespaces coherency
+    # Check whitespaces coherency on "middle" whitespaces
     if len(ws_tb_1) >= len(ws_tb_2):
         dict_ws_coherency = {
             idx_1: [ws_2 for ws_2 in ws_tb_2
                     if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= 0.5 * char_length]
-            for idx_1, ws_1 in enumerate(ws_tb_1)
+            for idx_1, ws_1 in enumerate(ws_tb_1[1:-1])
         }
     else:
         dict_ws_coherency = {
             idx_2: [ws_1 for ws_1 in ws_tb_1
                     if min(ws_1.x2, ws_2.x2) - max(ws_1.x1, ws_2.x1) >= 0.5 * char_length]
-            for idx_2, ws_2 in enumerate(ws_tb_2) if ws_2.width
+            for idx_2, ws_2 in enumerate(ws_tb_2[1:-1])
         }
 
     # Compute threshold for coherency

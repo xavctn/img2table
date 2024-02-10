@@ -109,17 +109,17 @@ def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: List
 
     # Cut whitespaces with horizontal lines
     line_ws = list()
-    h_lines = [l for l in lines if l.horizontal]
+    h_lines = [line for line in lines if line.horizontal]
     for ws in v_ws:
         # Get crossing h_lines
-        crossing_h_lines = sorted([l for l in h_lines if ws.y1 < l.y1 < ws.y2
-                                   and min(ws.x2, l.x2) - max(ws.x1, l.x1) >= 0.5 * ws.width],
-                                  key=lambda l: l.y1)
+        crossing_h_lines = sorted([line for line in h_lines if ws.y1 < line.y1 < ws.y2
+                                   and min(ws.x2, line.x2) - max(ws.x1, line.x1) >= 0.5 * ws.width],
+                                  key=lambda line: line.y1)
         if len(crossing_h_lines) > 0:
             # Get y values from whitespace and crossing lines
             y_values = sorted([ws.y1, ws.y2]
-                              + [l.y1 - l.thickness for l in crossing_h_lines]
-                              + [l.y1 + l.thickness for l in crossing_h_lines])
+                              + [line.y1 - line.thickness for line in crossing_h_lines]
+                              + [line.y1 + line.thickness for line in crossing_h_lines])
 
             # Create new sub whitespaces that are between two horizontal lines
             for y_top, y_bottom in [y_values[idx:idx + 2] for idx in range(0, len(y_values), 2)]:

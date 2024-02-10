@@ -21,14 +21,14 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     # Get threshold on image and binary image
     blur = cv2.GaussianBlur(img, (3, 3), 0)
 
-    thresh_kernel = max(int(round(char_length)), 1) if char_length else 21
+    thresh_kernel = max(int(round(char_length)), 1)
     thresh_kernel = thresh_kernel + 1 if thresh_kernel % 2 == 0 else thresh_kernel
 
     thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
     binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
 
     # Mask on areas with dark background
-    blur_size = min(255, max(int(2 * char_length) + 1 - int(2 * char_length) % 2, 1) if char_length else 11)
+    blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
     blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
     mask = cv2.inRange(blur, 0, 100)
 
@@ -39,7 +39,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
 
-        margin = int(char_length) if char_length else 21
+        margin = int(char_length)
         if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
             thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
 
@@ -139,14 +139,14 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
         return []
 
     # Identify if rows are horizontal
-    horizontal = np.average([l.horizontal for l in lines], weights=[l.length for l in lines]) > 0.5
+    horizontal = np.average([line.horizontal for line in lines], weights=[line.length for line in lines]) > 0.5
 
     # If not horizontal, transpose all rows
     if not horizontal:
         lines = [line.transpose for line in lines]
 
     # Sort rows by secondary dimension
-    lines = sorted(lines, key=lambda l: (l.y1, l.x1))
+    lines = sorted(lines, key=lambda line: (line.y1, line.x1))
 
     # Create clusters of rows based on "similar" secondary dimension
     previous_sequence, current_sequence = iter(lines), iter(lines)
@@ -164,14 +164,14 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
     final_lines = list()
     for cluster in line_clusters:
         # Sort the cluster
-        cluster = sorted(cluster, key=lambda l: min(l.x1, l.x2))
+        cluster = sorted(cluster, key=lambda line: min(line.x1, line.x2))
 
         # Loop over rows in the cluster to merge relevant rows together
         seq = iter(cluster)
         sub_clusters = [[next(seq)]]
         for line in seq:
             # If rows are vertically close, merge line with curr_line
-            dim_2_sub_clust = max(map(lambda l: l.x2, sub_clusters[-1]))
+            dim_2_sub_clust = max(map(lambda line: line.x2, sub_clusters[-1]))
             if line.x1 - dim_2_sub_clust <= max_gap:
                 sub_clusters[-1].append(line)
             # If the difference in vertical coordinates is too large, create a new sub cluster
@@ -180,11 +180,11 @@ def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
 
         # Create rows from sub clusters
         for sub_cl in sub_clusters:
-            y_value = int(round(np.average([l.y1 for l in sub_cl],
-                                           weights=list(map(lambda l: l.length, sub_cl)))))
-            thickness = min(max(1, max(map(lambda l: l.y2, sub_cl)) - min(map(lambda l: l.y1, sub_cl))), 5)
-            line = Line(x1=min(map(lambda l: l.x1, sub_cl)),
-                        x2=max(map(lambda l: l.x2, sub_cl)),
+            y_value = int(round(np.average([line.y1 for line in sub_cl],
+                                           weights=list(map(lambda line: line.length, sub_cl)))))
+            thickness = min(max(1, max(map(lambda line: line.y2, sub_cl)) - min(map(lambda line: line.y1, sub_cl))), 5)
+            line = Line(x1=min(map(lambda line: line.x1, sub_cl)),
+                        x2=max(map(lambda line: line.x2, sub_cl)),
                         y1=int(y_value),
                         y2=int(y_value),
                         thickness=thickness)
@@ -372,6 +372,6 @@ def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length
         # If possible, remove rows that correspond to words
         if contours is not None:
             merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
-            merged_lines = [l for l in merged_lines if max(l.length, l.width) >= minLinLength]
+            merged_lines = [line for line in merged_lines if max(line.length, line.width) >= minLinLength]
 
         yield merged_lines
