@@ -7,10 +7,11 @@ from img2table.tables.processing.borderless_tables.model import DelimiterGroup
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-def identify_row_delimiters(delimiter_group: DelimiterGroup) -> List[Cell]:
+def identify_row_delimiters(delimiter_group: DelimiterGroup, char_length: float) -> List[Cell]:
     """
     Identify list of rows corresponding to the delimiter group
     :param delimiter_group: column delimiters group
+    :param char_length: average character length
     :return: list of rows delimiters corresponding to the delimiter group
     """
     # Identify vertical whitespaces
@@ -41,8 +42,14 @@ def identify_row_delimiters(delimiter_group: DelimiterGroup) -> List[Cell]:
                                          y1=(delim.y1 + delim.y2) // 2,
                                          y2=(delim.y1 + delim.y2) // 2))
 
-    final_delims += [Cell(x1=delimiter_group.x1, x2=delimiter_group.x2, y1=delimiter_group.y1, y2=delimiter_group.y1),
-                     Cell(x1=delimiter_group.x1, x2=delimiter_group.x2, y1=delimiter_group.y2, y2=delimiter_group.y2)]
+    final_delims += [Cell(x1=delimiter_group.x1,
+                          x2=delimiter_group.x2,
+                          y1=delimiter_group.y1 - int(0.5 * char_length),
+                          y2=delimiter_group.y1 - int(0.5 * char_length)),
+                     Cell(x1=delimiter_group.x1,
+                          x2=delimiter_group.x2,
+                          y1=delimiter_group.y2 + int(0.5 * char_length),
+                          y2=delimiter_group.y2 + int(0.5 * char_length))]
 
     return sorted(final_delims, key=lambda d: d.y1)
 
@@ -129,15 +136,18 @@ def correct_delimiter_width(row_delimiters: List[Cell], contours: List[Cell]) ->
     return row_delimiters
 
 
-def identify_delimiter_group_rows(delimiter_group: DelimiterGroup, contours: List[Cell]) -> List[Cell]:
+def identify_delimiter_group_rows(delimiter_group: DelimiterGroup, contours: List[Cell],
+                                  char_length: float) -> List[Cell]:
     """
     Identify list of rows corresponding to the delimiter group
     :param delimiter_group: column delimiters group
     :param contours: list of image contours
+    :param char_length: average character length
     :return: list of rows delimiters corresponding to the delimiter group
     """
     # Get row delimiters
-    row_delimiters = identify_row_delimiters(delimiter_group=delimiter_group)
+    row_delimiters = identify_row_delimiters(delimiter_group=delimiter_group,
+                                             char_length=char_length)
 
     if row_delimiters:
         # Filter coherent delimiters

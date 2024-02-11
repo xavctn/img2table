@@ -14,7 +14,8 @@ def test_identify_row_delimiters():
     delimiter_group = DelimiterGroup(delimiters=[Cell(**c) for c in data.get('delimiters')],
                                      elements=[Cell(**c) for c in data.get('elements')])
 
-    result = identify_row_delimiters(delimiter_group=delimiter_group)
+    result = identify_row_delimiters(delimiter_group=delimiter_group,
+                                     char_length=14)
 
     with open("test_data/h_whitespaces.json", "r") as f:
         expected = [Cell(**c) for c in json.load(f)]
@@ -73,10 +74,11 @@ def test_identify_delimiter_group_rows():
         contours = [Cell(**el) for el in json.load(f)]
 
     result = identify_delimiter_group_rows(delimiter_group=delimiter_group,
-                                           contours=contours)
+                                           contours=contours,
+                                           char_length=14)
 
     assert len(result) == 18
-    assert min([d.y1 for d in result]) == 45
-    assert max([d.y2 for d in result]) == 1147
+    assert min([d.y1 for d in result]) == 38
+    assert max([d.y2 for d in result]) == 1154
     assert min([d.x1 for d in result]) == 53
     assert max([d.x2 for d in result]) == 1277

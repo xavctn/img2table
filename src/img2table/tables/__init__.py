@@ -14,6 +14,10 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float], method: 
     :param method: threshold method used
     :return: threshold image
     """
+    # If image is mainly black, revert the image
+    if np.mean(img) <= 100:
+        img = 255 - img
+
     thresh_kernel = int(char_length) // 2 * 2 + 1
 
     if method == "adaptive":

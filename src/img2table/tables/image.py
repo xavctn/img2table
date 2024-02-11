@@ -17,7 +17,6 @@ from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
-from img2table.tables.processing.prepare_image import prepare_image
 
 
 @dataclass
@@ -32,9 +31,6 @@ class TableImage:
     tables: List[Table] = None
 
     def __post_init__(self):
-        # Prepare image by removing eventual black background
-        self.img = prepare_image(img=self.img)
-
         # Compute image metrics
         self.char_length, self.median_line_sep, self.contours = compute_img_metrics(img=self.img)
 
