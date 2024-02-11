@@ -6,6 +6,7 @@ import numpy as np
 import polars as pl
 from numba import njit, prange
 
+from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.cell import Cell
 
 
@@ -135,9 +136,7 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     :return: tuple with average character length and connected components array
     """
     # Thresholding
-    t_sauvola = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, 11, 0.2,
-                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
-    thresh = 255 * (img <= t_sauvola).astype(np.uint8)
+    thresh = threshold_dark_areas(img=img, char_length=11, method="sauvola")
 
     # Connected components
     _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)

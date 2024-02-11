@@ -7,12 +7,13 @@ from typing import List
 import cv2
 import numpy as np
 
+from img2table.tables import threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
-from img2table.tables.processing.bordered_tables.lines import detect_lines, threshold_dark_areas
+from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
