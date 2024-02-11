@@ -1,16 +1,17 @@
 # coding: utf-8
 
 import pickle
+import sys
 
-import doctr
 import polars as pl
+import pytest
 
 from img2table.document.image import Image
 from img2table.ocr import DocTR
 from img2table.ocr.data import OCRDataframe
 
 
-def format_content(content: doctr.io.elements.Document):
+def format_content(content):
     output = {
         id_page: {id_line: [{"value": word.value,
                              "confidence": round(word.confidence, 2),
@@ -25,6 +26,7 @@ def format_content(content: doctr.io.elements.Document):
     return output
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
 def test_doctr_content():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
@@ -37,6 +39,7 @@ def test_doctr_content():
     assert format_content(result) == format_content(expected)
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
 def test_doctr_ocr_df():
     instance = DocTR()
 
@@ -50,6 +53,7 @@ def test_doctr_ocr_df():
     assert result == expected
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
 def test_doctr_document():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
