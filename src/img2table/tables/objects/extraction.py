@@ -174,7 +174,7 @@ class ExtractedTable:
         # Create HTML table
         table_html = "<table>" + "".join(rows_html) + "</table>"
 
-        return BeautifulSoup(table_html).prettify().strip()
+        return BeautifulSoup(table_html, "html.parser").prettify().strip()
 
     def _to_worksheet(self, sheet: Worksheet, cell_fmt: Optional[Format] = None):
         """

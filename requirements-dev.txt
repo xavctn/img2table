@@ -14,7 +14,7 @@ paddlepaddle; python_version < '3.12'
 paddleocr>=2.0.6; python_version < '3.12'
 
 # EasyOCR
-easyocr >= 1.7.0
+easyocr >= 1.7.0; python_version < '3.12'
 pillow>=10.0.1
 
 # docTR
