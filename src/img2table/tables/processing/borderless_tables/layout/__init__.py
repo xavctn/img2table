@@ -34,6 +34,9 @@ def segment_image(img: np.ndarray, lines: List[Line], char_length: float,
                                       char_length=char_length,
                                       median_line_sep=median_line_sep)
 
+    if len(img_elements) == 0:
+        return []
+
     # Identify column segments
     y_min, y_max = min([el.y1 for el in img_elements]), max([el.y2 for el in img_elements])
     image_segment = ImageSegment(x1=0, y1=y_min, x2=img.shape[1], y2=y_max, elements=img_elements)

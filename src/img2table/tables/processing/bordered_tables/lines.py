@@ -11,41 +11,6 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.ndarray:
-    """
-    Threshold image by differentiating areas with light and dark backgrounds
-    :param img: image array
-    :param char_length: average character length
-    :return: threshold image
-    """
-    # Get threshold on image and binary image
-    blur = cv2.GaussianBlur(img, (3, 3), 0)
-
-    thresh_kernel = max(int(round(char_length)), 1)
-    thresh_kernel = thresh_kernel + 1 if thresh_kernel % 2 == 0 else thresh_kernel
-
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
-    binary_thresh = cv2.adaptiveThreshold(255 - blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, thresh_kernel, 5)
-
-    # Mask on areas with dark background
-    blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
-    blur = cv2.GaussianBlur(img, (blur_size, blur_size), 0)
-    mask = cv2.inRange(blur, 0, 100)
-
-    # Get contours of dark areas
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # For each dark area, use binary threshold instead of regular threshold
-    for c in contours:
-        x, y, w, h = cv2.boundingRect(c)
-
-        margin = int(char_length)
-        if min(w, h) > 2 * margin and w * h / np.prod(img.shape[:2]) < 0.9:
-            thresh[y+margin:y+h-margin, x+margin:x+w-margin] = binary_thresh[y+margin:y+h-margin, x+margin:x+w-margin]
-
-    return thresh
-
-
 def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[Cell]) -> np.ndarray:
     """
     Dilate specific rows/columns of the threshold image in order to detect dotted rows

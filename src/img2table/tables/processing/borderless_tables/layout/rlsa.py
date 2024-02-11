@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 from numba import njit, prange
 
+from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 
@@ -233,10 +234,7 @@ def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float,
     :return: thresholded image
     """
     # Create thresholded image
-    kernel_size = int(char_length) + 1 - (int(char_length) % 2)
-    t_sauvola = cv2.ximgproc.niBlackThreshold(img, 255, cv2.THRESH_BINARY_INV, kernel_size, 0.2,
-                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
-    thresh = 255 * (img <= t_sauvola).astype(np.uint8)
+    thresh = threshold_dark_areas(img=img, char_length=char_length, method="sauvola")
 
     # Mask rows in image
     for line in lines:
