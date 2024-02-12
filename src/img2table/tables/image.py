@@ -59,7 +59,8 @@ class TableImage:
         self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
 
         # Compute parameters for line detection
-        minLinLength = maxLineGap = max(int(round(0.33 * self.median_line_sep)), 1) if self.median_line_sep else 10
+        minLinLength = max(self.median_line_sep // 3, 1) if self.median_line_sep else 10
+        maxLineGap = max(self.median_line_sep // 4, 1) if self.median_line_sep else 7
         kernel_size = max(int(round(0.66 * self.median_line_sep)), 1) if self.median_line_sep else 20
 
         # Detect rows in image
