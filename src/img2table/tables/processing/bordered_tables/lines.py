@@ -11,6 +11,38 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
+def filter_dilation(thresh: np.ndarray, dilation: np.ndarray) -> np.ndarray:
+    """
+    Filter dilated image only on relevant areas (i.e where it links dotted lines)
+    :param thresh: original threshold image
+    :param dilation: dilated image
+    :return: filtered dilated image
+    """
+    # Initialize filtered dilated image
+    filtered_dilation = np.full(shape=thresh.shape, fill_value=0).astype(np.uint8)
+
+    # Get connected components of dilated image
+    _, _, cc_stats_dilated, _ = cv2.connectedComponentsWithStats(dilation, 8, cv2.CV_32S)
+
+    for idx, stat in enumerate(cc_stats_dilated):
+        if idx == 0:
+            continue
+
+        # Get stats
+        x, y, w, h, area = stat
+
+        # Get cropped original image and identify white pixels
+        cropped = thresh[y:y + h, x:x + w]
+        y_white_pixels, x_white_pixels = np.where(cropped == 255)
+
+        # Compute relevant coordinates for dilation
+        x_min, x_max = x + np.min(x_white_pixels), x + np.max(x_white_pixels)
+        y_min, y_max = y + np.min(y_white_pixels), y + np.max(y_white_pixels)
+        filtered_dilation[y_min:y_max, x_min:x_max] = dilation[y_min:y_max, x_min:x_max]
+
+    return filtered_dilation
+
+
 def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[Cell]) -> np.ndarray:
     """
     Dilate specific rows/columns of the threshold image in order to detect dotted rows
@@ -42,7 +74,7 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
         # Compute percentage of white pixels in rows
         pct_w_pixels = np.mean(thresh[row_cl, :]) / 255
         # Compute percentage of rows covered by contours
-        covered_contours = [cnt for cnt in contours if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) > 0]
+        covered_contours = [cnt for cnt in contours if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) >= 0]
         pct_contours = sum(map(lambda cnt: cnt.width, covered_contours)) / thresh.shape[1]
 
         if 0.66 * pct_w_pixels >= pct_contours:
@@ -50,10 +82,11 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
 
     white_rows_final = [idx for cl in filtered_rows_cl for idx in cl]
 
-    # Keep only dilated image on specific rows
+    # Keep only dilated image on specific rows and filter it
     mask = np.ones(thresh.shape[0], dtype=bool)
     mask[white_rows_final] = False
     h_dilated[mask, :] = 0
+    filtered_h_dilated = filter_dilation(thresh=thresh, dilation=h_dilated)
 
     ### Vertical case
     # Create dilated image
@@ -73,7 +106,7 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
         # Compute percentage of white pixels in columns
         pct_w_pixels = np.mean(thresh[:, col_cl]) / 255
         # Compute percentage of columns covered by contours
-        covered_contours = [cnt for cnt in contours if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) > 0]
+        covered_contours = [cnt for cnt in contours if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) >= 0]
         pct_contours = sum(map(lambda cnt: cnt.height, covered_contours)) / thresh.shape[0]
 
         if 0.66 * pct_w_pixels >= pct_contours:
@@ -81,14 +114,15 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
 
     white_cols_final = [idx for cl in filtered_cols_cl for idx in cl]
 
-    # Keep only dilated image on specific columns
+    # Keep only dilated image on specific columns and filter it
     mask = np.ones(thresh.shape[1], dtype=bool)
     mask[white_cols_final] = False
     v_dilated[:, mask] = 0
+    filtered_v_dilated = filter_dilation(thresh=thresh, dilation=v_dilated)
 
     # Update thresh
-    new_thresh = np.maximum(thresh, h_dilated)
-    new_thresh = np.maximum(new_thresh, v_dilated)
+    new_thresh = np.maximum(thresh, filtered_h_dilated)
+    new_thresh = np.maximum(new_thresh, filtered_v_dilated)
 
     return new_thresh
 
