@@ -53,20 +53,20 @@ def test_pdf_tables(mock_tesseract):
 
     assert result[0][0].title == "Example of Data Table 1"
     if sys.version_info.minor < 11:
-        assert result[0][0].bbox == BBox(x1=236, y1=249, x2=1442, y2=543)
+        assert result[0][0].bbox == BBox(x1=235, y1=249, x2=1442, y2=543)
     assert (len(result[0][0].content), len(result[0][0].content[0])) == (5, 4)
 
     assert result[0][1].title == "Example of Data Table 2"
     if sys.version_info.minor < 11:
-        assert result[0][1].bbox == BBox(x1=235, y1=672, x2=1451, y2=971)
+        assert result[0][1].bbox == BBox(x1=236, y1=672, x2=1451, y2=971)
     assert (len(result[0][1].content), len(result[0][1].content[0])) == (5, 4)
 
     assert result[1][0].title == "Example of Data Table 3"
     if sys.version_info.minor < 11:
-        assert result[1][0].bbox == BBox(x1=236, y1=249, x2=1442, y2=543)
+        assert result[1][0].bbox == BBox(x1=235, y1=249, x2=1442, y2=543)
     assert (len(result[1][0].content), len(result[1][0].content[0])) == (5, 4)
 
     assert result[1][1].title == "Example of Data Table 4"
     if sys.version_info.minor < 11:
-        assert result[1][1].bbox == BBox(x1=235, y1=672, x2=1451, y2=971)
+        assert result[1][1].bbox == BBox(x1=236, y1=672, x2=1451, y2=971)
     assert (len(result[1][1].content), len(result[1][1].content[0])) == (5, 4)

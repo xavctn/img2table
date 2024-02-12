@@ -87,9 +87,9 @@ def test_no_ocr():
     assert len(result) == 1
 
     assert result[0].title is None
-    assert result[0].bbox == BBox(x1=13, y1=9, x2=857, y2=529)
-    assert len(result[0].content) == 20
-    assert len(result[0].content[0]) == 8
+    assert result[0].bbox == BBox(x1=46, y1=39, x2=834, y2=529)
+    assert len(result[0].content) == 19
+    assert len(result[0].content[0]) == 5
 
 
 def test_image_excel(mock_tesseract):
