@@ -109,19 +109,19 @@ def line_from_cluster(line_cluster: List[Line]) -> Line:
     """
     if all([line.vertical for line in line_cluster]):
         # Vertical case
-        x1 = min([line.x1 - line.thickness // 2 for line in line_cluster])
-        x2 = max([line.x2 + line.thickness // 2 for line in line_cluster])
-        y1 = min([line.y1 for line in line_cluster])
-        y2 = max([line.y2 for line in line_cluster])
-        thickness = x2 - x1
+        x1 = int(min([line.x1 - line.thickness // 2 for line in line_cluster]))
+        x2 = int(max([line.x2 + line.thickness // 2 for line in line_cluster]))
+        y1 = int(min([line.y1 for line in line_cluster]))
+        y2 = int(max([line.y2 for line in line_cluster]))
+        thickness = x2 - x1 + 1
         return Line(x1=(x1 + x2) // 2, y1=y1, x2=(x1 + x2) // 2, y2=y2, thickness=thickness)
     else:
         # Horizontal case
-        y1 = min([line.y1 - line.thickness // 2 for line in line_cluster])
-        y2 = max([line.y2 + line.thickness // 2 for line in line_cluster])
-        x1 = min([line.x1 for line in line_cluster])
-        x2 = max([line.x2 for line in line_cluster])
-        thickness = y2 - y1
+        y1 = int(min([line.y1 - line.thickness // 2 for line in line_cluster]))
+        y2 = int(max([line.y2 + line.thickness // 2 for line in line_cluster]))
+        x1 = int(min([line.x1 for line in line_cluster]))
+        x2 = int(max([line.x2 for line in line_cluster]))
+        thickness = y2 - y1 + 1
         return Line(x1=x1, y1=(y1 + y2) // 2, x2=x2, y2=(y1 + y2) // 2, thickness=thickness)
 
 
@@ -207,7 +207,7 @@ def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length
             x, y, w, h, area = stat
 
             # Filter on aspect ratio
-            if max(w, h) / min(w, h) < 5 or min(w, h) >= char_length:
+            if max(w, h) / min(w, h) < 5 and min(w, h) >= char_length:
                 continue
 
             if w >= h:
