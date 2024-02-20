@@ -239,11 +239,11 @@ def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float,
     # Mask rows in image
     for line in lines:
         if line.horizontal and line.length >= 3 * char_length:
-            cv2.rectangle(thresh, (line.x1 - line.thickness, line.y1), (line.x2 + line.thickness, line.y2), (0, 0, 0),
-                          3 * line.thickness)
+            cv2.rectangle(thresh, (line.x1, line.y1 - line.thickness // 2 - 1), (line.x2, line.y2 + line.thickness // 2 + 1),
+                          (0, 0, 0), -1)
         elif line.vertical and line.length >= 2 * char_length:
-            cv2.rectangle(thresh, (line.x1, line.y1 - line.thickness), (line.x2, line.y2 + line.thickness), (0, 0, 0),
-                          3 * line.thickness)
+            cv2.rectangle(thresh, (line.x1 - line.thickness // 2 - 1, line.y1), (line.x2 + line.thickness // 2 + 1, line.y2),
+                          (0, 0, 0), -1)
 
     # Apply dilation
     thresh = cv2.dilate(thresh, kernel=cv2.getStructuringElement(cv2.MORPH_RECT, (2, 1)), iterations=1)

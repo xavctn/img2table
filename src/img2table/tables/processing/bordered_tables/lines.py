@@ -1,22 +1,54 @@
 # coding: utf-8
 from itertools import groupby
 from operator import itemgetter
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 import cv2
 import numpy as np
 import polars as pl
 
+from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[Cell]) -> np.ndarray:
+def filter_dilation(thresh: np.ndarray, dilation: np.ndarray) -> np.ndarray:
+    """
+    Filter dilated image only on relevant areas (i.e where it links dotted lines)
+    :param thresh: original threshold image
+    :param dilation: dilated image
+    :return: filtered dilated image
+    """
+    # Initialize filtered dilated image
+    filtered_dilation = np.full(shape=thresh.shape, fill_value=0).astype(np.uint8)
+
+    # Get connected components of dilated image
+    _, _, cc_stats_dilated, _ = cv2.connectedComponentsWithStats(dilation, 8, cv2.CV_32S)
+
+    for idx, stat in enumerate(cc_stats_dilated):
+        if idx == 0:
+            continue
+
+        # Get stats
+        x, y, w, h, area = stat
+
+        # Get cropped original image and identify white pixels
+        cropped = thresh[y:y + h, x:x + w]
+        y_white_pixels, x_white_pixels = np.where(cropped == 255)
+
+        # Compute relevant coordinates for dilation
+        x_min, x_max = x + np.min(x_white_pixels), x + np.max(x_white_pixels)
+        y_min, y_max = y + np.min(y_white_pixels), y + np.max(y_white_pixels)
+        filtered_dilation[y_min:y_max, x_min:x_max] = dilation[y_min:y_max, x_min:x_max]
+
+    return filtered_dilation
+
+
+def dilate_dotted_lines(thresh: np.ndarray, char_length: float) -> np.ndarray:
     """
     Dilate specific rows/columns of the threshold image in order to detect dotted rows
     :param thresh: threshold image array
     :param char_length: average character length in image
-    :param contours: list of image contours as cell objects
     :return: threshold image with dilated dotted rows
     """
     # Compute non-null thresh and its average value
@@ -35,25 +67,13 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
     # Split into consecutive groups of rows and keep only small ones to avoid targeting text rows
     white_rows_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_rows), lambda i_x: i_x[0] - i_x[1])]
+    white_rows_final = [idx for cl in white_rows_cl for idx in cl if len(cl) < char_length]
 
-    # Filter clusters with contours
-    filtered_rows_cl = list()
-    for row_cl in white_rows_cl:
-        # Compute percentage of white pixels in rows
-        pct_w_pixels = np.mean(thresh[row_cl, :]) / 255
-        # Compute percentage of rows covered by contours
-        covered_contours = [cnt for cnt in contours if min(cnt.y2, max(row_cl)) - max(cnt.y1, min(row_cl)) > 0]
-        pct_contours = sum(map(lambda cnt: cnt.width, covered_contours)) / thresh.shape[1]
-
-        if 0.66 * pct_w_pixels >= pct_contours:
-            filtered_rows_cl.append(row_cl)
-
-    white_rows_final = [idx for cl in filtered_rows_cl for idx in cl]
-
-    # Keep only dilated image on specific rows
+    # Keep only dilated image on specific rows and filter it
     mask = np.ones(thresh.shape[0], dtype=bool)
     mask[white_rows_final] = False
     h_dilated[mask, :] = 0
+    filtered_h_dilated = filter_dilation(thresh=thresh, dilation=h_dilated)
 
     ### Vertical case
     # Create dilated image
@@ -61,282 +81,142 @@ def dilate_dotted_lines(thresh: np.ndarray, char_length: float, contours: List[C
 
     # Get columns with at least 2 times the average number of white pixels
     v_non_null = np.where(np.max(thresh, axis=0) > 0)[0]
-    white_cols = np.where(np.mean(thresh[min(v_non_null):max(v_non_null), :], axis=0) > 4 * w_mean)[0].tolist()
+    white_cols = np.where(np.mean(thresh[min(v_non_null):max(v_non_null), :], axis=0) >= 4 * w_mean)[0].tolist()
 
-    # Split into consecutive groups of columns and keep only small ones to avoid targeting text columns
+    # Split into consecutive groups of cols and keep only small ones to avoid targeting text columns
     white_cols_cl = [list(map(itemgetter(1), g))
                      for k, g in groupby(enumerate(white_cols), lambda i_x: i_x[0] - i_x[1])]
+    white_cols_final = [idx for cl in white_cols_cl for idx in cl if len(cl) < char_length]
 
-    # Filter clusters with contours
-    filtered_cols_cl = list()
-    for col_cl in white_cols_cl:
-        # Compute percentage of white pixels in columns
-        pct_w_pixels = np.mean(thresh[:, col_cl]) / 255
-        # Compute percentage of columns covered by contours
-        covered_contours = [cnt for cnt in contours if min(cnt.x2, max(col_cl)) - max(cnt.x1, min(col_cl)) > 0]
-        pct_contours = sum(map(lambda cnt: cnt.height, covered_contours)) / thresh.shape[0]
-
-        if 0.66 * pct_w_pixels >= pct_contours:
-            filtered_cols_cl.append(col_cl)
-
-    white_cols_final = [idx for cl in filtered_cols_cl for idx in cl]
-
-    # Keep only dilated image on specific columns
+    # Keep only dilated image on specific columns and filter it
     mask = np.ones(thresh.shape[1], dtype=bool)
     mask[white_cols_final] = False
     v_dilated[:, mask] = 0
+    filtered_v_dilated = filter_dilation(thresh=thresh, dilation=v_dilated)
 
     # Update thresh
-    new_thresh = np.maximum(thresh, h_dilated)
-    new_thresh = np.maximum(new_thresh, v_dilated)
+    new_thresh = np.maximum(thresh, filtered_h_dilated)
+    new_thresh = np.maximum(new_thresh, filtered_v_dilated)
 
     return new_thresh
 
 
-def overlapping_filter(lines: List[Line], max_gap: int = 5) -> List[Line]:
+def line_from_cluster(line_cluster: List[Line]) -> Line:
     """
-    Process rows to merge close rows
-    :param lines: rows
-    :param max_gap: maximum gap used to merge rows
-    :return: list of filtered rows
+    Create single line from a cluster of consecutive lines
+    :param line_cluster: cluster of consecutive lines
+    :return: resulting line from cluster
+    """
+    if all([line.vertical for line in line_cluster]):
+        # Vertical case
+        x1 = int(min([line.x1 - line.thickness // 2 for line in line_cluster]))
+        x2 = int(max([line.x2 + line.thickness // 2 for line in line_cluster]))
+        y1 = int(min([line.y1 for line in line_cluster]))
+        y2 = int(max([line.y2 for line in line_cluster]))
+        thickness = x2 - x1 + 1
+        return Line(x1=(x1 + x2) // 2, y1=y1, x2=(x1 + x2) // 2, y2=y2, thickness=thickness)
+    else:
+        # Horizontal case
+        y1 = int(min([line.y1 - line.thickness // 2 for line in line_cluster]))
+        y2 = int(max([line.y2 + line.thickness // 2 for line in line_cluster]))
+        x1 = int(min([line.x1 for line in line_cluster]))
+        x2 = int(max([line.x2 for line in line_cluster]))
+        thickness = y2 - y1 + 1
+        return Line(x1=x1, y1=(y1 + y2) // 2, x2=x2, y2=(y1 + y2) // 2, thickness=thickness)
+
+
+def merge_lines(lines: List[Line], max_gap: float) -> List[Line]:
+    """
+    Merge consecutive lines
+    :param lines: list of detected lines
+    :param max_gap: maximum gap between consecutive lines in order to merge them
+    :return: list of merged lines
     """
     if len(lines) == 0:
         return []
 
-    # Identify if rows are horizontal
-    horizontal = np.average([line.horizontal for line in lines], weights=[line.length for line in lines]) > 0.5
+    # Create lines dataframe
+    df_lines = pl.DataFrame(data=[{**line.dict, **{"id_line": idx, "vertical": line.vertical}}
+                                  for idx, line in enumerate(lines)])
 
-    # If not horizontal, transpose all rows
-    if not horizontal:
-        lines = [line.transpose for line in lines]
+    # Distance computations
+    v_dist = ((pl.col("x1") - pl.col("x1_right")).pow(2) + (pl.col("y1") - pl.col("y2_right")).pow(2)).pow(0.5)
+    h_dist = ((pl.col("y1") - pl.col("y1_right")).pow(2) + (pl.col("x1") - pl.col("x2_right")).pow(2)).pow(0.5)
 
-    # Sort rows by secondary dimension
-    lines = sorted(lines, key=lambda line: (line.y1, line.x1))
+    # Overlap computations
+    v_overlap = pl.min_horizontal("y2", "y2_right") - pl.max_horizontal("y1", "y1_right")
+    h_overlap = pl.min_horizontal("x2", "x2_right") - pl.max_horizontal("x1", "x1_right")
 
-    # Create clusters of rows based on "similar" secondary dimension
-    previous_sequence, current_sequence = iter(lines), iter(lines)
-    line_clusters = [[next(current_sequence)]]
-    for previous, line in zip(previous_sequence, current_sequence):
-        # If the vertical difference between consecutive rows is too large, create a new cluster
-        if line.y1 - previous.y1 > 2:
-            # Large gap, we create a new empty sublist
-            line_clusters.append([])
+    # Cross join lines and identify consecutive lines
+    df_cross_lines = (df_lines.join(df_lines, on=["vertical"], how='inner')
+                      .with_columns(pl.when(pl.col('vertical')).then(v_dist).otherwise(h_dist).alias('distance'),
+                                    pl.when(pl.col('vertical')).then(v_overlap).otherwise(h_overlap).alias('overlap'))
+                      .filter(pl.col('distance') <= max_gap,
+                              pl.col("overlap") <= max_gap)
+                      .select("id_line", "id_line_right")
+                      .unique()
+                      )
 
-        # Append to last cluster
-        line_clusters[-1].append(line)
+    # Get list of consecutive lines
+    consecutive_lines = [{idx} for idx in range(len(lines))]
+    consecutive_lines += [{row.get('id_line'), row.get('id_line_right')} for row in df_cross_lines.to_dicts()]
 
-    # Create final rows by "merging" rows within a cluster
-    final_lines = list()
-    for cluster in line_clusters:
-        # Sort the cluster
-        cluster = sorted(cluster, key=lambda line: min(line.x1, line.x2))
+    # Loop over couples to create clusters
+    clusters = find_components(edges=consecutive_lines)
 
-        # Loop over rows in the cluster to merge relevant rows together
-        seq = iter(cluster)
-        sub_clusters = [[next(seq)]]
-        for line in seq:
-            # If rows are vertically close, merge line with curr_line
-            dim_2_sub_clust = max(map(lambda line: line.x2, sub_clusters[-1]))
-            if line.x1 - dim_2_sub_clust <= max_gap:
-                sub_clusters[-1].append(line)
-            # If the difference in vertical coordinates is too large, create a new sub cluster
-            else:
-                sub_clusters.append([line])
+    # Get merged lines from clusters
+    list_lines_clusters = [line_from_cluster(line_cluster=[lines[idx] for idx in cl]) for cl in clusters]
 
-        # Create rows from sub clusters
-        for sub_cl in sub_clusters:
-            y_value = int(round(np.average([line.y1 for line in sub_cl],
-                                           weights=list(map(lambda line: line.length, sub_cl)))))
-            thickness = min(max(1, max(map(lambda line: line.y2, sub_cl)) - min(map(lambda line: line.y1, sub_cl))), 5)
-            line = Line(x1=min(map(lambda line: line.x1, sub_cl)),
-                        x2=max(map(lambda line: line.x2, sub_cl)),
-                        y1=int(y_value),
-                        y2=int(y_value),
-                        thickness=thickness)
-
-            if line.length > 0:
-                final_lines.append(line)
-
-    # If not horizontal, transpose all rows
-    if not horizontal:
-        final_lines = [line.transpose for line in final_lines]
-
-    return final_lines
+    return list_lines_clusters
 
 
-def create_lines_from_intersection(line_dict: Dict) -> List[Line]:
-    """
-    Create list of lines from detected line and its intersecting elements
-    :param line_dict: dictionary containing line and its intersecting elements
-    :return: list of relevant line objects
-    """
-    # Get intersection segments
-    inter_segs = [(inter_cnt.get('y1'), inter_cnt.get('y2')) if line_dict.get('vertical')
-                  else (inter_cnt.get('x1'), inter_cnt.get('x2'))
-                  for inter_cnt in line_dict.get('intersecting') or []
-                  ]
-
-    if len(inter_segs) == 0:
-        # If no elements intersect the line, return it
-        return [Line(x1=line_dict.get('x1_line'),
-                     x2=line_dict.get('x2_line'),
-                     y1=line_dict.get('y1_line'),
-                     y2=line_dict.get('y2_line'),
-                     thickness=line_dict.get('thickness'))
-                ]
-    
-    # Vertical case
-    if line_dict.get('vertical'):
-        # Get x and y values of the line
-        x, y_min, y_max = line_dict.get('x1_line'), line_dict.get('y1_line'), line_dict.get('y2_line')
-        # Create y range of the line
-        y_range = list(range(y_min, y_max + 1))
-
-        # For each intersecting elements, remove common coordinates with the line
-        for inter_seg in inter_segs:
-            y_range = [y for y in y_range if not inter_seg[0] <= y <= inter_seg[1]]
-
-        if y_range:
-            # Create list of lists of consecutive y values from the range
-            seq = iter(y_range)
-            line_y_gps = [[next(seq)]]
-            for y in seq:
-                if y > line_y_gps[-1][-1] + 1:
-                    line_y_gps.append([])
-                line_y_gps[-1].append(y)
-
-            return [Line(x1=x, x2=x, y1=min(y_gp), y2=max(y_gp), thickness=line_dict.get('thickness'))
-                    for y_gp in line_y_gps]
-        return []
-    # Horizontal case
-    else:
-        # Get x and y values of the line
-        y, x_min, x_max = line_dict.get('y1_line'), line_dict.get('x1_line'), line_dict.get('x2_line')
-        # Create x range of the line
-        x_range = list(range(x_min, x_max + 1))
-
-        # For each intersecting elements, remove common coordinates with the line
-        for inter_seg in inter_segs:
-            x_range = [x for x in x_range if not inter_seg[0] <= x <= inter_seg[1]]
-
-        if x_range:
-            # Create list of lists of consecutive x values from the range
-            seq = iter(x_range)
-            line_x_gps = [[next(seq)]]
-            for x in seq:
-                if x > line_x_gps[-1][-1] + 1:
-                    line_x_gps.append([])
-                line_x_gps[-1].append(x)
-
-            return [Line(y1=y, y2=y, x1=min(x_gp), x2=max(x_gp), thickness=line_dict.get('thickness'))
-                    for x_gp in line_x_gps]
-        return []
-
-
-def remove_word_lines(lines: List[Line], contours: List[Cell]) -> List[Line]:
-    """
-    Remove rows that corresponds to contours in image
-    :param lines: list of rows
-    :param contours: list of image contours as cell objects
-    :return: list of rows not intersecting with words
-    """
-    # If there are no rows or no contours, do nothing
-    if len(lines) == 0 or len(contours) == 0:
-        return lines
-
-    # Get contours dataframe
-    df_cnts = pl.LazyFrame(data=[{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in contours])
-
-    # Create dataframe containing rows
-    df_lines = (pl.LazyFrame(data=[{**line.dict, **{"id_line": idx}} for idx, line in enumerate(lines)])
-                .with_columns([pl.max_horizontal([pl.col('width'), pl.col('height')]).alias('length'),
-                               (pl.col('x1') == pl.col('x2')).alias('vertical')]
-                              )
-                .rename({"x1": "x1_line", "x2": "x2_line", "y1": "y1_line", "y2": "y2_line"})
-                )
-
-    # Merge both dataframes
-    df_words_lines = df_cnts.join(df_lines, how='cross')
-
-    # Compute intersection between contours bbox and rows
-    # - vertical case
-    vert_int = (
-            (((pl.col('x1') + pl.col('x2')) / 2 - pl.col('x1_line')).abs() / (pl.col('x2') - pl.col('x1')) < 0.5)
-            & ((pl.min_horizontal(['y2', 'y2_line']) - pl.max_horizontal(['y1', 'y1_line'])) > 0)
-    )
-    # - horizontal case
-    hor_int = (
-            (((pl.col('y1') + pl.col('y2')) / 2 - pl.col('y1_line')).abs() / (pl.col('y2') - pl.col('y1')) <= 0.4)
-            & ((pl.min_horizontal(['x2', 'x2_line']) - pl.max_horizontal(['x1', 'x1_line'])) > 0)
-    )
-    
-    df_words_lines = df_words_lines.with_columns(
-        ((pl.col('vertical') & vert_int) | ((~pl.col('vertical')) & hor_int)).alias('intersection')
-        )
-    
-    # Get lines together with elements that intersect the line
-    line_elements = (df_words_lines.filter(pl.col('intersection'))
-                     .group_by(["id_line", "x1_line", "y1_line", "x2_line", "y2_line", "vertical", "thickness"])
-                     .agg(pl.struct("x1", "y1", "x2", "y2").alias('intersecting'))
-                     .unique(subset=["id_line"])
-                     .collect()
-                     .to_dicts()
-                     )
-
-    # Create lines from line elements
-    modified_lines = {el.get('id_line') for el in line_elements}
-    kept_lines = [line for id_line, line in enumerate(lines) if id_line not in modified_lines]
-    reprocessed_lines = [line for line_dict in line_elements
-                         for line in create_lines_from_intersection(line_dict=line_dict)]
-
-    return kept_lines + reprocessed_lines
-
-
-def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float], rho: float = 1,
-                 theta: float = np.pi / 180, threshold: int = 50, minLinLength: int = 290, maxLineGap: int = 6,
-                 kernel_size: int = 20) -> (List[Line], List[Line]):
+def detect_lines(thresh: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float],
+                 min_line_length: Optional[float]) -> (List[Line], List[Line]):
     """
     Detect horizontal and vertical rows on image
     :param thresh: thresholded image array
     :param contours: list of image contours as cell objects
     :param char_length: average character length
-    :param rho: rho parameter for Hough line transform
-    :param theta: theta parameter for Hough line transform
-    :param threshold: threshold parameter for Hough line transform
-    :param minLinLength: minLinLength parameter for Hough line transform
-    :param maxLineGap: maxLineGap parameter for Hough line transform
-    :param kernel_size: kernel size to filter on horizontal / vertical rows
+    :param min_line_length: minimum line length
     :return: horizontal and vertical rows
     """
+    # Remove contours from thresh image
+    for c in contours:
+        thresh[c.y1:c.y2, c.x1:c.x2] = 0
+
     if char_length is not None:
         # Process threshold image in order to detect dotted rows
-        thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length, contours=contours)
+        thresh = dilate_dotted_lines(thresh=thresh, char_length=char_length)
 
     # Identify both vertical and horizontal rows
-    for kernel_tup, gap in [((kernel_size, 1), 2 * maxLineGap), ((1, kernel_size), maxLineGap)]:
+    for kernel_dims in [(min_line_length, 1), (1, min_line_length)]:
         # Apply masking on image
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_tup)
-        mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_dims)
+        mask = cv2.morphologyEx(thresh.copy(), cv2.MORPH_OPEN, kernel, iterations=1)
 
-        # Compute Hough rows on image and get rows
-        hough_lines = cv2.HoughLinesP(mask, rho, theta, threshold, None, minLinLength, maxLineGap)
+        # Get stats
+        _, _, stats, _ = cv2.connectedComponentsWithStats(mask, 8, cv2.CV_32S)
 
-        # Handle case with no rows
-        if hough_lines is None:
-            yield []
-            continue
+        lines = list()
+        # Get relevant CC that correspond to lines
+        for idx, stat in enumerate(stats):
+            if idx == 0:
+                continue
 
-        lines = [Line(*line[0].tolist()).reprocess() for line in hough_lines]
+            # Get stats
+            x, y, w, h, area = stat
 
-        # Remove rows that are not horizontal or vertical
-        lines = [line for line in lines if line.horizontal or line.vertical]
+            # Filter on aspect ratio
+            if max(w, h) / min(w, h) < 5 and min(w, h) >= char_length:
+                continue
 
-        # Merge rows
-        merged_lines = overlapping_filter(lines=lines, max_gap=gap)
+            if w >= h:
+                line = Line(x1=x, y1=y + h // 2, x2=x + w, y2=y + h // 2, thickness=h)
+            else:
+                line = Line(x1=x + w // 2, y1=y, x2=x + w // 2, y2=y + h, thickness=w)
+            lines.append(line)
 
-        # If possible, remove rows that correspond to words
-        if contours is not None:
-            merged_lines = remove_word_lines(lines=merged_lines, contours=contours)
-            merged_lines = [line for line in merged_lines if max(line.length, line.width) >= minLinLength]
+        # Merge lines
+        merged_lines = merge_lines(lines=lines, max_gap=min_line_length / 3)
 
         yield merged_lines

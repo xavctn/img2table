@@ -179,8 +179,14 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     mask_upper_area = upper_bound >= stats[:, cv2.CC_STAT_WIDTH] * stats[:, cv2.CC_STAT_HEIGHT]
     mask_area = mask_lower_area & mask_upper_area
 
+    # Identify dashes
+    mask_ar = stats[:, cv2.CC_STAT_WIDTH] / stats[:, cv2.CC_STAT_HEIGHT] >= 2
+    mask_width_upper = stats[:, cv2.CC_STAT_WIDTH] <= 1.5 * median_width
+    mask_width_lower = stats[:, cv2.CC_STAT_WIDTH] >= 0.5 * median_width
+    mask_dash = mask_ar & mask_width_upper & mask_width_lower
+
     # Filter connected components from mask
-    stats = stats[mask_area]
+    stats = stats[mask_area | mask_dash]
 
     if len(stats) > 0:
         # Compute average character length

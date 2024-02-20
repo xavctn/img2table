@@ -68,12 +68,12 @@ def test_image_tables(mock_tesseract):
     assert len(result) == 2
 
     assert result[0].title is None
-    assert result[0].bbox == BBox(x1=36, y1=20, x2=770, y2=326)
+    assert result[0].bbox == BBox(x1=36, y1=21, x2=770, y2=327)
     assert len(result[0].content) == 6
     assert len(result[0].content[0]) == 3
 
     assert result[1].title is None
-    assert result[1].bbox == BBox(x1=962, y1=20, x2=1154, y2=122)
+    assert result[1].bbox == BBox(x1=962, y1=21, x2=1154, y2=123)
     assert len(result[1].content) == 2
     assert len(result[1].content[0]) == 2
 
@@ -87,9 +87,9 @@ def test_no_ocr():
     assert len(result) == 1
 
     assert result[0].title is None
-    assert result[0].bbox == BBox(x1=13, y1=9, x2=857, y2=529)
-    assert len(result[0].content) == 20
-    assert len(result[0].content[0]) == 8
+    assert result[0].bbox == BBox(x1=47, y1=40, x2=829, y2=529)
+    assert len(result[0].content) == 19
+    assert len(result[0].content[0]) == 5
 
 
 def test_image_excel(mock_tesseract):

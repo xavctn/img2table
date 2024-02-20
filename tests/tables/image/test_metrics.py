@@ -9,7 +9,7 @@ def test_compute_char_length():
 
     char_length, cc_array = compute_char_length(img=image)
     assert round(char_length, 2) == 9.0
-    assert len(cc_array) == 130
+    assert len(cc_array) == 142
 
     image = cv2.imread("test_data/blank.png", cv2.IMREAD_GRAYSCALE)
     assert compute_char_length(img=image) == (None, None)
@@ -22,7 +22,7 @@ def test_compute_median_line_sep():
     median_line_sep, contours = compute_median_line_sep(img=image, char_length=char_length, cc=cc_array)
 
     assert round(median_line_sep, 2) == 51
-    assert len(contours) == 42
+    assert len(contours) == 30
 
 
 def test_compute_img_metrics():
@@ -31,7 +31,7 @@ def test_compute_img_metrics():
 
     assert round(char_length, 2) == 9.0
     assert round(median_line_sep, 2) == 51
-    assert len(contours) == 42
+    assert len(contours) == 30
 
     image = cv2.imread("test_data/blank.png", cv2.IMREAD_GRAYSCALE)
     assert compute_img_metrics(img=image) == (None, None, None)
