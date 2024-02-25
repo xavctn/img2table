@@ -6,10 +6,10 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ColumnGroup
 
 
-def get_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
+def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
     """
     Create table object from column delimiters and rows
     :param columns: column delimiters group
@@ -18,7 +18,8 @@ def get_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: Lis
     :return: Table object
     """
     # Convert delimiters to lines
-    v_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in columns.delimiters]
+    v_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for col in columns.columns
+               for v_ws in col.whitespaces for d in v_ws.ws.cells]
     h_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in row_delimiters]
 
     # Identify cells
