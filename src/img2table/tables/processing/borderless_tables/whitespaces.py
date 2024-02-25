@@ -181,17 +181,23 @@ def deduplicate_whitespaces(ws: List[Whitespace], elements: List[Cell]) -> List[
                     merged_ws.append(Whitespace(cells=list(set(new_cells))))
                     deleted_idx += [i, j]
 
+    filtered_ws = [w for idx, w in enumerate(ws) if idx not in deleted_idx]
+
+    # Remove merged whitespaces that are incoherent with filtered whitespaces
+    merged_ws = [m_ws for m_ws in merged_ws
+                 if not any([min(w.x2, m_ws.x2) - max(w.x1, m_ws.x1) > 0 for w in filtered_ws])]
+
     if len(merged_ws) > 1:
         # Deduplicate overlapping merged ws
         seq = iter(sorted(merged_ws, key=lambda w: w.area, reverse=True))
-        filtered_ws = [next(seq)]
+        filtered_merged_ws = [next(seq)]
         for w in seq:
             if not any([f_ws for f_ws in filtered_ws if w in f_ws]):
-                filtered_ws.append(w)
+                filtered_merged_ws.append(w)
     else:
-        filtered_ws = merged_ws
+        filtered_merged_ws = merged_ws
 
-    return filtered_ws + [w for idx, w in enumerate(ws) if idx not in deleted_idx]
+    return filtered_ws + filtered_merged_ws
 
 
 def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, ColumnGroup], char_length: float,

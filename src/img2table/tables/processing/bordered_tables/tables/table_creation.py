@@ -59,9 +59,12 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     # Identify elements corresponding to each cell
     df_elements = pl.LazyFrame([{"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
                                 for el in elements])
-    df_cells = pl.LazyFrame([{"id_row": id_row, "id_col": id_col,  "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
+    df_cells = (pl.LazyFrame([{"id_row": id_row, "id_col": id_col,  "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
                              for id_row, row in enumerate(table.items)
                              for id_col, c in enumerate(row.items)])
+                .with_columns((pl.len().over(["x1", "y1", "x2", "y2"]) > 1).alias("merged"))
+                )
+
     df_cells_elements = (
         df_cells.join(df_elements, how="cross")
         .with_columns((pl.min_horizontal(['x2', 'x2_el']) - pl.max_horizontal(['x1', 'x1_el'])).alias("x_overlap"),
@@ -69,7 +72,8 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
         .filter(pl.col('x_overlap') > 0,
                 pl.col('y_overlap') > 0)
         .with_columns((pl.col('x_overlap') * pl.col('y_overlap')).alias('area_intersection'))
-        .filter(pl.col('area_intersection') / pl.col('area_el') >= 0.6)
+        .filter(pl.col('area_intersection') / pl.col('area_el') >= 0.6,
+                ~(pl.col("merged") & pl.lit(table._borderless)))
         .select("id_row", "id_col")
         .unique()
         .collect()

@@ -18,8 +18,18 @@ def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[C
     :return: Table object
     """
     # Convert delimiters to lines
-    v_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for col in columns.columns
-               for v_ws in col.whitespaces for d in v_ws.ws.cells]
+    v_lines = list()
+    for col in columns.columns:
+        seq = iter(sorted([c for v_ws in col.whitespaces for c in v_ws.ws.cells],
+                          key=lambda c: c.y1 + c.y2))
+        line_groups = [[next(seq)]]
+        for c in seq:
+            if c.y1 > line_groups[-1][-1].y2:
+                line_groups.append([])
+            line_groups[-1].append(c)
+
+        v_lines += [Line(x1=gp[0].x1, y1=gp[0].y1, x2=gp[0].x2, y2=gp[-1].y2) for gp in line_groups]
+
     h_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in row_delimiters]
 
     # Identify cells
