@@ -63,6 +63,7 @@ def test_get_relevant_vertical_whitespaces():
                                elements=[Cell(**c) for c in data.get('elements')])
 
     result = get_relevant_vertical_whitespaces(segment=img_segment,
-                                               char_length=7.0)
+                                               char_length=7.0,
+                                               median_line_sep=14)
 
     assert len(result) == 11

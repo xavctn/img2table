@@ -6,7 +6,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.layout.column_segments import Rectangle, identify_remaining_segments, \
     get_vertical_ws, is_column_section, identify_column_groups, get_column_group_segments, get_segments_from_columns, \
     segment_image_columns
-from img2table.tables.processing.borderless_tables.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, Whitespace
 
 
 def test_identify_remaining_segments():
@@ -41,9 +41,9 @@ def test_get_vertical_ws():
                              char_length=5.04,
                              lines=lines)
 
-    expected = [Cell(x1=0, y1=105, x2=56, y2=1055),
-                Cell(x1=389, y1=117, x2=404, y2=1055),
-                Cell(x1=737, y1=105, x2=768, y2=1055)]
+    expected = [Whitespace(cells=[Cell(x1=0, y1=105, x2=56, y2=1055)]),
+                Whitespace(cells=[Cell(x1=389, y1=117, x2=404, y2=1055)]),
+                Whitespace(cells=[Cell(x1=737, y1=105, x2=768, y2=1055)])]
 
     assert result == expected
 

@@ -84,7 +84,7 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
             df_elements_ranges
             .with_columns((pl.col('y2') - pl.col('y1')).sum().over(["x1", "x2"]).alias("ws_height"),
                           (pl.col('y2').max().over(["x1", "x2"]) - pl.col('y2').min().over(["x1", "x2"])).alias("height"),
-                          pl.count().over(["x1", "x2"]).alias("nb_ws"))
+                          pl.len().over(["x1", "x2"]).alias("nb_ws"))
             .filter(pl.col("ws_height") >= pct * (y_max - y_min),
                     pl.col("ws_height") >= 0.8 * pl.col("height"),
                     (pl.col("nb_ws") == 1) | (pl.col('x2') - pl.col('x1') >= 2 * min_width))

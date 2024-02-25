@@ -144,7 +144,7 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     # Condition on text height
     avg_height_1 = np.median([el.height for el in tb_area_1.elements])
     avg_height_2 = np.median([el.height for el in tb_area_2.elements])
-    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.25:
+    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.3:
         return False
 
     # Get relevant whitespaces

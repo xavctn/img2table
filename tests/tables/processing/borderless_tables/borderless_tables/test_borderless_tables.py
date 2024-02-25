@@ -28,4 +28,4 @@ def test_identify_borderless_tables():
     assert len(result) == 1
     assert result[0].nb_rows == 16
     assert result[0].nb_columns == 7
-    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (131, 43, 1159, 1063)
+    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (135, 46, 1155, 1060)

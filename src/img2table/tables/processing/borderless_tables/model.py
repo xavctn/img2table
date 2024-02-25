@@ -277,7 +277,7 @@ class ColumnGroup:
     def __eq__(self, other):
         if isinstance(other, ColumnGroup):
             try:
-                assert set(self.columns) == set(other.columns)
+                assert self.columns == other.columns
                 assert set(self.elements) == set(other.elements)
                 return True
             except AssertionError:
