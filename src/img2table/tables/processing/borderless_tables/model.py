@@ -6,13 +6,66 @@ from img2table.tables.objects.cell import Cell
 
 
 @dataclass
+class Whitespace:
+    cells: List[Cell]
+
+    @property
+    def x1(self) -> int:
+        return min([c.x1 for c in self.cells])
+
+    @property
+    def y1(self) -> int:
+        return min([c.y1 for c in self.cells])
+
+    @property
+    def x2(self) -> int:
+        return max([c.x2 for c in self.cells])
+
+    @property
+    def y2(self) -> int:
+        return max([c.y2 for c in self.cells])
+
+    @property
+    def width(self) -> int:
+        return sum([c.width for c in self.cells])
+
+    @property
+    def height(self) -> int:
+        return sum([c.height for c in self.cells])
+
+    @property
+    def area(self) -> int:
+        return sum([c.area for c in self.cells])
+
+    @property
+    def continuous(self) -> bool:
+        return len(self.cells) == 1
+
+    def flipped(self) -> "Whitespace":
+        return Whitespace(cells=[Cell(x1=c.y1, y1=c.x1, x2=c.y2, y2=c.x2) for c in self.cells])
+
+    def reshape(self, x1: int, y1: int, x2: int, y2: int) -> "Whitespace":
+        return Whitespace(cells=[Cell(x1=max(c.x1, x1),
+                                      y1=max(c.y1, y1),
+                                      x2=min(c.x2, x2),
+                                      y2=min(c.y2, y2))
+                                 for c in self.cells])
+
+    def __contains__(self, item: "Whitespace") -> bool:
+        return self.x1 <= item.x1 and self.y1 <= item.y1 and self.x2 >= item.x2 and self.y2 >= item.y2
+
+    def __hash__(self):
+        return hash(repr(self))
+
+
+@dataclass
 class ImageSegment:
     x1: int
     y1: int
     x2: int
     y2: int
     elements: List[Cell] = None
-    whitespaces: List[Cell] = None
+    whitespaces: List[Whitespace] = None
     position: int = None
 
     @property
@@ -26,7 +79,7 @@ class ImageSegment:
     def set_elements(self, elements: List[Cell]):
         self.elements = elements
 
-    def set_whitespaces(self, whitespaces: List[Cell]):
+    def set_whitespaces(self, whitespaces: List[Whitespace]):
         self.whitespaces = whitespaces
 
     def __hash__(self):
@@ -58,7 +111,7 @@ class TableSegment:
         return [el for tb_area in self.table_areas for el in tb_area.elements]
 
     @property
-    def whitespaces(self) -> List[Cell]:
+    def whitespaces(self) -> List[Whitespace]:
         return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
 
 

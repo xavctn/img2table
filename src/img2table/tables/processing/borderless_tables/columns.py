@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from typing import Optional, List
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import TableSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import TableSegment, DelimiterGroup, Whitespace
 
 
 @dataclass
 class VerticalWS:
-    ws: Cell
+    ws: Whitespace
     position: int
     top: bool
     bottom: bool
@@ -47,11 +47,12 @@ class WSGroup:
     bottom: bool
     top_position: int
     bottom_position: int
+    whitespaces: List[Whitespace]
 
     @classmethod
     def from_ws(cls, v_ws: VerticalWS) -> "WSGroup":
         return cls(x1=v_ws.x1, y1=v_ws.y1, x2=v_ws.x2, y2=v_ws.y2, top=v_ws.top, bottom=v_ws.bottom,
-                   top_position=v_ws.position, bottom_position=v_ws.position)
+                   top_position=v_ws.position, bottom_position=v_ws.position, whitespaces=[v_ws.ws])
 
     @property
     def height(self) -> int:
@@ -75,6 +76,7 @@ class WSGroup:
         self.y2 = max(self.y2, v_ws.y2)
         self.top_position = min(self.top_position, v_ws.position)
         self.bottom_position = max(self.bottom_position, v_ws.position)
+        self.whitespaces.append(v_ws.ws)
 
         if v_ws.position == self.top_position:
             self.top = v_ws.top

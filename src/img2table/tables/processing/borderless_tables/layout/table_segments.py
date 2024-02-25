@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces, \
     get_relevant_vertical_whitespaces
 from img2table.tables.processing.common import is_contained_cell
@@ -100,7 +100,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
     return table_areas
 
 
-def merge_consecutive_ws(whitespaces: List[Cell]) -> List[Cell]:
+def merge_consecutive_ws(whitespaces: List[Whitespace]) -> List[Cell]:
     """
     Merge consecutive whitespaces
     :param whitespaces: list of original whitespaces
