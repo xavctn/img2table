@@ -53,33 +53,57 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     :param elements: list of image elements
     :return: processed table
     """
-    if len(elements) == 0 or table.nb_rows == 0:
+    if len(elements) == 0 or table.nb_rows * table.nb_columns == 0:
         return Table(rows=[])
 
     # Identify elements corresponding to each cell
-    df_elements = pl.LazyFrame([{"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
+    df_elements = pl.DataFrame([{"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
                                 for el in elements])
-    df_cells = pl.LazyFrame([{"id_row": id_row, "id_col": id_col,  "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
-                             for id_row, row in enumerate(table.items)
-                             for id_col, c in enumerate(row.items)])
+    df_cells = (pl.DataFrame([{"id_row": id_row, "id_col": id_col, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
+                              for id_row, row in enumerate(table.items)
+                              for id_col, c in enumerate(row.items)])
+                .with_columns((pl.col("id_row").n_unique().over(["x1", "y1", "x2", "y2"]) > 1).alias("merged_col"),
+                              (pl.col("id_col").n_unique().over(["x1", "y1", "x2", "y2"]) > 1).alias("merged_row"))
+                )
+
     df_cells_elements = (
         df_cells.join(df_elements, how="cross")
         .with_columns((pl.min_horizontal(['x2', 'x2_el']) - pl.max_horizontal(['x1', 'x1_el'])).alias("x_overlap"),
                       (pl.min_horizontal(['y2', 'y2_el']) - pl.max_horizontal(['y1', 'y1_el'])).alias("y_overlap"))
-        .filter(pl.col('x_overlap') > 0,
-                pl.col('y_overlap') > 0)
-        .with_columns((pl.col('x_overlap') * pl.col('y_overlap')).alias('area_intersection'))
-        .filter(pl.col('area_intersection') / pl.col('area_el') >= 0.6)
-        .select("id_row", "id_col")
-        .unique()
-        .collect()
+        .with_columns(pl.max_horizontal(pl.col('x_overlap'), pl.lit(0)).alias('x_overlap'),
+                      pl.max_horizontal(pl.col('y_overlap'), pl.lit(0)).alias('y_overlap'))
+        .with_columns(((pl.col('x_overlap') * pl.col('y_overlap')) / pl.col('area_el') >= 0.6).alias('contains'))
+        .group_by("id_row", "id_col", "merged_row", "merged_col")
+        .agg(pl.col('contains').max())
     )
 
     # Identify empty rows and empty columns
-    empty_rows = [id_row for id_row in range(table.nb_rows)
-                  if id_row not in [rec.get('id_row') for rec in df_cells_elements.to_dicts()]]
-    empty_cols = [id_col for id_col in range(table.nb_columns)
-                  if id_col not in [rec.get('id_col') for rec in df_cells_elements.to_dicts()]]
+    if table._borderless:
+        df_empty_rows = (df_cells_elements.group_by("id_row")
+                         .agg(pl.col('contains').max(),
+                              pl.when(~pl.col('merged_col')).then(pl.col('contains')).max().alias("single_contains"),
+                              pl.col("merged_col").min())
+                         )
+        empty_rows = sorted([row.get("id_row") for row in df_empty_rows.to_dicts()
+                             if not row.get("contains") or (not row.get('merged_col') and not row.get('single_contains'))])
+
+        df_empty_cols = (df_cells_elements.group_by("id_col")
+                         .agg(pl.col('contains').max(),
+                              pl.when(~pl.col('merged_row')).then(pl.col('contains')).max().alias("single_contains"),
+                              pl.col("merged_row").min())
+                         )
+        empty_cols = sorted([row.get("id_col") for row in df_empty_cols.to_dicts()
+                             if not row.get("contains") or (not row.get('merged_row') and not row.get('single_contains'))])
+    else:
+        df_empty_rows = (df_cells_elements.group_by("id_row")
+                         .agg(pl.col('contains').max())
+                         .filter(~pl.col("contains")))
+        empty_rows = sorted([row.get("id_row") for row in df_empty_rows.to_dicts()])
+
+        df_empty_cols = (df_cells_elements.group_by("id_col")
+                         .agg(pl.col('contains').max())
+                         .filter(~pl.col("contains")))
+        empty_cols = sorted([row.get("id_col") for row in df_empty_cols.to_dicts()])
 
     # Remove empty rows and empty columns
     table.remove_rows(row_ids=empty_rows)

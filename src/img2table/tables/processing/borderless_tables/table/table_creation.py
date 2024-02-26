@@ -6,10 +6,10 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ColumnGroup
 
 
-def get_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
+def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
     """
     Create table object from column delimiters and rows
     :param columns: column delimiters group
@@ -18,7 +18,18 @@ def get_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: Lis
     :return: Table object
     """
     # Convert delimiters to lines
-    v_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in columns.delimiters]
+    v_lines = list()
+    for col in columns.columns:
+        seq = iter(sorted([c for v_ws in col.whitespaces for c in v_ws.ws.cells],
+                          key=lambda c: c.y1 + c.y2))
+        line_groups = [[next(seq)]]
+        for c in seq:
+            if c.y1 > line_groups[-1][-1].y2:
+                line_groups.append([])
+            line_groups[-1].append(c)
+
+        v_lines += [Line(x1=gp[0].x1, y1=gp[0].y1, x2=gp[0].x2, y2=gp[-1].y2) for gp in line_groups]
+
     h_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in row_delimiters]
 
     # Identify cells

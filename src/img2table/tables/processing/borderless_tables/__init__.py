@@ -58,13 +58,13 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     for table_segment in table_segments:
         # Identify column groups in segment
         column_group = identify_columns(table_segment=table_segment,
-                                        char_length=char_length)
+                                        char_length=char_length,
+                                        median_line_sep=median_line_sep)
 
         if column_group:
             # Identify potential table rows
-            row_delimiters = identify_delimiter_group_rows(delimiter_group=column_group,
-                                                           contours=contours,
-                                                           char_length=char_length)
+            row_delimiters = identify_delimiter_group_rows(column_group=column_group,
+                                                           contours=contours)
 
             if row_delimiters:
                 # Create table from column group and rows

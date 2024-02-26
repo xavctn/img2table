@@ -4,20 +4,21 @@ from typing import List, Union
 
 import polars as pl
 
-from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ImageSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ImageSegment, ColumnGroup, Whitespace
 
 
-def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool = True, min_width: float = 0,
-                    pct: float = 0.25) -> List[Cell]:
+def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = True, min_width: float = 0,
+                    min_height: float = 1, pct: float = 0.25, continuous: bool = True) -> List[Whitespace]:
     """
     Identify whitespaces in segment
     :param segment: image segment
     :param vertical: boolean indicating if vertical or horizontal whitespaces are identified
-    :param pct: minimum percentage of the segment height/width to account for a whitespace
     :param min_width: minimum width of the detected whitespaces
-    :return: list of vertical or horizontal whitespaces as Cell objects
+    :param min_height: minimum height of the detected whitespaces
+    :param pct: minimum percentage of the segment height/width to account for a whitespace
+    :param continuous: boolean indicating if only continuous whitespaces are retrieved
+    :return: list of vertical or horizontal whitespaces
     """
     # Flip object coordinates in horizontal case
     if not vertical:
@@ -48,41 +49,60 @@ def get_whitespaces(segment: Union[ImageSegment, DelimiterGroup], vertical: bool
     # Get all elements within range and identify whitespaces
     df_elements_ranges = (
         df_x_ranges.join(df_elements, how='cross')
-        .with_columns((pl.min_horizontal(pl.col('x_max'), pl.col('x2'))
-                       - pl.max_horizontal(pl.col('x_min'), pl.col('x1')) > 0).alias('overlapping'))
-        .filter(pl.col('overlapping'))
+        .filter(pl.min_horizontal('x_max', 'x2') - pl.max_horizontal('x_min', 'x1') > 0)
         .sort(by=["x_min", "x_max", pl.col("y1") + pl.col('y2')])
         .select(pl.col("x_min").alias('x1'),
                 pl.col("x_max").alias("x2"),
                 pl.col('y2').shift().over("x_min", 'x_max').alias('y1'),
                 pl.col('y1').alias('y2')
                 )
-        .filter(pl.col('y2') - pl.col('y1') >= pct * (y_max - y_min))
-        .sort(by=['y1', 'y2', 'x1'])
-        .with_columns(((pl.col('x1') != pl.col('x2').shift())
-                       | (pl.col('y1') != pl.col('y1').shift())
-                       | (pl.col('y2') != pl.col('y2').shift())
-                       ).cast(int).cum_sum().alias('ws_id')
-                      )
-        .group_by("ws_id")
-        .agg(pl.col('x1').min().alias('x1'),
-             pl.col('y1').min().alias('y1'),
-             pl.col('x2').max().alias('x2'),
-             pl.col('y2').max().alias('y2'))
-        .drop("ws_id")
-        .collect()
+        .filter(pl.col('y1').is_not_null(),
+                pl.col('y2') - pl.col('y1') >= min_height)
     )
 
-    whitespaces = [Cell(**ws_dict) for ws_dict in df_elements_ranges.to_dicts()]
+    if continuous:
+        df_elements_ranges = (df_elements_ranges.filter(pl.col('y2') - pl.col('y1') >= pct * (y_max - y_min))
+                              .sort(by=['y1', 'y2', 'x1'])
+                              .with_columns(((pl.col('x1') != pl.col('x2').shift())
+                                             | (pl.col('y1') != pl.col('y1').shift())
+                                             | (pl.col('y2') != pl.col('y2').shift())
+                                             ).cast(int).cum_sum().alias('ws_id')
+                                            )
+                              .group_by("ws_id")
+                              .agg(pl.col('x1').min().alias('x1'),
+                                   pl.col('y1').min().alias('y1'),
+                                   pl.col('x2').max().alias('x2'),
+                                   pl.col('y2').max().alias('y2'))
+                              .drop("ws_id")
+                              .collect()
+                              )
+        whitespaces = [Whitespace(cells=[Cell(**ws_dict)])
+                       for ws_dict in df_elements_ranges.to_dicts()]
+
+    else:
+        df_elements_ranges = (
+            df_elements_ranges
+            .with_columns((pl.col('y2') - pl.col('y1')).sum().over(["x1", "x2"]).alias("ws_height"),
+                          (pl.col('y2').max().over(["x1", "x2"]) - pl.col('y2').min().over(["x1", "x2"])).alias("height"),
+                          pl.len().over(["x1", "x2"]).alias("nb_ws"))
+            .filter(pl.col("ws_height") >= pct * (y_max - y_min),
+                    pl.col("ws_height") >= 0.8 * pl.col("height"),
+                    (pl.col("nb_ws") == 1) | (pl.col('x2') - pl.col('x1') >= 2 * min_width))
+            .drop("ws_height", "height", "nb_ws")
+            .collect()
+        )
+
+        whitespaces = [Whitespace(cells=[Cell(**ws_dict) for ws_dict in ws_group])
+                       for _, ws_group in df_elements_ranges.rows_by_key(key=["x1", "x2"], named=True, include_key=True).items()]
 
     # Flip object coordinates in horizontal case
     if not vertical:
-        whitespaces = [Cell(x1=ws.y1, y1=ws.x1, x2=ws.y2, y2=ws.x2) for ws in whitespaces]
+        whitespaces = [ws.flipped() for ws in whitespaces]
 
     return whitespaces
 
 
-def adjacent_whitespaces(w_1: Cell, w_2: Cell) -> bool:
+def adjacent_whitespaces(w_1: Whitespace, w_2: Whitespace) -> bool:
     """
     Identify if two whitespaces are adjacent
     :param w_1: first whitespace
@@ -95,78 +115,98 @@ def adjacent_whitespaces(w_1: Cell, w_2: Cell) -> bool:
     return x_coherent and y_coherent
 
 
-def identify_coherent_v_whitespaces(v_whitespaces: List[Cell]) -> List[Cell]:
+def identify_coherent_v_whitespaces(v_whitespaces: List[Whitespace]) -> List[Whitespace]:
     """
     From vertical whitespaces, identify the most relevant ones according to height, width and relative positions
     :param v_whitespaces: list of vertical whitespaces
     :return: list of relevant vertical delimiters
     """
-    # Create vertical delimiters groups
-    v_groups = cluster_items(items=v_whitespaces,
-                             clustering_func=adjacent_whitespaces)
+    deleted_idx = list()
+    for i in range(len(v_whitespaces)):
+        for j in range(i, len(v_whitespaces)):
+            # Check if both whitespaces are adjacent
+            adjacent = adjacent_whitespaces(v_whitespaces[i], v_whitespaces[j])
 
-    # Keep only delimiters that represent at least 75% of the height of their group
-    v_delims = [d for gp in v_groups
-                for d in [d for d in gp if d.height >= 0.75 * max([d.height for d in gp])]]
+            if adjacent:
+                if v_whitespaces[i].height > v_whitespaces[j].height:
+                    deleted_idx.append(j)
+                elif v_whitespaces[i].height < v_whitespaces[j].height:
+                    deleted_idx.append(i)
 
-    # Group once again delimiters and keep only highest one in group
-    v_delim_groups = cluster_items(items=v_delims,
-                                   clustering_func=adjacent_whitespaces)
-
-    # For each group, select a delimiter that has the largest height
-    final_delims = list()
-    for gp in v_delim_groups:
-        if gp:
-            # Get x center of group
-            x_center = (min([d.x1 for d in gp]) + max([d.x2 for d in gp]))
-
-            # Filter on tallest delimiters
-            tallest_delimiters = [d for d in gp if d.height == max([d.height for d in gp])]
-
-            # Add delimiter closest to the center of the group
-            closest_del = sorted(tallest_delimiters, key=lambda d: abs(d.x1 + d.x2 - x_center)).pop(0)
-            final_delims.append(closest_del)
-
-    # Add all whitespaces of the largest height
-    max_height_ws = [ws for ws in v_whitespaces if ws.height == max([w.height for w in v_whitespaces])]
-
-    return list(set(final_delims + max_height_ws))
+    return [ws for idx, ws in enumerate(v_whitespaces) if idx not in deleted_idx]
 
 
-def deduplicate_whitespaces(ws: List[Cell], elements: List[Cell]):
+def deduplicate_whitespaces(ws: List[Whitespace], elements: List[Cell]) -> List[Whitespace]:
     """
     Remove useless whitespaces
     :param ws: list of whitespaces
     :param elements: list of segment elements
     :return: filtered whitespaces
     """
-    # Remove consecutive whitespaces that do not have elements between them
-    dedup_ws = sorted(ws, key=lambda ws: ws.x1 + ws.x2)
-    ws_to_del = list()
-    for ws_left, ws_right in zip(dedup_ws, dedup_ws[1:]):
-        # Get common area
-        common_area = Cell(x1=ws_left.x2,
-                           y1=max(ws_left.y1, ws_right.y1),
-                           x2=ws_right.x1,
-                           y2=min(ws_left.y2, ws_right.y2))
+    if len(ws) <= 1:
+        return ws
 
-        # Identify matching elements
-        matching_elements = [el for el in elements if el.x1 >= common_area.x1 and el.x2 <= common_area.x2
-                             and el.y1 >= common_area.y1 and el.y2 <= common_area.y2]
+    deleted_idx, merged_ws = list(), list()
+    for i in range(len(ws)):
+        for j in range(i + 1, len(ws)):
+            matching_elements = list()
+            for ws_1 in ws[i].cells:
+                for ws_2 in ws[j].cells:
+                    if min(ws_1.y2, ws_2.y2) - max(ws_1.y1, ws_2.y1) <= 0:
+                        continue
 
-        if len(matching_elements) == 0:
-            # Add smallest element to deleted ws
-            ws_to_del.append(ws_left if ws_left.height < ws_right.height else ws_right)
+                    # Get common area
+                    common_area = Cell(x1=min(ws_1.x2, ws_2.x2),
+                                       y1=max(ws_1.y1, ws_2.y1),
+                                       x2=max(ws_1.x1, ws_2.x1),
+                                       y2=min(ws_1.y2, ws_2.y2))
 
-    return [ws for ws in dedup_ws if ws not in ws_to_del]
+                    # Identify matching elements
+                    matching_elements += [el for el in elements if el.x1 >= common_area.x1 and el.x2 <= common_area.x2
+                                          and el.y1 >= common_area.y1 and el.y2 <= common_area.y2]
+
+            if len(matching_elements) == 0:
+                # Add smallest element to deleted ws
+                if ws[i].height > ws[j].height:
+                    deleted_idx.append(j)
+                elif ws[i].height < ws[j].height:
+                    deleted_idx.append(i)
+                else:
+                    # Create a merged whitespace
+                    new_cells = [Cell(x1=min(ws[i].x1, ws[j].x1),
+                                      y1=c.y1,
+                                      x2=max(ws[i].x2, ws[j].x2),
+                                      y2=c.y2)
+                                 for c in ws[i].cells + ws[j].cells]
+                    merged_ws.append(Whitespace(cells=list(set(new_cells))))
+                    deleted_idx += [i, j]
+
+    filtered_ws = [w for idx, w in enumerate(ws) if idx not in deleted_idx]
+
+    # Remove merged whitespaces that are incoherent with filtered whitespaces
+    merged_ws = [m_ws for m_ws in merged_ws
+                 if not any([min(w.x2, m_ws.x2) - max(w.x1, m_ws.x1) > 0 for w in filtered_ws])]
+
+    if len(merged_ws) > 1:
+        # Deduplicate overlapping merged ws
+        seq = iter(sorted(merged_ws, key=lambda w: w.area, reverse=True))
+        filtered_merged_ws = [next(seq)]
+        for w in seq:
+            if not any([f_ws for f_ws in filtered_ws if w in f_ws]):
+                filtered_merged_ws.append(w)
+    else:
+        filtered_merged_ws = merged_ws
+
+    return filtered_ws + filtered_merged_ws
 
 
-def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGroup], char_length: float,
-                                      pct: float = 0.25) -> List[Cell]:
+def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, ColumnGroup], char_length: float,
+                                      median_line_sep: float, pct: float = 0.25) -> List[Whitespace]:
     """
     Identify vertical whitespaces that can be column delimiters
     :param segment: image segment
     :param char_length: average character width in image
+    :param median_line_sep: median row separation
     :param pct: minimum percentage of the segment height for a vertical whitespace
     :return: list of vertical whitespaces that can be column delimiters
     """
@@ -174,7 +214,9 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, DelimiterGrou
     v_whitespaces = get_whitespaces(segment=segment,
                                     vertical=True,
                                     pct=pct,
-                                    min_width=char_length)
+                                    min_width=char_length,
+                                    min_height=min(median_line_sep, segment.height),
+                                    continuous=False)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)

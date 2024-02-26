@@ -3,12 +3,12 @@ from typing import List, Optional
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables.model import DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import ColumnGroup
 from img2table.tables.processing.borderless_tables.table.coherency import check_table_coherency
 from img2table.tables.processing.borderless_tables.table.table_creation import get_table
 
 
-def identify_table(columns: DelimiterGroup, row_delimiters: List[Cell], contours: List[Cell], median_line_sep: float,
+def identify_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[Cell], median_line_sep: float,
                    char_length: float) -> Optional[Table]:
     """
     Identify table from column delimiters and rows

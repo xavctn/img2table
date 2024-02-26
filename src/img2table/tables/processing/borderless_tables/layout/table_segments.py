@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces, \
     get_relevant_vertical_whitespaces
 from img2table.tables.processing.common import is_contained_cell
@@ -24,29 +24,29 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
 
     # Handle case where no whitespaces have been found by creating "fake" ws at the top or bottom
     if len(h_ws) == 0:
-        h_ws = [Cell(x1=min([el.x1 for el in segment.elements]),
-                     x2=max([el.x2 for el in segment.elements]),
-                     y1=segment.y1,
-                     y2=segment.y1),
-                Cell(x1=min([el.x1 for el in segment.elements]),
-                     x2=max([el.x2 for el in segment.elements]),
-                     y1=segment.y2,
-                     y2=segment.y2)
+        h_ws = [Whitespace(cells=[Cell(x1=min([el.x1 for el in segment.elements]),
+                                       x2=max([el.x2 for el in segment.elements]),
+                                       y1=segment.y1,
+                                       y2=segment.y1)]),
+                Whitespace(cells=[Cell(x1=min([el.x1 for el in segment.elements]),
+                                       x2=max([el.x2 for el in segment.elements]),
+                                       y1=segment.y2,
+                                       y2=segment.y2)])
                 ]
 
     # Create whitespaces at the top or the bottom if they are missing
     if h_ws[0].y1 > segment.y1:
-        up_ws = Cell(x1=min([ws.x1 for ws in h_ws]),
-                     x2=max([ws.x2 for ws in h_ws]),
-                     y1=segment.y1,
-                     y2=segment.y1)
+        up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                       x2=max([ws.x2 for ws in h_ws]),
+                                       y1=segment.y1,
+                                       y2=segment.y1)])
         h_ws.insert(0, up_ws)
 
     if h_ws[-1].y2 < segment.y2:
-        down_ws = Cell(x1=min([ws.x1 for ws in h_ws]),
-                       x2=max([ws.x2 for ws in h_ws]),
-                       y1=segment.y2,
-                       y2=segment.y2)
+        down_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                         x2=max([ws.x2 for ws in h_ws]),
+                                         y1=segment.y2,
+                                         y2=segment.y2)])
         h_ws.append(down_ws)
 
     # Check in areas between horizontal whitespaces in order to identify if they can correspond to tables
@@ -73,7 +73,10 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
 
         if area_elements:
             # Identify vertical whitespaces in the area
-            v_ws = get_relevant_vertical_whitespaces(segment=seg_area, char_length=char_length, pct=0.5)
+            v_ws = get_relevant_vertical_whitespaces(segment=seg_area,
+                                                     char_length=char_length,
+                                                     median_line_sep=median_line_sep,
+                                                     pct=0.5)
 
             # Identify number of whitespaces that are not on borders
             middle_ws = [ws for ws in v_ws if ws.x1 != seg_area.x1 and ws.x2 != seg_area.x2]
@@ -81,18 +84,19 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
             # If there can be at least 3 columns in area, it is a possible table area
             if len(middle_ws) >= 1:
                 # Add edges whitespaces
-                left_ws = Cell(x1=seg_area.x1,
-                               y1=seg_area.y1,
-                               x2=min([el.x1 for el in seg_area.elements]),
-                               y2=seg_area.y2)
-                right_ws = Cell(x1=max([el.x2 for el in seg_area.elements]),
-                                y1=seg_area.y1,
-                                x2=seg_area.x2,
-                                y2=seg_area.y2)
+                left_ws = Whitespace(cells=[Cell(x1=seg_area.x1,
+                                                 y1=seg_area.y1,
+                                                 x2=min([el.x1 for el in seg_area.elements]),
+                                                 y2=seg_area.y2)])
+                right_ws = Whitespace(cells=[Cell(x1=max([el.x2 for el in seg_area.elements]),
+                                                  y1=seg_area.y1,
+                                                  x2=seg_area.x2,
+                                                  y2=seg_area.y2)])
                 v_ws = [ws for ws in v_ws
                         if not is_contained_cell(inner_cell=ws, outer_cell=left_ws, percentage=0.1)
                         and not is_contained_cell(inner_cell=ws, outer_cell=right_ws, percentage=0.1)
-                        and len({ws.y1, ws.y2}.intersection({seg_area.y1, seg_area.y2})) > 0]
+                        and ((len({ws.y1, ws.y2}.intersection({seg_area.y1, seg_area.y2})) > 0)
+                             or (ws.height >= 0.66 * max([w.height for w in middle_ws])))]
 
                 seg_area.set_whitespaces(whitespaces=sorted(v_ws + [left_ws, right_ws], key=lambda ws: ws.x1 + ws.x2))
                 table_areas.append(seg_area)
@@ -100,7 +104,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
     return table_areas
 
 
-def merge_consecutive_ws(whitespaces: List[Cell]) -> List[Cell]:
+def merge_consecutive_ws(whitespaces: List[Whitespace]) -> List[Cell]:
     """
     Merge consecutive whitespaces
     :param whitespaces: list of original whitespaces
@@ -140,7 +144,7 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     # Condition on text height
     avg_height_1 = np.median([el.height for el in tb_area_1.elements])
     avg_height_2 = np.median([el.height for el in tb_area_2.elements])
-    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.25:
+    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.3:
         return False
 
     # Get relevant whitespaces

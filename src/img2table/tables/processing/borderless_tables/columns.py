@@ -1,89 +1,14 @@
 # coding: utf-8
 
 import copy
-from dataclasses import dataclass
 from typing import Optional, List
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import TableSegment, DelimiterGroup
+from img2table.tables.processing.borderless_tables.model import TableSegment, Whitespace, Column, VerticalWS, \
+    ColumnGroup
 
 
-@dataclass
-class VerticalWS:
-    ws: Cell
-    position: int
-    top: bool
-    bottom: bool
-    used: bool = False
-
-    @property
-    def x1(self) -> int:
-        return self.ws.x1
-
-    @property
-    def y1(self) -> int:
-        return self.ws.y1
-
-    @property
-    def x2(self) -> int:
-        return self.ws.x2
-
-    @property
-    def y2(self) -> int:
-        return self.ws.y2
-
-    @property
-    def width(self) -> int:
-        return self.ws.x2 - self.ws.x1
-
-
-@dataclass
-class WSGroup:
-    x1: int
-    y1: int
-    x2: int
-    y2: int
-    top: bool
-    bottom: bool
-    top_position: int
-    bottom_position: int
-
-    @classmethod
-    def from_ws(cls, v_ws: VerticalWS) -> "WSGroup":
-        return cls(x1=v_ws.x1, y1=v_ws.y1, x2=v_ws.x2, y2=v_ws.y2, top=v_ws.top, bottom=v_ws.bottom,
-                   top_position=v_ws.position, bottom_position=v_ws.position)
-
-    @property
-    def height(self) -> int:
-        return self.y2 - self.y1
-
-    def corresponds(self, v_ws: VerticalWS, char_length: float) -> bool:
-        if self.bottom_position is None:
-            return True
-        elif v_ws.position != self.bottom_position + 1:
-            return False
-        elif not self.bottom or not v_ws.top:
-            return False
-
-        # Condition on position
-        return min(self.x2, v_ws.x2) - max(self.x1, v_ws.x1) >= 0.5 * char_length
-
-    def add(self, v_ws: VerticalWS):
-        self.x1 = max(self.x1, v_ws.x1)
-        self.y1 = min(self.y1, v_ws.y1)
-        self.x2 = min(self.x2, v_ws.x2)
-        self.y2 = max(self.y2, v_ws.y2)
-        self.top_position = min(self.top_position, v_ws.position)
-        self.bottom_position = max(self.bottom_position, v_ws.position)
-
-        if v_ws.position == self.top_position:
-            self.top = v_ws.top
-
-        if v_ws.position == self.bottom_position:
-            self.bottom = v_ws.bottom
-
-
-def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> List[Cell]:
+def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> List[Column]:
     """
     Identify column delimiters in table segment
     :param table_segment: TableSegment object
@@ -94,59 +19,73 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
     table_areas = sorted(table_segment.table_areas, key=lambda x: x.position)
 
     # Create groups of relevant vertical whitespaces
-    ws_groups = list()
+    columns = list()
     for id_area, tb_area in enumerate(table_areas):
-        new_groups = list()
+        new_columns = list()
         whitespaces = [VerticalWS(ws=ws,
                                   top=ws.y1 == tb_area.y1,
                                   bottom=ws.y2 == tb_area.y2,
                                   position=id_area)
                        for ws in tb_area.whitespaces]
 
-        for gp in ws_groups:
+        for col in columns:
             # Get matching whitespaces
-            matching_ws = [v_ws for v_ws in whitespaces if gp.corresponds(v_ws=v_ws, char_length=char_length)]
+            matching_ws = [v_ws for v_ws in whitespaces if col.corresponds(v_ws=v_ws, char_length=char_length)]
 
             if matching_ws:
                 for v_ws in matching_ws:
                     # Update whitespace
                     setattr(v_ws, "used", True)
 
-                    # Create new group
-                    new_gp = copy.deepcopy(gp)
-                    new_gp.add(v_ws)
-                    new_groups.append(new_gp)
+                    # Create new column
+                    new_col = copy.deepcopy(col)
+                    new_col.add(v_ws)
+                    new_columns.append(new_col)
             else:
-                new_groups.append(gp)
+                new_columns.append(col)
 
-        # Create groups corresponding to unused whitespaces
-        new_groups += [WSGroup.from_ws(v_ws=v_ws) for v_ws in whitespaces if not v_ws.used]
+        # Create columns corresponding to unused whitespaces
+        new_columns += [Column.from_ws(v_ws=v_ws) for v_ws in whitespaces if not v_ws.used]
 
-        # Replace existing groups by new groups
-        ws_groups = new_groups
+        # Replace existing columns by new columns
+        columns = new_columns
 
-    # Recompute boundaries of whitespaces groups (up to previous/next area)
+    # Recompute boundaries of columns (up to previous/next area)
     dict_bounds = {k: {"y_min": table_areas[k].y1, "y_max": table_areas[k].y2}
                    for k in range(len(table_areas))}
-    ws_cells = [Cell(x1=gp.x1,
-                     y1=dict_bounds.get(gp.top_position - 1, {}).get("y_max") or gp.y1 if gp.top else gp.y1,
-                     x2=gp.x2,
-                     y2=dict_bounds.get(gp.bottom_position + 1, {}).get("y_min") or gp.y2 if gp.bottom else gp.y2)
-                for gp in ws_groups]
+    reshaped_columns = list()
+    for col in columns:
+        reshaped_whitespaces = list()
+        for v_ws in col.whitespaces:
+            # Reshape all whitespaces
+            y_min = dict_bounds.get(v_ws.position - 1, {}).get("y_max") or v_ws.y1 if v_ws.top else v_ws.y1
+            y_max = dict_bounds.get(v_ws.position + 1, {}).get("y_min") or v_ws.y2 if v_ws.bottom else v_ws.y2
+            reshaped_v_ws = VerticalWS(ws=Whitespace(cells=[Cell(x1=col.x1,
+                                                                 y1=y_min if c.y1 == v_ws.y1 else c.y1,
+                                                                 x2=col.x2,
+                                                                 y2=y_max if c.y2 == v_ws.y2 else c.y2)
+                                                            for c in v_ws.ws.cells]),)
+            reshaped_whitespaces.append(reshaped_v_ws)
 
-    # Keep only whitespaces that represent at least 66% of the maximum height
-    max_height = max(map(lambda ws: ws.height, ws_cells))
-    ws_cells = [ws for ws in ws_cells if ws.height >= 0.66 * max_height]
+        # Create reshaped column
+        reshaped_col = Column(whitespaces=reshaped_whitespaces)
+        reshaped_columns.append(reshaped_col)
 
-    return ws_cells
+    # Keep only columns that represent at least 66% of the maximum height
+    max_height = max(map(lambda col: col.height, reshaped_columns))
+    reshaped_columns = [col for col in reshaped_columns if col.height >= 0.66 * max_height]
+
+    return reshaped_columns
 
 
-def get_relevant_height(whitespaces: List[Cell], elements: List[Cell], char_length: float) -> List[Cell]:
+def get_relevant_height(columns: List[Column], elements: List[Cell], char_length: float,
+                        median_line_sep: float) -> List[Column]:
     """
-    Get relevant whitespaces height relative to image elements
-    :param whitespaces: list of whitespaces defining column delimiters
+    Get relevant columns height relative to image elements
+    :param columns: list of column delimiters
     :param elements: list of image elements
     :param char_length: average character length
+    :param median_line_sep: median line separation
     :return: list of resized column delimiters
     """
     # Group elements in rows
@@ -159,51 +98,79 @@ def get_relevant_height(whitespaces: List[Cell], elements: List[Cell], char_leng
         rows[-1].append(el)
 
     # Identify top and bottom values for vertical whitespaces
-    y_top, y_bottom, = max([ws.y2 for ws in whitespaces]), min([ws.y1 for ws in whitespaces])
+    y_top, y_bottom, = max([col.y2 for col in columns]), min([col.y1 for col in columns])
     for row in rows:
         x1_row, x2_row = min([el.x1 for el in row]), max([el.x2 for el in row])
         y1_row, y2_row = min([el.y1 for el in row]), max([el.y2 for el in row])
 
-        # Identify whitespaces that correspond vertically to rows
-        row_ws = [ws for ws in whitespaces if min(ws.y2, y2_row) - max(ws.y1, y1_row) == y2_row - y1_row]
+        # Identify columns that correspond vertically to rows
+        row_cols = [col for col in columns if min(col.y2, y2_row) - max(col.y1, y1_row) == y2_row - y1_row]
 
-        if len([ws for ws in row_ws if min(ws.x2, x2_row) - max(ws.x1, x1_row) > 0]) > 0:
+        if len([col for col in row_cols if min(col.x2, x2_row) - max(col.x1, x1_row) > 0]) > 0:
             y_top = min(y_top, y1_row)
             y_bottom = max(y_bottom, y2_row)
 
-    # Reprocess whitespaces
-    whitespaces = sorted(whitespaces, key=lambda w: w.x1 + w.x2)
-    reprocessed_ws = list()
-    for idx, ws in enumerate(whitespaces):
+    # Reprocess columns
+    columns = sorted(columns, key=lambda col: col.x1 + col.x2)
+    reprocessed_cols = list()
+    for idx, col in enumerate(columns):
         if idx == 0:
             # Left border
-            ws = Cell(x1=int(ws.x2 - char_length),
-                      y1=max(ws.y1, y_top),
-                      x2=int(ws.x2 - char_length),
-                      y2=min(ws.y2, y_bottom))
-        elif idx == len(whitespaces) - 1:
+            new_v_ws = list()
+            for v_ws in col.whitespaces:
+                ws_cells = [Cell(x1=c.x2,
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 x2=c.x2,
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                            for c in v_ws.ws.cells
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
+                if len(ws_cells) > 0:
+                    new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
+
+        elif idx == len(columns) - 1:
             # Right border
-            ws = Cell(x1=int(ws.x1 + char_length),
-                      y1=max(ws.y1, y_top),
-                      x2=int(ws.x1 + char_length),
-                      y2=min(ws.y2, y_bottom))
+            new_v_ws = list()
+            for v_ws in col.whitespaces:
+                ws_cells = [Cell(x1=c.x1,
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 x2=c.x1,
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                            for c in v_ws.ws.cells
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
+                if len(ws_cells) > 0:
+                    new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
         else:
             # Column delimiters
-            ws = Cell(x1=(ws.x1 + ws.x2) // 2,
-                      y1=max(ws.y1, y_top),
-                      x2=(ws.x1 + ws.x2) // 2,
-                      y2=min(ws.y2, y_bottom))
+            new_v_ws = list()
+            for v_ws in col.whitespaces:
+                ws_cells = [Cell(x1=(c.x1 + c.x2) // 2,
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 x2=(c.x1 + c.x2) // 2,
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                            for c in v_ws.ws.cells
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
+                if len(ws_cells) > 0:
+                    new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
 
-        reprocessed_ws.append(ws)
+        if len(new_v_ws) > 0:
+            reprocessed_cols.append(Column(whitespaces=new_v_ws))
 
-    return reprocessed_ws
+    if reprocessed_cols:
+        # Keep only columns that represent at least 66% of the maximum height
+        max_height = max(map(lambda col: col.height, reprocessed_cols))
+        reprocessed_cols = [col for col in reprocessed_cols if col.height >= 0.66 * max_height]
+
+        return reprocessed_cols
+    else:
+        return []
 
 
-def identify_columns(table_segment: TableSegment, char_length: float) -> Optional[DelimiterGroup]:
+def identify_columns(table_segment: TableSegment, char_length: float, median_line_sep: float) -> Optional[ColumnGroup]:
     """
     Identify list of vertical delimiters that can be table columns in a table segment
     :param table_segment: TableSegment object
     :param char_length: average character length
+    :param median_line_sep: median line separation
     :return: delimiter group that can correspond to columns
     """
     # Get columns whitespaces
@@ -211,16 +178,21 @@ def identify_columns(table_segment: TableSegment, char_length: float) -> Optiona
                                      char_length=char_length)
 
     # Resize columns
-    resized_columns = get_relevant_height(whitespaces=columns,
+    resized_columns = get_relevant_height(columns=columns,
                                           elements=table_segment.elements,
-                                          char_length=char_length)
+                                          char_length=char_length,
+                                          median_line_sep=median_line_sep)
 
-    # Create delimiter group
-    x1_del, x2_del = min([d.x1 for d in resized_columns]), max([d.x2 for d in resized_columns])
-    y1_del, y2_del = min([d.y1 for d in resized_columns]), max([d.y2 for d in resized_columns])
-    delimiter_group = DelimiterGroup(delimiters=resized_columns,
-                                     elements=[el for el in table_segment.elements if el.x1 >= x1_del
-                                               and el.x2 <= x2_del and el.y1 >= y1_del and el.y2 <= y2_del])
+    if resized_columns:
+        # Create column group
+        x1_del, x2_del = min([d.x1 for d in resized_columns]), max([d.x2 for d in resized_columns])
+        y1_del, y2_del = min([d.y1 for d in resized_columns]), max([d.y2 for d in resized_columns])
+        column_group = ColumnGroup(columns=resized_columns,
+                                   elements=[el for el in table_segment.elements if el.x1 >= x1_del
+                                             and el.x2 <= x2_del and el.y1 >= y1_del and el.y2 <= y2_del],
+                                   char_length=char_length)
 
-    return delimiter_group if len(delimiter_group.delimiters) >= 4 and len(delimiter_group.elements) > 0 else None
+        return column_group if len(column_group.columns) >= 4 and len(column_group.elements) > 0 else None
+
+    return None
 
