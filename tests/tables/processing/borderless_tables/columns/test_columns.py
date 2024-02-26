@@ -53,14 +53,14 @@ def test_get_relevant_height():
                                  char_length=14,
                                  median_line_sep=16)
 
-    assert result == [Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=104, x2=21, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=496, x2=21, y2=633)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=104, x2=321, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=496, x2=321, y2=626)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=104, x2=1708, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=496, x2=1708, y2=626)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=104, x2=1845, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=496, x2=1845, y2=633)]))])]
+    assert result == [Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=111, x2=21, y2=544)])),
+                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=496, x2=21, y2=626)]))]),
+                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=111, x2=321, y2=544)])),
+                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=496, x2=321, y2=633)]))]),
+                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=111, x2=1708, y2=544)])),
+                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=496, x2=1708, y2=633)]))]),
+                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=111, x2=1845, y2=544)])),
+                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=496, x2=1845, y2=626)]))])]
 
 
 def test_identify_columns():

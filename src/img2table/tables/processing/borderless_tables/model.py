@@ -137,6 +137,10 @@ class VerticalWS:
         return self.ws.x2 - self.ws.x1
 
     @property
+    def height(self) -> int:
+        return self.ws.y2 - self.ws.y1
+
+    @property
     def continuous(self) -> bool:
         return self.ws.continuous
 

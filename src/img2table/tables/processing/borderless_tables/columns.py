@@ -64,7 +64,7 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
                                                                  y1=y_min if c.y1 == v_ws.y1 else c.y1,
                                                                  x2=col.x2,
                                                                  y2=y_max if c.y2 == v_ws.y2 else c.y2)
-                                                            for c in v_ws.ws.cells]))
+                                                            for c in v_ws.ws.cells]),)
             reshaped_whitespaces.append(reshaped_v_ws)
 
         # Create reshaped column
@@ -110,9 +110,6 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             y_top = min(y_top, y1_row)
             y_bottom = max(y_bottom, y2_row)
 
-    # Adjust height
-    y_top, y_bottom = y_top - int(0.5 * char_length), y_bottom + int(0.5 * char_length)
-
     # Reprocess columns
     columns = sorted(columns, key=lambda col: col.x1 + col.x2)
     reprocessed_cols = list()
@@ -121,8 +118,12 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             # Left border
             new_v_ws = list()
             for v_ws in col.whitespaces:
-                ws_cells = [Cell(x1=c.x2, y1=max(c.y1, y_top), x2=c.x2, y2=min(c.y2, y_bottom)) for c in v_ws.ws.cells
-                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= median_line_sep]
+                ws_cells = [Cell(x1=c.x2,
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 x2=c.x2,
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                            for c in v_ws.ws.cells
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
                     new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
 
@@ -130,8 +131,12 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             # Right border
             new_v_ws = list()
             for v_ws in col.whitespaces:
-                ws_cells = [Cell(x1=c.x1, y1=max(c.y1, y_top), x2=c.x1, y2=min(c.y2, y_bottom)) for c in v_ws.ws.cells
-                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= median_line_sep]
+                ws_cells = [Cell(x1=c.x1,
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 x2=c.x1,
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                            for c in v_ws.ws.cells
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
                     new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
         else:
@@ -139,11 +144,11 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             new_v_ws = list()
             for v_ws in col.whitespaces:
                 ws_cells = [Cell(x1=(c.x1 + c.x2) // 2,
-                                 y1=max(c.y1, y_top),
+                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
                                  x2=(c.x1 + c.x2) // 2,
-                                 y2=min(c.y2, y_bottom))
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
                             for c in v_ws.ws.cells
-                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= median_line_sep]
+                            if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
                     new_v_ws.append(VerticalWS(ws=Whitespace(cells=ws_cells)))
 
