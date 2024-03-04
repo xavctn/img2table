@@ -119,9 +119,9 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             new_v_ws = list()
             for v_ws in col.whitespaces:
                 ws_cells = [Cell(x1=c.x2,
-                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 y1=y_top - int(0.5 * char_length) if c.y1 <= y_top else max(c.y1, y_top),
                                  x2=c.x2,
-                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 >= y_bottom else min(c.y2, y_bottom))
                             for c in v_ws.ws.cells
                             if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
@@ -132,9 +132,9 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             new_v_ws = list()
             for v_ws in col.whitespaces:
                 ws_cells = [Cell(x1=c.x1,
-                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 y1=y_top - int(0.5 * char_length) if c.y1 <= y_top else max(c.y1, y_top),
                                  x2=c.x1,
-                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 >= y_bottom else min(c.y2, y_bottom))
                             for c in v_ws.ws.cells
                             if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
@@ -144,9 +144,9 @@ def get_relevant_height(columns: List[Column], elements: List[Cell], char_length
             new_v_ws = list()
             for v_ws in col.whitespaces:
                 ws_cells = [Cell(x1=(c.x1 + c.x2) // 2,
-                                 y1=y_top - int(0.5 * char_length) if c.y1 == y_top else max(c.y1, y_top),
+                                 y1=y_top - int(0.5 * char_length) if c.y1 <= y_top else max(c.y1, y_top),
                                  x2=(c.x1 + c.x2) // 2,
-                                 y2=y_bottom + int(0.5 * char_length) if c.y2 == y_bottom else min(c.y2, y_bottom))
+                                 y2=y_bottom + int(0.5 * char_length) if c.y2 >= y_bottom else min(c.y2, y_bottom))
                             for c in v_ws.ws.cells
                             if min(c.y2, y_bottom) - max(c.y1, y_top) >= min(median_line_sep, v_ws.height)]
                 if len(ws_cells) > 0:
