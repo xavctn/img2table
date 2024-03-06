@@ -19,7 +19,7 @@ pillow>=10.0.1
 
 # docTR
 python-doctr; python_version < '3.12'
-rapidfuzz==2.15.1
+rapidfuzz==3.6.2
 
 # Test dependencies
 pytest >= 6
