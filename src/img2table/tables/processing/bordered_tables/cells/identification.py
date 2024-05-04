@@ -97,7 +97,12 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     df_bbox_v = (df_bbox_v.with_columns((pl.min_horizontal(['y2', 'y2_bbox'])
                                          - pl.max_horizontal(['y1', 'y1_bbox'])).alias('overlapping')
                                         )
-                 .filter(pl.col('overlapping') / (pl.col('y2_bbox') - pl.col('y1_bbox')) >= 0.8)
+                 .with_columns(pl.max_horizontal(pl.lit(5),
+                                                 pl.min_horizontal(pl.lit(10),
+                                                                   0.9 * (pl.col('y2_bbox') - pl.col('y1_bbox')))
+                                                 ).alias("tolerance")
+                               )
+                 .filter(pl.col('y2_bbox') - pl.col('y1_bbox') - pl.col('overlapping') <= pl.col("tolerance"))
                  )
 
     # Get all vertical delimiters by bbox

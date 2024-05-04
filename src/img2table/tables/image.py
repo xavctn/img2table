@@ -7,7 +7,6 @@ from typing import List
 import cv2
 import numpy as np
 
-from img2table.tables import threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -55,14 +54,11 @@ class TableImage:
         :param implicit_rows: boolean indicating if implicit rows are splitted
         :return:
         """
-        # Apply thresholding
-        self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
-
         # Compute parameters for line detection
         min_line_length = max(int(round(0.66 * self.median_line_sep)), 1) if self.median_line_sep else 20
 
         # Detect rows in image
-        h_lines, v_lines = detect_lines(thresh=self.thresh,
+        h_lines, v_lines = detect_lines(img=self.img,
                                         contours=self.contours,
                                         char_length=self.char_length,
                                         min_line_length=min_line_length)

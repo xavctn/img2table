@@ -3,7 +3,6 @@ import typing
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-import cv2
 import fitz
 import numpy as np
 
@@ -58,13 +57,11 @@ class PDF(Document):
             page = doc.load_page(page_id=page_number)
             pix = page.get_pixmap(matrix=mat)
             img = np.frombuffer(buffer=pix.samples, dtype=np.uint8).reshape((pix.height, pix.width, 3))
-            # To grayscale
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # Handle rotation if needed
             if self.detect_rotation:
-                final, self._rotated = fix_rotation_image(img=gray)
+                final, self._rotated = fix_rotation_image(img=img)
             else:
-                final, self._rotated = gray, False
+                final, self._rotated = img, False
             images.append(final)
 
         self._images = images

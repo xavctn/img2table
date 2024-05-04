@@ -234,7 +234,7 @@ def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float,
     :return: thresholded image
     """
     # Create thresholded image
-    thresh = threshold_dark_areas(img=img, char_length=char_length, method="sauvola")
+    thresh = threshold_dark_areas(img=img, char_length=char_length)
 
     # Mask rows in image
     for line in lines:

@@ -15,6 +15,9 @@ def add_semi_bordered_cells(cluster: List[Cell], lines: List[Line], char_length:
     :param char_length: average character length
     :return: cluster with add semi-bordered cells
     """
+    if len(cluster) == 0:
+        return cluster
+
     # Compute cluster coordinates
     x_min, x_max = min([c.x1 for c in cluster]), max([c.x2 for c in cluster])
     y_min, y_max = min([c.y1 for c in cluster]), max([c.y2 for c in cluster])

@@ -62,11 +62,11 @@ def handle_implicit_rows_table(img: np.ndarray, table: Table, contours: List[Cel
     :param img: image array
     :param table: Table object
     :param contours: list of image contours as cell objects
-    :param lines: list of lines in image
     :param margin: margin in pixels used for cropped images
     :return: reprocessed table with implicit rows
     """
-    height, width = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    height, width = gray.shape[:2]
 
     # If table is a single cell, do not search for implicit rows
     if table.nb_columns * table.nb_rows <= 1:
@@ -87,8 +87,8 @@ def handle_implicit_rows_table(img: np.ndarray, table: Table, contours: List[Cel
             continue
 
         # Get cropped image
-        cropped_img = img[max(row.y1 - margin, 0):min(row.y2 + margin, height),
-                          max(row.x1 - margin, 0):min(row.x2 + margin, width)]
+        cropped_img = gray[max(row.y1 - margin, 0):min(row.y2 + margin, height),
+                      max(row.x1 - margin, 0):min(row.x2 + margin, width)]
 
         # If cropped image is empty, do not do anything
         height_cropped, width_cropped = cropped_img.shape[:2]

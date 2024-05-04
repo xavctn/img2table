@@ -136,7 +136,7 @@ def compute_char_length(img: np.ndarray) -> Tuple[Optional[float], Optional[np.n
     :return: tuple with average character length and connected components array
     """
     # Thresholding
-    thresh = threshold_dark_areas(img=img, char_length=11, method="sauvola")
+    thresh = threshold_dark_areas(img=img, char_length=11)
 
     # Connected components
     _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
@@ -241,7 +241,7 @@ def compute_median_line_sep(img: np.ndarray, cc: np.ndarray,
     :return: median separation between rows
     """
     # Create image from connected components
-    black_img = np.zeros(img.shape, np.uint8)
+    black_img = np.zeros(img.shape[:2], np.uint8)
     cells_cc = [Cell(x1=c[cv2.CC_STAT_LEFT],
                      y1=c[cv2.CC_STAT_TOP],
                      x2=c[cv2.CC_STAT_LEFT] + c[cv2.CC_STAT_WIDTH],
