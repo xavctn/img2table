@@ -19,7 +19,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     :return: list of detected lines
     """
     # Apply masking on image
-    kernel_dims = (1, round(min_line_length / 2)) if vertical else (round(min_line_length / 2), 1)
+    kernel_dims = (1, round(min_line_length / 3)) if vertical else (round(min_line_length / 3), 1)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_dims)
     mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
 
@@ -28,7 +28,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, hollow_kernel)
 
     # Apply closing for dotted lines
-    dotted_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, round(min_line_length / 2)) if vertical else (round(min_line_length / 2), 1))
+    dotted_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, round(min_line_length / 6)) if vertical else (round(min_line_length / 6), 1))
     mask_dotted = cv2.morphologyEx(mask_closed, cv2.MORPH_CLOSE, dotted_kernel)
 
     # Apply masking on line length
@@ -85,7 +85,8 @@ def detect_lines(img: np.ndarray, contours: Optional[List[Cell]], char_length: O
     :return: horizontal and vertical rows
     """
     # Grayscale and blurring
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    blur = cv2.bilateralFilter(img, 3, 40, 80)
+    gray = cv2.cvtColor(blur, cv2.COLOR_RGB2GRAY)
 
     # Apply laplacian and filter image
     laplacian = cv2.Laplacian(src=gray, ksize=3, ddepth=cv2.CV_64F)

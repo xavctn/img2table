@@ -55,7 +55,7 @@ class TableImage:
         :return:
         """
         # Compute parameters for line detection
-        min_line_length = max(int(round(0.66 * self.median_line_sep)), 1) if self.median_line_sep else 20
+        min_line_length = int(min(1.5 * self.median_line_sep, 4 * self.char_length)) if self.median_line_sep else 20
 
         # Detect rows in image
         h_lines, v_lines = detect_lines(img=self.img,

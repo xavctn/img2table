@@ -48,7 +48,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
             # Fix area statistics for the first CC
             area = len(np.where(mask[y:y + h, x:x + w] == 255)[0])
 
-        if area / (w * h) >= 0.6 and min(w, h) >= char_length and max(w, h) >= 4 * char_length:
+        if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 4 * char_length:
             thresh[y:y+h, x:x+w] = binary_thresh[y:y+h, x:x+w]
 
     return thresh
