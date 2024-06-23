@@ -49,7 +49,7 @@ class TextractOCR(OCRInstance):
         :return: list of OCR elements corresponding to the page
         """
         # Get image dimensions
-        height, width = image.shape
+        height, width = image.shape[:2]
 
         # Initialize dictionary containing child relationships
         dict_children = dict()

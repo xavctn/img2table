@@ -31,7 +31,7 @@ def test_load_image():
 
     assert img_from_path.bytes == img_from_bytes.bytes == img_from_bytesio.bytes
 
-    assert list(img_from_path.images)[0].shape == (417, 1365)
+    assert list(img_from_path.images)[0].shape == (417, 1365, 3)
 
 
 def test_blank_image(mock_tesseract):
@@ -87,7 +87,7 @@ def test_no_ocr():
     assert len(result) == 1
 
     assert result[0].title is None
-    assert result[0].bbox == BBox(x1=47, y1=40, x2=829, y2=529)
+    assert result[0].bbox == BBox(x1=46, y1=37, x2=834, y2=529)
     assert len(result[0].content) == 19
     assert len(result[0].content[0]) == 5
 

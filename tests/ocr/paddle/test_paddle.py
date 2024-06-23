@@ -24,7 +24,7 @@ def test_paddle_hocr():
     from img2table.ocr import PaddleOCR
 
     instance = PaddleOCR()
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
 
     result = instance.hocr(image=img)
 

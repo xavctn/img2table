@@ -2,7 +2,6 @@
 
 import typing
 
-import cv2
 import polars as pl
 
 from img2table.document.base import Document
@@ -35,7 +34,7 @@ class DocTR(OCRInstance):
 
     def content(self, document: Document) -> "doctr.io.elements.Document":
         # Get OCR of all images
-        ocrs = self.model([cv2.cvtColor(img, cv2.COLOR_GRAY2RGB) for img in document.images])
+        ocrs = self.model(document.images)
 
         return ocrs
 

@@ -5,33 +5,34 @@ from img2table.tables.metrics import compute_char_length, compute_median_line_se
 
 
 def test_compute_char_length():
-    image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
 
-    char_length, cc_array = compute_char_length(img=image)
+    char_length, thresh_chars = compute_char_length(img=image)
     assert round(char_length, 2) == 9.0
-    assert len(cc_array) == 142
+    assert thresh_chars.shape == (417, 1365)
 
-    image = cv2.imread("test_data/blank.png", cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(cv2.imread("test_data/blank.png"), cv2.COLOR_BGR2RGB)
     assert compute_char_length(img=image) == (None, None)
 
 
 def test_compute_median_line_sep():
-    image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
-    char_length, cc_array = compute_char_length(img=image)
+    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
+    char_length, thresh_chars = compute_char_length(img=image)
 
-    median_line_sep, contours = compute_median_line_sep(img=image, char_length=char_length, cc=cc_array)
+    median_line_sep, contours = compute_median_line_sep(thresh_chars=thresh_chars,
+                                                        char_length=char_length)
 
     assert round(median_line_sep, 2) == 51
-    assert len(contours) == 30
+    assert len(contours) == 71
 
 
 def test_compute_img_metrics():
-    image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
     char_length, median_line_sep, contours = compute_img_metrics(img=image)
 
     assert round(char_length, 2) == 9.0
     assert round(median_line_sep, 2) == 51
-    assert len(contours) == 30
+    assert len(contours) == 71
 
-    image = cv2.imread("test_data/blank.png", cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(cv2.imread("test_data/blank.png"), cv2.COLOR_BGR2RGB)
     assert compute_img_metrics(img=image) == (None, None, None)
