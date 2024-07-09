@@ -18,7 +18,7 @@ def deduplicate_cells(df_cells: pl.LazyFrame) -> pl.LazyFrame:
 
     # Create copy of df_cells
     df_cells_cp = (df_cells.clone()
-                   .rename({col: f"{col}_" for col in df_cells.columns})
+                   .rename({col: f"{col}_" for col in df_h_lines.collect_schema().names()})
                    )
 
     if df_cells.collect().height == 0:
