@@ -14,7 +14,7 @@ def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
     """
     # Create copy of df_h_lines
     df_h_lines_cp = (df_h_lines.clone()
-                     .rename({col: f"{col}_" for col in df_h_lines.columns})
+                     .rename({col: f"{col}_" for col in df_h_lines.collect_schema().names()})
                      )
 
     # Cross join with itself to get pairs of horizontal rows
