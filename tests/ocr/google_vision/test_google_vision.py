@@ -56,7 +56,7 @@ def test_vision_ocr(mock_vision):
     with open("test_data/expected_content.json", "r") as f:
         content = json.load(f)
 
-    expected_ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected_ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     # Test init error
     with pytest.raises(TypeError) as e_info:

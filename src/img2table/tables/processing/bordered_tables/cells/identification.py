@@ -6,7 +6,7 @@ import polars as pl
 from img2table.tables.objects.line import Line
 
 
-def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
+def get_potential_cells_from_h_lines(df_h_lines: pl.DataFrame) -> pl.DataFrame:
     """
     Identify potential cells by matching corresponding horizontal rows
     :param df_h_lines: dataframe containing horizontal rows
@@ -64,7 +64,7 @@ def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
     return df_bbox
 
 
-def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pl.LazyFrame:
+def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pl.DataFrame:
     """
     Create dataframe of all possible cells from horizontal and vertical rows
     :param horizontal_lines: list of horizontal rows
@@ -73,11 +73,11 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
     """
     # Check for empty rows
     if len(horizontal_lines) * len(vertical_lines) == 0:
-        return pl.DataFrame().lazy()
+        return pl.DataFrame()
 
     # Create dataframe from horizontal and vertical rows
-    df_h_lines = pl.LazyFrame(data=[line.dict for line in horizontal_lines])
-    df_v_lines = pl.LazyFrame(data=[line.dict for line in vertical_lines])
+    df_h_lines = pl.DataFrame(data=[line.dict for line in horizontal_lines])
+    df_v_lines = pl.DataFrame(data=[line.dict for line in vertical_lines])
 
     # Identify potential cells bboxes from horizontal rows
     df_bbox = get_potential_cells_from_h_lines(df_h_lines=df_h_lines)

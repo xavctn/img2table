@@ -9,7 +9,7 @@ from img2table.tables.processing.borderless_tables import identify_borderless_ta
 
 
 def test_identify_borderless_tables():
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)

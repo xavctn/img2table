@@ -46,7 +46,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
         return []
 
     # Create dataframe with contours
-    df_cnt = pl.LazyFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
+    df_cnt = pl.DataFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
                                 for idx, c in enumerate(contours)])
 
     # Cross join
@@ -86,7 +86,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
                 )
 
     # Map results to cells
-    return [Cell(**d) for d in df_final.collect().to_dicts()]
+    return [Cell(**d) for d in df_final.to_dicts()]
 
 
 def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:

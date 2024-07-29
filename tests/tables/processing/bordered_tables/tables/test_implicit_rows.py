@@ -24,7 +24,7 @@ def test_compute_table_median_row_sep():
 
 
 def test_handle_implicit_rows_table():
-    img = cv2.imread("test_data/implicit.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/implicit.png"), cv2.COLOR_BGR2RGB)
 
     with open("test_data/implicit_table.json", 'r') as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
@@ -41,7 +41,7 @@ def test_handle_implicit_rows_table():
 
 
 def test_handle_implicit_rows():
-    img = cv2.imread("test_data/implicit.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/implicit.png"), cv2.COLOR_BGR2RGB)
 
     with open("test_data/implicit_table.json", 'r') as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])

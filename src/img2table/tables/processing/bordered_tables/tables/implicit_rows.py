@@ -20,7 +20,7 @@ def compute_table_median_row_sep(table: Table, contours: List[Cell]) -> Optional
     # Create dataframe with contours
     list_elements = [{"id": idx, "x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2}
                      for idx, el in enumerate(contours)]
-    df_elements = pl.LazyFrame(data=list_elements)
+    df_elements = pl.DataFrame(data=list_elements)
 
     # Filter on elements that are within the table
     df_elements_table = df_elements.filter((pl.col('x1') >= table.x1) & (pl.col('x2') <= table.x2)
@@ -40,14 +40,13 @@ def compute_table_median_row_sep(table: Table, contours: List[Cell]) -> Optional
                      .filter(pl.col('rk') == 1)
                      )
 
-    if df_elms_below.collect().height == 0:
+    if df_elms_below.height == 0:
         return None
 
     # Compute median vertical distance between elements
     median_v_dist = (df_elms_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
                                                   - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
                      .select(pl.median('y_diff'))
-                     .collect()
                      .to_dicts()
                      .pop()
                      .get('y_diff')

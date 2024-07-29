@@ -48,7 +48,7 @@ def test_doctr_ocr_df():
 
     result = instance.to_ocr_dataframe(content=content)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     assert result == expected
 
@@ -60,6 +60,6 @@ def test_doctr_document():
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
-    assert result.df.collect().equals(expected.df.collect())
+    assert result.df.equals(expected.df)

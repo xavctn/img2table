@@ -19,7 +19,7 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
                                    vertical_lines=vertical_lines)
 
     # Handle case of empty cells
-    if df_cells.collect().height == 0:
+    if df_cells.height == 0:
         return []
 
     # Deduplicate cells

@@ -310,7 +310,7 @@ def compute_median_line_sep(thresh_chars: np.ndarray,
         return None, []
 
     # Create contours dataframe
-    df_contours = pl.LazyFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
+    df_contours = pl.DataFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
                                      for idx, c in enumerate(contours_cells)])
 
     # Cross join to get corresponding contours and filter on contours that corresponds horizontally
@@ -327,14 +327,13 @@ def compute_median_line_sep(thresh_chars: np.ndarray,
                      .filter(pl.col('rk') == 1)
                      )
 
-    if df_cnts_below.collect().height == 0:
+    if df_cnts_below.height == 0:
         return None, contours_cells
 
     # Compute median vertical distance between contours
     median_v_dist = (df_cnts_below.with_columns(((pl.col('y1_right') + pl.col('y2_right')
                                                   - pl.col('y1') - pl.col('y2')) / 2).abs().alias('y_diff'))
                      .select(pl.median('y_diff'))
-                     .collect()
                      .to_dicts()
                      .pop()
                      .get('y_diff')

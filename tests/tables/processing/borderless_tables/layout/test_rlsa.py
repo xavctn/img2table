@@ -12,7 +12,7 @@ from img2table.tables.processing.borderless_tables.layout.rlsa import identify_t
 def test_identify_text_mask():
     config.DISABLE_JIT = True
 
-    img = cv2.imread("test_data/test.bmp", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.bmp"), cv2.COLOR_BGR2RGB)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)

@@ -8,7 +8,7 @@ from img2table.tables.processing.borderless_tables import segment_image
 
 
 def test_segment_image():
-    img = cv2.imread("test_data/test.bmp", 0)
+    img = cv2.cvtColor(cv2.imread("test_data/test.bmp"), cv2.COLOR_BGR2RGB)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)

@@ -38,7 +38,7 @@ def test_merge_contours():
 
 
 def test_get_contours_cell():
-    img = cv2.imread("test_data/test.jpg", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.jpg"), cv2.COLOR_BGR2RGB)
     cell = Cell(x1=0, x2=img.shape[1], y1=0, y2=img.shape[0])
 
     result = get_contours_cell(img=img,
@@ -50,6 +50,6 @@ def test_get_contours_cell():
 
     expected = [Cell(x1=51, y1=19, x2=518, y2=146),
                 Cell(x1=60, y1=156, x2=534, y2=691),
-                Cell(x1=52, y1=765, x2=543, y2=811)]
+                Cell(x1=65, y1=765, x2=543, y2=811)]
 
     assert result == expected

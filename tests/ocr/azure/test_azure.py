@@ -30,7 +30,7 @@ def test_to_ocr_df(mock_azure):
 
     result = ocr.to_ocr_dataframe(content=[content])
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     assert result == expected
 
@@ -54,6 +54,6 @@ def test_azure_ocr(mock_azure):
 
     result = ocr.of(document=img)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     assert result == expected

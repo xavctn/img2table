@@ -70,7 +70,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
         return [0]
 
     # Create dataframe with centroids
-    df_centroids = pl.LazyFrame(data=centroids, schema=['x1', 'y1'])
+    df_centroids = pl.DataFrame(data=centroids, schema=['x1', 'y1'])
 
     # Cross join and keep only relevant pairs
     df_cross = (df_centroids.join(df_centroids, how='cross')
@@ -94,7 +94,6 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
                           .len()
                           .sort(by=['len', pl.col('angle').abs()], descending=[True, False])
                           .limit(n_max)
-                          .collect(streaming=True)
                           .to_dicts()
                           )
 

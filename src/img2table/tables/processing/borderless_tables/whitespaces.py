@@ -34,8 +34,8 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
 
     # Create dataframe containing elements
     df_elements = pl.concat(
-        [pl.LazyFrame([{"x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2} for el in segment.elements]),
-         pl.LazyFrame([{"x1": segment.x1, "y1": y, "x2": segment.x2, "y2": y} for y in [y_min, y_max]])]
+        [pl.DataFrame([{"x1": el.x1, "y1": el.y1, "x2": el.x2, "y2": el.y2} for el in segment.elements]),
+         pl.DataFrame([{"x1": segment.x1, "y1": y, "x2": segment.x2, "y2": y} for y in [y_min, y_max]])]
     )
 
     # Get dataframe with relevant ranges
@@ -74,7 +74,6 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
                                    pl.col('x2').max().alias('x2'),
                                    pl.col('y2').max().alias('y2'))
                               .drop("ws_id")
-                              .collect()
                               )
         whitespaces = [Whitespace(cells=[Cell(**ws_dict)])
                        for ws_dict in df_elements_ranges.to_dicts()]
@@ -89,7 +88,6 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
                     pl.col("ws_height") >= 0.8 * pl.col("height"),
                     (pl.col("nb_ws") == 1) | (pl.col('x2') - pl.col('x1') >= 2 * min_width))
             .drop("ws_height", "height", "nb_ws")
-            .collect()
         )
 
         whitespaces = [Whitespace(cells=[Cell(**ws_dict) for ws_dict in ws_group])

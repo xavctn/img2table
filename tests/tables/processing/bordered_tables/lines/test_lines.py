@@ -9,11 +9,11 @@ from img2table.tables.processing.bordered_tables.lines import detect_lines
 
 
 def test_detect_lines():
-    thresh = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
     with open("test_data/contours.json", "r") as f:
         contours = [Cell(**el) for el in json.load(f)]
 
-    h_lines, v_lines = detect_lines(thresh=thresh,
+    h_lines, v_lines = detect_lines(img=img,
                                     contours=contours,
                                     char_length=8.85,
                                     min_line_length=10)

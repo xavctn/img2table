@@ -10,3 +10,4 @@ build
 certs
 venv
 profiling*
+examples/testing
