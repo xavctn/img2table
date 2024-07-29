@@ -2,23 +2,19 @@
 from typing import List
 
 import numpy as np
-import polars as pl
 
 from img2table.tables.objects.cell import Cell
 
 
-def deduplicate_cells(df_cells: pl.DataFrame) -> List[Cell]:
+def deduplicate_cells(cells: List[Cell]) -> List[Cell]:
     """
     Deduplicate nested cells in order to keep the smallest ones
-    :param df_cells: dataframe containing cells
+    :param cells: list of cells
     :return: cells after deduplication of the nested ones
     """
-    # Get Cell objects
-    cells = [Cell(**d) for d in df_cells.drop("index").to_dicts()]
-
     # Create array of cell coverages
-    d_dims = df_cells.select(pl.col("x2").max(), pl.col("y2").max()).to_dicts().pop()
-    coverage_array = np.ones((d_dims.get("y2"), d_dims.get("x2")), dtype=np.uint8)
+    x_max, y_max = max([c.x2 for c in cells] + [0]), max([c.y2 for c in cells] + [0])
+    coverage_array = np.ones((y_max, x_max), dtype=np.uint8)
 
     dedup_cells = list()
     for c in sorted(cells, key=lambda c: c.area):

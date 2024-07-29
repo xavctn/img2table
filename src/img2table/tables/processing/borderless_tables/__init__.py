@@ -34,11 +34,11 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     return final_tables
 
 
-def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
+def identify_borderless_tables(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
                                contours: List[Cell], existing_tables: List[Table]) -> List[Table]:
     """
     Identify borderless tables in image
-    :param img: image array
+    :param thresh: threshold image array
     :param lines: list of rows detected in image
     :param char_length: average character length
     :param median_line_sep: median line separation
@@ -47,7 +47,7 @@ def identify_borderless_tables(img: np.ndarray, lines: List[Line], char_length: 
     :return: list of detected borderless tables
     """
     # Segment image and identify parts that can correspond to tables
-    table_segments = segment_image(img=img,
+    table_segments = segment_image(thresh=thresh,
                                    lines=lines,
                                    char_length=char_length,
                                    median_line_sep=median_line_sep,

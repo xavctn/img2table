@@ -19,7 +19,7 @@ def test_get_whitespaces():
 
     result = get_whitespaces(segment=img_segment, vertical=True)
 
-    assert len(result) == 38
+    assert len(result) == 39
 
 
 def test_adjacent_whitespaces():

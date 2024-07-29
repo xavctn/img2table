@@ -15,14 +15,10 @@ def get_cells(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[
     :return: list of all cells in image
     """
     # Create dataframe with cells from horizontal and vertical rows
-    df_cells = get_cells_dataframe(horizontal_lines=horizontal_lines,
-                                   vertical_lines=vertical_lines)
-
-    # Handle case of empty cells
-    if df_cells.height == 0:
-        return []
+    cells = get_cells_dataframe(horizontal_lines=horizontal_lines,
+                                vertical_lines=vertical_lines)
 
     # Deduplicate cells
-    dedup_cells = deduplicate_cells(df_cells=df_cells)
+    dedup_cells = deduplicate_cells(cells=cells)
 
     return dedup_cells

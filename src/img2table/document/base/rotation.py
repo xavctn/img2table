@@ -4,6 +4,7 @@ from typing import Tuple, List
 import cv2
 import numpy as np
 import polars as pl
+from numba import njit, prange
 
 dixon_q_test_confidence_dict = {
     0.9: {3: 0.941, 4: 0.765, 5: 0.642, 6: 0.56, 7: 0.507, 8: 0.468, 9: 0.437, 10: 0.412},
@@ -58,6 +59,32 @@ def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.nda
     return filtered_centroids, median_height, thresh
 
 
+@njit("List(float64)(float64[:,:],float64)", fastmath=True, cache=True, parallel=False)
+def compute_angles(centroids: np.ndarray, ref_height: float) -> List[float]:
+    angles = list()
+
+    for i in prange(len(centroids)):
+        for j in prange(i + 1, len(centroids)):
+            xi, yi = centroids[i][:]
+            xj, yj = centroids[j][:]
+
+            # Continue if both elements are not relevant
+            if xi == xj:
+                continue
+            elif not -10 * ref_height <= yi - yj <= 10 * ref_height:
+                continue
+
+            # Compute slope and angle
+            slope = round((yi - yj) / (xi - xj), 3)
+            angle = np.arctan(slope) * 180 / np.pi
+
+            if not -45 <= angle <= 45:
+                angle = - min(angle + 90, 90 - angle) * np.sign(angle)
+            angles.append(angle)
+
+    return angles
+
+
 def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5) -> List[float]:
     """
     Identify relevant angles from connected components centroids
@@ -69,28 +96,12 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     if len(centroids) == 0:
         return [0]
 
-    # Create dataframe with centroids
-    df_centroids = pl.DataFrame(data=centroids, schema=['x1', 'y1'])
-
-    # Cross join and keep only relevant pairs
-    df_cross = (df_centroids.join(df_centroids, how='cross')
-                .filter(pl.col('x1') != pl.col('x1_right'))
-                .filter((pl.col('y1') - pl.col('y1_right')).abs() <= 10 * ref_height)
-                )
-
-    # Compute slopes and angles
-    df_angles = (df_cross.with_columns(((pl.col('y1') - pl.col('y1_right')) / (pl.col('x1') - pl.col('x1_right'))
-                                        ).round(3).alias('slope'))
-                 .with_columns((pl.col('slope').arctan() * 180 / np.pi).alias('angle'))
-                 .with_columns(pl.when(pl.col('angle').abs() <= 45)
-                               .then(pl.col('angle'))
-                               .otherwise(pl.min_horizontal(pl.col('angle') + 90, 90 - pl.col('angle')) * -pl.col('angle').sign())
-                               .alias('angle')
-                               )
-                 )
+    # Compute angles
+    angles = compute_angles(centroids=centroids, ref_height=ref_height)
 
     # Get n most represented angles
-    most_likely_angles = (df_angles.group_by('angle')
+    most_likely_angles = (pl.DataFrame(angles, schema={"angle": float})
+                          .group_by("angle")
                           .len()
                           .sort(by=['len', pl.col('angle').abs()], descending=[True, False])
                           .limit(n_max)

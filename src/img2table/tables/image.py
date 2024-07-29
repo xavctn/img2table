@@ -7,6 +7,7 @@ from typing import List
 import cv2
 import numpy as np
 
+from img2table.tables import threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -30,8 +31,10 @@ class TableImage:
     tables: List[Table] = None
 
     def __post_init__(self):
+        self.thresh = threshold_dark_areas(img=self.img, char_length=11)
+
         # Compute image metrics
-        self.char_length, self.median_line_sep, self.contours = compute_img_metrics(img=self.img)
+        self.char_length, self.median_line_sep, self.contours = compute_img_metrics(thresh=self.thresh.copy())
 
     @cached_property
     def white_img(self) -> np.ndarray:
@@ -84,7 +87,9 @@ class TableImage:
                                         implicit_columns=implicit_columns)
                        for table in self.tables]
 
-        self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2]
+        # Post filter bordered tables
+        self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2
+                       or tb.nb_columns >= 3]
 
     def extract_borderless_tables(self):
         """
@@ -93,8 +98,11 @@ class TableImage:
         """
         # Median line separation needs to be not null to extract borderless tables
         if self.median_line_sep is not None:
+            if self.char_length > 22:
+                self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
+
             # Extract borderless tables
-            borderless_tbs = identify_borderless_tables(img=self.img,
+            borderless_tbs = identify_borderless_tables(thresh=self.thresh,
                                                         char_length=self.char_length,
                                                         median_line_sep=self.median_line_sep,
                                                         lines=self.lines,

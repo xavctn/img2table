@@ -26,10 +26,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     t_sauvola = cv2.ximgproc.niBlackThreshold(gray, 255, cv2.THRESH_BINARY_INV, thresh_kernel, 0.2,
                                               binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
     thresh = 255 * (gray <= t_sauvola).astype(np.uint8)
-    # Threshold binary image
-    bin_t_sauvola = cv2.ximgproc.niBlackThreshold(255 - gray, 255, cv2.THRESH_BINARY_INV, thresh_kernel, 0.2,
-                                                  binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
-    binary_thresh = 255 * (255 - gray <= bin_t_sauvola).astype(np.uint8)
+    binary_thresh = None
 
     # Mask on areas with dark background
     blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
@@ -45,10 +42,15 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
         x, y, w, h, area = row
 
         if idx == 0:
-            # Fix area statistics for the first CC
-            area = len(np.where(mask[y:y + h, x:x + w] == 255)[0])
+            continue
 
-        if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 4 * char_length:
+        if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 5 * char_length:
+            if binary_thresh is None:
+                # Threshold binary image
+                bin_t_sauvola = cv2.ximgproc.niBlackThreshold(255 - gray, 255, cv2.THRESH_BINARY_INV, thresh_kernel,
+                                                              0.2,
+                                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
+                binary_thresh = 255 * (255 - gray <= bin_t_sauvola).astype(np.uint8)
             thresh[y:y+h, x:x+w] = binary_thresh[y:y+h, x:x+w]
 
     return thresh

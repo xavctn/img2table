@@ -11,12 +11,11 @@ import cv2
 import numpy as np
 from numba import njit, prange
 
-from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 
 
-@njit("int32[:,:](int32[:,:],int32[:,:],float64)", fastmath=True, cache=True, parallel=False)
+@njit("int32[:,:](int32[:,:],int32[:,:],float64)", fastmath=True, cache=True, parallel=True)
 def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) -> np.ndarray:
     """
     Remove noise from detected connected components
@@ -25,7 +24,6 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) ->
     :param average_height: average connected components' height
     :return: connected components labels array without noisy components
     """
-    cc_denoised = cc.copy()
     for idx in prange(len(cc_stats)):
         if idx == 0:
             continue
@@ -39,15 +37,15 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) ->
         cond_low_density = area / (max(w, 1) * max(h, 1)) < 0.08
 
         if cond_height or cond_elongation or cond_low_density:
-            for row in prange(y, y + h):
-                for col in prange(x, x + w):
-                    if cc_denoised[row][col] == idx:
-                        cc_denoised[row][col] = 0
+            for row in range(y, y + h):
+                for col in range(x, x + w):
+                    if cc[row][col] == idx:
+                        cc[row][col] = 0
 
-    return cc_denoised
+    return cc
 
 
-@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True, cache=True, parallel=False)
+@njit("uint8[:,:](int32[:,:],int32[:,:],float64,float64,float64)", fastmath=True, cache=True, parallel=True)
 def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: float) -> np.ndarray:
     """
     Implementation of adaptive run-length smoothing algorithm
@@ -91,8 +89,8 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
                 # Presence of other CC
                 no_other_cc = True
                 list_ccs = [-1, 0, label, prev_cc_label]
-                for y in prange(max(0, row - 2), min(row + 3, h)):
-                    for x in prange(prev_cc_position + 1, col):
+                for y in range(max(0, row - 2), min(row + 3, h)):
+                    for x in range(prev_cc_position + 1, col):
                         if cc[y][x] not in list_ccs:
                             no_other_cc = False
 
@@ -110,7 +108,7 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
     return rsla_img
 
 
-@njit("boolean[:,:](uint8[:,:],float64)", fastmath=True, cache=True, parallel=False)
+@njit("boolean[:,:](uint8[:,:],float64)", fastmath=True, cache=True, parallel=True)
 def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     """
     Identify obstacles (columns, line gaps) in image
@@ -119,14 +117,14 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     :return: connected components labels array with obstacles identified
     """
     mask_obstacles = np.full(shape=img.shape, fill_value=False)
-    min_width = np.ceil(min_width)
+    min_width = int(np.ceil(min_width))
     h, w = img.shape
 
     for col in prange(w - min_width):
         prev_cc_position = -1
         for row in range(h):
             max_value = 0
-            for idx in prange(min_width):
+            for idx in range(min_width):
                 max_value = max(max_value, img[row][col + idx])
 
             # Not a CC
@@ -135,8 +133,8 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
             else:
                 length = row - prev_cc_position - 1
                 if length > h / 5:
-                    for id_row in prange(prev_cc_position + 1, row):
-                        for idx in prange(min_width):
+                    for id_row in range(prev_cc_position + 1, row):
+                        for idx in range(min_width):
                             mask_obstacles[id_row][col + idx] = True
 
                 # Update counters
@@ -145,14 +143,14 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
         # Check ending
         length = row + 1 - prev_cc_position - 1
         if length > h / 5:
-            for id_row in prange(prev_cc_position + 1, row + 1):
-                for idx in prange(min_width):
+            for id_row in range(prev_cc_position + 1, row + 1):
+                for idx in range(min_width):
                     mask_obstacles[id_row][col + idx] = True
 
     return mask_obstacles
 
 
-@njit("boolean[:, :](uint8[:, :],int32[:, :], float64)", fastmath=True, cache=True, parallel=False)
+@njit("boolean[:, :](uint8[:, :],int32[:, :], float64)", fastmath=True, cache=True, parallel=True)
 def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: float) -> np.ndarray:
     """
     Identify image text mask
@@ -164,7 +162,12 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
     text_mask = np.full(shape=thresh.shape, fill_value=False)
 
     # Get average height
-    Hm = np.average(cc_stats_rlsa[1:, cv2.CC_STAT_HEIGHT], weights=cc_stats_rlsa[1:, cv2.CC_STAT_AREA])
+    num, denum = 0, 0
+    for i in range(1, cc_stats_rlsa.shape[0]):
+        height, area = cc_stats_rlsa[i, cv2.CC_STAT_HEIGHT], cc_stats_rlsa[i, cv2.CC_STAT_AREA]
+        num += height * area
+        denum += area
+    Hm = num / max(denum, 1)
 
     for cc_idx in prange(len(cc_stats_rlsa)):
         x, y, w, h, area = cc_stats_rlsa[cc_idx][:]
@@ -223,19 +226,16 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
     return text_mask
 
 
-def identify_text_mask(img: np.ndarray, lines: List[Line], char_length: float,
+def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float,
                        existing_tables: Optional[List[Table]] = None) -> np.ndarray:
     """
     Identify text mask of the input image
-    :param img: image array
+    :param thresh: threshold image array
     :param lines: list of image rows
     :param char_length: average character length
     :param existing_tables: list of detected bordered tables
     :return: thresholded image
     """
-    # Create thresholded image
-    thresh = threshold_dark_areas(img=img, char_length=char_length)
-
     # Mask rows in image
     for line in lines:
         if line.horizontal and line.length >= 3 * char_length:
