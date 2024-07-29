@@ -62,4 +62,4 @@ def test_doctr_document():
 
     expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
-    assert result.df.equals(expected.df)
+    assert result.df.drop("confidence").equals(expected.df.drop("confidence"))

@@ -27,7 +27,7 @@ def get_tables(cells: List[Cell], elements: List[Cell], lines: List[Line], char_
 
     # Add semi-bordered cells to clusters
     complete_clusters = [add_semi_bordered_cells(cluster=cluster, lines=lines, char_length=char_length)
-                         for cluster in clusters_normalized]
+                         for cluster in clusters_normalized if len(cluster) > 0]
 
     # Create tables from cells clusters
     tables = [cluster_to_table(cluster_cells=cluster, elements=elements)
