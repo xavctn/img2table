@@ -34,7 +34,7 @@ The library can be installed via pip:
 
 * Table identification for images and PDF files, including bounding boxes at the table cell level
 * Handling of complex table structures such as merged cells
-* Handling of implicit rows - see [example](/examples/Implicit_rows.ipynb)
+* Handling of implicit rows - see [example](/examples/Implicit.ipynb)
 * Table content extraction by providing support for OCR services / tools
 * Extracted tables are returned as a simple object, including a Pandas DataFrame representation
 * Export extracted tables to an Excel file, preserving their original structure
@@ -353,6 +353,7 @@ doc = Image(src)
 # Table extraction
 extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=False,
+                                      implicit_columns=False,
                                       borderless_tables=False,
                                       min_confidence=50)
 ```
@@ -361,7 +362,9 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dt>implicit_columns : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
@@ -440,6 +443,7 @@ doc = Image(src)
 doc.to_xlsx(dest=dest,
             ocr=ocr,
             implicit_rows=False,
+            implicit_columns=False,
             borderless_tables=False,
             min_confidence=50)
 ```
@@ -450,7 +454,9 @@ doc.to_xlsx(dest=dest,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>

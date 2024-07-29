@@ -14,7 +14,7 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
-from img2table.tables.processing.bordered_tables.tables.implicit_rows import handle_implicit_rows
+from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
 
 
@@ -48,10 +48,11 @@ class TableImage:
 
         return white_img
 
-    def extract_bordered_tables(self, implicit_rows: bool = True):
+    def extract_bordered_tables(self, implicit_rows: bool = False, implicit_columns: bool = False):
         """
         Identify and extract bordered tables from image
         :param implicit_rows: boolean indicating if implicit rows are splitted
+        :param implicit_columns: boolean indicating if implicit columns are splitted
         :return:
         """
         # Compute parameters for line detection
@@ -75,10 +76,13 @@ class TableImage:
                                  char_length=self.char_length)
 
         # If necessary, detect implicit rows
-        if implicit_rows:
-            self.tables = handle_implicit_rows(img=self.white_img,
-                                               tables=self.tables,
-                                               contours=self.contours)
+        self.tables = [implicit_content(table=table,
+                                        contours=self.contours,
+                                        char_length=self.char_length,
+                                        median_line_sep=self.median_line_sep,
+                                        implicit_rows=implicit_rows,
+                                        implicit_columns=implicit_columns)
+                       for table in self.tables]
 
         self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2]
 
@@ -100,10 +104,11 @@ class TableImage:
             # Add to tables
             self.tables += [tb for tb in borderless_tbs if tb.nb_rows >= 2 and tb.nb_columns >= 3]
 
-    def extract_tables(self, implicit_rows: bool = False, borderless_tables: bool = False) -> List[Table]:
+    def extract_tables(self, implicit_rows: bool = False, implicit_columns: bool = False, borderless_tables: bool = False) -> List[Table]:
         """
         Identify and extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are splitted
+        :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :return: list of identified tables
         """
@@ -111,7 +116,8 @@ class TableImage:
             return []
 
         # Extract bordered tables
-        self.extract_bordered_tables(implicit_rows=implicit_rows)
+        self.extract_bordered_tables(implicit_rows=implicit_rows,
+                                     implicit_columns=implicit_columns)
 
         if borderless_tables:
             # Extract borderless tables
