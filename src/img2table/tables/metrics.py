@@ -3,6 +3,7 @@ from typing import Tuple, Optional, List
 
 import cv2
 import numpy as np
+import polars as pl
 from numba import njit, prange
 
 from img2table.tables.objects.cell import Cell
@@ -260,8 +261,8 @@ def compute_char_length(thresh: np.ndarray) -> Tuple[Optional[float], Optional[n
     # Remove dots
     stats = remove_dots(cc_labels=cc_labels, stats=stats)
 
-    # Remove connected components with less than 5 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
+    # Remove connected components with less than 10 pixels
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
     stats = stats[mask_pixels]
 
     if len(stats) == 0:
@@ -384,7 +385,15 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
 
     # Compute median line sep
     row_separations = get_row_separations(stats=stats_contours)
-    median_line_sep = np.median(row_separations) if row_separations else None
+
+    if row_separations:
+        median_line_sep = (pl.DataFrame(row_separations, schema={"sep": float})
+                           .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
+                           .group_by("sep").len() .sort(by=['len'], descending=[True])
+                           .limit(1).to_dicts().pop().get("sep")
+                           )
+    else:
+        median_line_sep = None
 
     # Get contours cells
     contours_cells = [Cell(x1=x, y1=y, x2=x + w, y2=y + h)

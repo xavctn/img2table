@@ -8,7 +8,7 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-@njit(["int64[:,:](int64[:,:],int64[:,:])", "int64[:,:](int32[:,:],int32[:,:])"], cache=True, fastmath=True)
+@njit("int64[:,:](int64[:,:],int64[:,:])", cache=True, fastmath=True)
 def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarray:
     """
     Identify cells from lines
@@ -104,8 +104,8 @@ def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]
         return []
 
     # Create arrays from horizontal and vertical rows
-    h_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in horizontal_lines])
-    v_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in vertical_lines])
+    h_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in horizontal_lines], dtype=np.int64)
+    v_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in vertical_lines], dtype=np.int64)
 
     # Compute cells
     cells_array = identify_cells(h_lines_arr=h_lines_array,
