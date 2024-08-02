@@ -34,7 +34,7 @@ The library can be installed via pip:
 
 * Table identification for images and PDF files, including bounding boxes at the table cell level
 * Handling of complex table structures such as merged cells
-* Handling of implicit rows - see [example](/examples/Implicit.ipynb)
+* Handling of implicit content - see [example](/examples/Implicit.ipynb)
 * Table content extraction by providing support for OCR services / tools
 * Extracted tables are returned as a simple object, including a Pandas DataFrame representation
 * Export extracted tables to an Excel file, preserving their original structure
@@ -478,8 +478,8 @@ Several Jupyter notebooks with examples are available :
 <a href="/examples/borderless.ipynb" target="_self">Borderless tables</a>: specific examples dedicated to the extraction of borderless tables
 </li>
 <li>
-<a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
-of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> method
+<a href="/examples/Implicit.ipynb" target="_self">Implicit content</a>: illustrated effect 
+of the parameter <code>implicit_rows</code>/<code>implicit_columns</code> of the <code>extract_tables</code> method
 </li>
 </ul>
 
@@ -496,7 +496,6 @@ Effectiveness can not be guaranteed on other type of documents.
 </li>
 <li>
 Table detection using only OpenCV processing can have some limitations. If the library fails to detect tables, 
-you may check CNN based solutions like <a href="https://github.com/DevashishPrasad/CascadeTabNet">CascadeTabNet</a> or 
-the <a href="https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.6/ppstructure/docs/quickstart_en.md#224-table-recognition">PaddleOCR implementation</a>.
+you may check CNN based solutions.
 </li>
 </ul>
