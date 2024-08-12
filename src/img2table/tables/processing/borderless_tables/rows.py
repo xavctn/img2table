@@ -2,7 +2,7 @@
 from typing import List
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ColumnGroup
+from img2table.tables.processing.borderless_tables.model import ColumnGroup, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
@@ -14,6 +14,27 @@ def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
     """
     # Identify vertical whitespaces
     h_ws = get_whitespaces(segment=column_group, vertical=False, pct=0.66)
+
+    # Create whitespaces at the top or the bottom if they are missing
+    if h_ws[0].y1 > column_group.y1:
+        up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                       x2=max([ws.x2 for ws in h_ws]),
+                                       y1=column_group.y1,
+                                       y2=min([el.y1 for el in column_group.elements]))])
+        h_ws.insert(0, up_ws)
+
+    if h_ws[-1].y2 < column_group.y2:
+        down_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                         x2=max([ws.x2 for ws in h_ws]),
+                                         y1=column_group.y2,
+                                         y2=max([el.y2 for el in column_group.elements]))])
+        h_ws.append(down_ws)
+
+    # Identify relevant whitespace height
+    if len(h_ws) > 2:
+        full_ws_h = sorted([ws.height for ws in h_ws[1:-1] if ws.width == max([w.width for w in h_ws])])
+        min_height = 0.5 * full_ws_h[len(full_ws_h) // 2 + len(full_ws_h) % 2 - 1] if len(full_ws_h) >= 3 else 1
+        h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Filter relevant whitespaces
     deleted_idx = list()
@@ -43,8 +64,9 @@ def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
 
     # Add top and bottom row delimiters
     x1_els, x2_els = min([el.x1 for el in column_group.elements]), max([el.x2 for el in column_group.elements])
-    final_delims += [Cell(x1=x1_els, x2=x2_els, y1=column_group.y1, y2=column_group.y1),
-                     Cell(x1=x1_els, x2=x2_els, y1=column_group.y2, y2=column_group.y2)]
+    y1_els, y2_els = min([el.y1 for el in column_group.elements]), max([el.y2 for el in column_group.elements])
+    final_delims += [Cell(x1=x1_els, x2=x2_els, y1=y1_els, y2=y1_els),
+                     Cell(x1=x1_els, x2=x2_els, y1=y2_els, y2=y2_els)]
 
     return sorted(final_delims, key=lambda d: d.y1)
 

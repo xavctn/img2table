@@ -7,23 +7,42 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables.model import ImageSegment
+from img2table.tables.processing.borderless_tables.model import ImageSegment, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-def implicit_rows_lines(table: Table, segment: ImageSegment, median_line_sep: float) -> List[Line]:
+def implicit_rows_lines(table: Table, segment: ImageSegment) -> List[Line]:
     """
     Identify lines corresponding to implicit rows
     :param table: table
     :param segment: ImageSegment used for whitespaces computation
-    :param median_line_sep: median row separation
     :return: list of lines corresponding to implicit rows
     """
     # Horizontal whitespaces
     h_ws = get_whitespaces(segment=segment,
                            vertical=False,
-                           min_width=median_line_sep // 4,
                            pct=1)
+
+    # Create whitespaces at the top or the bottom if they are missing
+    if h_ws[0].y1 > segment.y1:
+        up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                       x2=max([ws.x2 for ws in h_ws]),
+                                       y1=segment.y1,
+                                       y2=min([el.y1 for el in segment.elements]))])
+        h_ws.insert(0, up_ws)
+
+    if h_ws[-1].y2 < segment.y2:
+        down_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
+                                         x2=max([ws.x2 for ws in h_ws]),
+                                         y1=segment.y2,
+                                         y2=max([el.y2 for el in segment.elements]))])
+        h_ws.append(down_ws)
+
+    # Identify relevant whitespace height
+    if len(h_ws) > 2:
+        full_ws_h = sorted([ws.height for ws in h_ws[1:-1] if ws.width == max([w.width for w in h_ws])])
+        min_height = 0.5 * full_ws_h[len(full_ws_h) // 2 + len(full_ws_h) % 2 - 1] if len(full_ws_h) >= 3 else 1
+        h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Identify created lines
     created_lines = list()
@@ -63,14 +82,13 @@ def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: flo
     return created_lines
 
 
-def implicit_content(table: Table, contours: List[Cell], char_length: float, median_line_sep: float,
-                     implicit_rows: bool = False, implicit_columns: bool = False) -> Table:
+def implicit_content(table: Table, contours: List[Cell], char_length: float, implicit_rows: bool = False,
+                     implicit_columns: bool = False) -> Table:
     """
     Identify implicit content in table
     :param table: Table object
     :param contours: image contours
     :param char_length: average character length
-    :param median_line_sep: median row separation
     :param implicit_rows: boolean indicating if implicit rows should be detected
     :param implicit_columns: boolean indicating if implicit columns should be detected
     :return: Table with implicit content detected
@@ -88,7 +106,7 @@ def implicit_content(table: Table, contours: List[Cell], char_length: float, med
     # Create new lines
     lines = table.lines
     if implicit_rows:
-        lines += implicit_rows_lines(table=table, segment=segment, median_line_sep=median_line_sep)
+        lines += implicit_rows_lines(table=table, segment=segment)
     if implicit_columns:
         lines += implicit_columns_lines(table=table, segment=segment, char_length=char_length)
 

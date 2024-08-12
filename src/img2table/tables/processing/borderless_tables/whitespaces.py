@@ -22,14 +22,14 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
     :return: list of groups of cells forming whitespaces
     """
     # Get x values in elements
-    x_vals = list()
+    x_vals = set()
     for idx in prange(elements_array.shape[0]):
         x1, y1, x2, y2, y_middle = elements_array[idx][:]
-        x_vals.append(x1)
-        x_vals.append(x2)
+        x_vals.add(x1)
+        x_vals.add(x2)
 
     # Create array of x values
-    x_array = np.transpose(np.array([x_vals]))
+    x_array = np.transpose(np.array([list(x_vals)]))
     x_array = x_array[x_array[:, 0].argsort()]
 
     # Check ranges
@@ -104,7 +104,7 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
                 x2_prev = x2
             else:
                 # Add whitespace
-                if x2_prev - x1_prev >= min_width:
+                if x2_prev - x1_prev >= min_width and idx > 0:
                     dedup_whitespaces.append([[x1_prev, y1_prev, x2_prev, y2_prev]])
                 # Reset metrics
                 x1_prev, y1_prev, x2_prev, y2_prev = x1, y1, x2, y2
@@ -225,8 +225,9 @@ def deduplicate_whitespaces(ws: List[Whitespace], elements: List[Cell]) -> List[
                                        y2=min(ws_1.y2, ws_2.y2))
 
                     # Identify matching elements
-                    matching_elements += [el for el in elements if el.x1 >= common_area.x1 and el.x2 <= common_area.x2
-                                          and el.y1 >= common_area.y1 and el.y2 <= common_area.y2]
+                    matching_elements += [el for el in elements
+                                          if min(el.x2, common_area.x2) - max(el.x1, common_area.x1) > 0
+                                          and min(el.y2, common_area.y2) - max(el.y1, common_area.y1) > 0]
 
             if len(matching_elements) == 0:
                 # Add smallest element to deleted ws
@@ -278,8 +279,8 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, ColumnGroup],
                                     vertical=True,
                                     pct=pct,
                                     min_width=char_length,
-                                    min_height=min(median_line_sep, segment.height),
-                                    continuous=False)
+                                    min_height=min(median_line_sep, segment.element_height),
+                                    continuous=True)
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)

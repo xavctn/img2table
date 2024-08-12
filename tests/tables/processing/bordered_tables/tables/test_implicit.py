@@ -20,8 +20,7 @@ def test_implicit_rows_lines():
                            elements=contours)
 
     result = implicit_rows_lines(table=table,
-                                 segment=segment,
-                                 median_line_sep=34)
+                                 segment=segment)
 
     # Check that all created lines have right width
     assert all([line.width == table.width for line in result])
@@ -63,7 +62,6 @@ def test_implicit_content():
     result = implicit_content(table=table,
                               contours=contours,
                               char_length=11,
-                              median_line_sep=34,
                               implicit_rows=True,
                               implicit_columns=True)
 

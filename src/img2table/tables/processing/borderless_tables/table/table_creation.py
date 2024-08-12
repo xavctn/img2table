@@ -28,7 +28,10 @@ def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[C
                 line_groups.append([])
             line_groups[-1].append(c)
 
-        v_lines += [Line(x1=gp[0].x1, y1=gp[0].y1, x2=gp[0].x2, y2=gp[-1].y2) for gp in line_groups]
+        v_lines += [Line(x1=(gp[0].x1 + gp[0].x2) // 2,
+                         y1=gp[0].y1,
+                         x2=(gp[0].x1 + gp[0].x2) // 2,
+                         y2=gp[-1].y2) for gp in line_groups]
 
     h_lines = [Line(x1=d.x1, x2=d.x2, y1=d.y1, y2=d.y2) for d in row_delimiters]
 

@@ -39,14 +39,14 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
         up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
                                        x2=max([ws.x2 for ws in h_ws]),
                                        y1=segment.y1,
-                                       y2=segment.y1)])
+                                       y2=min([el.y1 for el in segment.elements]))])
         h_ws.insert(0, up_ws)
 
     if h_ws[-1].y2 < segment.y2:
         down_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
                                          x2=max([ws.x2 for ws in h_ws]),
                                          y1=segment.y2,
-                                         y2=segment.y2)])
+                                         y2=max([el.y2 for el in segment.elements]))])
         h_ws.append(down_ws)
 
     # Check in areas between horizontal whitespaces in order to identify if they can correspond to tables
@@ -76,7 +76,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
             v_ws = get_relevant_vertical_whitespaces(segment=seg_area,
                                                      char_length=char_length,
                                                      median_line_sep=median_line_sep,
-                                                     pct=0.5)
+                                                     pct=0.66)
 
             # Identify number of whitespaces that are not on borders
             middle_ws = [ws for ws in v_ws if ws.x1 != seg_area.x1 and ws.x2 != seg_area.x2]
@@ -138,13 +138,7 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     v_diff = max(tb_area_1.y1, tb_area_2.y1) - min(tb_area_1.y2, tb_area_2.y2)
 
     # If areas are not consecutive or with too much separation, not coherent
-    if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 2 * median_line_sep:
-        return False
-
-    # Condition on text height
-    avg_height_1 = np.median([el.height for el in tb_area_1.elements])
-    avg_height_2 = np.median([el.height for el in tb_area_2.elements])
-    if max(avg_height_1, avg_height_2) / min(avg_height_1, avg_height_2) >= 1.3:
+    if abs(tb_area_1.position - tb_area_2.position) != 1 or v_diff > 2.5 * median_line_sep:
         return False
 
     # Get relevant whitespaces
@@ -154,9 +148,6 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     else:
         ws_tb_1 = merge_consecutive_ws([ws for ws in tb_area_1.whitespaces if ws.y1 == tb_area_1.y1])
         ws_tb_2 = merge_consecutive_ws([ws for ws in tb_area_2.whitespaces if ws.y2 == tb_area_2.y2])
-
-    if max(len(ws_tb_1), len(ws_tb_2)) < 4:
-        return False
 
     # Check whitespaces coherency on "middle" whitespaces
     if len(ws_tb_1) >= len(ws_tb_2):
@@ -173,7 +164,12 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
         }
 
     # Compute threshold for coherency
-    threshold = 1 if min(len(ws_tb_1), len(ws_tb_2)) < 4 else 0.8
+    if min(len(ws_tb_1), len(ws_tb_2)) < 4:
+        threshold = 1
+    elif v_diff < median_line_sep:
+        threshold = 0.66
+    else:
+        threshold = 0.8
 
     return np.mean([int(len(v) == 1) for v in dict_ws_coherency.values()]) >= threshold
 

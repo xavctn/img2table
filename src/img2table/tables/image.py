@@ -15,6 +15,7 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
+from img2table.tables.processing.bordered_tables.tables.consecutive import merge_consecutive_tables
 from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
 
@@ -82,14 +83,16 @@ class TableImage:
         self.tables = [implicit_content(table=table,
                                         contours=self.contours,
                                         char_length=self.char_length,
-                                        median_line_sep=self.median_line_sep,
                                         implicit_rows=implicit_rows,
                                         implicit_columns=implicit_columns)
                        for table in self.tables]
 
+        # Merge consecutive tables
+        self.tables = merge_consecutive_tables(tables=self.tables,
+                                               contours=self.contours)
+
         # Post filter bordered tables
-        self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2
-                       or tb.nb_columns >= 3]
+        self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2]
 
     def extract_borderless_tables(self):
         """
@@ -98,8 +101,7 @@ class TableImage:
         """
         # Median line separation needs to be not null to extract borderless tables
         if self.median_line_sep is not None:
-            if self.char_length > 22:
-                self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
+            self.thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
 
             # Extract borderless tables
             borderless_tbs = identify_borderless_tables(thresh=self.thresh,

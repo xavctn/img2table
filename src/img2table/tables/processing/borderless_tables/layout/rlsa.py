@@ -15,13 +15,14 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 
 
-@njit("int32[:,:](int32[:,:],int32[:,:],float64)", fastmath=True, cache=True, parallel=False)
-def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) -> np.ndarray:
+@njit("int32[:,:](int32[:,:],int32[:,:],float64,float64)", fastmath=True, cache=True, parallel=False)
+def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float, median_width: float) -> np.ndarray:
     """
     Remove noise from detected connected components
     :param cc: connected components labels array
     :param cc_stats: connected components' statistics array
     :param average_height: average connected components' height
+    :param median_width: median connected components' width
     :return: connected components labels array without noisy components
     """
     for idx in prange(len(cc_stats)):
@@ -30,6 +31,12 @@ def remove_noise(cc: np.ndarray, cc_stats: np.ndarray, average_height: float) ->
 
         # Get stats
         x, y, w, h, area = cc_stats[idx][:]
+
+        # Check dashes
+        is_dash = (w / h >= 2) and (0.5 * median_width <= w <= 1.5 * median_width)
+
+        if is_dash:
+            continue
 
         # Check removal conditions
         cond_height = h < average_height / 3
@@ -150,13 +157,15 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     return mask_obstacles
 
 
-@njit("boolean[:, :](uint8[:, :],int32[:, :], float64)", fastmath=True, cache=True, parallel=False)
-def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: float) -> np.ndarray:
+@njit("boolean[:, :](uint8[:, :],int32[:, :],float64,float64)", fastmath=True, cache=True, parallel=False)
+def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: float,
+                  median_width: float) -> np.ndarray:
     """
     Identify image text mask
     :param thresh: thresholded image
     :param cc_stats_rlsa: connected components stats array
     :param char_length: average character length
+    :param median_width: median connected components' width
     :return: text mask array
     """
     text_mask = np.full(shape=thresh.shape, fill_value=False)
@@ -171,6 +180,13 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
 
     for cc_idx in prange(len(cc_stats_rlsa)):
         x, y, w, h, area = cc_stats_rlsa[cc_idx][:]
+
+        # Check for dashes
+        if (w / h >= 2) and (0.5 * median_width <= w <= 1.5 * median_width):
+            for row in prange(y, y + h):
+                for col in prange(x, x + w):
+                    text_mask[row][col] = True
+            continue
 
         if cc_idx == 0 or min(w, h) <= 2 * char_length / 3:
             continue
@@ -256,7 +272,8 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
 
     # Remove noise
     average_height = np.mean(cc_stats[1:, cv2.CC_STAT_HEIGHT])
-    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=average_height)
+    median_width = np.median(cc_stats[1:, cv2.CC_STAT_WIDTH])
+    cc_denoised = remove_noise(cc=cc, cc_stats=cc_stats, average_height=average_height, median_width=median_width)
 
     # Apply small RLSA
     rlsa_small = adaptive_rlsa(cc=cc_denoised, cc_stats=cc_stats, a=1, th=3.5, c=0.4)
@@ -278,7 +295,8 @@ def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float
     # Get text mask
     text_mask = get_text_mask(thresh=thresh,
                               cc_stats_rlsa=cc_stats_rlsa,
-                              char_length=char_length)
+                              char_length=char_length,
+                              median_width=median_width)
 
     # Compute final image
     cc_final = cc_obstacles.copy()
