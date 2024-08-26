@@ -27,6 +27,7 @@ def format_content(content):
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_content():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
@@ -40,6 +41,7 @@ def test_doctr_content():
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_ocr_df():
     instance = DocTR()
 
@@ -54,6 +56,7 @@ def test_doctr_ocr_df():
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_document():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
