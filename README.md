@@ -26,6 +26,7 @@ The library can be installed via pip:
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR<br>
 > <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
+> <code>pip install img2table[surya]</code>: For usage with Surya OCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
 > <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
@@ -251,6 +252,30 @@ ocr = DocTR(detect_language=False,
 >    <dd style="font-style: italic;">Parameter indicating if language prediction is run on the document</dd>
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the docTR <code>ocr_predictor</code> method.</dd>
+></dl>
+
+<br>
+</details>
+
+
+<details>
+<summary>Surya OCR<a name="surya"></a></summary>
+<br>
+
+<b><i>Only available for <code>python >= 3.10</code></i></b><br>
+<a href="https://github.com/VikParuchuri/surya">Surya</a> is an open-source OCR based on Deep Learning models.<br>
+At first use, relevant models will be downloaded.
+
+```python
+from img2table.ocr import SuryaOCR
+
+ocr = SuryaOCR(langs=["en"])
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>langs : list, optional, default <code>["en"]</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in Surya OCR for text extraction</dd>
 ></dl>
 
 <br>
