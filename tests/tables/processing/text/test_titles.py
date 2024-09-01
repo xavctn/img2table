@@ -12,10 +12,10 @@ from img2table.tables.processing.text.titles import get_title_tables
 
 
 def test_get_title_tables():
-    img = cv2.imread("test_data/test.jpg", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.jpg"), cv2.COLOR_BGR2RGB)
     with open("test_data/table.json", "r") as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";").lazy())
+    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";"))
 
     result = get_title_tables(img=img, tables=[table], ocr_df=ocr_df)
 

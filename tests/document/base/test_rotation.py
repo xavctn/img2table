@@ -40,7 +40,7 @@ def test_angle_dixon_q_test():
 def test_fix_rotation_image():
     def crop_to_orig_img(img, orig_img):
         # Get original dimensions
-        orig_height, orig_width = orig_img.shape
+        orig_height, orig_width = orig_img.shape[:2]
 
         # Get center of img
         center = (img.shape[0] // 2, img.shape[1] // 2)
@@ -50,7 +50,7 @@ def test_fix_rotation_image():
 
         return cropped
 
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("test_data/test.png")
 
     similarities = list()
     for angle in range(-30, 30, 3):

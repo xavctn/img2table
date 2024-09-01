@@ -66,4 +66,4 @@ def test_get_relevant_vertical_whitespaces():
                                                char_length=7.0,
                                                median_line_sep=14)
 
-    assert len(result) == 11
+    assert len(result) == 12

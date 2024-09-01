@@ -41,9 +41,9 @@ def test_get_vertical_ws():
                              char_length=5.04,
                              lines=lines)
 
-    expected = [Whitespace(cells=[Cell(x1=0, y1=105, x2=56, y2=1055)]),
-                Whitespace(cells=[Cell(x1=389, y1=117, x2=404, y2=1055)]),
-                Whitespace(cells=[Cell(x1=737, y1=105, x2=768, y2=1055)])]
+    expected = [Whitespace(cells=[Cell(x1=0, y1=106, x2=56, y2=1054)]),
+                Whitespace(cells=[Cell(x1=389, y1=116, x2=404, y2=1054)]),
+                Whitespace(cells=[Cell(x1=737, y1=106, x2=768, y2=1054)])]
 
     assert result == expected
 

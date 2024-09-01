@@ -37,7 +37,7 @@ def test_load_pdf():
 
     assert pdf_from_path.bytes == pdf_from_bytes.bytes == pdf_from_bytesio.bytes
 
-    assert list(pdf_from_path.images)[0].shape == (2200, 1700)
+    assert list(pdf_from_path.images)[0].shape == (2200, 1700, 3)
 
 
 def test_pdf_pages():
@@ -53,7 +53,7 @@ def test_pdf_tables(mock_tesseract):
 
     assert result[0][0].title == "Example of Data Table 1"
     if sys.version_info.minor < 11:
-        assert result[0][0].bbox == BBox(x1=236, y1=249, x2=1442, y2=543)
+        assert result[0][0].bbox == BBox(x1=235, y1=249, x2=1442, y2=543)
     assert (len(result[0][0].content), len(result[0][0].content[0])) == (5, 4)
 
     assert result[0][1].title == "Example of Data Table 2"
@@ -63,7 +63,7 @@ def test_pdf_tables(mock_tesseract):
 
     assert result[1][0].title == "Example of Data Table 3"
     if sys.version_info.minor < 11:
-        assert result[1][0].bbox == BBox(x1=236, y1=249, x2=1442, y2=543)
+        assert result[1][0].bbox == BBox(x1=235, y1=249, x2=1442, y2=543)
     assert (len(result[1][0].content), len(result[1][0].content[0])) == (5, 4)
 
     assert result[1][1].title == "Example of Data Table 4"

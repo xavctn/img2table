@@ -1,124 +1,114 @@
 # coding: utf-8
 from typing import List
 
-import polars as pl
+import numpy as np
+from numba import njit, prange
 
+from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def get_potential_cells_from_h_lines(df_h_lines: pl.LazyFrame) -> pl.LazyFrame:
+@njit("int64[:,:](int64[:,:],int64[:,:])", cache=True, fastmath=True)
+def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarray:
     """
-    Identify potential cells by matching corresponding horizontal rows
-    :param df_h_lines: dataframe containing horizontal rows
-    :return: dataframe containing potential cells
+    Identify cells from lines
+    :param h_lines_arr: array containing horizontal lines
+    :param v_lines_arr: array containing vertical lines
+    :return: array of cells coordinates
     """
-    # Create copy of df_h_lines
-    df_h_lines_cp = (df_h_lines.clone()
-                     .rename({col: f"{col}_" for col in df_h_lines.columns})
-                     )
+    # Get potential cells from horizontal lines
+    potential_cells = list()
+    for i in prange(h_lines_arr.shape[0]):
+        x1i, y1i, x2i, y2i = h_lines_arr[i][:]
+        for j in prange(h_lines_arr.shape[0]):
+            x1j, y1j, x2j, y2j = h_lines_arr[j][:]
 
-    # Cross join with itself to get pairs of horizontal rows
-    cross_h_lines = (df_h_lines.join(df_h_lines_cp, how='cross')
-                     .filter(pl.col('y1') < pl.col('y1_'))
-                     )
+            if y1i >= y1j:
+                continue
 
-    # Compute horizontal correspondences between rows
-    cross_h_lines = cross_h_lines.with_columns([
-        (((pl.col('x1') - pl.col('x1_')) / pl.col('width')).abs() <= 0.02).alias("l_corresponds"),
-        (((pl.col('x2') - pl.col('x2_')) / pl.col('width')).abs() <= 0.02).alias("r_corresponds"),
-        (((pl.col('x1') <= pl.col('x1_')) & (pl.col('x1_') <= pl.col('x2')))
-         | ((pl.col('x1_') <= pl.col('x1')) & (pl.col('x1') <= pl.col('x2_')))).alias('l_contained'),
-        (((pl.col('x1') <= pl.col('x2_')) & (pl.col('x2_') <= pl.col('x2')))
-         | ((pl.col('x1_') <= pl.col('x2')) & (pl.col('x2') <= pl.col('x2_')))).alias('r_contained')
-    ])
+            # Check correspondence between lines
+            l_corresponds = -0.02 <= (x1i - x1j) / (x2i - x1i) <= 0.02
+            r_corresponds = -0.02 <= (x2i - x2j) / (x2i - x1i) <= 0.02
+            l_contained = (x1i <= x1j <= x2i) or (x1j <= x1i <= x2j)
+            r_contained = (x1i <= x2j <= x2i) or (x1j <= x2i <= x2j)
 
-    # Create condition on horizontal correspondence in order to use both rows and filter on relevant combinations
-    matching_condition = ((pl.col('l_corresponds') | pl.col('l_contained'))
-                          & (pl.col('r_corresponds') | pl.col('r_contained')))
-    cross_h_lines = cross_h_lines.filter(matching_condition)
+            if (l_corresponds or l_contained) and (r_corresponds or r_contained):
+                potential_cells.append([max(x1i, x1j), min(x2i, x2j), y1i, y2j])
 
-    # Create cell bbox from horizontal rows
-    df_bbox = (cross_h_lines.select([pl.max_horizontal(['x1', 'x1_']).alias('x1_bbox'),
-                                     pl.min_horizontal(['x2', 'x2_']).alias('x2_bbox'),
-                                     pl.col('y1').alias("y1_bbox"),
-                                     pl.col('y1_').alias('y2_bbox')]
-                                    )
-               .with_row_index(name="idx")
-               )
+    if len(potential_cells) == 0:
+        return np.empty((0, 4), dtype=np.int64)
 
     # Deduplicate on upper bound
-    df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
-               .with_columns(pl.lit(1).alias('ones'))
-               .with_columns(pl.col('ones').cum_sum().over(["x1_bbox", "x2_bbox", "y1_bbox"]).alias('cell_rk'))
-               .filter(pl.col('cell_rk') == 1)
-               )
+    potential_cells = sorted(potential_cells)
+    dedup_upper = list()
+    prev_x1, prev_x2, prev_y1 = 0, 0, 0
+    for idx in range(len(potential_cells)):
+        x1, x2, y1, y2 = potential_cells[idx]
+
+        if not (x1 == prev_x1 and x2 == prev_x2 and y1 == prev_y1):
+            dedup_upper.append([x1, x2, y2, -y1])
+        prev_x1, prev_x2, prev_y1 = x1, x2, y1
 
     # Deduplicate on lower bound
-    df_bbox = (df_bbox.sort(by=["x1_bbox", "x2_bbox", "y2_bbox", "y1_bbox"], descending=[False, False, False, True])
-               .with_columns(pl.lit(1).alias('ones'))
-               .with_columns(pl.col('ones').cum_sum().over(["x1_bbox", "x2_bbox", "y2_bbox"]).alias('cell_rk'))
-               .filter(pl.col('cell_rk') == 1)
-               .drop(['ones', 'cell_rk'])
-               )
+    dedup_upper = sorted(dedup_upper)
+    dedup_lower = list()
+    prev_x1, prev_x2, prev_y2 = 0, 0, 0
+    for idx in range(len(dedup_upper)):
+        x1, x2, y2, _y1 = dedup_upper[idx]
+        y1 = -_y1
 
-    return df_bbox
+        if not (x1 == prev_x1 and x2 == prev_x2 and y2 == prev_y2):
+            dedup_lower.append([x1, x2, y1, y2])
+        prev_x1, prev_x2, prev_y2 = x1, x2, y2
+
+    # Create array of potential cells
+    cells_array = np.array(dedup_lower)
+    cells = list()
+
+    for i in prange(cells_array.shape[0]):
+        x1, x2, y1, y2 = cells_array[i][:]
+
+        # Compute horizontal margin
+        margin = max(5, (x2 - x1) * 0.025)
+
+        delimiters = list()
+        for j in range(v_lines_arr.shape[0]):
+            x1v, y1v, x2v, y2v = v_lines_arr[j][:]
+
+            if x1 - margin <= x1v <= x2 + margin:
+                # Check vertical overlapping and tolerance
+                overlap = min(y2, y2v) - max(y1, y1v)
+                tolerance = max(5, min(10, 0.1 * (y2 - y1)))
+
+                if y2 - y1 - overlap <= tolerance:
+                    delimiters.append(x1v)
+
+        # Create new cells from delimiters
+        if len(delimiters) >= 2:
+            delimiters = sorted(delimiters)
+            for j in range(len(delimiters) - 1):
+                cells.append([delimiters[j], y1, delimiters[j + 1], y2])
+
+    return np.array(cells).astype(np.int64) if cells else np.empty((0, 4), dtype=np.int64)
 
 
-def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> pl.LazyFrame:
+def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
     """
     Create dataframe of all possible cells from horizontal and vertical rows
     :param horizontal_lines: list of horizontal rows
     :param vertical_lines: list of vertical rows
-    :return: dataframe containing all cells
+    :return: list of detected cells
     """
     # Check for empty rows
     if len(horizontal_lines) * len(vertical_lines) == 0:
-        return pl.DataFrame().lazy()
+        return []
 
-    # Create dataframe from horizontal and vertical rows
-    df_h_lines = pl.LazyFrame(data=[line.dict for line in horizontal_lines])
-    df_v_lines = pl.LazyFrame(data=[line.dict for line in vertical_lines])
+    # Create arrays from horizontal and vertical rows
+    h_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in horizontal_lines], dtype=np.int64)
+    v_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in vertical_lines], dtype=np.int64)
 
-    # Identify potential cells bboxes from horizontal rows
-    df_bbox = get_potential_cells_from_h_lines(df_h_lines=df_h_lines)
+    # Compute cells
+    cells_array = identify_cells(h_lines_arr=h_lines_array,
+                                 v_lines_arr=v_lines_array)
 
-    # Cross join with vertical rows
-    df_bbox = df_bbox.with_columns(pl.max_horizontal([(pl.col('x2_bbox') - pl.col('x1_bbox')) * 0.025,
-                                                      pl.lit(5.0)]).round(0).alias('h_margin')
-                                   )
-    df_bbox_v = df_bbox.join(df_v_lines, how='cross')
-
-    # Check horizontal correspondence between cell and vertical rows
-    horizontal_cond = ((pl.col("x1_bbox") - pl.col("h_margin") <= pl.col("x1"))
-                       & (pl.col("x2_bbox") + pl.col("h_margin") >= pl.col("x1")))
-    df_bbox_v = df_bbox_v.filter(horizontal_cond)
-
-    # Check vertical overlapping
-    df_bbox_v = (df_bbox_v.with_columns((pl.min_horizontal(['y2', 'y2_bbox'])
-                                         - pl.max_horizontal(['y1', 'y1_bbox'])).alias('overlapping')
-                                        )
-                 .filter(pl.col('overlapping') / (pl.col('y2_bbox') - pl.col('y1_bbox')) >= 0.8)
-                 )
-
-    # Get all vertical delimiters by bbox
-    df_bbox_delimiters = (df_bbox_v.sort(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox", "x1"])
-                          .group_by(['idx', "x1_bbox", "x2_bbox", "y1_bbox", "y2_bbox"])
-                          .agg(pl.col('x1').alias('dels'))
-                          .filter(pl.col("dels").list.len() >= 2)
-                          )
-
-    # Create new cells based on vertical delimiters
-    df_cells = (df_bbox_delimiters.explode("dels")
-                .with_columns([pl.col('dels').shift(1).over(pl.col('idx')).alias("x1_bbox"),
-                               pl.col('dels').alias("x2_bbox")])
-                .filter(pl.col('x1_bbox').is_not_null())
-                .select([pl.col("x1_bbox").alias("x1"),
-                         pl.col("y1_bbox").alias("y1"),
-                         pl.col("x2_bbox").alias("x2"),
-                         pl.col("y2_bbox").alias("y2")
-                         ])
-                .sort(['x1', 'y1', 'x2', 'y2'])
-                .with_row_index(name="index")
-                )
-
-    return df_cells
+    return [Cell(x1=c[0], y1=c[1], x2=c[2], y2=c[3]) for c in cells_array]

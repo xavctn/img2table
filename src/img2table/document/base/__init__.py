@@ -111,12 +111,13 @@ class Document(Validations):
                     or (tb.nb_rows >= 2 and tb.nb_columns >= 3)]
                 for k, v in tables.items()}
 
-    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, borderless_tables: bool = False,
-                       min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
+    def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, implicit_columns: bool = False,
+                       borderless_tables: bool = False, min_confidence: int = 50) -> Dict[int, List[ExtractedTable]]:
         """
         Extract tables from document
         :param ocr: OCRInstance object used to extract table content
         :param implicit_rows: boolean indicating if implicit rows are splitted
+        :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: dictionary with page number as key and list of extracted tables as values
@@ -125,6 +126,7 @@ class Document(Validations):
         from img2table.tables.image import TableImage
         tables = {idx: TableImage(img=img,
                                   min_confidence=min_confidence).extract_tables(implicit_rows=implicit_rows,
+                                                                                implicit_columns=implicit_columns,
                                                                                 borderless_tables=borderless_tables)
                   for idx, img in enumerate(self.images)}
 
@@ -140,12 +142,14 @@ class Document(Validations):
         return tables
 
     def to_xlsx(self, dest: Union[str, Path, io.BytesIO], ocr: "OCRInstance" = None, implicit_rows: bool = False,
-                borderless_tables: bool = False, min_confidence: int = 50) -> Optional[io.BytesIO]:
+                implicit_columns: bool = False, borderless_tables: bool = False,
+                min_confidence: int = 50) -> Optional[io.BytesIO]:
         """
         Create xlsx file containing all extracted tables from document
         :param dest: destination for xlsx file
         :param ocr: OCRInstance object used to extract table content
         :param implicit_rows: boolean indicating if implicit rows are splitted
+        :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: if a buffer is passed as dest arg, it is returned containing xlsx data
@@ -153,6 +157,7 @@ class Document(Validations):
         # Extract tables
         extracted_tables = self.extract_tables(ocr=ocr,
                                                implicit_rows=implicit_rows,
+                                               implicit_columns=implicit_columns,
                                                borderless_tables=borderless_tables,
                                                min_confidence=min_confidence)
         extracted_tables = {0: extracted_tables} if isinstance(extracted_tables, list) else extracted_tables

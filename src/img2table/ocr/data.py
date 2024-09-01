@@ -9,7 +9,7 @@ from img2table.tables.objects.table import Table
 
 @dataclass
 class OCRDataframe:
-    df: pl.LazyFrame
+    df: pl.DataFrame
 
     def page(self, page_number: int = 0) -> "OCRDataframe":
         # Filter dataframe on specific page
@@ -76,7 +76,6 @@ class OCRDataframe:
 
         # Concatenate all rows
         text_lines = (df_text_parent.select(pl.col('value'))
-                      .collect()
                       .get_column('value')
                       .to_list()
                       )
@@ -102,7 +101,7 @@ class OCRDataframe:
         list_cells = [{"row": id_row, "col": id_col, "x1_w": cell.x1, "x2_w": cell.x2, "y1_w": cell.y1, "y2_w": cell.y2}
                       for id_row, row in enumerate(table.items)
                       for id_col, cell in enumerate(row.items)]
-        df_cells = pl.LazyFrame(data=list_cells)
+        df_cells = pl.DataFrame(data=list_cells)
 
         # Cartesian product between two dataframes
         df_word_cells = df_words.join(other=df_cells, how="cross")
@@ -143,7 +142,7 @@ class OCRDataframe:
                           )
 
         # Implement found values to table cells content
-        for rec in df_text_parent.collect().to_dicts():
+        for rec in df_text_parent.to_dicts():
             table.items[rec.get('row')].items[rec.get('col')].content = rec.get('text') or None
 
         return table
@@ -151,7 +150,7 @@ class OCRDataframe:
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             try:
-                assert self.df.collect().sort(by=['id']).equals(other.df.collect().sort(by=['id']))
+                assert self.df.sort(by=['id']).equals(other.df.sort(by=['id']))
                 return True
             except AssertionError:
                 return False

@@ -69,6 +69,13 @@ class ImageSegment:
     def height(self) -> int:
         return self.y2 - self.y1
 
+    @property
+    def element_height(self) -> int:
+        if self.elements:
+            return max([el.y2 for el in self.elements]) - min([el.y1 for el in self.elements])
+        else:
+            return self.height
+
     def set_elements(self, elements: List[Cell]):
         self.elements = elements
 

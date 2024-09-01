@@ -26,6 +26,7 @@ The library can be installed via pip:
 > <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
 > <code>pip install img2table[paddle]</code>: For usage with Paddle OCR<br>
 > <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
+> <code>pip install img2table[surya]</code>: For usage with Surya OCR<br>
 > <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
 > <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
 > <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
@@ -34,7 +35,7 @@ The library can be installed via pip:
 
 * Table identification for images and PDF files, including bounding boxes at the table cell level
 * Handling of complex table structures such as merged cells
-* Handling of implicit rows - see [example](/examples/Implicit_rows.ipynb)
+* Handling of implicit content - see [example](/examples/Implicit.ipynb)
 * Table content extraction by providing support for OCR services / tools
 * Extracted tables are returned as a simple object, including a Pandas DataFrame representation
 * Export extracted tables to an Excel file, preserving their original structure
@@ -258,6 +259,30 @@ ocr = DocTR(detect_language=False,
 
 
 <details>
+<summary>Surya OCR<a name="surya"></a></summary>
+<br>
+
+<b><i>Only available for <code>python >= 3.10</code></i></b><br>
+<a href="https://github.com/VikParuchuri/surya">Surya</a> is an open-source OCR based on Deep Learning models.<br>
+At first use, relevant models will be downloaded.
+
+```python
+from img2table.ocr import SuryaOCR
+
+ocr = SuryaOCR(langs=["en"])
+```
+
+> <h4>Parameters</h4>
+><dl>
+>    <dt>langs : list, optional, default <code>["en"]</code></dt>
+>    <dd style="font-style: italic;">Lang parameter used in Surya OCR for text extraction</dd>
+></dl>
+
+<br>
+</details>
+
+
+<details>
 <summary>Google Vision<a name="vision"></a></summary>
 <br>
 
@@ -353,6 +378,7 @@ doc = Image(src)
 # Table extraction
 extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=False,
+                                      implicit_columns=False,
                                       borderless_tables=False,
                                       min_confidence=50)
 ```
@@ -361,7 +387,9 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dt>implicit_columns : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
@@ -440,6 +468,7 @@ doc = Image(src)
 doc.to_xlsx(dest=dest,
             ocr=ocr,
             implicit_rows=False,
+            implicit_columns=False,
             borderless_tables=False,
             min_confidence=50)
 ```
@@ -450,7 +479,9 @@ doc.to_xlsx(dest=dest,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit_rows.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
@@ -472,8 +503,8 @@ Several Jupyter notebooks with examples are available :
 <a href="/examples/borderless.ipynb" target="_self">Borderless tables</a>: specific examples dedicated to the extraction of borderless tables
 </li>
 <li>
-<a href="/examples/Implicit_rows.ipynb" target="_self">Implicit rows</a>: illustrated effect 
-of the parameter <code>implicit_rows</code> of the <code>extract_tables</code> method
+<a href="/examples/Implicit.ipynb" target="_self">Implicit content</a>: illustrated effect 
+of the parameter <code>implicit_rows</code>/<code>implicit_columns</code> of the <code>extract_tables</code> method
 </li>
 </ul>
 
@@ -490,7 +521,6 @@ Effectiveness can not be guaranteed on other type of documents.
 </li>
 <li>
 Table detection using only OpenCV processing can have some limitations. If the library fails to detect tables, 
-you may check CNN based solutions like <a href="https://github.com/DevashishPrasad/CascadeTabNet">CascadeTabNet</a> or 
-the <a href="https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.6/ppstructure/docs/quickstart_en.md#224-table-recognition">PaddleOCR implementation</a>.
+you may check CNN based solutions.
 </li>
 </ul>

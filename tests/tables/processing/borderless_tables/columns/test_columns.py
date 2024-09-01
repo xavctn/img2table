@@ -3,8 +3,7 @@
 import json
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.columns import get_columns_delimiters, get_relevant_height, \
-    identify_columns
+from img2table.tables.processing.borderless_tables.columns import get_columns_delimiters, identify_columns
 from img2table.tables.processing.borderless_tables.model import ImageSegment, TableSegment, ColumnGroup, Whitespace, \
     Column, VerticalWS
 
@@ -32,35 +31,6 @@ def test_get_columns_delimiters():
                                           VerticalWS(ws=Whitespace(cells=[Cell(x1=1659, y1=496, x2=1758, y2=626)]))]),
                       Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=0, x2=1859, y2=544)])),
                                           VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=496, x2=1859, y2=660)]))])]
-
-
-def test_get_relevant_height():
-    whitespaces = [Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=7, y1=0, x2=21, y2=544)])),
-                                       VerticalWS(ws=Whitespace(cells=[Cell(x1=7, y1=496, x2=21, y2=660)]))]),
-                   Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=270, y1=69, x2=372, y2=544)])),
-                                       VerticalWS(ws=Whitespace(cells=[Cell(x1=270, y1=496, x2=372, y2=626)]))]),
-                   Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1659, y1=69, x2=1758, y2=544)])),
-                                       VerticalWS(ws=Whitespace(cells=[Cell(x1=1659, y1=496, x2=1758, y2=626)]))]),
-                   Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=0, x2=1859, y2=544)])),
-                                       VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=496, x2=1859, y2=660)]))])]
-
-    with open("test_data/table_segment.json", "r") as f:
-        data = json.load(f)
-    elements = [Cell(**el) for tb in data.get("table_areas") for el in tb.get('elements')]
-
-    result = get_relevant_height(columns=whitespaces,
-                                 elements=elements,
-                                 char_length=14,
-                                 median_line_sep=16)
-
-    assert result == [Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=111, x2=21, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=21, y1=496, x2=21, y2=626)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=111, x2=321, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=321, y1=496, x2=321, y2=633)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=111, x2=1708, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1708, y1=496, x2=1708, y2=633)]))]),
-                      Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=111, x2=1845, y2=544)])),
-                                          VerticalWS(ws=Whitespace(cells=[Cell(x1=1845, y1=496, x2=1845, y2=626)]))])]
 
 
 def test_identify_columns():

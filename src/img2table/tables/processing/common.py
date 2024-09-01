@@ -46,7 +46,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
         return []
 
     # Create dataframe with contours
-    df_cnt = pl.LazyFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
+    df_cnt = pl.DataFrame(data=[{"id": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "area": c.area}
                                 for idx, c in enumerate(contours)])
 
     # Cross join
@@ -86,7 +86,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
                 )
 
     # Map results to cells
-    return [Cell(**d) for d in df_final.collect().to_dicts()]
+    return [Cell(**d) for d in df_final.to_dicts()]
 
 
 def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:
@@ -142,10 +142,11 @@ def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: i
     :param merge_vertically: boolean indicating if contours are merged according to the vertical or horizontal axis
     :return: list of contours contained in cell
     """
-    height, width = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    height, width = gray.shape[:2]
     # Get cropped image
-    cropped_img = img[max(cell.y1 - margin, 0):min(cell.y2 + margin, height),
-                      max(cell.x1 - margin, 0):min(cell.x2 + margin, width)]
+    cropped_img = gray[max(cell.y1 - margin, 0):min(cell.y2 + margin, height),
+                       max(cell.x1 - margin, 0):min(cell.x2 + margin, width)]
 
     # If cropped image is empty, do not do anything
     height_cropped, width_cropped = cropped_img.shape[:2]

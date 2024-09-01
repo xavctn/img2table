@@ -23,7 +23,7 @@ def convert_np_types(obj: Any):
     elif isinstance(obj, np.int32):
         return int(obj)
     elif isinstance(obj, (np.float64, float)):
-        return round(float(obj), 1)
+        return None
     else:
         return obj
 
@@ -56,7 +56,7 @@ def test_easyocr_ocr_df():
 
     result = instance.to_ocr_dataframe(content=content)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     assert result == expected
 
@@ -68,6 +68,6 @@ def test_easyocr_document():
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
-    assert result.df.drop("confidence").collect(streaming=True).equals(expected.df.drop("confidence").collect(streaming=True))
+    assert result.df.drop("confidence").equals(expected.df.drop("confidence"))

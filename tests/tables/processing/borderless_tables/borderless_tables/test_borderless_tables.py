@@ -3,13 +3,15 @@ import json
 
 import cv2
 
+from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
 
 
 def test_identify_borderless_tables():
-    img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
+    thresh = threshold_dark_areas(img=img, char_length=11)
 
     with open("test_data/lines.json", 'r') as f:
         data = json.load(f)
@@ -18,7 +20,7 @@ def test_identify_borderless_tables():
     with open("test_data/contours.json", 'r') as f:
         contours = [Cell(**el) for el in json.load(f)]
 
-    result = identify_borderless_tables(img=img,
+    result = identify_borderless_tables(thresh=thresh,
                                         char_length=7.0,
                                         median_line_sep=66,
                                         lines=lines,
@@ -28,4 +30,4 @@ def test_identify_borderless_tables():
     assert len(result) == 1
     assert result[0].nb_rows == 16
     assert result[0].nb_columns == 7
-    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (135, 43, 1155, 1063)
+    assert (result[0].x1, result[0].y1, result[0].x2, result[0].y2) == (135, 52, 1155, 1054)

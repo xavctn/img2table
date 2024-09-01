@@ -6,7 +6,7 @@ from img2table.tables.image import TableImage
 
 
 def test_table_image():
-    image = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
 
     tb_image = TableImage(img=image,
                           min_confidence=50)

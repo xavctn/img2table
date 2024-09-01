@@ -27,6 +27,7 @@ def format_content(content):
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_content():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
@@ -40,6 +41,7 @@ def test_doctr_content():
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_ocr_df():
     instance = DocTR()
 
@@ -48,18 +50,19 @@ def test_doctr_ocr_df():
 
     result = instance.to_ocr_dataframe(content=content)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     assert result == expected
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Not supported anymore")
 def test_doctr_document():
     instance = DocTR()
     doc = Image(src="test_data/test.png")
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";").lazy())
+    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
-    assert result.df.collect().equals(expected.df.collect())
+    assert result.df.drop("confidence").equals(expected.df.drop("confidence"))

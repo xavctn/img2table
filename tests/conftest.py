@@ -3,6 +3,7 @@ import json
 import os
 import pickle
 import subprocess
+import sys
 from typing import NamedTuple, Dict
 
 import azure.cognitiveservices.vision.computervision
@@ -102,4 +103,19 @@ def mock_azure(monkeypatch):
     monkeypatch.setattr(azure.cognitiveservices.vision.computervision.ComputerVisionClient,
                         "get_read_result",
                         mock_get_read_result)
+
+
+@pytest.fixture
+def mock_surya(monkeypatch):
+    def mock_run_ocr(*args, **kwargs):
+        with open(os.path.join(MOCK_DIR, "surya.pkl"), "rb") as f:
+            resp = pickle.load(f)
+        return resp
+
+    if sys.version_info >= (3, 10):
+        import surya.ocr
+        # Mock surya
+        monkeypatch.setattr(surya.ocr,
+                            "run_ocr",
+                            mock_run_ocr)
 

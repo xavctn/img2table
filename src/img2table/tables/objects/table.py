@@ -1,6 +1,7 @@
 # coding: utf-8
 import typing
 from collections import OrderedDict
+from functools import cached_property
 from typing import Union, List
 
 import numpy as np
@@ -8,6 +9,7 @@ import numpy as np
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.extraction import ExtractedTable, BBox
+from img2table.tables.objects.line import Line
 from img2table.tables.objects.row import Row
 
 if typing.TYPE_CHECKING:
@@ -63,6 +65,42 @@ class Table(TableObject):
     @property
     def cell(self) -> Cell:
         return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
+
+    @cached_property
+    def lines(self) -> List[Line]:
+        # Create lines from cells
+        h_lines, v_lines = list(), list()
+        for cell in [cell for row in self.items for cell in row.items]:
+            # Add vertical lines
+            v_lines.append(Line(x1=cell.x1, y1=cell.y1, x2=cell.x1, y2=cell.y2))
+            v_lines.append(Line(x1=cell.x2, y1=cell.y1, x2=cell.x2, y2=cell.y2))
+            # Add horizontal lines
+            h_lines.append(Line(x1=cell.x1, y1=cell.y1, x2=cell.x2, y2=cell.y1))
+            h_lines.append(Line(x1=cell.x1, y1=cell.y2, x2=cell.x2, y2=cell.y2))
+
+        # Merge vertical lines
+        seq = iter(sorted(v_lines, key=lambda l: (l.x1, l.y1)))
+        v_lines_groups = [[next(seq)]]
+        for line in seq:
+            prev_line = v_lines_groups[-1][-1]
+            if line.x1 > prev_line.x1 or line.y1 > prev_line.y2:
+                v_lines_groups.append([])
+            v_lines_groups[-1].append(line)
+
+        # Merge horizontal lines
+        seq = iter(sorted(h_lines, key=lambda l: (l.y1, l.x1)))
+        h_lines_groups = [[next(seq)]]
+        for line in seq:
+            prev_line = h_lines_groups[-1][-1]
+            if line.y1 > prev_line.y1 or line.x1 > prev_line.x2:
+                h_lines_groups.append([])
+            h_lines_groups[-1].append(line)
+
+        return [Line(x1=min([l.x1 for l in gp]),
+                     y1=min([l.y1 for l in gp]),
+                     x2=max([l.x2 for l in gp]),
+                     y2=max([l.y2 for l in gp]))
+                for gp in v_lines_groups + h_lines_groups]
 
     def remove_rows(self, row_ids: List[int]):
         """

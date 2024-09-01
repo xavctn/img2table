@@ -19,7 +19,7 @@ def display_borderless_tables(img: Image, ocr: OCRInstance) -> np.ndarray:
                                           borderless_tables=True)
 
     # Create image displaying extracted tables
-    display_image = cv2.cvtColor(list(img.images)[0], cv2.COLOR_GRAY2RGB)
+    display_image = list(img.images)[0].copy()
     for tb in extracted_tables:
         for row in tb.content.values():
             for cell in row:
@@ -31,7 +31,7 @@ def display_borderless_tables(img: Image, ocr: OCRInstance) -> np.ndarray:
     white_img = cv2.cvtColor(255 * np.ones((display_image.shape[0], width), dtype=np.uint8), cv2.COLOR_GRAY2RGB)
 
     # Stack images
-    final_image = np.hstack([cv2.cvtColor(list(img.images)[0], cv2.COLOR_GRAY2RGB),
+    final_image = np.hstack([list(img.images)[0].copy(),
                              white_img,
                              display_image])
 

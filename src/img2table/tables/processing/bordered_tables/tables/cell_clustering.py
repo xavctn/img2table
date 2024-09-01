@@ -16,7 +16,7 @@ def get_adjacent_cells(cells: List[Cell]) -> List[Set[int]]:
     if len(cells) == 0:
         return []
 
-    df_cells = pl.LazyFrame([{"idx": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "height": c.height,
+    df_cells = pl.DataFrame([{"idx": idx, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2, "height": c.height,
                               "width": c.width}
                              for idx, c in enumerate(cells)])
 
@@ -53,7 +53,6 @@ def get_adjacent_cells(cells: List[Cell]) -> List[Set[int]]:
         .select("idx", "idx_right")
         .unique()
         .sort(by=['idx', 'idx_right'])
-        .collect()
     )
 
     # Get sets of adjacent cells indexes

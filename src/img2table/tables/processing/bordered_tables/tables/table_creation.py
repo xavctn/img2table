@@ -78,32 +78,21 @@ def remove_unwanted_elements(table: Table, elements: List[Cell]) -> Table:
     )
 
     # Identify empty rows and empty columns
-    if table._borderless:
-        df_empty_rows = (df_cells_elements.group_by("id_row")
-                         .agg(pl.col('contains').max(),
-                              pl.when(~pl.col('merged_col')).then(pl.col('contains')).max().alias("single_contains"),
-                              pl.col("merged_col").min())
-                         )
-        empty_rows = sorted([row.get("id_row") for row in df_empty_rows.to_dicts()
-                             if not row.get("contains") or (not row.get('merged_col') and not row.get('single_contains'))])
+    df_empty_rows = (df_cells_elements.group_by("id_row")
+                     .agg(pl.col('contains').max(),
+                          pl.when(~pl.col('merged_col')).then(pl.col('contains')).max().alias("single_contains"),
+                          pl.col("merged_col").min())
+                     )
+    empty_rows = sorted([row.get("id_row") for row in df_empty_rows.to_dicts()
+                         if not row.get("contains") or (not row.get('merged_col') and not row.get('single_contains'))])
 
-        df_empty_cols = (df_cells_elements.group_by("id_col")
-                         .agg(pl.col('contains').max(),
-                              pl.when(~pl.col('merged_row')).then(pl.col('contains')).max().alias("single_contains"),
-                              pl.col("merged_row").min())
-                         )
-        empty_cols = sorted([row.get("id_col") for row in df_empty_cols.to_dicts()
-                             if not row.get("contains") or (not row.get('merged_row') and not row.get('single_contains'))])
-    else:
-        df_empty_rows = (df_cells_elements.group_by("id_row")
-                         .agg(pl.col('contains').max())
-                         .filter(~pl.col("contains")))
-        empty_rows = sorted([row.get("id_row") for row in df_empty_rows.to_dicts()])
-
-        df_empty_cols = (df_cells_elements.group_by("id_col")
-                         .agg(pl.col('contains').max())
-                         .filter(~pl.col("contains")))
-        empty_cols = sorted([row.get("id_col") for row in df_empty_cols.to_dicts()])
+    df_empty_cols = (df_cells_elements.group_by("id_col")
+                     .agg(pl.col('contains').max(),
+                          pl.when(~pl.col('merged_row')).then(pl.col('contains')).max().alias("single_contains"),
+                          pl.col("merged_row").min())
+                     )
+    empty_cols = sorted([row.get("id_col") for row in df_empty_cols.to_dicts()
+                         if not row.get("contains") or (not row.get('merged_row') and not row.get('single_contains'))])
 
     # Remove empty rows and empty columns
     table.remove_rows(row_ids=empty_rows)

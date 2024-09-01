@@ -49,7 +49,7 @@ class TextractOCR(OCRInstance):
         :return: list of OCR elements corresponding to the page
         """
         # Get image dimensions
-        height, width = image.shape
+        height, width = image.shape[:2]
 
         # Initialize dictionary containing child relationships
         dict_children = dict()
@@ -101,6 +101,6 @@ class TextractOCR(OCRInstance):
         list_dfs = list()
         for page_elements in content:
             if page_elements:
-                list_dfs.append(pl.LazyFrame(data=page_elements, schema=self.pl_schema))
+                list_dfs.append(pl.DataFrame(data=page_elements, schema=self.pl_schema))
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

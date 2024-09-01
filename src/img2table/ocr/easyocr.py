@@ -71,4 +71,4 @@ class EasyOCR(OCRInstance):
 
                 list_elements.append(dict_word)
 
-        return OCRDataframe(df=pl.LazyFrame(list_elements)) if list_elements else None
+        return OCRDataframe(df=pl.DataFrame(list_elements)) if list_elements else None

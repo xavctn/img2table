@@ -20,11 +20,15 @@ class PdfOCR(OCRInstance):
 
             # Get image size and page dimensions
             img_height, img_width = list(document.images)[idx].shape[:2]
-            page_height, page_width = page.mediabox.height, page.mediabox.width
+            page_height = (page.cropbox * page.rotation_matrix).height
+            page_width = (page.cropbox * page.rotation_matrix).width
 
             # Extract words
-            list_words = [
-                {
+            list_words = list()
+            for x1, y1, x2, y2, value, block_no, line_no, word_no in page.get_text("words", sort=True):
+                (x1, y1), (x2, y2) = fitz.Point(x1, y1) * page.rotation_matrix, fitz.Point(x2, y2) * page.rotation_matrix
+                x1, y1, x2, y2 = min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)
+                word = {
                     "page": idx,
                     "class": "ocrx_word",
                     "id": f"word_{idx + 1}_{block_no}_{line_no}_{word_no}",
@@ -36,8 +40,7 @@ class PdfOCR(OCRInstance):
                     "x2": round(x2 * img_width / page_width),
                     "y2": round(y2 * img_height / page_height)
                 }
-                for x1, y1, x2, y2, value, block_no, line_no, word_no in page.get_text("words", sort=True)
-            ]
+                list_words.append(word)
 
             if list_words:
                 # Append to list of pages
@@ -71,6 +74,6 @@ class PdfOCR(OCRInstance):
         list_dfs = list()
         for page_elements in content:
             if page_elements:
-                list_dfs.append(pl.LazyFrame(data=page_elements, schema=self.pl_schema))
+                list_dfs.append(pl.DataFrame(data=page_elements, schema=self.pl_schema))
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
