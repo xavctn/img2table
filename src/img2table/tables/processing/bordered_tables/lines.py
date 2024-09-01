@@ -67,7 +67,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
                         y1=y + round(np.mean(line_rows)),
                         x2=x + np.max(non_blank_pixels),
                         y2=y + round(np.mean(line_rows)),
-                        thickness=np.max(line_rows) - np.min(line_rows))
+                        thickness=np.max(line_rows) - np.min(line_rows) + 1)
         else:
             non_blank_pixels = np.where(np.sum(cropped, axis=1) > 0)
             line_cols = np.where((np.sum(cropped, axis=0) / 255) >= 0.5 * h)
@@ -79,7 +79,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
                         y1=y + np.min(non_blank_pixels),
                         x2=x + round(np.mean(line_cols)),
                         y2=y + np.max(non_blank_pixels),
-                        thickness=np.max(line_cols) - np.min(line_cols))
+                        thickness=np.max(line_cols) - np.min(line_cols) + 1)
         lines.append(line)
 
     return lines

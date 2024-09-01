@@ -66,3 +66,6 @@ class Line(TableObject):
             self.x2 = self.x1 = x_val
 
         return self
+
+    def __hash__(self):
+        return hash(repr(self))
