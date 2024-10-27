@@ -82,14 +82,14 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
             prev_y_middle = y_middle
         else:
             # Check if previously defined area is relevant
-            if area_count >= 5 and width_area / (x2_area - x1_area) >= 0.66:
+            if area_count >= 5 and width_area / ((x2_area - x1_area) or 1) >= 0.66:
                 line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
             # Create new area
             x1_area, y1_area, x2_area, y2_area = x, y, x + w, y + h
             width_area, prev_y_middle, area_count = w, y_middle, 1
 
     # Check last area
-    if area_count >= 5 and width_area / (x2_area - x1_area) >= 0.66:
+    if area_count >= 5 and width_area / ((x2_area - x1_area) or 1) >= 0.66:
         line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
 
     ### Identify vertical lines
@@ -111,14 +111,14 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
             prev_x_middle = x_middle
         else:
             # Check if previously defined area is relevant
-            if area_count >= 5 and height_area / (y2_area - y1_area) >= 0.66:
+            if area_count >= 5 and height_area / ((y2_area - y1_area) or 1) >= 0.66:
                 line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
             # Create new area
             x1_area, y1_area, x2_area, y2_area = x, y, x + w, y + h
             height_area, prev_x_middle, area_count = h, x_middle, 1
 
     # Check last area
-    if area_count >= 5 and height_area / (y2_area - y1_area) >= 0.66:
+    if area_count >= 5 and height_area / ((y2_area - y1_area) or 1) >= 0.66:
         line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
 
     if len(line_areas) == 0:

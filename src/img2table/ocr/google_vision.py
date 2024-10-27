@@ -9,7 +9,6 @@ from typing import List, Optional, Dict, Tuple
 import cv2
 import numpy as np
 import polars as pl
-import requests
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
@@ -100,6 +99,8 @@ class VisionEndpointContent(VisionContent):
         :param page: page number
         :return: list of OCR elements
         """
+        import requests
+
         # Create payload
         payload = {
             "requests": [

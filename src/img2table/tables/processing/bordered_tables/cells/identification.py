@@ -27,8 +27,8 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
                 continue
 
             # Check correspondence between lines
-            l_corresponds = -0.02 <= (x1i - x1j) / (x2i - x1i) <= 0.02
-            r_corresponds = -0.02 <= (x2i - x2j) / (x2i - x1i) <= 0.02
+            l_corresponds = -0.02 <= (x1i - x1j) / ((x2i - x1i) or 1) <= 0.02
+            r_corresponds = -0.02 <= (x2i - x2j) / ((x2i - x1i) or 1) <= 0.02
             l_contained = (x1i <= x1j <= x2i) or (x1j <= x1i <= x2j)
             r_contained = (x1i <= x2j <= x2i) or (x1j <= x2i <= x2j)
 
