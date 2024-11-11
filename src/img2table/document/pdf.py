@@ -3,8 +3,9 @@ import typing
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-import fitz
+import cv2
 import numpy as np
+import pypdfium2
 
 from img2table.document.base import Document
 from img2table.document.base.rotation import fix_rotation_image
@@ -48,15 +49,13 @@ class PDF(Document):
         if self._images is not None:
             return self._images
 
-        mat = fitz.Matrix(200 / 72, 200 / 72)
-        doc = fitz.Document(stream=self.bytes, filetype='pdf')
+        doc = pypdfium2.PdfDocument(input=self.bytes)
 
         # Get all images
         images = list()
-        for page_number in self.pages or range(doc.page_count):
-            page = doc.load_page(page_id=page_number)
-            pix = page.get_pixmap(matrix=mat)
-            img = np.frombuffer(buffer=pix.samples, dtype=np.uint8).reshape((pix.height, pix.width, 3))
+        for page_number in self.pages or range(len(doc)):
+            page = doc[page_number]
+            img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
             # Handle rotation if needed
             if self.detect_rotation:
                 final, self._rotated = fix_rotation_image(img=img)
@@ -65,6 +64,7 @@ class PDF(Document):
             images.append(final)
 
         self._images = images
+        doc.close()
         return images
 
     def get_table_content(self, tables: Dict[int, List["Table"]], ocr: "OCRInstance",
