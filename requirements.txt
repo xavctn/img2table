@@ -1,7 +1,7 @@
 polars[pandas]>=1.2
 pyarrow>=7
 numpy
-pymupdf>=1.19.1
+pypdfium2
 opencv-contrib-python>=4
 numba
 beautifulsoup4
