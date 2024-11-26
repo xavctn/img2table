@@ -83,9 +83,9 @@ class Word:
     @property
     def direction(self):
         if len(self.chars) >= 3:
-            if self.width / self.height >= 2:
+            if self.height > 0 and self.width / self.height >= 2:
                 return "horizontal"
-            elif self.height / self.width >= 2:
+            elif self.width > 0 and self.height / self.width >= 2:
                 return "vertical"
         return "unknown"
 
