@@ -12,7 +12,7 @@ from img2table.ocr.data import OCRDataframe
 from tests import MOCK_DIR
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Library not available")
 def test_content(mock_surya):
     img = Image("test_data/test.png")
     ocr = SuryaOCR(langs=["en"])
@@ -25,7 +25,7 @@ def test_content(mock_surya):
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Library not available")
 def test_to_ocr_df():
     ocr = SuryaOCR(langs=["en"])
     with open(os.path.join(MOCK_DIR, "surya.pkl"), "rb") as f:
@@ -38,7 +38,7 @@ def test_to_ocr_df():
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Library not available")
 def test_surya_ocr(mock_surya):
     # Test init error
     with pytest.raises(TypeError) as e_info:
