@@ -8,12 +8,10 @@ export PYTHONPATH := $(DIR)/src
 venv:
 	python -m venv ./venv || true
 	. $(VENV); python -m pip install pip wheel --upgrade;
-	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-	. $(VENV); python -m pip install -r requirements-dev.txt
+	. $(VENV); python -m pip install -r requirements-dev.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 update:
-	. $(VENV); python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-	. $(VENV); python -m pip install -U -r requirements-dev.txt
+	. $(VENV); python -m pip install -U -r requirements-dev.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Test commands
 test:

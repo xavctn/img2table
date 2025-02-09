@@ -1,73 +1,73 @@
 page;class;id;parent;value;confidence;x1;y1;x2;y2
-0;ocrx_word;word_1_1_0;word_1_1;20 PAYS LES PLUS PEUPLÉS (EN TEMPS RÉEL);99;203;31;865;67
-0;ocrx_word;word_1_2_0;word_1_2;Chine;94;160;130;231;154
-0;ocrx_word;word_1_3_0;word_1_3;Japon;96;672;130;743;155
-0;ocrx_word;word_1_4_0;word_1_4;k;65;92;131;121;151
-0;ocrx_word;word_1_5_0;word_1_5; 1 448 949 124;98;357;131;506;155
-0;ocrx_word;word_1_6_0;word_1_6; 125 815 814;100;853;131;981;155
-0;ocrx_word;word_1_7_0;word_1_7;1;80;58;133;76;151
-0;ocrx_word;word_1_8_0;word_1_8;11;79;561;132;590;153
-0;ocrx_word;word_1_9_0;word_1_9;Ethiopie;97;672;191;771;218
-0;ocrx_word;word_1_10_0;word_1_10;Inde;95;158;192;216;217
-0;ocrx_word;word_1_11_0;word_1_11;1 403 805 173;98;358;192;507;218
-0;ocrx_word;word_1_12_0;word_1_12; 120 125 587;100;853;192;981;217
-0;ocrx_word;word_1_13_0;word_1_13;2;78;56;194;78;216
-0;ocrx_word;word_1_14_0;word_1_14;12;79;560;194;596;217
-0;ocrx_word;word_1_15_0;word_1_15;(a);50;100;195;127;213
-0;ocrx_word;word_1_16_0;word_1_16;e the first;38;597;195;653;215
-0;ocrx_word;word_1_17_0;word_1_17;États-Unis;99;159;254;278;280
-0;ocrx_word;word_1_18_0;word_1_18;Philippines;100;672;255;799;281
-0;ocrx_word;word_1_19_0;word_1_19;334 378 540;100;376;256;506;280
-0;ocrx_word;word_1_20_0;word_1_20;112 159 001;100;854;256;981;280
-0;ocrx_word;word_1_21_0;word_1_21;3;82;57;257;77;279
-0;ocrx_word;word_1_22_0;word_1_22;13;91;559;257;593;279
-0;ocrx_word;word_1_23_0;word_1_23;B;34;601;258;632;277
-0;ocrx_word;word_1_24_0;word_1_24;Égypte;94;671;313;758;345
-0;ocrx_word;word_1_25_0;word_1_25;Indonésie;98;160;317;269;342
-0;ocrx_word;word_1_26_0;word_1_26;278 605 610;98;376;318;507;342
-0;ocrx_word;word_1_27_0;word_1_27;105 787 594;100;853;317;982;342
-0;ocrx_word;word_1_28_0;word_1_28;14;88;562;319;591;342
-0;ocrx_word;word_1_29_0;word_1_29;4;86;57;321;76;341
-0;ocrx_word;word_1_30_0;word_1_30; Brésil;96;158;380;229;405
-0;ocrx_word;word_1_31_0;word_1_31;215 194 443;100;376;381;506;405
-0;ocrx_word;word_1_32_0;word_1_32;15;87;559;381;594;404
-0;ocrx_word;word_1_33_0;word_1_33;★;67;594;381;652;402
-0;ocrx_word;word_1_34_0;word_1_34;Vietnam;96;673;381;770;404
-0;ocrx_word;word_1_35_0;word_1_35;98 872 186;99;865;381;982;405
-0;ocrx_word;word_1_36_0;word_1_36;5;83;58;382;77;403
-0;ocrx_word;word_1_37_0;word_1_37;l C;49;88;442;144;464
-0;ocrx_word;word_1_38_0;word_1_38;Pakistan;96;158;443;257;467
-0;ocrx_word;word_1_39_0;word_1_39;228 575 462;95;376;443;506;467
-0;ocrx_word;word_1_40_0;word_1_40;16;90;560;443;595;466
-0;ocrx_word;word_1_41_0;word_1_41;Congo;96;671;443;752;467
-0;ocrx_word;word_1_42_0;word_1_42;94 560 352;99;865;443;982;467
-0;ocrx_word;word_1_43_0;word_1_43;6;81;56;444;79;465
-0;ocrx_word;word_1_44_0;word_1_44;1;36;597;444;654;464
-0;ocrx_word;word_1_45_0;word_1_45;Allemagne;98;674;504;797;531
-0;ocrx_word;word_1_46_0;word_1_46;7 ■ ■;71;55;505;142;529
-0;ocrx_word;word_1_47_0;word_1_47;Nigeria;96;159;505;246;530
-0;ocrx_word;word_1_48_0;word_1_48;215 401 411;100;377;506;505;529
-0;ocrx_word;word_1_49_0;word_1_49;17;88;560;506;594;529
-0;ocrx_word;word_1_50_0;word_1_50;84 247 226;99;864;506;982;529
-0;ocrx_word;word_1_51_0;word_1_51;Bangladesh;98;159;567;289;593
-0;ocrx_word;word_1_52_0;word_1_52; 167 568 471;99;376;568;505;591
-0;ocrx_word;word_1_53_0;word_1_53;INSTITUTIONS;52;603;568;653;590
-0;ocrx_word;word_1_54_0;word_1_54;Iran;93;673;568;723;592
-0;ocrx_word;word_1_55_0;word_1_55;85 891 049;99;865;568;981;592
-0;ocrx_word;word_1_56_0;word_1_56;18;92;560;569;593;591
-0;ocrx_word;word_1_57_0;word_1_57;8;91;56;570;78;590
-0;ocrx_word;word_1_58_0;word_1_58;.;83;99;571;139;588
-0;ocrx_word;word_1_59_0;word_1_59;Russie;97;160;630;239;654
-0;ocrx_word;word_1_60_0;word_1_60;C+;84;601;630;649;653
-0;ocrx_word;word_1_61_0;word_1_61;146 042 034;97;377;631;507;655
-0;ocrx_word;word_1_62_0;word_1_62;Turquie;96;674;631;764;655
-0;ocrx_word;word_1_63_0;word_1_63;85 934 290;99;864;631;982;655
-0;ocrx_word;word_1_64_0;word_1_64;9;73;57;633;77;653
-0;ocrx_word;word_1_65_0;word_1_65;19;91;559;632;592;654
-0;ocrx_word;word_1_66_0;word_1_66;Thaïlande;98;675;691;786;718
-0;ocrx_word;word_1_67_0;word_1_67;Mexique;96;158;692;260;717
-0;ocrx_word;word_1_68_0;word_1_68;131 312 546;95;376;693;507;717
-0;ocrx_word;word_1_69_0;word_1_69;70 102 414;99;865;692;982;719
-0;ocrx_word;word_1_70_0;word_1_70;10;90;45;694;77;716
-0;ocrx_word;word_1_71_0;word_1_71;20;91;559;695;591;716
-0;ocrx_word;word_1_72_0;word_1_72;sh;29;99;696;127;714
+0;ocrx_word;word_1_1_0;word_1_1;20 PAYS LES PLUS PEUPLÉS (EN TEMPS RÉEL);99;206;33;862;64
+0;ocrx_word;word_1_2_0;word_1_2;k;57;94;132;118;149
+0;ocrx_word;word_1_3_0;word_1_3;Chine;93;163;132;229;153
+0;ocrx_word;word_1_4_0;word_1_4;Japon;97;675;132;741;153
+0;ocrx_word;word_1_5_0;word_1_5;1 448 949 124;98;360;133;504;153
+0;ocrx_word;word_1_6_0;word_1_6;11;93;563;133;587;151
+0;ocrx_word;word_1_7_0;word_1_7;125 815 814;94;856;133;979;153
+0;ocrx_word;word_1_8_0;word_1_8;1;93;60;134;74;150
+0;ocrx_word;word_1_9_0;word_1_9;Ethiopie;98;675;193;768;216
+0;ocrx_word;word_1_10_0;word_1_10;Inde;97;161;194;214;215
+0;ocrx_word;word_1_11_0;word_1_11;1 403 805 173;98;361;194;505;216
+0;ocrx_word;word_1_12_0;word_1_12;120 125 587;93;856;194;979;215
+0;ocrx_word;word_1_13_0;word_1_13;2;81;57;195;76;215
+0;ocrx_word;word_1_14_0;word_1_14;12 ;88;563;195;595;215
+0;ocrx_word;word_1_15_0;word_1_15;138;23;599;196;651;214
+0;ocrx_word;word_1_16_0;word_1_16;(a);45;102;197;126;211
+0;ocrx_word;word_1_17_0;word_1_17;États-Unis;98;162;255;275;278
+0;ocrx_word;word_1_18_0;word_1_18;Philippines;99;675;257;796;279
+0;ocrx_word;word_1_19_0;word_1_19;3;87;59;258;75;278
+0;ocrx_word;word_1_20_0;word_1_20;334 378 540;94;379;258;504;278
+0;ocrx_word;word_1_21_0;word_1_21;112 159 001;94;857;258;979;278
+0;ocrx_word;word_1_22_0;word_1_22;13;93;562;259;591;278
+0;ocrx_word;word_1_23_0;word_1_23;A;40;603;259;629;275
+0;ocrx_word;word_1_24_0;word_1_24;Égypte;95;672;315;755;343
+0;ocrx_word;word_1_25_0;word_1_25;Indonésie;98;163;319;268;340
+0;ocrx_word;word_1_26_0;word_1_26;105 787 594;91;856;319;980;341
+0;ocrx_word;word_1_27_0;word_1_27;278 605 610;96;379;320;505;340
+0;ocrx_word;word_1_28_0;word_1_28;14;96;564;320;588;340
+0;ocrx_word;word_1_29_0;word_1_29;4;93;59;322;74;340
+0;ocrx_word;word_1_30_0;word_1_30;Brésil;94;161;382;227;404
+0;ocrx_word;word_1_31_0;word_1_31;5;83;60;383;75;402
+0;ocrx_word;word_1_32_0;word_1_32;215 194 443;98;379;383;504;404
+0;ocrx_word;word_1_33_0;word_1_33;l ર;73;562;383;592;402
+0;ocrx_word;word_1_34_0;word_1_34;★;84;596;383;651;401
+0;ocrx_word;word_1_35_0;word_1_35;Vietnam;98;676;383;768;403
+0;ocrx_word;word_1_36_0;word_1_36;98 872 186;89;867;383;980;404
+0;ocrx_word;word_1_37_0;word_1_37;94 560 352;91;867;443;981;467
+0;ocrx_word;word_1_38_0;word_1_38;l C;61;91;444;142;463
+0;ocrx_word;word_1_39_0;word_1_39;Pakistan;97;161;444;255;465
+0;ocrx_word;word_1_40_0;word_1_40;Congo;97;674;444;750;466
+0;ocrx_word;word_1_41_0;word_1_41;6;87;58;445;77;464
+0;ocrx_word;word_1_42_0;word_1_42;228 575 462;96;379;445;504;465
+0;ocrx_word;word_1_43_0;word_1_43;16;91;563;445;593;465
+0;ocrx_word;word_1_44_0;word_1_44;"";26;599;445;652;462
+0;ocrx_word;word_1_45_0;word_1_45;Allemagne;98;677;506;794;529
+0;ocrx_word;word_1_46_0;word_1_46;7                                                                                                                                                                            ;91;57;507;141;528
+0;ocrx_word;word_1_47_0;word_1_47;Nigeria;97;162;507;244;529
+0;ocrx_word;word_1_48_0;word_1_48;215 401 411;92;380;508;503;528
+0;ocrx_word;word_1_49_0;word_1_49;17;88;563;508;592;527
+0;ocrx_word;word_1_50_0;word_1_50;84 247 226;90;866;508;980;528
+0;ocrx_word;word_1_51_0;word_1_51;Bangladesh;99;162;569;286;591
+0;ocrx_word;word_1_52_0;word_1_52;167 568 471;94;379;570;503;590
+0;ocrx_word;word_1_53_0;word_1_53;personal program;47;604;570;653;590
+0;ocrx_word;word_1_54_0;word_1_54;Iran;97;676;570;722;591
+0;ocrx_word;word_1_55_0;word_1_55;85 891 049;92;867;570;979;591
+0;ocrx_word;word_1_56_0;word_1_56;8;79;58;571;76;589
+0;ocrx_word;word_1_57_0;word_1_57;18;93;563;571;591;590
+0;ocrx_word;word_1_58_0;word_1_58;o;72;100;572;137;587
+0;ocrx_word;word_1_59_0;word_1_59;Russie;96;163;632;237;653
+0;ocrx_word;word_1_60_0;word_1_60;(+;59;604;632;647;652
+0;ocrx_word;word_1_61_0;word_1_61;146 042 034;98;380;633;505;654
+0;ocrx_word;word_1_62_0;word_1_62;Turquie;97;677;633;762;654
+0;ocrx_word;word_1_63_0;word_1_63;85 934 290;93;866;633;980;654
+0;ocrx_word;word_1_64_0;word_1_64;9;89;59;634;75;651
+0;ocrx_word;word_1_65_0;word_1_65;19;96;562;634;590;653
+0;ocrx_word;word_1_66_0;word_1_66;Thaïlande;95;678;693;783;716
+0;ocrx_word;word_1_67_0;word_1_67;Mexique;97;161;694;258;716
+0;ocrx_word;word_1_68_0;word_1_68;70 102 414;90;867;694;980;718
+0;ocrx_word;word_1_69_0;word_1_69;131 312 546;95;379;695;505;716
+0;ocrx_word;word_1_70_0;word_1_70;10;93;48;696;75;714
+0;ocrx_word;word_1_71_0;word_1_71;19;19;101;697;125;713
+0;ocrx_word;word_1_72_0;word_1_72;20;91;562;697;589;715

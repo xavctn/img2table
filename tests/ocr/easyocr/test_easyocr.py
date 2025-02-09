@@ -28,13 +28,13 @@ def convert_np_types(obj: Any):
         return obj
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
 def test_validators():
     with pytest.raises(TypeError) as e_info:
         ocr = EasyOCR(lang=12)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
 def test_easyocr_content():
     instance = EasyOCR()
     doc = Image(src="test_data/test.png")
@@ -47,7 +47,7 @@ def test_easyocr_content():
     assert convert_np_types(result) == convert_np_types(expected)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
 def test_easyocr_ocr_df():
     instance = EasyOCR()
 
@@ -61,7 +61,7 @@ def test_easyocr_ocr_df():
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="Error building with 3.12")
+@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
 def test_easyocr_document():
     instance = EasyOCR()
     doc = Image(src="test_data/test.png")

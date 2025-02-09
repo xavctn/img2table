@@ -113,9 +113,9 @@ def mock_surya(monkeypatch):
         return resp
 
     if sys.version_info >= (3, 10):
-        import surya.ocr
+        import surya.recognition
         # Mock surya
-        monkeypatch.setattr(surya.ocr,
-                            "run_ocr",
+        monkeypatch.setattr(surya.recognition.RecognitionPredictor,
+                            "__call__",
                             mock_run_ocr)
 
