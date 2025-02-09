@@ -22,9 +22,8 @@ class SuryaOCR(OCRInstance):
         Initialization of EasyOCR instance
         """
         try:
-            from surya.model.detection.model import load_model as load_det_model, load_processor as load_det_processor
-            from surya.model.recognition.model import load_model as load_rec_model
-            from surya.model.recognition.processor import load_processor as load_rec_processor
+            from surya.recognition import RecognitionPredictor
+            from surya.detection import DetectionPredictor
 
         except ModuleNotFoundError:
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[surya]' to use this class.")
@@ -38,22 +37,18 @@ class SuryaOCR(OCRInstance):
             raise TypeError(f"Invalid type {type(langs)} for langs argument")
 
         # Initialize model
-        self.det_processor, self.det_model = load_det_processor(), load_det_model()
-        self.rec_model, self.rec_processor = load_rec_model(), load_rec_processor()
+        self.det_predictor = DetectionPredictor()
+        self.rec_predictor = RecognitionPredictor()
 
-    def content(self, document: Document) -> typing.List["surya.schema.OCRResult"]:
-        from surya.ocr import run_ocr
+    def content(self, document: Document) -> typing.List["surya.recognition.schema.OCRResult"]:
         # Get OCR of all images
-        ocrs = run_ocr(images=[Image.fromarray(img) for img in document.images],
-                       langs=[self.langs],
-                       det_model=self.det_model,
-                       det_processor=self.det_processor,
-                       rec_model=self.rec_model,
-                       rec_processor=self.rec_processor)
+        ocrs = self.rec_predictor(images=[Image.fromarray(img) for img in document.images],
+                                  langs=[self.langs],
+                                  det_predictor=self.det_predictor)
 
         return ocrs
 
-    def to_ocr_dataframe(self, content: typing.List["surya.schema.OCRResult"]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: typing.List["surya.recognition.schema.OCRResult"]) -> OCRDataframe:
         """
         Convert docTR Document object to OCRDataframe object
         :param content: docTR Document object

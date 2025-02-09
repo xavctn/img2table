@@ -18,10 +18,10 @@ easyocr >= 1.7.0
 pillow>=10.0.1
 
 # docTR
-python-doctr>=0.6; python_version < '3.12'
+python-doctr>=0.8; python_version < '3.12'
 
 # Surya
-surya-ocr>=0.5; python_version >= '3.9'
+surya-ocr>=0.9; python_version >= '3.10'
 
 # Test dependencies
 pytest >= 6
