@@ -9,13 +9,18 @@ venv:
 	python -m venv ./venv || true
 	. $(VENV); python -m pip install pip wheel --upgrade;
 	. $(VENV); python -m pip install -r requirements-dev.txt --extra-index-url https://download.pytorch.org/whl/cpu
+	. $(VENV); python -m pip install -U opencv-python opencv-contrib-python opencv-python-headless
 
 update:
 	. $(VENV); python -m pip install -U -r requirements-dev.txt --extra-index-url https://download.pytorch.org/whl/cpu
+	. $(VENV); python -m pip install -U opencv-python opencv-contrib-python opencv-python-headless
 
 # Test commands
 test:
 	. $(VENV); pytest --cov-report term --cov=src
+
+fast-test:
+	. $(VENV); pytest --cov-report term --cov=src --ignore=tests/ocr --ignore=tests/document/base
 
 # Examples commands
 jupyter-examples:

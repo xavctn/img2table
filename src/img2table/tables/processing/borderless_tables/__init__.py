@@ -28,11 +28,16 @@ def coherent_table(tb: Table, elements: List[Cell]) -> Optional[Table]:
     # Dataframe of elements
     df_elements = pl.DataFrame([{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in elements])
 
+    df_relevant_rows = (df_rows.unique()
+                        .with_columns(pl.col("x1").len().over("row_id").alias("nb_cells"))
+                        .filter(pl.col("nb_cells") >= 3)
+                        )
+
+    if df_relevant_rows.height == 0:
+        return None
+
     # Get elements in each cells and identify coherent rows
-    rel_rows = (df_rows.unique()
-                .with_columns(pl.col("x1").len().over("row_id").alias("nb_cells"))
-                .filter(pl.col("nb_cells") >= 3)
-                .join(df_elements, how="cross")
+    rel_rows = (df_relevant_rows.join(df_elements, how="cross")
                 .with_columns(x_overlap=pl.min_horizontal("x2", "x2_right") - pl.max_horizontal("x1", "x1_right"),
                               y_overlap=pl.min_horizontal("y2", "y2_right") - pl.max_horizontal("y1", "y1_right"),
                               area=(pl.col("x2_right") - pl.col("x1_right")) * (pl.col("y2_right") - pl.col("y1_right")))

@@ -21,11 +21,11 @@ class Char:
 
     @property
     def width(self) -> int:
-        return self.x2 - self.x1
+        return (self.x2 - self.x1) or 1
 
     @property
     def height(self) -> int:
-        return self.y2 - self.y1
+        return (self.y2 - self.y1) or 1
 
     def distance(self, char: "Char") -> float:
         return (((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2 + (
@@ -56,11 +56,11 @@ class Word:
 
     @property
     def width(self) -> int:
-        return self.x2 - self.x1
+        return (self.x2 - self.x1) or 1
 
     @property
     def height(self) -> int:
-        return self.y2 - self.y1
+        return (self.y2 - self.y1) or 1
 
     @property
     def value(self) -> Optional[str]:

@@ -329,21 +329,22 @@ def recompute_contours(stats: np.ndarray, chars_array: np.ndarray) -> np.ndarray
     return np.array(list_contours) if list_contours else np.empty((0, 4), dtype=np.int64)
 
 
-@njit("List(float64)(int64[:,:])", cache=True, fastmath=True, parallel=False)
-def get_row_separations(stats: np.ndarray) -> List[float]:
+@njit("List(float64)(int64[:,:],float64)", cache=True, fastmath=True, parallel=False)
+def get_row_separations(stats: np.ndarray, char_length: float) -> List[float]:
     """
     Compute row separation between contours
     :param stats: array of contours
+    :param char_length: average character length
     :return: list of row separations
     """
     row_separations = list()
 
-    for i in prange(1, len(stats)):
+    for i in prange(len(stats)):
         # Get statistics
         xi, yi, wi, hi = stats[i][:]
         row_separation = 10 ** 6
 
-        for j in range(1, len(stats)):
+        for j in range(len(stats)):
             if i == j:
                 continue
 
@@ -353,7 +354,7 @@ def get_row_separations(stats: np.ndarray) -> List[float]:
             # Compute horizontal overlap and vertical positions
             h_overlap = min(xi + hi, xj + hj) - max(xi, xj)
             v_pos_i, v_pos_j = (2 * yi + hi) / 2, (2 * yj + hj) / 2
-            if h_overlap <= 0 or v_pos_j <= v_pos_i:
+            if h_overlap <= char_length // 2 or v_pos_j <= v_pos_i:
                 continue
 
             if v_pos_j - v_pos_i <= row_separation:
@@ -384,12 +385,12 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     stats_contours = recompute_contours(stats=stats, chars_array=chars_array)
 
     # Compute median line sep
-    row_separations = get_row_separations(stats=stats_contours)
+    row_separations = get_row_separations(stats=stats_contours, char_length=char_length)
 
     if row_separations:
         median_line_sep = (pl.DataFrame(row_separations, schema={"sep": float})
                            .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
-                           .group_by("sep").len() .sort(by=['len'], descending=[True])
+                           .group_by("sep").len().sort(by=['len', 'sep'], descending=[True, False])
                            .limit(1).to_dicts().pop().get("sep")
                            )
     else:
