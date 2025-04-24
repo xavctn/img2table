@@ -8,6 +8,25 @@ from numba import njit, prange
 
 from img2table.tables.objects.cell import Cell
 
+class MetricsOption:
+    """
+    Class for configuring options in image processing for metric calculation
+    """
+    def __init__(self, aspect_ratio=None):
+        """
+        Initialize the metric options
+        :param aspect_ratio: Aspect ratio threshold for determining dashed lines
+        """
+        self.aspect_ratio = 3 if aspect_ratio is None else aspect_ratio
+        
+    def get(self, key, default=None):
+        """
+        Get the option value
+        :param key: Option Name
+        :param default: Default Value
+        :return: Option value or default value
+        """
+        return getattr(self, key, default)
 
 @njit("int32[:,:](int32[:,:],int32[:,:])", fastmath=True, cache=True, parallel=False)
 def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
@@ -54,8 +73,8 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
     return np.array(cc_to_keep) if cc_to_keep else np.empty((0, 5), dtype=np.int32)
 
 
-@njit("int32[:,:](float64[:,:])", cache=True, fastmath=True, parallel=False)
-def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
+@njit("int32[:,:](float64[:,:], float64)", cache=True, fastmath=True, parallel=False)
+def remove_dotted_lines(complete_stats: np.ndarray, aspect_ratio: float) -> np.ndarray:
     """
     Remove dotted lines in image by identifying aligned connected components
     :param complete_stats: connected components' array
@@ -70,7 +89,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     for idx in prange(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
-        if w / h < 2:
+        if w / h < aspect_ratio:
             continue
 
         if y_middle - prev_y_middle <= 2:
@@ -99,7 +118,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     for idx in prange(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
-        if h / w < 2:
+        if h / w < aspect_ratio:
             continue
 
         if x_middle - prev_x_middle <= 2:
@@ -249,12 +268,14 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
     return character_thresh, np.array(list_relevant_chars) if list_relevant_chars else np.empty((0, 5), dtype=np.int32)
 
 
-def compute_char_length(thresh: np.ndarray) -> Tuple[Optional[float], Optional[np.ndarray], Optional[np.ndarray]]:
+def compute_char_length(thresh: np.ndarray, metrics_option: Optional[MetricsOption] = None) -> Tuple[Optional[float], Optional[np.ndarray], Optional[np.ndarray]]:
     """
     Compute average character length based on connected components' analysis
     :param thresh: threshold image array
     :return: tuple with average character length, thresholded image of characters and array of image characters
     """
+    if metrics_option is None:
+        metrics_option = MetricsOption()
     # Connected components
     _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
 
@@ -270,7 +291,8 @@ def compute_char_length(thresh: np.ndarray) -> Tuple[Optional[float], Optional[n
 
     # Remove dotted lines
     complete_stats = np.c_[stats, (2 * stats[:, 0] + stats[:, 2]) / 2, (2 * stats[:, 1] + stats[:, 3]) / 2]
-    stats = remove_dotted_lines(complete_stats=complete_stats)
+    
+    stats = remove_dotted_lines(complete_stats=complete_stats, aspect_ratio=metrics_option.get('aspect_ratio', 3.0))
 
     if len(stats) == 0:
         return None, None, None
@@ -403,14 +425,14 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     return median_line_sep, contours_cells
 
 
-def compute_img_metrics(thresh: np.ndarray) -> Tuple[Optional[float], Optional[float], Optional[List[Cell]]]:
+def compute_img_metrics(thresh: np.ndarray, metrics_option: Optional[MetricsOption] = None) -> Tuple[Optional[float], Optional[float], Optional[List[Cell]]]:
     """
     Compute metrics from image
     :param thresh: threshold image array
     :return: average character length, median line separation and image contours
     """
     # Compute average character length based on connected components analysis
-    char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh)
+    char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh, metrics_option=metrics_option)
 
     if char_length is None:
         return None, None, None
