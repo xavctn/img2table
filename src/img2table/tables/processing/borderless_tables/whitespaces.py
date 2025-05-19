@@ -129,6 +129,8 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
     :param continuous: boolean indicating if only continuous whitespaces are retrieved
     :return: list of vertical or horizontal whitespaces
     """
+    if not segment.elements:
+        return []
     # Flip object coordinates in horizontal case
     if not vertical:
         flipped_elements = [Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements]

@@ -46,8 +46,12 @@ def coherent_table(tb: Table, elements: List[Cell]) -> Optional[Table]:
                 )
 
     if len(rel_rows) > 0:
+        min_row = rel_rows[0].get("min_row")
+        max_row = rel_rows[0].get("max_row")
+        if min_row is None or max_row is None:
+            return None
         # Get new rows
-        new_rows = tb.items[rel_rows[0].get("min_row"):rel_rows[0].get("max_row") + 1]
+        new_rows = tb.items[min_row:max_row + 1]
         if len(new_rows) >= 2:
             return Table(rows=new_rows, borderless=True)
 

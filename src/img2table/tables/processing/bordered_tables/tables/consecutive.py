@@ -12,6 +12,9 @@ def merge_consecutive_tables(tables: List[Table], contours: List[Cell]) -> List[
     :param contours: list of image contours
     :return: list of processed tables
     """
+    # Filter out empty tables
+    tables = [t for t in tables if len(t.items) > 0]
+
     if len(tables) == 0:
         return []
 
