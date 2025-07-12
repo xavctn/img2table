@@ -12,7 +12,7 @@ import polars as pl
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
-
+from packaging import version
 
 class PaddleOCR(OCRInstance):
     """
@@ -27,7 +27,9 @@ class PaddleOCR(OCRInstance):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                from paddleocr import PaddleOCR as OCR
+                from paddleocr import PaddleOCR as OCR , __version__ 
+                self.version = __version__
+                
         except ModuleNotFoundError:
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[paddle]' to use this class.")
 
@@ -36,14 +38,28 @@ class PaddleOCR(OCRInstance):
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
-        # Create kwargs dict for constructor
-        kw = kw or {}
-        kw["lang"] = self.lang
-        kw["use_angle_cls"] = kw.get("use_angle_cls") or False
-        kw["show_log"] = kw.get("show_log") or False
+        def init_2x(self,lang: str = 'en', kw: Dict = None):
+           
+            # Create kwargs dict for constructor
+            kw = kw or {}
+            kw["lang"] = lang
+            kw["use_angle_cls"] = kw.get("use_angle_cls") or False
+            kw["show_log"] = kw.get("show_log") or False
 
-        self.ocr = OCR(**kw)
+            self.ocr = OCR(**kw)
 
+        def init_3x(self,lang: str = 'en', kw: Dict = None):
+            kw = kw or {}
+            kw["lang"] = lang
+            kw["use_angle_cls"] = kw.get("use_angle_cls") or False
+            
+            self.ocr = OCR(**kw)
+            
+        if version.parse(self.version) >= version.parse("3.0.0"):
+            init_3x(self=self,lang=lang,kw=kw)
+        else:
+            init_2x(self=self,lang=lang,kw=kw)
+    
     def hocr(self, image: np.ndarray) -> List:
         """
         Get OCR of an image using Paddle
@@ -55,8 +71,11 @@ class PaddleOCR(OCRInstance):
             # Write image to temporary file
             cv2.imwrite(tmp_file, image)
 
-            # Get OCR
-            ocr_result = self.ocr.ocr(img=tmp_file, cls=False)
+            # Get OCR and the version
+            if version.parse(self.version) >= version.parse("3.0.0"):
+                ocr_result = self.ocr.predict(tmp_file)
+            else:
+                ocr_result = self.ocr.ocr(img=tmp_file, cls=False)
 
         # Remove temporary file
         while os.path.exists(tmp_file):
@@ -64,11 +83,34 @@ class PaddleOCR(OCRInstance):
                 os.remove(tmp_file)
             except PermissionError:
                 pass
-
         # Get result
         ocr_result = ocr_result.pop()
-        return [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result] if ocr_result else []
+        if version.parse(self.version) >= version.parse("3.0.0"):
+            results = self.hocr_3x(ocr_result)
+        else:
+            results = [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result] if ocr_result else []
+        return  results
 
+    def hocr_3x(self,ocr_result):
+        """
+        PaddleOCR > 3.0.0 to hadnle the results
+        """
+        def box_to_points(box):
+            x1, y1, x2, y2 = box
+            return np.array([
+                [x1, y1],
+                [x2, y1],
+                [x2, y2],
+                [x1, y2]
+            ])
+        lines = list(zip(ocr_result["rec_boxes"], zip(ocr_result["rec_texts"], ocr_result["rec_scores"]))) 
+        normalized_lines = []
+        for bbox, (text, score) in lines:
+            if isinstance(bbox, np.ndarray) and bbox.shape == (4,):
+                bbox = box_to_points(bbox)
+                normalized_lines.append((bbox, (text, score)))
+
+        return [[bbox, (text, round(score, 2))] for bbox, (text, score) in normalized_lines] if normalized_lines else []
     def content(self, document: Document) -> List[List]:
         # Get OCR of all images
         ocrs = [self.hocr(image=image) for image in document.images]
