@@ -9,6 +9,10 @@ boto3
 # Azure
 azure-cognitiveservices-vision-computervision
 
+# Azure Document Intelligence
+azure-ai-documentintelligence
+azure-identity
+
 # Paddle
 paddlepaddle; python_version < '3.13'
 paddleocr>=2.0.6; python_version < '3.13'
