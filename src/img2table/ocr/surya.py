@@ -24,6 +24,7 @@ class SuryaOCR(OCRInstance):
         try:
             from surya.recognition import RecognitionPredictor
             from surya.detection import DetectionPredictor
+            from surya.foundation import FoundationPredictor
 
         except ModuleNotFoundError:
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[surya]' to use this class.")
@@ -38,7 +39,7 @@ class SuryaOCR(OCRInstance):
 
         # Initialize model
         self.det_predictor = DetectionPredictor()
-        self.rec_predictor = RecognitionPredictor()
+        self.rec_predictor = RecognitionPredictor(FoundationPredictor())
 
     def content(self, document: Document) -> typing.List["surya.recognition.schema.OCRResult"]:
         # Get OCR of all images

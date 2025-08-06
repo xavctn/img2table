@@ -10,18 +10,18 @@ boto3
 azure-cognitiveservices-vision-computervision
 
 # Paddle
-paddlepaddle; python_version < '3.13'
-paddleocr>=2.0.6; python_version < '3.13'
+paddlepaddle
+paddleocr>=2.0.6
 
 # EasyOCR
 easyocr >= 1.7.0
 pillow>=10.0.1
 
 # docTR
-python-doctr>=0.8; python_version < '3.12'
+python-doctr>=0.8
 
 # Surya
-surya-ocr>=0.9; python_version >= '3.10'
+surya-ocr>=0.15.0; python_version >= '3.10'
 
 # Test dependencies
 pytest >= 6

@@ -131,14 +131,16 @@ class OCRDataframe:
         # Group text by parent
         df_text_parent = (df_words_contained
                           .group_by(['row', 'col', 'parent'])
-                          .agg([pl.col('x1').min(),
-                                pl.col('x2').max(),
-                                pl.col('y1').min(),
-                                pl.col('y2').max(),
-                                pl.col('value').map_elements(lambda x: ' '.join(x), return_dtype=str).alias('value')])
+                          .agg(pl.col('x1').min(),
+                               pl.col('x2').max(),
+                               pl.col('y1').min(),
+                               pl.col('y2').max(),
+                               pl.col('value'))
+                          .with_columns(pl.col("value").list.join(" "))
                           .sort([pl.col("row"), pl.col("col"), pl.col('y1'), pl.col('x1')])
                           .group_by(['row', 'col'])
-                          .agg(pl.col('value').map_elements(lambda x: '\n'.join(x).strip(), return_dtype=str).alias('text'))
+                          .agg(pl.col('value'))
+                          .with_columns(text=pl.col("value").list.join("\n"))
                           )
 
         # Implement found values to table cells content
