@@ -1,19 +1,19 @@
 page;class;id;parent;value;confidence;x1;y1;x2;y2
-0;ocrx_word;word_1_1;word_1_1;Title;100;379;33;426;60
-0;ocrx_word;word_1_2;word_1_2;Test 1;96;964;38;1019;58
-0;ocrx_word;word_1_3;word_1_3;Test 2;100;1061;36;1115;58
-0;ocrx_word;word_1_4;word_1_4;Line 1 - Col 1;93;40;88;155;109
-0;ocrx_word;word_1_5;word_1_5;Line 1 -Col 2;94;282;88;395;109
-0;ocrx_word;word_1_6;word_1_6;Line 1-Col 3;94;499;88;614;109
-0;ocrx_word;word_1_7;word_1_7;Test 3;100;962;86;1020;112
-0;ocrx_word;word_1_8;word_1_8;Test 4;100;1061;88;1116;110
-0;ocrx_word;word_1_9;word_1_9;Line 2-Col 1;92;41;140;155;161
-0;ocrx_word;word_1_10;word_1_10;Line2-Col3;92;499;139;614;159
-0;ocrx_word;word_1_11;word_1_11;Line 3-Col 1;93;40;191;155;211
-0;ocrx_word;word_1_12;word_1_12;Merged Cells;99;327;188;446;213
-0;ocrx_word;word_1_13;word_1_13;Line 3-Col 3;88;499;191;616;211
-0;ocrx_word;word_1_14;word_1_14;Line4-Col 1;91;40;242;155;262
-0;ocrx_word;word_1_15;word_1_15;Line 4-Col 3;88;498;242;616;262
-0;ocrx_word;word_1_16;word_1_16;Line 5 - Col 1;98;40;289;155;314
-0;ocrx_word;word_1_17;word_1_17;Line 5-Col 2;89;282;292;395;313
-0;ocrx_word;word_1_18;word_1_18;Line 5-Col 3;91;498;292;614;313
+0;ocrx_word;word_1_1;word_1_1;Title;99;379;33;429;62
+0;ocrx_word;word_1_2;word_1_2;Test 1;99;962;34;1021;60
+0;ocrx_word;word_1_3;word_1_3;Test 2;98;1057;34;1117;60
+0;ocrx_word;word_1_4;word_1_4;Line 1 - Col 1;93;38;86;156;110
+0;ocrx_word;word_1_5;word_1_5;Line 1 -Col 2;91;277;85;396;110
+0;ocrx_word;word_1_6;word_1_6;Line 1 -Col 3;91;496;85;614;110
+0;ocrx_word;word_1_7;word_1_7;Test 3;98;961;85;1021;111
+0;ocrx_word;word_1_8;word_1_8;Test 4;95;1056;85;1117;111
+0;ocrx_word;word_1_9;word_1_9;Line 2 - Col 1;92;37;135;156;162
+0;ocrx_word;word_1_10;word_1_10;Line 2 -Col 3;91;496;136;614;161
+0;ocrx_word;word_1_11;word_1_11;Line 3 -Col 1;92;38;189;155;211
+0;ocrx_word;word_1_12;word_1_12;Merged Cells;98;324;186;447;214
+0;ocrx_word;word_1_13;word_1_13;Line 3 - Col 3;90;496;187;614;213
+0;ocrx_word;word_1_14;word_1_14;Line 4 - Col 1;90;38;239;156;263
+0;ocrx_word;word_1_15;word_1_15;Line 4 -Col 3;92;496;239;614;264
+0;ocrx_word;word_1_16;word_1_16;Line 5 - Col 1;93;38;292;155;313
+0;ocrx_word;word_1_17;word_1_17;Line 5 - Col 2;87;277;290;396;314
+0;ocrx_word;word_1_18;word_1_18;Line 5 -Col 3;88;496;290;614;315
