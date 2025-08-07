@@ -1,6 +1,4 @@
-# coding: utf-8
-
-from typing import List, Tuple, Dict
+from typing import Optional
 
 import polars as pl
 
@@ -13,7 +11,7 @@ class EasyOCR(OCRInstance):
     """
     EAsyOCR instance
     """
-    def __init__(self, lang: List[str] = ['en'], kw: Dict = None):
+    def __init__(self, lang: Optional[list[str]] = None, kw: Optional[dict] = None) -> None:
         """
         Initialization of EasyOCR instance
         :param lang: lang parameter used in EasyOCR
@@ -21,11 +19,12 @@ class EasyOCR(OCRInstance):
         """
         try:
             from easyocr import Reader
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[easyocr]' to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[easyocr]' to use this class.") from err
 
+        lang = lang or ["en"]
         if isinstance(lang, list):
-            if all([isinstance(lng, str) for lng in lang]):
+            if all(isinstance(lng, str) for lng in lang):
                 self.lang = lang
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
@@ -37,30 +36,26 @@ class EasyOCR(OCRInstance):
 
         self.reader = Reader(**kw)
 
-    def content(self, document: Document) -> List[List[Tuple]]:
+    def content(self, document: Document) -> list[list[tuple]]:
         # Get OCR of all images
-        ocrs = [self.reader.readtext(image) for image in document.images]
+        return [self.reader.readtext(image) for image in document.images]
 
-        return ocrs
-
-    def to_ocr_dataframe(self, content: List[List]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list]) -> OCRDataframe:
         """
         Convert hOCR HTML to OCRDataframe object
         :param content: hOCR HTML string
         :return: OCRDataframe object corresponding to content
         """
         # Create list of elements
-        list_elements = list()
+        list_elements = []
 
         for page, ocr_result in enumerate(content):
-            word_id = 0
-            for word in ocr_result:
-                word_id += 1
+            for idx, word in enumerate(ocr_result):
                 dict_word = {
                     "page": page,
                     "class": "ocrx_word",
-                    "id": f"word_{page + 1}_{word_id}",
-                    "parent": f"word_{page + 1}_{word_id}",
+                    "id": f"word_{page + 1}_{idx + 1}",
+                    "parent": f"word_{page + 1}_{idx + 1}",
                     "value": word[1],
                     "confidence": round(100 * word[2]),
                     "x1": round(min([edge[0] for edge in word[0]])),

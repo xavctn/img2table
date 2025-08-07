@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List
 
 import numpy as np
 from numba import njit, prange
@@ -17,7 +15,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     :return: array of cells coordinates
     """
     # Get potential cells from horizontal lines
-    potential_cells = list()
+    potential_cells = []
     for i in prange(h_lines_arr.shape[0]):
         x1i, y1i, x2i, y2i = h_lines_arr[i][:]
         for j in prange(h_lines_arr.shape[0]):
@@ -40,7 +38,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
 
     # Deduplicate on upper bound
     potential_cells = sorted(potential_cells)
-    dedup_upper = list()
+    dedup_upper = []
     prev_x1, prev_x2, prev_y1 = 0, 0, 0
     for idx in range(len(potential_cells)):
         x1, x2, y1, y2 = potential_cells[idx]
@@ -51,7 +49,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
 
     # Deduplicate on lower bound
     dedup_upper = sorted(dedup_upper)
-    dedup_lower = list()
+    dedup_lower = []
     prev_x1, prev_x2, prev_y2 = 0, 0, 0
     for idx in range(len(dedup_upper)):
         x1, x2, y2, _y1 = dedup_upper[idx]
@@ -63,7 +61,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
 
     # Create array of potential cells
     cells_array = np.array(dedup_lower)
-    cells = list()
+    cells = []
 
     for i in prange(cells_array.shape[0]):
         x1, x2, y1, y2 = cells_array[i][:]
@@ -71,7 +69,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
         # Compute horizontal margin
         margin = max(5, (x2 - x1) * 0.025)
 
-        delimiters = list()
+        delimiters = []
         for j in range(v_lines_arr.shape[0]):
             x1v, y1v, x2v, y2v = v_lines_arr[j][:]
 
@@ -92,7 +90,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     return np.array(cells).astype(np.int64) if cells else np.empty((0, 4), dtype=np.int64)
 
 
-def get_cells_dataframe(horizontal_lines: List[Line], vertical_lines: List[Line]) -> List[Cell]:
+def get_cells_dataframe(horizontal_lines: list[Line], vertical_lines: list[Line]) -> list[Cell]:
     """
     Create dataframe of all possible cells from horizontal and vertical rows
     :param horizontal_lines: list of horizontal rows

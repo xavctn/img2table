@@ -20,7 +20,7 @@ jobs:
         cache: 'pip'
     - name: Install dependencies
       run: make venv
-    - name: Perform tests
-      run: make test
+    - name: Perform lint / tests
+      run: make lint test
       env:
         NUMBA_DISABLE_JIT: 1

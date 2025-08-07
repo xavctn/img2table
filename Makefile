@@ -22,6 +22,9 @@ test:
 fast-test:
 	. $(VENV); pytest --cov-report term --cov=src --ignore=tests/ocr --ignore=tests/document/base
 
+lint:
+	. $(VENV); ruff check src
+
 # Examples commands
 jupyter-examples:
 	. $(VENV); cd examples && jupyter notebook

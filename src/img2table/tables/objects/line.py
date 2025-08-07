@@ -1,7 +1,6 @@
-# coding: utf-8
 import math
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Any
 
 import numpy as np
 
@@ -36,7 +35,7 @@ class Line(TableObject):
         return self.angle % 180 == 90
 
     @property
-    def dict(self):
+    def dict(self) -> dict[str, Any]:
         return {"x1": self.x1,
                 "x2": self.x2,
                 "y1": self.y1,
@@ -49,7 +48,7 @@ class Line(TableObject):
     def transpose(self) -> "Line":
         return Line(x1=self.y1, y1=self.x1, x2=self.y2, y2=self.x2, thickness=self.thickness)
 
-    def reprocess(self):
+    def reprocess(self) -> "Line":
         # Reallocate coordinates in proper order
         _x1 = min(self.x1, self.x2)
         _x2 = max(self.x1, self.x2)
@@ -59,13 +58,13 @@ class Line(TableObject):
 
         # Correct "almost" horizontal or vertical rows
         if abs(self.angle) <= 5:
-            y_val = int(round((self.y1 + self.y2) / 2))
+            y_val = round((self.y1 + self.y2) / 2)
             self.y2 = self.y1 = y_val
         elif abs(self.angle - 90) <= 5:
-            x_val = int(round((self.x1 + self.x2) / 2))
+            x_val = round((self.x1 + self.x2) / 2)
             self.x2 = self.x1 = x_val
 
         return self
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))

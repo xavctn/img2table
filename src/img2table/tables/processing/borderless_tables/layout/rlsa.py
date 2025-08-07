@@ -1,11 +1,10 @@
-# coding: utf-8
 
 """
 Implementation of Adaptive RLSA algorithm based on https://www.sciencedirect.com/science/article/abs/pii/S0262885609002005
 and text line segmentation by
 """
 
-from typing import List, Optional
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -75,10 +74,10 @@ def adaptive_rlsa(cc: np.ndarray, cc_stats: np.ndarray, a: float, th: float, c: 
             if label == 0:
                 continue
             # First encountered CC
-            elif prev_cc_label == -1 or label == -1:
+            if prev_cc_label == -1 or label == -1:
                 prev_cc_position, prev_cc_label = col, label
                 continue
-            elif label == prev_cc_label:
+            if label == prev_cc_label:
                 # Update all pixels in range
                 rsla_img[row][prev_cc_position:col] = 1
             else:
@@ -137,15 +136,15 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
             # Not a CC
             if max_value == 0:
                 continue
-            else:
-                length = row - prev_cc_position - 1
-                if length > h / 5:
-                    for id_row in range(prev_cc_position + 1, row):
-                        for idx in range(min_width):
-                            mask_obstacles[id_row][col + idx] = True
 
-                # Update counters
-                prev_cc_position = row
+            length = row - prev_cc_position - 1
+            if length > h / 5:
+                for id_row in range(prev_cc_position + 1, row):
+                    for idx in range(min_width):
+                        mask_obstacles[id_row][col + idx] = True
+
+            # Update counters
+            prev_cc_position = row
 
         # Check ending
         length = row + 1 - prev_cc_position - 1
@@ -198,9 +197,8 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
             for col in range(x, x + w):
                 value = thresh[row][col]
 
-                if value == 255:
-                    if prev_value == 0:
-                        h_tc += 1
+                if value == 255 and prev_value == 0:
+                    h_tc += 1
                 prev_value = value
 
         # Get vertical white to black transitions
@@ -223,15 +221,11 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
 
         # Apply rules to identify text elements
         is_text = False
-        if 0.8 * Hm <= H <= 1.2 * Hm:
+        if (0.8 * Hm <= H <= 1.2 * Hm) or ( 0.8 * Hm > H and 1.2 < THx < 3.5):
             is_text = True
-        elif H < 0.8 * Hm and 1.2 < THx < 3.5:
-            is_text = True
-        elif THx < 0.2 and R > 5 and 0.95 < TVx < 1.05:
+        elif (THx < 0.2 and R > 5 and 0.95 < TVx < 1.05) or (THx > 5 and R < 0.2 and 0.95 < THy < 1.05):
             is_text = False
-        elif THx > 5 and R < 0.2 and 0.95 < THy < 1.05:
-            is_text = False
-        elif H > 1.2 * Hm and 1.2 < THx < 3.5 and 1.2 < TVx < 3.5:
+        elif 1.2 * Hm < H and 1.2 < THx < 3.5 and 1.2 < TVx < 3.5:
             is_text = True
 
         if is_text:
@@ -242,8 +236,8 @@ def get_text_mask(thresh: np.ndarray, cc_stats_rlsa: np.ndarray, char_length: fl
     return text_mask
 
 
-def identify_text_mask(thresh: np.ndarray, lines: List[Line], char_length: float,
-                       existing_tables: Optional[List[Table]] = None) -> np.ndarray:
+def identify_text_mask(thresh: np.ndarray, lines: list[Line], char_length: float,
+                       existing_tables: Optional[list[Table]] = None) -> np.ndarray:
     """
     Identify text mask of the input image
     :param thresh: threshold image array

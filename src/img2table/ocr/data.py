@@ -1,5 +1,5 @@
-# coding: utf-8
 from dataclasses import dataclass
+from typing import Optional
 
 import polars as pl
 
@@ -16,7 +16,8 @@ class OCRDataframe:
         df_page = self.df.filter(pl.col('page') == page_number)
         return OCRDataframe(df=df_page)
 
-    def get_text_cell(self, cell: Cell, margin: int = 0, page_number: int = None, min_confidence: int = 50) -> str:
+    def get_text_cell(self, cell: Cell, margin: int = 0, page_number: Optional[int] = None,
+                      min_confidence: int = 50) -> str:
         """
         Get text corresponding to cell
         :param cell: Cell object in document
@@ -82,7 +83,7 @@ class OCRDataframe:
 
         return "\n".join([" ".join(line).strip() for line in text_lines]).strip() or None
 
-    def get_text_table(self, table: Table, page_number: int = None, min_confidence: int = 50) -> Table:
+    def get_text_table(self, table: Table, page_number: Optional[int] = None, min_confidence: int = 50) -> Table:
         """
         Identify text located in Table object
         :param table: Table object
@@ -149,7 +150,10 @@ class OCRDataframe:
 
         return table
 
-    def __eq__(self, other):
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, self.__class__):
             try:
                 assert self.df.sort(by=['id']).equals(other.df.sort(by=['id']))

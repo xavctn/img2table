@@ -1,10 +1,9 @@
-# coding: utf-8
 import base64
 import binascii
 import os
 import typing
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Optional, Dict, Tuple
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -19,7 +18,7 @@ if typing.TYPE_CHECKING:
 
 
 class VisionContent:
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: int) -> None:
         self.timeout = timeout
 
     @staticmethod
@@ -34,17 +33,17 @@ class VisionContent:
 
 
 class VisionEndpointContent(VisionContent):
-    def __init__(self, api_key: str, timeout: int):
+    def __init__(self, api_key: str, timeout: int) -> None:
         """
         Document content class from Google Vision using direct requests to endpoint
         :param api_key: Google Vision API key
         :param timeout: requests timeout in seconds
         """
-        super(VisionEndpointContent, self).__init__(timeout=timeout)
+        super().__init__(timeout=timeout)
         self.api_key = api_key
 
     @staticmethod
-    def map_response(response: Dict, page: int, width: int, height: int) -> List[Dict]:
+    def map_response(response: dict, page: int, width: int, height: int) -> list[dict]:
         """
         Extract test_data from API endpoint response
         :param response: json response from Google API endpoint
@@ -53,7 +52,7 @@ class VisionEndpointContent(VisionContent):
         :param height: image height
         :return: list of OCR elements
         """
-        elements = list()
+        elements = []
         for id_block, block in enumerate(response['responses'][0]['fullTextAnnotation']['pages'][0]['blocks']):
             for id_par, par in enumerate(block.get('paragraphs')):
                 id_line = 0
@@ -92,7 +91,7 @@ class VisionEndpointContent(VisionContent):
 
         return elements
 
-    def get_ocr_image(self, img: np.ndarray, page: int) -> List[Dict]:
+    def get_ocr_image(self, img: np.ndarray, page: int) -> list[dict]:
         """
         Extract OCR from image
         :param img: image array
@@ -122,14 +121,14 @@ class VisionEndpointContent(VisionContent):
 
         return self.map_response(response=response, page=page, width=img.shape[1], height=img.shape[0])
 
-    def get_content(self, document: Document) -> List[List[Dict]]:
+    def get_content(self, document: Document) -> list[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object
         :return: list of OCR elements by page
         """
         # Call API for all images of document
-        results = list()
+        results = []
         with ThreadPoolExecutor(max_workers=20) as pool:
             args = ((image, idx) for idx, image in enumerate(document.images))
             for ocr in pool.map(lambda d: self.get_ocr_image(*d), args):
@@ -139,22 +138,22 @@ class VisionEndpointContent(VisionContent):
 
 
 class VisionAPIContent(VisionContent):
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: int) -> None:
         """
         Document content class from Google Vision using direct requests to endpoint
         :param timeout: requests timeout in seconds
         """
         try:
             from google.cloud import vision
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.") from err
 
-        super(VisionAPIContent, self).__init__(timeout=timeout)
+        super().__init__(timeout=timeout)
         self.client = vision.ImageAnnotatorClient()
 
     @staticmethod
     def map_response(response: "vision_v1.types.BatchAnnotateImagesResponse",
-                     shapes: List[Tuple[int, int]]) -> List[List[Dict]]:
+                     shapes: list[tuple[int, int]]) -> list[list[dict]]:
         """
         Extract data from API endpoint response object
         :param response: API endpoint response object
@@ -163,12 +162,12 @@ class VisionAPIContent(VisionContent):
         """
         from google.cloud import vision_v1
 
-        elements = list()
+        elements = []
         for id_page, page in enumerate(response.responses):
             # Get image shape
             height, width = shapes[id_page]
 
-            page_elements = list()
+            page_elements = []
             for id_block, block in enumerate(page.full_text_annotation.pages[0].blocks):
                 for id_par, par in enumerate(block.paragraphs):
                     id_line = 0
@@ -180,14 +179,14 @@ class VisionAPIContent(VisionContent):
                         y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
 
                         # Compute x and y values in bounding box
-                        x_vals = list()
+                        x_vals = []
                         for vertex in word.bounding_box.vertices:
                             try:
                                 x_vals.append(vertex.x or x_repl)
                             except AttributeError:
                                 x_vals.append(x_repl)
 
-                        y_vals = list()
+                        y_vals = []
                         for vertex in word.bounding_box.vertices:
                             try:
                                 y_vals.append(vertex.y or y_repl)
@@ -224,7 +223,7 @@ class VisionAPIContent(VisionContent):
 
         return elements
 
-    def get_content(self, document: Document) -> List[List[Dict]]:
+    def get_content(self, document: Document) -> list[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -232,10 +231,10 @@ class VisionAPIContent(VisionContent):
         """
         try:
             from google.cloud import vision_v1
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[gcp]' to use this class.") from err
 
-        reqs, shapes = list(), list()
+        reqs, shapes = [], []
         for img in document.images:
             # Create image object
             image = vision_v1.Image()
@@ -262,7 +261,7 @@ class VisionOCR(OCRInstance):
     Google Vision OCR instance
     """
 
-    def __init__(self, api_key: Optional[str] = None, timeout: int = 15):
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 15) -> None:
         """
         Initialization of Google Vision OCR instance
         :param api_key: Google Vision API key
@@ -286,18 +285,16 @@ class VisionOCR(OCRInstance):
         else:
             self.content_getter = VisionEndpointContent(api_key=api_key, timeout=timeout)
 
-    def content(self, document: Document) -> List[List[Dict]]:
+    def content(self, document: Document) -> list[list[dict]]:
         return self.content_getter.get_content(document=document)
 
-    def to_ocr_dataframe(self, content: List[List[Dict]]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe:
         """
         Convert list of OCR elements by page to OCRDataframe object
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = list()
-        for page_elements in content:
-            if page_elements:
-                list_dfs.append(pl.DataFrame(data=page_elements, schema=self.pl_schema))
+        list_dfs = [pl.DataFrame(data=page_elements, schema=self.pl_schema)
+                    for page_elements in content if page_elements]
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

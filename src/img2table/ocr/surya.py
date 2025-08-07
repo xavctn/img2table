@@ -1,4 +1,3 @@
-# coding: utf-8
 
 import typing
 
@@ -17,23 +16,23 @@ class SuryaOCR(OCRInstance):
     """
     DocTR instance
     """
-    def __init__(self, langs: typing.List[str] = None):
+    def __init__(self, langs: typing.Optional[list[str]] = None) -> None:
         """
-        Initialization of EasyOCR instance
+        Initialization of SuryaOCR instance
         """
         try:
             from surya.recognition import RecognitionPredictor
             from surya.detection import DetectionPredictor
             from surya.foundation import FoundationPredictor
 
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[surya]' to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[surya]' to use this class.") from err
 
         if isinstance(langs, list):
-            if all([isinstance(lng, str) for lng in langs]):
+            if all(isinstance(lng, str) for lng in langs):
                 self.langs = langs or ["en"]
             else:
-                raise TypeError(f"All values should be strings for langs argument")
+                raise TypeError("All values should be strings for langs argument")
         else:
             raise TypeError(f"Invalid type {type(langs)} for langs argument")
 
@@ -41,32 +40,28 @@ class SuryaOCR(OCRInstance):
         self.det_predictor = DetectionPredictor()
         self.rec_predictor = RecognitionPredictor(FoundationPredictor())
 
-    def content(self, document: Document) -> typing.List["surya.recognition.schema.OCRResult"]:
+    def content(self, document: Document) -> list["surya.recognition.schema.OCRResult"]:
         # Get OCR of all images
-        ocrs = self.rec_predictor(images=[Image.fromarray(img) for img in document.images],
+        return self.rec_predictor(images=[Image.fromarray(img) for img in document.images],
                                   langs=[self.langs],
                                   det_predictor=self.det_predictor)
 
-        return ocrs
-
-    def to_ocr_dataframe(self, content: typing.List["surya.recognition.schema.OCRResult"]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list["surya.recognition.schema.OCRResult"]) -> OCRDataframe:
         """
         Convert docTR Document object to OCRDataframe object
         :param content: docTR Document object
         :return: OCRDataframe object corresponding to content
         """
         # Create list of elements
-        list_elements = list()
+        list_elements = []
 
         for page_id, ocr_result in enumerate(content):
-            line_id = 0
-            for text_line in ocr_result.text_lines:
-                line_id += 1
+            for idx, text_line in enumerate(ocr_result.text_lines):
                 dict_word = {
                     "page": page_id,
                     "class": "ocrx_word",
-                    "id": f"word_{page_id + 1}_{line_id}_0",
-                    "parent": f"word_{page_id + 1}_{line_id}",
+                    "id": f"word_{page_id + 1}_{idx + 1}_0",
+                    "parent": f"word_{page_id + 1}_{idx + 1}",
                     "value": text_line.text,
                     "confidence": round(100 * text_line.confidence),
                     "x1": int(text_line.bbox[0]),

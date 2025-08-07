@@ -1,4 +1,3 @@
-# coding: utf-8
 
 import typing
 
@@ -16,14 +15,14 @@ class DocTR(OCRInstance):
     """
     DocTR instance
     """
-    def __init__(self, detect_language: bool = False, kw: typing.Dict = None):
+    def __init__(self, detect_language: bool = False, kw: typing.Optional[dict] = None) -> None:
         """
         Initialization of EasyOCR instance
         """
         try:
             from doctr.models import ocr_predictor
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install doctr to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install doctr to use this class.") from err
 
         # Create kwargs dict for constructor
         kw = kw or {}
@@ -34,9 +33,7 @@ class DocTR(OCRInstance):
 
     def content(self, document: Document) -> "doctr.io.elements.Document":
         # Get OCR of all images
-        ocrs = self.model(document.images)
-
-        return ocrs
+        return self.model(document.images)
 
     def to_ocr_dataframe(self, content: "doctr.io.elements.Document") -> OCRDataframe:
         """
@@ -45,7 +42,7 @@ class DocTR(OCRInstance):
         :return: OCRDataframe object corresponding to content
         """
         # Create list of elements
-        list_elements = list()
+        list_elements = []
 
         for page_id, page in enumerate(content.pages):
             dimensions = page.dimensions

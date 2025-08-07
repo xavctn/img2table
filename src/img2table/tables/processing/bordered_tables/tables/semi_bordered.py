@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List, Tuple
 
 import polars as pl
 
@@ -8,7 +6,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.processing.bordered_tables.tables.table_creation import normalize_table_cells
 
 
-def get_lines_in_cluster(cluster: List[Cell], lines: List[Line]) -> Tuple[List[Line], List[Line]]:
+def get_lines_in_cluster(cluster: list[Cell], lines: list[Line]) -> tuple[list[Line], list[Line]]:
     """
     Identify list of lines belonging to cluster
     :param cluster: list of cells in cluster
@@ -32,8 +30,8 @@ def get_lines_in_cluster(cluster: List[Cell], lines: List[Line]) -> Tuple[List[L
     return h_lines_cl, v_lines_cl
 
 
-def identify_table_dimensions(cluster: List[Cell], h_lines_cl: List[Line], v_lines_cl: List[Line],
-                              char_length: float) -> Tuple[int, int, int, int]:
+def identify_table_dimensions(cluster: list[Cell], h_lines_cl: list[Line], v_lines_cl: list[Line],
+                              char_length: float) -> tuple[int, int, int, int]:
     """
     Identify table dimensions by checking lines corresponding to cluster
     :param cluster: cluster of cells
@@ -85,8 +83,8 @@ def identify_table_dimensions(cluster: List[Cell], h_lines_cl: List[Line], v_lin
     return left_val, right_val, top_val, bottom_val
 
 
-def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_lines_cl: List[Line], left_val: int,
-                                 right_val: int, top_val: int, bottom_val: int) -> List[Cell]:
+def identify_potential_new_cells(cluster: list[Cell], h_lines_cl: list[Line], v_lines_cl: list[Line], left_val: int,
+                                 right_val: int, top_val: int, bottom_val: int) -> list[Cell]:
     """
     Indetify potential new cells in cluster based on computed dimensions
     :param cluster: cluster of cells
@@ -99,15 +97,15 @@ def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_
     :return: list of potential cells
     """
     # Compute x and y values used in cluster
-    x_cluster = sorted(list({c.x1 for c in cluster}.union({c.x2 for c in cluster}).union({left_val, right_val})))
-    y_cluster = sorted(list({c.y1 for c in cluster}.union({c.y2 for c in cluster}).union({top_val, bottom_val})))
+    x_cluster = sorted({c.x1 for c in cluster}.union({c.x2 for c in cluster}).union({left_val, right_val}))
+    y_cluster = sorted({c.y1 for c in cluster}.union({c.y2 for c in cluster}).union({top_val, bottom_val}))
 
     # Create list of new cells
-    new_cells = list()
+    new_cells = []
 
     # Compute cells on left end
     x1, x2 = x_cluster[0], x_cluster[1]
-    y_vals = sorted(list({top_val, bottom_val}.union({l.y1 for l in h_lines_cl if min(l.x2, x2) - max(l.x1, x1) >= 0.9 * (x2 - x1)})))
+    y_vals = sorted({top_val, bottom_val}.union({ln.y1 for ln in h_lines_cl if min(ln.x2, x2) - max(ln.x1, x1) >= 0.9 * (x2 - x1)}))
     for y1, y2 in zip(y_vals, y_vals[1:]):
         new_cell = Cell(x1=x1, y1=y1, x2=x2, y2=y2)
         if new_cell.area > 0:
@@ -115,7 +113,7 @@ def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_
 
     # Compute cells on right end
     x1, x2 = x_cluster[-2], x_cluster[-1]
-    y_vals = sorted(list({top_val, bottom_val}.union({l.y1 for l in h_lines_cl if min(l.x2, x2) - max(l.x1, x1) >= 0.9 * (x2 - x1)})))
+    y_vals = sorted({top_val, bottom_val}.union({ln.y1 for ln in h_lines_cl if min(ln.x2, x2) - max(ln.x1, x1) >= 0.9 * (x2 - x1)}))
     for y1, y2 in zip(y_vals, y_vals[1:]):
         new_cell = Cell(x1=x1, y1=y1, x2=x2, y2=y2)
         if new_cell.area > 0:
@@ -123,7 +121,7 @@ def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_
 
     # Compute cells on top end
     y1, y2 = y_cluster[0], y_cluster[1]
-    x_vals = sorted(list({left_val, right_val}.union({l.x1 for l in v_lines_cl if min(l.y2, y2) - max(l.y1, y1) >= 0.9 * (y2 - y1)})))
+    x_vals = sorted({left_val, right_val}.union({ln.x1 for ln in v_lines_cl if min(ln.y2, y2) - max(ln.y1, y1) >= 0.9 * (y2 - y1)}))
     for x1, x2 in zip(x_vals, x_vals[1:]):
         new_cell = Cell(x1=x1, y1=y1, x2=x2, y2=y2)
         if new_cell.area > 0:
@@ -131,7 +129,7 @@ def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_
 
     # Compute cells on bottom end
     y1, y2 = y_cluster[-2], y_cluster[-1]
-    x_vals = sorted(list({left_val, right_val}.union({l.x1 for l in v_lines_cl if min(l.y2, y2) - max(l.y1, y1) >= 0.9 * (y2 - y1)})))
+    x_vals = sorted({left_val, right_val}.union({ln.x1 for ln in v_lines_cl if min(ln.y2, y2) - max(ln.y1, y1) >= 0.9 * (y2 - y1)}))
     for x1, x2 in zip(x_vals, x_vals[1:]):
         new_cell = Cell(x1=x1, y1=y1, x2=x2, y2=y2)
         if new_cell.area > 0:
@@ -140,7 +138,7 @@ def identify_potential_new_cells(cluster: List[Cell], h_lines_cl: List[Line], v_
     return list(set(new_cells))
 
 
-def update_cluster_cells(cluster: List[Cell], new_cells: List[Cell]) -> List[Cell]:
+def update_cluster_cells(cluster: list[Cell], new_cells: list[Cell]) -> list[Cell]:
     """
     Update cluster cells with new ones if relevant
     :param cluster: cluster of cells
@@ -193,11 +191,10 @@ def update_cluster_cells(cluster: List[Cell], new_cells: List[Cell]) -> List[Cel
 
     if final_cells:
         return normalize_table_cells(cluster_cells=cluster + final_cells)
-    else:
-        return cluster
+    return cluster
 
 
-def add_semi_bordered_cells(cluster: List[Cell], lines: List[Line], char_length: float):
+def add_semi_bordered_cells(cluster: list[Cell], lines: list[Line], char_length: float) -> list[Cell]:
     """
     Identify and add semi-bordered cells to cluster
     :param cluster: cluster of cells
@@ -227,6 +224,4 @@ def add_semi_bordered_cells(cluster: List[Cell], lines: List[Line], char_length:
                                              bottom_val=bottom_val)
 
     # Update cluster cells
-    updated_cluster = update_cluster_cells(cluster=cluster, new_cells=new_cells)
-
-    return updated_cluster
+    return update_cluster_cells(cluster=cluster, new_cells=new_cells)

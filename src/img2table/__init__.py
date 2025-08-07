@@ -1,9 +1,9 @@
-# coding: utf-8
 
 
 class Validations:
-    def __post_init__(self):
-        """Run validation methods if declared.
+    def __post_init__(self) -> None:
+        """
+        Run validation methods if declared.
         The validation method can be a simple check
         that raises ValueError or a transformation to
         the field value.

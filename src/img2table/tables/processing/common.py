@@ -1,6 +1,6 @@
 # coding: utf_8
 import copy
-from typing import List, Union, Optional
+from typing import Union, Optional
 
 import cv2
 import numpy as np
@@ -36,7 +36,7 @@ def is_contained_cell(inner_cell: Union[Cell, tuple], outer_cell: Union[Cell, tu
     return intersection_area / inner_cell.area >= percentage
 
 
-def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
+def merge_overlapping_contours(contours: list[Cell]) -> list[Cell]:
     """
     Merge overlapping contours
     :param contours: list of contours as Cell objects
@@ -89,7 +89,7 @@ def merge_overlapping_contours(contours: List[Cell]) -> List[Cell]:
     return [Cell(**d) for d in df_final.to_dicts()]
 
 
-def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> List[Cell]:
+def merge_contours(contours: list[Cell], vertically: Optional[bool] = True) -> list[Cell]:
     """
     Create merge contours by an axis
     :param contours: list of contours
@@ -131,7 +131,7 @@ def merge_contours(contours: List[Cell], vertically: Optional[bool] = True) -> L
 
 
 def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: int = 9, kernel_size: int = 15,
-                      merge_vertically: Optional[bool] = True) -> List[Cell]:
+                      merge_vertically: Optional[bool] = True) -> list[Cell]:
     """
     Get list of contours contained in cell
     :param img: image array
@@ -166,7 +166,7 @@ def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: i
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
     # Get list of contours
-    list_cnts_cell = list()
+    list_cnts_cell = []
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
         x = x + cell.x1 - margin
@@ -175,7 +175,5 @@ def get_contours_cell(img: np.ndarray, cell: Cell, margin: int = 5, blur_size: i
         list_cnts_cell.append(contour_cell)
 
     # Add contours to row
-    contours = merge_contours(contours=list_cnts_cell,
-                              vertically=merge_vertically)
-
-    return contours
+    return merge_contours(contours=list_cnts_cell,
+                          vertically=merge_vertically)

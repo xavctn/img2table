@@ -1,4 +1,3 @@
-# coding: utf-8
 from dataclasses import dataclass
 
 from img2table.tables.objects import TableObject
@@ -18,5 +17,5 @@ class Cell(TableObject):
         bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
         return TableCell(bbox=bbox, value=self.content)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))

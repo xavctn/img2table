@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -12,8 +11,8 @@ from img2table.tables.processing.borderless_tables.layout.table_segments import 
 from img2table.tables.processing.borderless_tables.model import TableSegment, ImageSegment
 
 
-def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
-                  median_line_sep: float, existing_tables: Optional[List[Table]] = None) -> List[TableSegment]:
+def segment_image(thresh: np.ndarray, lines: list[Line], char_length: float,
+                  median_line_sep: float, existing_tables: Optional[list[Table]] = None) -> list[TableSegment]:
     """
     Segment image and its elements
     :param thresh: threshold image array
@@ -31,8 +30,7 @@ def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
 
     # Identify image elements
     img_elements = get_image_elements(thresh=text_thresh,
-                                      char_length=char_length,
-                                      median_line_sep=median_line_sep)
+                                      char_length=char_length)
 
     if len(img_elements) == 0:
         return []
@@ -46,10 +44,8 @@ def segment_image(thresh: np.ndarray, lines: List[Line], char_length: float,
                                          lines=lines)
 
     # Within each column, identify segments that can correspond to tables
-    tb_segments = [table_segment for col_segment in col_segments
-                   for table_segment in get_table_segments(segment=col_segment,
-                                                           char_length=char_length,
-                                                           median_line_sep=median_line_sep)
-                   ]
-
-    return tb_segments
+    return [table_segment for col_segment in col_segments
+            for table_segment in get_table_segments(segment=col_segment,
+                                                    char_length=char_length,
+                                                    median_line_sep=median_line_sep)
+            ]

@@ -1,10 +1,10 @@
-# coding: utf-8
 
-import os
 import warnings
 from importlib.metadata import version
+from importlib.util import find_spec
+from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Dict, Any
+from typing import Any, Optional
 
 import cv2
 import numpy as np
@@ -19,7 +19,7 @@ class PaddleOCR2(OCRInstance):
     """
     Paddle-OCR 2.X instance
     """
-    def __init__(self, lang: str = 'en', kw: Dict = None):
+    def __init__(self, lang: str = 'en', kw: Optional[dict] = None) -> None:
         """
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle
@@ -39,7 +39,7 @@ class PaddleOCR2(OCRInstance):
         from paddleocr import PaddleOCR as OCR
         self.ocr = OCR(**kw)
 
-    def hocr(self, image: np.ndarray) -> List:
+    def hocr(self, image: np.ndarray) -> list:
         """
         Get OCR of an image using Paddle
         :param image: numpy array representing the image
@@ -54,9 +54,9 @@ class PaddleOCR2(OCRInstance):
             ocr_result = self.ocr.ocr(img=tmp_file, cls=False)
 
         # Remove temporary file
-        while os.path.exists(tmp_file):
+        while Path(tmp_file).exists():
             try:
-                os.remove(tmp_file)
+                Path(tmp_file).unlink(missing_ok=True)
             except PermissionError:
                 pass
 
@@ -64,30 +64,26 @@ class PaddleOCR2(OCRInstance):
         ocr_result = ocr_result.pop()
         return [[bbox, (word[0], round(word[1], 2))] for bbox, word in ocr_result] if ocr_result else []
 
-    def content(self, document: Document) -> List[List]:
+    def content(self, document: Document) -> list[list]:
         # Get OCR of all images
-        ocrs = [self.hocr(image=image) for image in document.images]
+        return [self.hocr(image=image) for image in document.images]
 
-        return ocrs
-
-    def to_ocr_dataframe(self, content: List[List]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list]) -> OCRDataframe:
         """
         Convert hOCR HTML to OCRDataframe object
         :param content: hOCR HTML string
         :return: OCRDataframe object corresponding to content
         """
         # Create list of elements
-        list_elements = list()
+        list_elements = []
 
         for page, ocr_result in enumerate(content):
-            word_id = 0
-            for bbox, word in ocr_result:
-                word_id += 1
+            for idx, (bbox, word) in enumerate(ocr_result):
                 dict_word = {
                     "page": page,
                     "class": "ocrx_word",
-                    "id": f"word_{page + 1}_{word_id}",
-                    "parent": f"word_{page + 1}_{word_id}",
+                    "id": f"word_{page + 1}_{idx + 1}",
+                    "parent": f"word_{page + 1}_{idx + 1}",
                     "value": word[0],
                     "confidence": 100 * word[1],
                     "x1": round(min([edge[0] for edge in bbox])),
@@ -106,7 +102,7 @@ class PaddleOCR3(OCRInstance):
     Paddle-OCR 3.X instance
     """
 
-    def __init__(self, lang: str = 'en', kw: Dict = None):
+    def __init__(self, lang: str = 'en', kw: Optional[dict] = None) -> None:
         """
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle
@@ -128,31 +124,29 @@ class PaddleOCR3(OCRInstance):
 
         self.ocr = OCR(**kw)
 
-    def content(self, document: Document) -> List[Dict]:
+    def content(self, document: Document) -> list[dict]:
         ocrs = self.ocr.predict(input=document.images)
         return [{"rec_texts": res["rec_texts"],
                  "rec_scores": res["rec_scores"],
                  "rec_boxes": [bbox.tolist() for bbox in res["rec_boxes"]]}
                 for res in ocrs]
 
-    def to_ocr_dataframe(self, content: List[Dict]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[dict]) -> OCRDataframe:
         """
         Convert hOCR HTML to OCRDataframe object
         :param content: hOCR HTML string
         :return: OCRDataframe object corresponding to content
         """
         # Create list of elements
-        list_elements = list()
+        list_elements = []
 
         for page, ocr_result in enumerate(content):
-            word_id = 0
-            for word, conf, bbox in zip(ocr_result["rec_texts"], ocr_result["rec_scores"], ocr_result["rec_boxes"]):
-                word_id += 1
+            for idx, (word, conf, bbox) in enumerate(zip(ocr_result["rec_texts"], ocr_result["rec_scores"], ocr_result["rec_boxes"])):
                 dict_word = {
                     "page": page,
                     "class": "ocrx_word",
-                    "id": f"word_{page + 1}_{word_id}",
-                    "parent": f"word_{page + 1}_{word_id}",
+                    "id": f"word_{page + 1}_{idx + 1}",
+                    "parent": f"word_{page + 1}_{idx + 1}",
                     "value": word,
                     "confidence": 100 * conf,
                     "x1": int(bbox[0]),
@@ -170,17 +164,13 @@ class PaddleOCR(OCRInstance):
     """
     Paddle-OCR instance
     """
-    def __init__(self, lang: str = 'en', kw: Dict = None):
+    def __init__(self, lang: str = 'en', kw: Optional[dict] = None) -> None:
         """
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle
         :param kw: dictionary containing kwargs for PaddleOCR constructor
         """
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                import paddleocr
-        except ModuleNotFoundError:
+        if find_spec("paddleocr") is None:
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[paddle]' to use this class.")
 
         # Check paddle version

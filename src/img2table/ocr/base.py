@@ -1,4 +1,3 @@
-# coding: utf-8
 from typing import Any
 
 import polars as pl
@@ -9,8 +8,8 @@ from img2table.ocr.data import OCRDataframe
 
 class OCRInstance:
     @property
-    def pl_schema(self):
-        schema = {
+    def pl_schema(self) -> dict[str, Any]:
+        return {
             "page": pl.Int64,
             "class": str,
             "id": str,
@@ -22,7 +21,6 @@ class OCRInstance:
             "x2": pl.Int64,
             "y2": pl.Int64
         }
-        return schema
 
     def content(self, document: Document) -> Any:
         raise NotImplementedError

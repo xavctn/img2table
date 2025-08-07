@@ -1,13 +1,11 @@
-# coding: utf-8
 from dataclasses import dataclass, field
-from typing import List
 
 from img2table.tables.objects.cell import Cell
 
 
 @dataclass
 class Whitespace:
-    cells: List[Cell]
+    cells: list[Cell]
 
     @property
     def x1(self) -> int:
@@ -47,7 +45,7 @@ class Whitespace:
     def __contains__(self, item: "Whitespace") -> bool:
         return self.x1 <= item.x1 and self.y1 <= item.y1 and self.x2 >= item.x2 and self.y2 >= item.y2
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))
 
 
@@ -57,8 +55,8 @@ class ImageSegment:
     y1: int
     x2: int
     y2: int
-    elements: List[Cell] = None
-    whitespaces: List[Whitespace] = None
+    elements: list[Cell] = None
+    whitespaces: list[Whitespace] = None
     position: int = None
 
     @property
@@ -73,22 +71,21 @@ class ImageSegment:
     def element_height(self) -> int:
         if self.elements:
             return max([el.y2 for el in self.elements]) - min([el.y1 for el in self.elements])
-        else:
-            return self.height
+        return self.height
 
-    def set_elements(self, elements: List[Cell]):
+    def set_elements(self, elements: list[Cell]) -> None:
         self.elements = elements
 
-    def set_whitespaces(self, whitespaces: List[Whitespace]):
+    def set_whitespaces(self, whitespaces: list[Whitespace]) -> None:
         self.whitespaces = whitespaces
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))
 
 
 @dataclass
 class TableSegment:
-    table_areas: List[ImageSegment]
+    table_areas: list[ImageSegment]
 
     @property
     def x1(self) -> int:
@@ -107,11 +104,11 @@ class TableSegment:
         return max([tb_area.y2 for tb_area in self.table_areas])
 
     @property
-    def elements(self) -> List[Cell]:
+    def elements(self) -> list[Cell]:
         return [el for tb_area in self.table_areas for el in tb_area.elements]
 
     @property
-    def whitespaces(self) -> List[Whitespace]:
+    def whitespaces(self) -> list[Whitespace]:
         return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
 
 
@@ -154,7 +151,7 @@ class VerticalWS:
 
 @dataclass
 class Column:
-    whitespaces: List[VerticalWS]
+    whitespaces: list[VerticalWS]
     top: bool = True
     bottom: bool = True
     top_position: int = 0
@@ -183,7 +180,7 @@ class Column:
 
     @property
     def continuous(self) -> bool:
-        return all([v_ws.continuous for v_ws in self.whitespaces])
+        return all(v_ws.continuous for v_ws in self.whitespaces)
 
     @classmethod
     def from_ws(cls, v_ws: VerticalWS) -> "Column":
@@ -193,15 +190,15 @@ class Column:
     def corresponds(self, v_ws: VerticalWS, char_length: float) -> bool:
         if self.bottom_position is None:
             return True
-        elif v_ws.position != self.bottom_position + 1:
+        if v_ws.position != self.bottom_position + 1:
             return False
-        elif not self.bottom or not v_ws.top:
+        if not self.bottom or not v_ws.top:
             return False
 
         # Condition on position
         return min(self.x2, v_ws.x2) - max(self.x1, v_ws.x1) >= 0.5 * char_length
 
-    def add(self, v_ws: VerticalWS):
+    def add(self, v_ws: VerticalWS) -> None:
         self.whitespaces.append(v_ws)
         self.top_position = min(self.top_position, v_ws.position)
         self.bottom_position = max(self.bottom_position, v_ws.position)
@@ -215,11 +212,11 @@ class Column:
 
 @dataclass
 class ColumnGroup:
-    columns: List[Column]
+    columns: list[Column]
     char_length: float
-    elements: List[Cell] = field(default_factory=lambda: [])
+    elements: list[Cell] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # Reprocess left and right columns positions
         self.columns = sorted(self.columns, key=lambda col: col.x1)
 
@@ -285,7 +282,10 @@ class ColumnGroup:
     def area(self) -> int:
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
-    def __eq__(self, other):
+    def __hash__(self) -> int:
+        return hash(repr(self))
+
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, ColumnGroup):
             try:
                 assert self.columns == other.columns

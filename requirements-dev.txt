@@ -24,6 +24,7 @@ python-doctr>=0.8
 surya-ocr>=0.15.0; python_version >= '3.10'
 
 # Test dependencies
+ruff
 pytest >= 6
 pytest-cov
 pytest-xdist

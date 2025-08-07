@@ -1,3 +1,7 @@
 [build-system]
 requires = ["pbr>=5.7.0", "setuptools>=42"]
 build-backend = "pbr.build"
+
+[tool.ruff.lint]
+select = ["ANN", "B", "A", "C4", "ICN", "INP", "PIE", "PYI", "RSE", "RET", "SLF", "SIM", "TID", "TC", "ARG", "PTH", "NPY", "E", "W", "PL", "F", "UP", "RUF"]
+ignore = ["ANN401", "ANN003", "C417", "SLF001", "SIM105", "SIM300", "E501", "PLR2004", "PLR0912", "PLR0913", "PLR0915", "PLC0415"]

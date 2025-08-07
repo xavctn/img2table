@@ -52,7 +52,7 @@ def test_fix_rotation_image():
 
     img = cv2.imread("test_data/test.png")
 
-    similarities = list()
+    similarities = []
     for angle in range(-30, 30, 3):
         # Create test image by rotating it
         test_img = rotate_img_with_border(img=img.copy(), angle=angle)
