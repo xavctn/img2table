@@ -1,6 +1,3 @@
-# coding: utf-8
-from typing import List
-
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
@@ -9,7 +6,7 @@ from img2table.tables.processing.bordered_tables.tables.semi_bordered import add
 from img2table.tables.processing.bordered_tables.tables.table_creation import cluster_to_table, normalize_table_cells
 
 
-def get_tables(cells: List[Cell], elements: List[Cell], lines: List[Line], char_length: float) -> List[Table]:
+def get_tables(cells: list[Cell], elements: list[Cell], lines: list[Line], char_length: float) -> list[Table]:
     """
     Identify and create Table object from list of image cells
     :param cells: list of cells found in image

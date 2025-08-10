@@ -1,4 +1,3 @@
-# coding: utf-8
 import numpy as np
 
 from img2table.tables.objects.table import Table
@@ -32,7 +31,7 @@ def check_column_coherency(table: Table, char_length: float) -> bool:
         return False
 
     # Get column widths
-    col_widths = list()
+    col_widths = []
     for idx in range(table.nb_columns):
         col_elements = [row.items[idx] for row in table.items]
         col_width = min([el.x2 for el in col_elements]) - max([el.x1 for el in col_elements])

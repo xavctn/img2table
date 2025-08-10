@@ -1,8 +1,6 @@
-# coding: utf-8
 import copy
 from dataclasses import dataclass
 from functools import cached_property
-from typing import List
 
 import cv2
 import numpy as np
@@ -27,11 +25,11 @@ class TableImage:
     char_length: float = None
     median_line_sep: float = None
     thresh: np.ndarray = None
-    contours: List[Cell] = None
-    lines: List[Line] = None
-    tables: List[Table] = None
+    contours: list[Cell] = None
+    lines: list[Line] = None
+    tables: list[Table] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.thresh = threshold_dark_areas(img=self.img, char_length=11)
 
         # Compute image metrics
@@ -52,7 +50,7 @@ class TableImage:
 
         return white_img
 
-    def extract_bordered_tables(self, implicit_rows: bool = False, implicit_columns: bool = False):
+    def extract_bordered_tables(self, implicit_rows: bool = False, implicit_columns: bool = False) -> None:
         """
         Identify and extract bordered tables from image
         :param implicit_rows: boolean indicating if implicit rows are splitted
@@ -94,7 +92,7 @@ class TableImage:
         # Post filter bordered tables
         self.tables = [tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2]
 
-    def extract_borderless_tables(self):
+    def extract_borderless_tables(self) -> None:
         """
         Identify and extract borderless tables from image
         :return:
@@ -114,7 +112,7 @@ class TableImage:
             # Add to tables
             self.tables += [tb for tb in borderless_tbs if tb.nb_rows >= 2 and tb.nb_columns >= 3]
 
-    def extract_tables(self, implicit_rows: bool = False, implicit_columns: bool = False, borderless_tables: bool = False) -> List[Table]:
+    def extract_tables(self, implicit_rows: bool = False, implicit_columns: bool = False, borderless_tables: bool = False) -> list[Table]:
         """
         Identify and extract tables from image
         :param implicit_rows: boolean indicating if implicit rows are splitted

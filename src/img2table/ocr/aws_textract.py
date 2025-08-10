@@ -1,6 +1,6 @@
-# coding: utf-8
 
-from typing import List, Iterator, Optional, Dict
+from collections.abc import Iterator
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -16,7 +16,7 @@ class TextractOCR(OCRInstance):
     AWS Textract instance
     """
     def __init__(self, aws_access_key_id: Optional[str] = None, aws_secret_access_key: Optional[str] = None,
-                 aws_session_token: Optional[str] = None, region: Optional[str] = None):
+                 aws_session_token: Optional[str] = None, region: Optional[str] = None) -> None:
         """
         Initialization of AWS Textract OCR instance
         :param aws_access_key_id: AWS access key id
@@ -26,8 +26,8 @@ class TextractOCR(OCRInstance):
         """
         try:
             import boto3
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[aws]' to use this class.")
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[aws]' to use this class.") from err
 
         if not any(map(lambda v: v is None, [aws_access_key_id, aws_secret_access_key, aws_session_token])):
             self.client = boto3.client(service_name='textract',
@@ -40,7 +40,7 @@ class TextractOCR(OCRInstance):
                                        region_name=region)
 
     @staticmethod
-    def map_response(response: Dict, image: np.ndarray, page: int) -> List[Dict]:
+    def map_response(response: dict, image: np.ndarray, page: int) -> list[dict]:
         """
         Extract data from API endpoint response dictionary
         :param response: dictionary returned by Textract API
@@ -52,10 +52,10 @@ class TextractOCR(OCRInstance):
         height, width = image.shape[:2]
 
         # Initialize dictionary containing child relationships
-        dict_children = dict()
+        dict_children = {}
 
         # Parse blocks and identify words
-        word_elements = list()
+        word_elements = []
         for block in response.get('Blocks'):
             # Identify children and add relationship to dict
             children = [child for rel in block.get('Relationships', []) for child in rel.get('Ids')
@@ -81,7 +81,7 @@ class TextractOCR(OCRInstance):
 
         return word_elements
 
-    def content(self, document: Document) -> Iterator[List[Dict]]:
+    def content(self, document: Document) -> Iterator[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -92,15 +92,13 @@ class TextractOCR(OCRInstance):
             content = self.client.detect_document_text(Document={'Bytes': img.tobytes()})
             yield self.map_response(response=content, image=image, page=page)
 
-    def to_ocr_dataframe(self, content: Iterator[List[Dict]]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: Iterator[list[dict]]) -> OCRDataframe:
         """
         Convert list of OCR elements by page to OCRDataframe object
         :param content: list of OCR elements by page
         :return: OCRDataframe object corresponding to content
         """
-        list_dfs = list()
-        for page_elements in content:
-            if page_elements:
-                list_dfs.append(pl.DataFrame(data=page_elements, schema=self.pl_schema))
+        list_dfs = [pl.DataFrame(data=page_elements, schema=self.pl_schema)
+                    for page_elements in content if page_elements]
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

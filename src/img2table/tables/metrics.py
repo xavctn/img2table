@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import Tuple, Optional, List
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -17,7 +16,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
     :param stats: connected components' stats array
     :return: list of non-dot connected components' indexes
     """
-    cc_to_keep = list()
+    cc_to_keep = []
 
     for idx in prange(len(stats)):
         if idx == 0:
@@ -61,7 +60,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     :param complete_stats: connected components' array
     :return: filtered connected components' array
     """
-    line_areas = list()
+    line_areas = []
 
     ### Identify horizontal lines
     complete_stats = complete_stats[complete_stats[:, 6].argsort()]
@@ -128,7 +127,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     areas_array = np.array(line_areas)
 
     # Check if connected components is located in areas
-    kept_cc = list()
+    kept_cc = []
     for idx in prange(complete_stats.shape[0]):
         x, y, w, h, area, x_middle, y_middle = complete_stats[idx][:]
 
@@ -148,13 +147,13 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
 
 
 @njit("UniTuple(int32[:,:], 2)(int32[:,:])", cache=True, fastmath=True, parallel=False)
-def filter_cc(stats: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Filter relevant connected components
     :param stats: connected components' array
     :return: tuple with relevant connected components' array and discarded connected components' array
     """
-    kept_cc, discarded_cc = list(), list()
+    kept_cc, discarded_cc = [], []
 
     for idx in prange(stats.shape[0]):
         x, y, w, h, area = stats[idx][:]
@@ -183,7 +182,7 @@ def filter_cc(stats: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     upper_bound = 5 * median_width * median_height
     lower_bound = 0.2 * median_width * median_height
 
-    kept_cc = list()
+    kept_cc = []
     for idx in prange(kept_stats.shape[0]):
         x, y, w, h, area = kept_stats[idx][:]
 
@@ -206,7 +205,7 @@ def filter_cc(stats: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
 @njit("Tuple((uint8[:,:],int32[:,:]))(uint8[:,:],int32[:,:],int32[:,:],float64)", fastmath=True, cache=True,
       parallel=False)
 def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_stats: np.ndarray,
-                            char_length: float) -> Tuple[np.ndarray, np.ndarray]:
+                            char_length: float) -> tuple[np.ndarray, np.ndarray]:
     """
     Create thresholded image containing uniquely characters
     :param thresh: thresholded image
@@ -219,7 +218,7 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
     character_thresh = np.zeros(thresh.shape, dtype=np.uint8)
 
     # Identify CC from discarded connected components that can be characters
-    list_relevant_chars = list()
+    list_relevant_chars = []
     for idx in prange(len(stats)):
         x, y, w, h, area = stats[idx][:]
 
@@ -235,7 +234,7 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
 
             if y_overlap < 0.5 * min(cc_h, h):
                 continue
-            elif max(cc_h, cc_w) > 3 * max(h, w):
+            if max(cc_h, cc_w) > 3 * max(h, w):
                 continue
 
             # Compute horizontal distance
@@ -249,7 +248,7 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
     return character_thresh, np.array(list_relevant_chars) if list_relevant_chars else np.empty((0, 5), dtype=np.int32)
 
 
-def compute_char_length(thresh: np.ndarray) -> Tuple[Optional[float], Optional[np.ndarray], Optional[np.ndarray]]:
+def compute_char_length(thresh: np.ndarray) -> tuple[Optional[float], Optional[np.ndarray], Optional[np.ndarray]]:
     """
     Compute average character length based on connected components' analysis
     :param thresh: threshold image array
@@ -291,8 +290,7 @@ def compute_char_length(thresh: np.ndarray) -> Tuple[Optional[float], Optional[n
                                                                  char_length=char_length)
 
         return char_length, characters_thresh, chars_array
-    else:
-        return None, None, None
+    return None, None, None
 
 
 @njit("int64[:,:](int32[:,:],int32[:,:])", cache=True, fastmath=True)
@@ -303,7 +301,7 @@ def recompute_contours(stats: np.ndarray, chars_array: np.ndarray) -> np.ndarray
     :param chars_array: characters array
     :return: array of contours with dimensions recomputed
     """
-    list_contours = list()
+    list_contours = []
     for idx in prange(stats.shape[0]):
         if idx == 0:
             continue
@@ -329,21 +327,22 @@ def recompute_contours(stats: np.ndarray, chars_array: np.ndarray) -> np.ndarray
     return np.array(list_contours) if list_contours else np.empty((0, 4), dtype=np.int64)
 
 
-@njit("List(float64)(int64[:,:])", cache=True, fastmath=True, parallel=False)
-def get_row_separations(stats: np.ndarray) -> List[float]:
+@njit("List(float64)(int64[:,:],float64)", cache=True, fastmath=True, parallel=False)
+def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
     """
     Compute row separation between contours
     :param stats: array of contours
+    :param char_length: average character length
     :return: list of row separations
     """
-    row_separations = list()
+    row_separations = []
 
-    for i in prange(1, len(stats)):
+    for i in prange(len(stats)):
         # Get statistics
         xi, yi, wi, hi = stats[i][:]
         row_separation = 10 ** 6
 
-        for j in range(1, len(stats)):
+        for j in range(len(stats)):
             if i == j:
                 continue
 
@@ -353,11 +352,10 @@ def get_row_separations(stats: np.ndarray) -> List[float]:
             # Compute horizontal overlap and vertical positions
             h_overlap = min(xi + hi, xj + hj) - max(xi, xj)
             v_pos_i, v_pos_j = (2 * yi + hi) / 2, (2 * yj + hj) / 2
-            if h_overlap <= 0 or v_pos_j <= v_pos_i:
+            if h_overlap <= char_length // 2 or v_pos_j <= v_pos_i:
                 continue
 
-            if v_pos_j - v_pos_i <= row_separation:
-                row_separation = v_pos_j - v_pos_i
+            row_separation = min(row_separation, v_pos_j - v_pos_i)
 
         if row_separation < 10 ** 6:
             row_separations.append(row_separation)
@@ -366,7 +364,7 @@ def get_row_separations(stats: np.ndarray) -> List[float]:
 
 
 def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
-                            char_length: float) -> Tuple[Optional[float], Optional[List[Cell]]]:
+                            char_length: float) -> tuple[Optional[float], Optional[list[Cell]]]:
     """
     Compute median separation between rows
     :param thresh_chars: thresholded image of characters
@@ -384,12 +382,12 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     stats_contours = recompute_contours(stats=stats, chars_array=chars_array)
 
     # Compute median line sep
-    row_separations = get_row_separations(stats=stats_contours)
+    row_separations = get_row_separations(stats=stats_contours, char_length=char_length)
 
     if row_separations:
         median_line_sep = (pl.DataFrame(row_separations, schema={"sep": float})
                            .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
-                           .group_by("sep").len() .sort(by=['len'], descending=[True])
+                           .group_by("sep").len().sort(by=['len', 'sep'], descending=[True, False])
                            .limit(1).to_dicts().pop().get("sep")
                            )
     else:
@@ -403,7 +401,7 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     return median_line_sep, contours_cells
 
 
-def compute_img_metrics(thresh: np.ndarray) -> Tuple[Optional[float], Optional[float], Optional[List[Cell]]]:
+def compute_img_metrics(thresh: np.ndarray) -> tuple[Optional[float], Optional[float], Optional[list[Cell]]]:
     """
     Compute metrics from image
     :param thresh: threshold image array

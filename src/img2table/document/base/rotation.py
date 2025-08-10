@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import Tuple, List
 
 import cv2
 import numpy as np
@@ -13,7 +11,7 @@ dixon_q_test_confidence_dict = {
 }
 
 
-def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.ndarray]:
+def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
     """
     Identify connected components in image
     :param img: image array
@@ -60,8 +58,8 @@ def get_connected_components(img: np.ndarray) -> Tuple[np.ndarray, float, np.nda
 
 
 @njit("List(float64)(float64[:,:],float64)", fastmath=True, cache=True, parallel=False)
-def compute_angles(centroids: np.ndarray, ref_height: float) -> List[float]:
-    angles = list()
+def compute_angles(centroids: np.ndarray, ref_height: float) -> list[float]:
+    angles = []
 
     for i in prange(len(centroids)):
         for j in prange(i + 1, len(centroids)):
@@ -71,7 +69,7 @@ def compute_angles(centroids: np.ndarray, ref_height: float) -> List[float]:
             # Continue if both elements are not relevant
             if xi == xj:
                 continue
-            elif not -10 * ref_height <= yi - yj <= 10 * ref_height:
+            if not -10 * ref_height <= yi - yj <= 10 * ref_height:
                 continue
 
             # Compute slope and angle
@@ -85,7 +83,7 @@ def compute_angles(centroids: np.ndarray, ref_height: float) -> List[float]:
     return angles
 
 
-def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5) -> List[float]:
+def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5) -> list[float]:
     """
     Identify relevant angles from connected components centroids
     :param centroids: array of connected components centroids
@@ -111,13 +109,12 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     if most_likely_angles:
         if most_likely_angles[0].get('angle') == 0:
             return [0]
-        else:
-            return sorted(list(set([angle.get('angle') for angle in most_likely_angles
-                                    if angle.get('len') >= 0.25 * max([a.get('len') for a in most_likely_angles])])))
+        return sorted({angle.get('angle') for angle in most_likely_angles
+                       if angle.get('len') >= 0.25 * max([a.get('len') for a in most_likely_angles])})
     return [0]
 
 
-def angle_dixon_q_test(angles: List[float], confidence: float = 0.9) -> float:
+def angle_dixon_q_test(angles: list[float], confidence: float = 0.9) -> float:
     """
     Compute best angle according to Dixon Q test
     :param angles: list of possible angles
@@ -174,7 +171,7 @@ def evaluate_angle(img: np.ndarray, angle: float) -> int:
     return np.sum((proj[1:] - proj[:-1]) ** 2)
 
 
-def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
+def estimate_skew(angles: list[float], thresh: np.ndarray) -> float:
     """
     Estimate skew from angles
     :param angles: list of angles
@@ -204,7 +201,7 @@ def estimate_skew(angles: List[float], thresh: np.ndarray) -> float:
 
 
 def rotate_img_with_border(img: np.ndarray, angle: float,
-                           background_color: Tuple[int, int, int] = (255, 255, 255)) -> np.ndarray:
+                           background_color: tuple[int, int, int] = (255, 255, 255)) -> np.ndarray:
     """
     Rotate an image of the defined angle and add background on border
     :param img: image array
@@ -228,13 +225,12 @@ def rotate_img_with_border(img: np.ndarray, angle: float,
     rotation_mat[1, 2] += bound_h / 2 - image_center[1]
 
     # Create rotated image with white background
-    rotated_img = cv2.warpAffine(img, rotation_mat, (bound_w, bound_h),
-                                 borderMode=cv2.BORDER_CONSTANT,
-                                 borderValue=background_color)
-    return rotated_img
+    return cv2.warpAffine(img, rotation_mat, (bound_w, bound_h),
+                          borderMode=cv2.BORDER_CONSTANT,
+                          borderValue=background_color)
 
 
-def fix_rotation_image(img: np.ndarray) -> Tuple[np.ndarray, bool]:
+def fix_rotation_image(img: np.ndarray) -> tuple[np.ndarray, bool]:
     """
     Fix rotation of input image (based on https://www.mdpi.com/2079-9292/9/1/55) by at most 45 degrees
     :param img: image array

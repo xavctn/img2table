@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List
 
 import numpy as np
 
@@ -10,7 +8,7 @@ from img2table.tables.processing.borderless_tables.whitespaces import get_whites
 from img2table.tables.processing.common import is_contained_cell
 
 
-def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: float) -> List[ImageSegment]:
+def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: float) -> list[ImageSegment]:
     """
     Identify relevant table areas in segment
     :param segment: ImageSegment object
@@ -50,11 +48,9 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
         h_ws.append(down_ws)
 
     # Check in areas between horizontal whitespaces in order to identify if they can correspond to tables
-    table_areas = list()
-    idx = 0
+    table_areas = []
 
-    for up, down in zip(h_ws, h_ws[1:]):
-        idx += 1
+    for idx, (up, down) in enumerate(zip(h_ws, h_ws[1:])):
         # Get the delimited area
         delimited_area = Cell(x1=max(min(up.x1, down.x1) - int(char_length), 0),
                               y1=up.y2,
@@ -69,7 +65,7 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
                                 y1=delimited_area.y1,
                                 y2=delimited_area.y2,
                                 elements=area_elements,
-                                position=idx)
+                                position=idx + 1)
 
         if area_elements:
             # Identify vertical whitespaces in the area
@@ -98,13 +94,13 @@ def get_table_areas(segment: ImageSegment, char_length: float, median_line_sep: 
                         and ((len({ws.y1, ws.y2}.intersection({seg_area.y1, seg_area.y2})) > 0)
                              or (ws.height >= 0.66 * max([w.height for w in middle_ws])))]
 
-                seg_area.set_whitespaces(whitespaces=sorted(v_ws + [left_ws, right_ws], key=lambda ws: ws.x1 + ws.x2))
+                seg_area.set_whitespaces(whitespaces=sorted([*v_ws, left_ws, right_ws], key=lambda ws: ws.x1 + ws.x2))
                 table_areas.append(seg_area)
 
     return table_areas
 
 
-def merge_consecutive_ws(whitespaces: List[Whitespace]) -> List[Cell]:
+def merge_consecutive_ws(whitespaces: list[Whitespace]) -> list[Cell]:
     """
     Merge consecutive whitespaces
     :param whitespaces: list of original whitespaces
@@ -174,7 +170,7 @@ def coherent_table_areas(tb_area_1: ImageSegment, tb_area_2: ImageSegment, char_
     return np.mean([int(len(v) == 1) for v in dict_ws_coherency.values()]) >= threshold
 
 
-def table_segment_from_group(table_segment_group: List[ImageSegment]) -> ImageSegment:
+def table_segment_from_group(table_segment_group: list[ImageSegment]) -> ImageSegment:
     """
     Create table segment from group of corresponding ImageSegment objects
     :param table_segment_group: list of ImageSegment objects
@@ -185,17 +181,15 @@ def table_segment_from_group(table_segment_group: List[ImageSegment]) -> ImageSe
     whitespaces = [ws for seg in table_segment_group for ws in seg.whitespaces]
 
     # Create ImageSegment object
-    table_segment = ImageSegment(x1=min([seg.x1 for seg in table_segment_group]),
-                                 y1=min([seg.y1 for seg in table_segment_group]),
-                                 x2=max([seg.x2 for seg in table_segment_group]),
-                                 y2=max([seg.y2 for seg in table_segment_group]),
-                                 elements=elements,
-                                 whitespaces=whitespaces)
-    
-    return table_segment
+    return ImageSegment(x1=min([seg.x1 for seg in table_segment_group]),
+                        y1=min([seg.y1 for seg in table_segment_group]),
+                        x2=max([seg.x2 for seg in table_segment_group]),
+                        y2=max([seg.y2 for seg in table_segment_group]),
+                        elements=elements,
+                        whitespaces=whitespaces)
 
 
-def get_table_segments(segment: ImageSegment, char_length: float, median_line_sep: float) -> List[TableSegment]:
+def get_table_segments(segment: ImageSegment, char_length: float, median_line_sep: float) -> list[TableSegment]:
     """
     Identify relevant table areas in segment
     :param segment: ImageSegment object
@@ -221,9 +215,7 @@ def get_table_segments(segment: ImageSegment, char_length: float, median_line_se
                                     median_line_sep=median_line_sep):
             tb_areas_gps.append([])
         tb_areas_gps[-1].append(tb_area)
-        
-    # Create image segments corresponding to potential table
-    table_segments = [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps
-                      if max([len(tb_area.whitespaces) for tb_area in tb_area_gp]) > 3]
 
-    return table_segments
+    # Create image segments corresponding to potential table
+    return [TableSegment(table_areas=tb_area_gp) for tb_area_gp in tb_areas_gps
+            if max([len(tb_area.whitespaces) for tb_area in tb_area_gp]) > 3]

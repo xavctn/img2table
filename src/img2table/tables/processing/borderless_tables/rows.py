@@ -1,12 +1,10 @@
-# coding: utf-8
-from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import ColumnGroup, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
+def identify_row_delimiters(column_group: ColumnGroup) -> list[Cell]:
     """
     Identify list of rows corresponding to the delimiter group
     :param column_group: column delimiters group
@@ -37,7 +35,7 @@ def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
         h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Filter relevant whitespaces
-    deleted_idx = list()
+    deleted_idx = []
     for i in range(len(h_ws)):
         for j in range(i, len(h_ws)):
             # Check if both whitespaces are adjacent
@@ -52,7 +50,7 @@ def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
     h_ws = [ws for idx, ws in enumerate(h_ws) if idx not in deleted_idx]
 
     # Create delimiters
-    final_delims = list()
+    final_delims = []
     for ws in h_ws:
         if ws.y1 == column_group.y1 or ws.y2 == column_group.y2:
             continue
@@ -71,7 +69,7 @@ def identify_row_delimiters(column_group: ColumnGroup) -> List[Cell]:
     return sorted(final_delims, key=lambda d: d.y1)
 
 
-def filter_coherent_row_delimiters(row_delimiters: List[Cell], column_group: ColumnGroup) -> List[Cell]:
+def filter_coherent_row_delimiters(row_delimiters: list[Cell], column_group: ColumnGroup) -> list[Cell]:
     """
     Filter coherent row delimiters (i.e that properly delimit relevant text)
     :param row_delimiters: list of row delimiters
@@ -81,7 +79,7 @@ def filter_coherent_row_delimiters(row_delimiters: List[Cell], column_group: Col
     # Get max width of delimiters
     max_width = max(map(lambda d: d.width, row_delimiters))
 
-    delimiters_to_delete = list()
+    delimiters_to_delete = []
     for idx, delim in enumerate(row_delimiters):
         if delim.width >= 0.95 * max_width:
             continue
@@ -123,7 +121,7 @@ def filter_coherent_row_delimiters(row_delimiters: List[Cell], column_group: Col
     return [d for idx, d in enumerate(row_delimiters) if idx not in delimiters_to_delete]
 
 
-def correct_delimiter_width(row_delimiters: List[Cell], contours: List[Cell]) -> List[Cell]:
+def correct_delimiter_width(row_delimiters: list[Cell], contours: list[Cell]) -> list[Cell]:
     """
     Correct delimiter width if needed
     :param row_delimiters: list of row delimiters
@@ -147,13 +145,13 @@ def correct_delimiter_width(row_delimiters: List[Cell], contours: List[Cell]) ->
         delim_x_max = min([c.x1 for c in right_contours] + [x_max])
 
         # Update delimiter width
-        setattr(row_delimiters[idx], "x1", delim_x_min)
-        setattr(row_delimiters[idx], "x2", delim_x_max)
+        row_delimiters[idx].x1 = delim_x_min
+        row_delimiters[idx].x2 = delim_x_max
 
     return row_delimiters
 
 
-def identify_delimiter_group_rows(column_group: ColumnGroup, contours: List[Cell]) -> List[Cell]:
+def identify_delimiter_group_rows(column_group: ColumnGroup, contours: list[Cell]) -> list[Cell]:
     """
     Identify list of rows corresponding to the delimiter group
     :param column_group: column delimiters group

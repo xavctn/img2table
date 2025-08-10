@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List
 
 import cv2
 import numpy as np
@@ -7,7 +5,7 @@ import numpy as np
 from img2table.tables.objects.cell import Cell
 
 
-def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: float) -> List[Cell]:
+def get_image_elements(thresh: np.ndarray, char_length: float) -> list[Cell]:
     """
     Identify image elements
     :param thresh: thresholded image array
@@ -20,7 +18,7 @@ def get_image_elements(thresh: np.ndarray, char_length: float, median_line_sep: 
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
     # Get list of contours
-    elements = list()
+    elements = []
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
         if ((min(h, w) >= 0.5 * char_length and max(h, w) >= char_length)

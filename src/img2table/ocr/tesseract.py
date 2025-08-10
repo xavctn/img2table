@@ -1,11 +1,12 @@
-# coding: utf-8
 
 import os
 import re
 import subprocess
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Iterator, Optional
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -21,7 +22,7 @@ class TesseractOCR(OCRInstance):
     """
     Tesseract-OCR instance
     """
-    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None):
+    def __init__(self, n_threads: int = 1, lang: str = 'eng', psm: int = 11, tessdata_dir: Optional[str] = None) -> None:
         """
         Initialization of Tesseract OCR instance
         :param n_threads: number of concurrent threads used for Tesseract
@@ -51,18 +52,18 @@ class TesseractOCR(OCRInstance):
         self.env = env
 
         # Check if Tesseract is available
-        cmd_tess = subprocess.run("tesseract --version", env=self.env, shell=True)
+        cmd_tess = subprocess.run("tesseract --version", env=self.env, shell=True, check=False)
         if cmd_tess.returncode != 0:
-            raise EnvironmentError("Tesseract not found in environment. Check variables and PATH")
+            raise OSError("Tesseract not found in environment. Check variables and PATH")
 
         # Check if requested languages are available
         try:
             lang_tess = subprocess.check_output("tesseract --list-langs", env=self.env, shell=True).decode()
-            for lang in self.lang.split('+'):
-                if not any([re.search(fr"\b{lang}\b", line) is not None for line in lang_tess.splitlines()]):
-                    raise EnvironmentError(f"Tesseract '{lang}' trainned data cannot be located")
-        except subprocess.CalledProcessError:
-            raise EnvironmentError("Tesseract trainned data cannot be located.")
+            for lng in self.lang.split('+'):
+                if not any(re.search(fr"\b{lng}\b", line) is not None for line in lang_tess.splitlines()):
+                    raise OSError(f"Tesseract '{lng}' trainned data cannot be located")
+        except subprocess.CalledProcessError as err:
+            raise OSError("Tesseract trainned data cannot be located.") from err
 
     def hocr(self, image: np.ndarray) -> str:
         """
@@ -82,9 +83,9 @@ class TesseractOCR(OCRInstance):
                                            shell=True)
 
         # Remove temporary file
-        while os.path.exists(tmp_file):
+        while Path(tmp_file).exists():
             try:
-                os.remove(tmp_file)
+                Path(tmp_file).unlink(missing_ok=True)
             except PermissionError:
                 pass
 
@@ -92,25 +93,23 @@ class TesseractOCR(OCRInstance):
 
     def content(self, document: Document) -> Iterator[str]:
         with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
-            hocrs = pool.map(self.hocr, document.images)
+            return pool.map(self.hocr, document.images)
 
-        return hocrs
-
-    def to_ocr_dataframe(self, content: List[str]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[str]) -> OCRDataframe:
         """
         Convert hOCR HTML to OCRDataframe object
         :param content: hOCR HTML string
         :return: OCRDataframe object corresponding to content
         """
         # Create list of dataframes for each page
-        list_dfs = list()
+        list_dfs = []
 
         for page, hocr in enumerate(content):
             # Instantiate HTML parser
             soup = BeautifulSoup(hocr, features='html.parser')
 
             # Parse all HTML elements
-            list_elements = list()
+            list_elements = []
             for element in soup.find_all(class_=True):
                 # Get element properties
                 d_el = {

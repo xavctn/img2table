@@ -1,6 +1,5 @@
-# coding: utf-8
 from collections import defaultdict
-from typing import List, Any, Callable, Optional
+from typing import Any, Callable, Optional
 
 import cv2
 import numpy as np
@@ -56,7 +55,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
     return thresh
 
 
-def cluster_items(items: List[Any], clustering_func: Callable) -> List[List[Any]]:
+def cluster_items(items: list[Any], clustering_func: Callable) -> list[list[Any]]:
     """
     Cluster items based on a function
     :param items: list of items
@@ -64,7 +63,7 @@ def cluster_items(items: List[Any], clustering_func: Callable) -> List[List[Any]
     :return: list of list of items based on clustering function
     """
     # Create clusters based on clustering function between items
-    clusters = list()
+    clusters = []
     for i in range(len(items)):
         for j in range(i, len(items)):
             # Check if both items corresponds according to the clustering function
@@ -76,7 +75,7 @@ def cluster_items(items: List[Any], clustering_func: Callable) -> List[List[Any]
                 if matching_clusters:
                     remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
                     new_cluster = {i, j}.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
-                    clusters = remaining_clusters + [new_cluster]
+                    clusters = [*remaining_clusters, new_cluster]
                 else:
                     clusters.append({i, j})
 
@@ -84,14 +83,14 @@ def cluster_items(items: List[Any], clustering_func: Callable) -> List[List[Any]
 
 
 class Node:
-    def __init__(self, key):
+    def __init__(self, key: Any) -> None:
         self.key = key
         self.parent = self
         self.size = 1
 
 
 class UnionFind(dict):
-    def find(self, key):
+    def find(self, key: Any) -> Node:
         node = self.get(key, None)
         if node is None:
             node = self[key] = Node(key)
@@ -101,7 +100,7 @@ class UnionFind(dict):
                 node.parent, node = node.parent.parent, node.parent
         return node
 
-    def union(self, key_a, key_b):
+    def union(self, key_a: Any, key_b: Any) -> None:
         node_a = self.find(key_a)
         node_b = self.find(key_b)
         if node_a != node_b:  # disjoint? -> join!
@@ -113,15 +112,14 @@ class UnionFind(dict):
                 node_a.size += node_b.size
 
 
-def find_components(edges):
+def find_components(edges: list[list[Any]]) -> list[list[Any]]:
     forest = UnionFind()
 
     for edge in edges:
-        edge = edge if len(edge) > 1 else list(edge) * 2
-        forest.union(*edge)
+        forest.union(*(edge if len(edge) > 1 else list(edge) * 2))
 
     result = defaultdict(list)
-    for key in forest.keys():
+    for key in forest:
         root = forest.find(key)
         result[root.key].append(key)
 

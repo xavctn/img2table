@@ -1,7 +1,7 @@
-# coding: utf-8
 
+from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional, List, OrderedDict, NamedTuple
+from typing import Optional, NamedTuple
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -22,7 +22,7 @@ class TableCell:
     bbox: BBox
     value: Optional[str]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(repr(self))
 
 
@@ -52,14 +52,13 @@ class CellSpan:
     def html_value(self) -> str:
         if self.value is not None:
             return self.value.replace("\n", "<br>")
-        else:
-            return ""
+        return ""
 
     @property
     def html(self) -> str:
         return f'<td colspan="{self.colspan}" rowspan="{self.rowspan}">{self.html_value}</td>'
 
-    def html_cell_span(self) -> List["CellSpan"]:
+    def html_cell_span(self) -> list["CellSpan"]:
         if self.colspan > 1 and self.rowspan > 1:
             # Check largest coordinate and split
             if self.colspan > self.rowspan:
@@ -69,18 +68,17 @@ class CellSpan:
                                  col_right=self.col_right,
                                  value=self.value)
                         for row_idx in range(self.top_row, self.bottom_row + 1)]
-            else:
-                return [CellSpan(top_row=self.top_row,
-                                 bottom_row=self.bottom_row,
-                                 col_left=col_idx,
-                                 col_right=col_idx,
-                                 value=self.value)
-                        for col_idx in range(self.col_left, self.col_right + 1)]
+            return [CellSpan(top_row=self.top_row,
+                             bottom_row=self.bottom_row,
+                             col_left=col_idx,
+                             col_right=col_idx,
+                             value=self.value)
+                    for col_idx in range(self.col_left, self.col_right + 1)]
 
         return [self]
 
 
-def create_all_rectangles(cell_positions: List[CellPosition]) -> List[CellSpan]:
+def create_all_rectangles(cell_positions: list[CellPosition]) -> list[CellSpan]:
     """
     Create all possible rectangles from list of cell positions
     :param cell_positions: list of cell positions
@@ -123,17 +121,16 @@ def create_all_rectangles(cell_positions: List[CellPosition]) -> List[CellSpan]:
 
     if remaining_cell_positions:
         # Get remaining rectangles
-        return [cell_span] + create_all_rectangles(remaining_cell_positions)
-    else:
-        # Return coordinates
-        return [cell_span]
+        return [cell_span, *create_all_rectangles(remaining_cell_positions)]
+    # Return coordinates
+    return [cell_span]
 
 
 @dataclass
 class ExtractedTable:
     bbox: BBox
     title: Optional[str]
-    content: OrderedDict[int, List[TableCell]]
+    content: OrderedDict[int, list[TableCell]]
 
     @property
     def df(self) -> pd.DataFrame:
@@ -151,11 +148,11 @@ class ExtractedTable:
         :return: HTML table
         """
         # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
-        dict_cells = dict()
+        dict_cells = {}
         for id_row, row in self.content.items():
             for id_col, cell in enumerate(row):
                 cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
-                dict_cells[hash(cell)] = dict_cells.get(hash(cell), []) + [cell_pos]
+                dict_cells[hash(cell)] = [*dict_cells.get(hash(cell), []), cell_pos]
 
         # Get list of cell spans
         cell_span_list = [cell_span for _, cells in dict_cells.items()
@@ -163,7 +160,7 @@ class ExtractedTable:
         cell_span_list = [span for cell_span in cell_span_list for span in cell_span.html_cell_span()]
 
         # Create HTML rows
-        rows_html = list()
+        rows_html = []
         for row_idx in range(len(self.content)):
             # Get cells in row
             row_cells = sorted([cell_span for cell_span in cell_span_list if cell_span.top_row == row_idx],
@@ -176,18 +173,18 @@ class ExtractedTable:
 
         return BeautifulSoup(table_html, "html.parser").prettify().strip()
 
-    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Optional[Format] = None):
+    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Optional[Format] = None) -> None:
         """
         Populate xlsx worksheet with table data
         :param sheet: xlsxwriter Worksheet
         :param cell_fmt: xlsxwriter cell format
         """
         # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
-        dict_cells = dict()
+        dict_cells = {}
         for id_row, row in self.content.items():
             for id_col, cell in enumerate(row):
                 cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
-                dict_cells[hash(cell)] = dict_cells.get(hash(cell), []) + [cell_pos]
+                dict_cells[hash(cell)] = [*dict_cells.get(hash(cell), []), cell_pos]
 
         # Write all cells to sheet
         for c in dict_cells.values():
@@ -222,8 +219,8 @@ class ExtractedTable:
                    <div align=\"center\">{self.df.to_html().replace("None", "")}</div>
                    <hr>
                 """
-        return html
+        return html # noqa: RET504
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ExtractedTable(title={self.title}, bbox=({self.bbox.x1}, {self.bbox.y1}, {self.bbox.x2}, " \
                f"{self.bbox.y2}),shape=({len(self.content)}, {len(self.content[0])}))".strip()

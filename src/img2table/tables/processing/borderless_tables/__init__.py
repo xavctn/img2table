@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import polars as pl
@@ -14,7 +13,7 @@ from img2table.tables.processing.borderless_tables.table import identify_table
 from img2table.tables.processing.common import is_contained_cell
 
 
-def coherent_table(tb: Table, elements: List[Cell]) -> Optional[Table]:
+def coherent_table(tb: Table, elements: list[Cell]) -> Optional[Table]:
     """
     Check coherency of top/bottom part of the table
     :param tb: table
@@ -28,11 +27,16 @@ def coherent_table(tb: Table, elements: List[Cell]) -> Optional[Table]:
     # Dataframe of elements
     df_elements = pl.DataFrame([{"x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2} for c in elements])
 
+    df_relevant_rows = (df_rows.unique()
+                        .with_columns(pl.col("x1").len().over("row_id").alias("nb_cells"))
+                        .filter(pl.col("nb_cells") >= 3)
+                        )
+
+    if df_relevant_rows.height == 0:
+        return None
+
     # Get elements in each cells and identify coherent rows
-    rel_rows = (df_rows.unique()
-                .with_columns(pl.col("x1").len().over("row_id").alias("nb_cells"))
-                .filter(pl.col("nb_cells") >= 3)
-                .join(df_elements, how="cross")
+    rel_rows = (df_relevant_rows.join(df_elements, how="cross")
                 .with_columns(x_overlap=pl.min_horizontal("x2", "x2_right") - pl.max_horizontal("x1", "x1_right"),
                               y_overlap=pl.min_horizontal("y2", "y2_right") - pl.max_horizontal("y1", "y1_right"),
                               area=(pl.col("x2_right") - pl.col("x1_right")) * (pl.col("y2_right") - pl.col("y1_right")))
@@ -54,7 +58,7 @@ def coherent_table(tb: Table, elements: List[Cell]) -> Optional[Table]:
     return None
 
 
-def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Table]) -> List[Table]:
+def deduplicate_tables(identified_tables: list[Table], existing_tables: list[Table]) -> list[Table]:
     """
     Deduplicate identified borderless tables with already identified tables in order to avoid duplicates and overlap
     :param identified_tables: list of borderless tables identified
@@ -65,18 +69,18 @@ def deduplicate_tables(identified_tables: List[Table], existing_tables: List[Tab
     identified_tables = sorted(identified_tables, key=lambda tb: tb.area, reverse=True)
 
     # For each table check if it does not overlap with an existing table
-    final_tables = list()
+    final_tables = []
     for table in identified_tables:
-        if not any([max(is_contained_cell(inner_cell=table.cell, outer_cell=tb.cell, percentage=0.1),
-                        is_contained_cell(inner_cell=tb.cell, outer_cell=table.cell, percentage=0.1))
-                    for tb in existing_tables + final_tables]):
+        if not any(max(is_contained_cell(inner_cell=table.cell, outer_cell=tb.cell, percentage=0.1),
+                       is_contained_cell(inner_cell=tb.cell, outer_cell=table.cell, percentage=0.1))
+                   for tb in existing_tables + final_tables):
             final_tables.append(table)
 
     return final_tables
 
 
-def identify_borderless_tables(thresh: np.ndarray, lines: List[Line], char_length: float, median_line_sep: float,
-                               contours: List[Cell], existing_tables: List[Table]) -> List[Table]:
+def identify_borderless_tables(thresh: np.ndarray, lines: list[Line], char_length: float, median_line_sep: float,
+                               contours: list[Cell], existing_tables: list[Table]) -> list[Table]:
     """
     Identify borderless tables in image
     :param thresh: threshold image array
@@ -95,12 +99,11 @@ def identify_borderless_tables(thresh: np.ndarray, lines: List[Line], char_lengt
                                    existing_tables=existing_tables)
 
     # In each segment, create groups of rows and identify tables
-    tables = list()
+    tables = []
     for table_segment in table_segments:
         # Identify column groups in segment
         column_group = identify_columns(table_segment=table_segment,
-                                        char_length=char_length,
-                                        median_line_sep=median_line_sep)
+                                        char_length=char_length)
 
         if column_group:
             # Identify potential table rows

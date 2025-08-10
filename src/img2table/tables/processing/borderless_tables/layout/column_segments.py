@@ -1,8 +1,7 @@
-# coding: utf-8
 import random
 from dataclasses import dataclass
 from queue import PriorityQueue
-from typing import List, Union
+from typing import Union
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
@@ -23,21 +22,21 @@ class Rectangle:
         return cls(x1=cell.x1, y1=cell.y1, x2=cell.x2, y2=cell.y2)
 
     @property
-    def area(self):
+    def area(self) -> int:
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
     @property
-    def center(self):
+    def center(self) -> tuple[float, float]:
         return (self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2
 
     @property
     def cell(self) -> Cell:
         return Cell(x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2)
 
-    def distance(self, other):
+    def distance(self, other: "Rectangle") -> float:
         return (self.center[0] - other.center[0]) ** 2 + (self.center[1] - other.center[1]) ** 2
 
-    def overlaps(self, other):
+    def overlaps(self, other: "Rectangle") -> bool:
         x_left = max(self.x1, other.x1)
         y_top = max(self.y1, other.y1)
         x_right = min(self.x2, other.x2)
@@ -47,7 +46,7 @@ class Rectangle:
 
 
 def identify_remaining_segments(searched_rectangle: Rectangle,
-                                existing_segments: List[Union[Cell, ImageSegment]]) -> List[Cell]:
+                                existing_segments: list[Union[Cell, ImageSegment]]) -> list[Cell]:
     """
     Identify remaining segments in searched rectangle
     :param searched_rectangle: rectangle corresponding to area of research
@@ -61,8 +60,8 @@ def identify_remaining_segments(searched_rectangle: Rectangle,
     queue = PriorityQueue()
     queue.put([-searched_rectangle.area, searched_rectangle, obstacles])
 
-    segments = list()
-    while not queue.qsize() == 0:
+    segments = []
+    while queue.qsize() != 0:
         q, r, obs = queue.get()
         if len(obs) == 0:
             # Update segments
@@ -92,7 +91,7 @@ def identify_remaining_segments(searched_rectangle: Rectangle,
     return [seg.cell for seg in segments]
 
 
-def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: List[Line]) -> List[Cell]:
+def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: list[Line]) -> list[Cell]:
     """
     Identify vertical whitespaces that can correspond to column delimiters in document
     :param image_segment: segment corresponding to the image
@@ -108,7 +107,7 @@ def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: List
         return []
 
     # Cut whitespaces with horizontal lines
-    line_ws = list()
+    line_ws = []
     h_lines = [line for line in lines if line.horizontal]
     for ws in v_ws:
         # Get crossing h_lines
@@ -154,13 +153,11 @@ def get_vertical_ws(image_segment: ImageSegment, char_length: float, lines: List
         line_ws_groups[-1].append(ws)
 
     # Keep only the tallest whitespace in each group
-    final_ws = [sorted([ws for ws in cl if ws.height == max([w.height for w in cl])], key=lambda w: w.area).pop()
-                for cl in line_ws_groups]
-
-    return final_ws
+    return [sorted([ws for ws in cl if ws.height == max([w.height for w in cl])], key=lambda w: w.area).pop()
+            for cl in line_ws_groups]
 
 
-def is_column_section(ws_group: List[Cell]) -> bool:
+def is_column_section(ws_group: list[Cell]) -> bool:
     """
     Identify if the whitespace group can correspond to columns
     :param ws_group: group of whitespaces
@@ -177,7 +174,27 @@ def is_column_section(ws_group: List[Cell]) -> bool:
     return max(col_widths) / min(col_widths) <= 1.25
 
 
-def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell]) -> List[List[Cell]]:
+def top_matches(col_1: Cell, col_2: Cell) -> bool:
+    """
+    Identify if the top ends of columns are closely matching
+    :param col_1: first column as cell
+    :param col_2: second column as cell
+    :return: boolean indicating if the top ends of columns are closely matching
+    """
+    return abs(col_1.y1 - col_2.y1) / max(col_1.height, col_2.height) <= 0.05
+
+
+def bottom_matches(col_1: Cell, col_2: Cell) -> bool:
+    """
+    Identify if the bottom ends of columns are closely matching
+    :param col_1: first column as cell
+    :param col_2: second column as cell
+    :return: boolean indicating if the bottom ends of columns are closely matching
+    """
+    return abs(col_1.y2 - col_2.y2) / max(col_1.height, col_2.height) <= 0.05
+
+
+def identify_column_groups(image_segment: ImageSegment, vertical_ws: list[Cell]) -> list[list[Cell]]:
     """
     Identify groups of whitespaces that correspond to document columns
     :param image_segment: segment corresponding to the image
@@ -190,9 +207,6 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
     edge_ws = [ws for ws in vertical_ws if len({ws.x1, ws.x2}.intersection({image_segment.x1, image_segment.x2})) > 0]
 
     # Create groups of columns based on top/bottom alignment
-    top_matches = lambda col_1, col_2: abs(col_1.y1 - col_2.y1) / max(col_1.height, col_2.height) <= 0.05
-    bottom_matches = lambda col_1, col_2: abs(col_1.y2 - col_2.y2) / max(col_1.height, col_2.height) <= 0.05
-
     top_col_groups = [cl + edge_ws for cl in cluster_items(items=middle_ws, clustering_func=top_matches)]
     bottom_col_groups = [cl + edge_ws for cl in cluster_items(items=middle_ws, clustering_func=bottom_matches)]
 
@@ -202,7 +216,7 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
                         reverse=True)
 
     # Get groups that contain all relevant whitespaces
-    filtered_col_groups = list()
+    filtered_col_groups = []
     for col_gp in col_groups:
         y_min, y_max = min([ws.y1 for ws in col_gp]), max([ws.y2 for ws in col_gp])
         matching_ws = [ws for ws in vertical_ws if min(ws.y2, y_max) - max(ws.y1, y_min) > 0.2 * ws.height
@@ -217,13 +231,13 @@ def identify_column_groups(image_segment: ImageSegment, vertical_ws: List[Cell])
     seq = iter(filtered_col_groups)
     dedup_col_groups = [next(seq)]
     for col_gp in seq:
-        if not any([set(col_gp).intersection(set(gp)) == set(col_gp) for gp in dedup_col_groups]):
+        if not any(set(col_gp).intersection(set(gp)) == set(col_gp) for gp in dedup_col_groups):
             dedup_col_groups.append(col_gp)
 
     return dedup_col_groups
 
 
-def get_column_group_segments(col_group: List[Cell]) -> List[ImageSegment]:
+def get_column_group_segments(col_group: list[Cell]) -> list[ImageSegment]:
     """
     Identify image segments from the column group
     :param col_group: group of whitespaces that correspond to document columns
@@ -231,7 +245,7 @@ def get_column_group_segments(col_group: List[Cell]) -> List[ImageSegment]:
     """
     # Compute segments delimited by columns
     col_group = sorted(col_group, key=lambda ws: ws.x1 + ws.x2)
-    col_segments = list()
+    col_segments = []
 
     for left_ws, right_ws in zip(col_group, col_group[1:]):
         y1_segment, y2_segment = max(left_ws.y1, right_ws.y1), min(left_ws.y2, right_ws.y2)
@@ -252,7 +266,7 @@ def get_column_group_segments(col_group: List[Cell]) -> List[ImageSegment]:
     return col_segments + remaining_segments
 
 
-def get_segments_from_columns(image_segment: ImageSegment, column_groups: List[List[Cell]]) -> List[ImageSegment]:
+def get_segments_from_columns(image_segment: ImageSegment, column_groups: list[list[Cell]]) -> list[ImageSegment]:
     """
     Identify all segments in image from columns
     :param image_segment: segment corresponding to the image
@@ -282,7 +296,7 @@ def get_segments_from_columns(image_segment: ImageSegment, column_groups: List[L
                                  y2=max([seg.y2 for seg in col_group_segments]))
 
     # Create image segments and identify missing segments
-    img_segments = col_group_segments + [top_segment, bottom_segment, left_segment, right_segment]
+    img_segments = [*col_group_segments, top_segment, bottom_segment, left_segment, right_segment]
     missing_segments = [ImageSegment(x1=area.x1, y1=area.y1, x2=area.x2, y2=area.y2)
                         for area in identify_remaining_segments(searched_rectangle=Rectangle.from_cell(image_segment),
                                                                 existing_segments=img_segments)
@@ -291,7 +305,7 @@ def get_segments_from_columns(image_segment: ImageSegment, column_groups: List[L
     return img_segments + missing_segments
 
 
-def segment_image_columns(image_segment: ImageSegment, char_length: float, lines: List[Line]) -> List[ImageSegment]:
+def segment_image_columns(image_segment: ImageSegment, char_length: float, lines: list[Line]) -> list[ImageSegment]:
     """
     Create image segments by identifying columns
     :param image_segment: segment corresponding to the image
@@ -316,7 +330,7 @@ def segment_image_columns(image_segment: ImageSegment, char_length: float, lines
                                              column_groups=column_groups)
 
     # Populate elements in groups
-    final_segments = list()
+    final_segments = []
     for segment in col_segments:
         segment_elements = [el for el in image_segment.elements if el.x1 >= segment.x1 and el.x2 <= segment.x2
                             and el.y1 >= segment.y1 and el.y2 <= segment.y2]

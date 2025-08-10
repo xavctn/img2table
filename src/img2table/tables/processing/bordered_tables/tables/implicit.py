@@ -1,6 +1,4 @@
-# coding:utf-8
 
-from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -11,7 +9,7 @@ from img2table.tables.processing.borderless_tables.model import ImageSegment, Wh
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-def implicit_rows_lines(table: Table, segment: ImageSegment) -> List[Line]:
+def implicit_rows_lines(table: Table, segment: ImageSegment) -> list[Line]:
     """
     Identify lines corresponding to implicit rows
     :param table: table
@@ -45,9 +43,9 @@ def implicit_rows_lines(table: Table, segment: ImageSegment) -> List[Line]:
         h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Identify created lines
-    created_lines = list()
+    created_lines = []
     for ws in h_ws:
-        if not any([line for line in table.lines if ws.y1 <= line.y1 <= ws.y2 and line.horizontal]):
+        if not any(line for line in table.lines if ws.y1 <= line.y1 <= ws.y2 and line.horizontal):
             created_lines.append(Line(x1=table.x1,
                                       y1=(ws.y1 + ws.y2) // 2,
                                       x2=table.x2,
@@ -56,7 +54,7 @@ def implicit_rows_lines(table: Table, segment: ImageSegment) -> List[Line]:
     return created_lines
 
 
-def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: float) -> List[Line]:
+def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: float) -> list[Line]:
     """
     Identify lines corresponding to implicit columns
     :param table: table
@@ -71,9 +69,9 @@ def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: flo
                            pct=1)
 
     # Identify created lines
-    created_lines = list()
+    created_lines = []
     for ws in v_ws:
-        if not any([line for line in table.lines if ws.x1 <= line.x1 <= ws.x2 and line.vertical]):
+        if not any(line for line in table.lines if ws.x1 <= line.x1 <= ws.x2 and line.vertical):
             created_lines.append(Line(x1=(ws.x1 + ws.x2) // 2,
                                       y1=table.y1,
                                       x2=(ws.x1 + ws.x2) // 2,
@@ -82,7 +80,7 @@ def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: flo
     return created_lines
 
 
-def implicit_content(table: Table, contours: List[Cell], char_length: float, implicit_rows: bool = False,
+def implicit_content(table: Table, contours: list[Cell], char_length: float, implicit_rows: bool = False,
                      implicit_columns: bool = False) -> Table:
     """
     Identify implicit content in table

@@ -1,11 +1,9 @@
-# coding: utf-8
-from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.table import Table
 
 
-def merge_consecutive_tables(tables: List[Table], contours: List[Cell]) -> List[Table]:
+def merge_consecutive_tables(tables: list[Table], contours: list[Cell]) -> list[Table]:
     """
     Merge consecutive coherent tables
     :param tables: list of detected tables
@@ -26,16 +24,16 @@ def merge_consecutive_tables(tables: List[Table], contours: List[Cell]) -> List[
                                and c.x2 >= min(prev_table.x1, tb.x1)
                                and c.x1 <= max(prev_table.x2, tb.x2)]
         # Check coherency of tables
-        prev_tb_cols = sorted([l for l in prev_table.lines if l.vertical], key=lambda l: l.x1)
-        tb_cols = sorted([l for l in tb.lines if l.vertical], key=lambda l: l.x1)
-        coherency_lines = all([abs(l1.x1 - l2.x1) <= 2 for l1, l2 in zip(prev_tb_cols, tb_cols)])
+        prev_tb_cols = sorted([ln for ln in prev_table.lines if ln.vertical], key=lambda ln: ln.x1)
+        tb_cols = sorted([ln for ln in tb.lines if ln.vertical], key=lambda ln: ln.x1)
+        coherency_lines = all(abs(l1.x1 - l2.x1) <= 2 for l1, l2 in zip(prev_tb_cols, tb_cols))
 
         if not (len(in_between_contours) == 0 and prev_table.nb_columns == tb.nb_columns and coherency_lines):
             clusters.append([])
         clusters[-1].append(tb)
 
     # Create merged tables
-    merged_tables = list()
+    merged_tables = []
     for cl in clusters:
         if len(cl) == 1:
             merged_tables += cl

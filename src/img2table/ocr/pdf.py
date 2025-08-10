@@ -1,6 +1,5 @@
-# coding: utf-8
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import polars as pl
@@ -21,11 +20,11 @@ class Char:
 
     @property
     def width(self) -> int:
-        return self.x2 - self.x1
+        return (self.x2 - self.x1) or 1
 
     @property
     def height(self) -> int:
-        return self.y2 - self.y1
+        return (self.y2 - self.y1) or 1
 
     def distance(self, char: "Char") -> float:
         return (((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2 + (
@@ -36,7 +35,7 @@ class Char:
 class Word:
     idx: int
     line_idx: int
-    chars: List[Char]
+    chars: list[Char]
 
     @property
     def x1(self) -> int:
@@ -56,17 +55,17 @@ class Word:
 
     @property
     def width(self) -> int:
-        return self.x2 - self.x1
+        return (self.x2 - self.x1) or 1
 
     @property
     def height(self) -> int:
-        return self.y2 - self.y1
+        return (self.y2 - self.y1) or 1
 
     @property
     def value(self) -> Optional[str]:
         return "".join([c.value for c in self.chars]) if self.chars else None
 
-    def dict(self, page_idx: int) -> Dict:
+    def dict(self, page_idx: int) -> dict:
         return {
             "page": page_idx,
             "class": "ocrx_word",
@@ -81,11 +80,11 @@ class Word:
         }
 
     @property
-    def direction(self):
+    def direction(self) -> str:
         if len(self.chars) >= 3:
             if self.width / self.height >= 2:
                 return "horizontal"
-            elif self.height / self.width >= 2:
+            if self.height / self.width >= 2:
                 return "vertical"
         return "unknown"
 
@@ -94,36 +93,32 @@ class Word:
         if self.chars:
             if self.direction == "horizontal":
                 return np.mean([c.width for c in self.chars])
-            elif self.direction == "vertical":
+            if self.direction == "vertical":
                 return np.mean([c.height for c in self.chars])
-            else:
-                return np.mean([max(c.height, c.width) for c in self.chars])
-        else:
-            return 0
+            return np.mean([max(c.height, c.width) for c in self.chars])
+        return 0
 
     def distance(self, char: Char) -> float:
         if self.chars:
             return self.chars[-1].distance(char=char)
-        else:
-            return 0
+        return 0
 
     def corresponds(self, char: Char) -> bool:
         if self.chars:
             if self.direction == "horizontal":
                 return min(self.y2, char.y2) - max(self.y1, char.y1) >= 0.5 * min(self.height, char.height)
-            elif self.direction == "vertical":
+            if self.direction == "vertical":
                 return min(self.x2, char.x2) - max(self.x1, char.x1) >= 0.5 * min(self.width, char.width)
-            else:
-                return self.distance(char=char) <= 3 * self.size
+            return self.distance(char=char) <= 3 * self.size
         return True
 
-    def add_char(self, char: Char):
+    def add_char(self, char: Char) -> None:
         self.chars.append(char)
 
 
 def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: float,
                          page_height: float, page_rotation: int, x_offset: float,
-                         y_offset: float) -> Tuple[int, int, int, int]:
+                         y_offset: float) -> tuple[int, int, int, int]:
     """
     Compute character coordinates within page
     :param text_page: PdfTextPage object from pypdfium2
@@ -158,8 +153,8 @@ def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: floa
 
 
 class PdfOCR(OCRInstance):
-    def content(self, document: Document) -> List[List[Dict]]:
-        list_pages = list()
+    def content(self, document: Document) -> list[list[dict]]:
+        list_pages = []
 
         doc = PdfDocument(input=document.bytes)
         for idx, page_number in enumerate(document.pages):
@@ -190,17 +185,16 @@ class PdfOCR(OCRInstance):
                 # Check coherency of character with previous characters / words
                 if char.value.strip() == "":
                     word_id += 1
-                else:
-                    if words[-1].corresponds(char=char):
-                        if words[-1].distance(char=char) <= 2 * words[-1].size and word_id == words[-1].idx:
-                            words[-1].add_char(char=char)
-                        else:
-                            word_id += 1
-                            words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
+                elif words[-1].corresponds(char=char):
+                    if words[-1].distance(char=char) <= 2 * words[-1].size and word_id == words[-1].idx:
+                        words[-1].add_char(char=char)
                     else:
                         word_id += 1
-                        line_id += 1
                         words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
+                else:
+                    word_id += 1
+                    line_id += 1
+                    words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
 
             # Get only words that hold values
             list_words = [w.dict(page_idx=idx) for w in words if w.value]
@@ -229,15 +223,13 @@ class PdfOCR(OCRInstance):
         doc.close()
         return list_pages
 
-    def to_ocr_dataframe(self, content: List[List[Dict]]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe:
         # Check if any page has words
         if min(map(len, content)) == 0:
             return None
 
         # Create OCRDataframe
-        list_dfs = list()
-        for page_elements in content:
-            if page_elements:
-                list_dfs.append(pl.DataFrame(data=page_elements, schema=self.pl_schema))
+        list_dfs = [pl.DataFrame(data=page_elements, schema=self.pl_schema)
+                    for page_elements in content if page_elements]
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

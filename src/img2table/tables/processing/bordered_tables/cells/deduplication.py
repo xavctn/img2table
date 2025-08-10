@@ -1,12 +1,10 @@
-# coding: utf-8
-from typing import List
 
 import numpy as np
 
 from img2table.tables.objects.cell import Cell
 
 
-def deduplicate_cells(cells: List[Cell]) -> List[Cell]:
+def deduplicate_cells(cells: list[Cell]) -> list[Cell]:
     """
     Deduplicate nested cells in order to keep the smallest ones
     :param cells: list of cells
@@ -16,7 +14,7 @@ def deduplicate_cells(cells: List[Cell]) -> List[Cell]:
     x_max, y_max = max([c.x2 for c in cells] + [0]), max([c.y2 for c in cells] + [0])
     coverage_array = np.ones((y_max, x_max), dtype=np.uint8)
 
-    dedup_cells = list()
+    dedup_cells = []
     for c in sorted(cells, key=lambda c: c.area):
         cropped = coverage_array[c.y1:c.y2, c.x1:c.x2]
         # If cell has at least 25% of its area not covered, add it

@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -9,7 +7,7 @@ from img2table.tables.processing.bordered_tables.tables import cluster_to_table
 from img2table.tables.processing.borderless_tables.model import ColumnGroup
 
 
-def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[Cell]) -> Table:
+def get_table(columns: ColumnGroup, row_delimiters: list[Cell], contours: list[Cell]) -> Table:
     """
     Create table object from column delimiters and rows
     :param columns: column delimiters group
@@ -18,7 +16,7 @@ def get_table(columns: ColumnGroup, row_delimiters: List[Cell], contours: List[C
     :return: Table object
     """
     # Convert delimiters to lines
-    v_lines = list()
+    v_lines = []
     for col in columns.columns:
         seq = iter(sorted([c for v_ws in col.whitespaces for c in v_ws.ws.cells],
                           key=lambda c: c.y1 + c.y2))

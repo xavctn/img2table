@@ -1,5 +1,3 @@
-# coding: utf-8
-from typing import List, Set
 
 import polars as pl
 
@@ -7,7 +5,7 @@ from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
 
 
-def get_adjacent_cells(cells: List[Cell]) -> List[Set[int]]:
+def get_adjacent_cells(cells: list[Cell]) -> list[set[int]]:
     """
     Identify adjacent cells
     :param cells: list of cells
@@ -56,12 +54,10 @@ def get_adjacent_cells(cells: List[Cell]) -> List[Set[int]]:
     )
 
     # Get sets of adjacent cells indexes
-    adjacent_cells = [{row.get('idx'), row.get('idx_right')} for row in df_adjacent_cells.to_dicts()]
-
-    return adjacent_cells
+    return [{row.get('idx'), row.get('idx_right')} for row in df_adjacent_cells.to_dicts()]
 
 
-def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
+def cluster_cells_in_tables(cells: list[Cell]) -> list[list[Cell]]:
     """
     Based on adjacent cells, create clusters of cells that corresponds to tables
     :param cells: list cells in image
@@ -74,6 +70,4 @@ def cluster_cells_in_tables(cells: List[Cell]) -> List[List[Cell]]:
     clusters = find_components(edges=adjacent_cells)
 
     # Return list of cell objects
-    list_table_cells = [[cells[idx] for idx in cl] for cl in clusters]
-
-    return list_table_cells
+    return [[cells[idx] for idx in cl] for cl in clusters]

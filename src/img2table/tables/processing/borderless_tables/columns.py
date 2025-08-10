@@ -1,14 +1,13 @@
-# coding: utf-8
 
 import copy
-from typing import Optional, List
+from typing import Optional
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import TableSegment, Whitespace, Column, VerticalWS, \
     ColumnGroup
 
 
-def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> List[Column]:
+def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> list[Column]:
     """
     Identify column delimiters in table segment
     :param table_segment: TableSegment object
@@ -19,9 +18,9 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
     table_areas = sorted(table_segment.table_areas, key=lambda x: x.position)
 
     # Create groups of relevant vertical whitespaces
-    columns = list()
+    columns = []
     for id_area, tb_area in enumerate(table_areas):
-        new_columns = list()
+        new_columns = []
         whitespaces = [VerticalWS(ws=ws,
                                   top=ws.y1 == tb_area.y1,
                                   bottom=ws.y2 == tb_area.y2,
@@ -35,7 +34,7 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
             if matching_ws:
                 for v_ws in matching_ws:
                     # Update whitespace
-                    setattr(v_ws, "used", True)
+                    v_ws.used = True
 
                     # Create new column
                     new_col = copy.deepcopy(col)
@@ -53,9 +52,9 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
     # Recompute boundaries of columns (up to previous/next area)
     dict_bounds = {k: {"y_min": table_areas[k].y1, "y_max": table_areas[k].y2}
                    for k in range(len(table_areas))}
-    reshaped_columns = list()
+    reshaped_columns = []
     for col in columns:
-        reshaped_whitespaces = list()
+        reshaped_whitespaces = []
         for v_ws in col.whitespaces:
             # Reshape all whitespaces
             y_min = dict_bounds.get(v_ws.position - 1, {}).get("y_max") or v_ws.y1 if v_ws.top else v_ws.y1
@@ -73,17 +72,14 @@ def get_columns_delimiters(table_segment: TableSegment, char_length: float) -> L
 
     # Keep only columns that represent at least 66% of the maximum height
     max_height = max(map(lambda col: col.height, reshaped_columns))
-    reshaped_columns = [col for col in reshaped_columns if col.height >= 0.66 * max_height]
-
-    return reshaped_columns
+    return [col for col in reshaped_columns if col.height >= 0.66 * max_height]
 
 
-def identify_columns(table_segment: TableSegment, char_length: float, median_line_sep: float) -> Optional[ColumnGroup]:
+def identify_columns(table_segment: TableSegment, char_length: float) -> Optional[ColumnGroup]:
     """
     Identify list of vertical delimiters that can be table columns in a table segment
     :param table_segment: TableSegment object
     :param char_length: average character length
-    :param median_line_sep: median line separation
     :return: delimiter group that can correspond to columns
     """
     # Get columns whitespaces

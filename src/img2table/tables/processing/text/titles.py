@@ -1,6 +1,4 @@
-# coding: utf-8
 import copy
-from typing import List
 
 import numpy as np
 
@@ -10,7 +8,7 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.common import get_contours_cell
 
 
-def get_title_tables(img: np.ndarray, tables: List[Table], ocr_df: OCRDataframe, margin: int = 5) -> List[Table]:
+def get_title_tables(img: np.ndarray, tables: list[Table], ocr_df: OCRDataframe, margin: int = 5) -> list[Table]:
     """
     Retrieve titles of cell areas
     :param img: image array
@@ -36,12 +34,12 @@ def get_title_tables(img: np.ndarray, tables: List[Table], ocr_df: OCRDataframe,
         tb_cl[-1].append(tb)
 
     # Identify relative zones for each title corresponding to each cluster
-    final_tables = list()
+    final_tables = []
     for id_cl, cluster in enumerate(tb_cl):
         # Compute horizontal boundaries of title
-        x_delimiters = [int(round((tb_1.x2 + tb_2.x1) / 2)) for tb_1, tb_2 in zip(cluster, cluster[1:])]
-        x_delimiters = [max(10, int(round(cluster[0].x1 - 0.2 * cluster[0].width)))] + x_delimiters + [width - 10]
-        x_delimiters = x_delimiters + [min(width - 10, int(round(cluster[-1].x2 + 0.2 * cluster[-1].width)))]
+        x_delimiters = [round((tb_1.x2 + tb_2.x1) / 2) for tb_1, tb_2 in zip(cluster, cluster[1:])]
+        x_delimiters = [max(10, round(cluster[0].x1 - 0.2 * cluster[0].width)), *x_delimiters, width - 10]
+        x_delimiters = [*x_delimiters, min(width - 10, round(cluster[-1].x2 + 0.2 * cluster[-1].width))]
         x_bounds = [(del_1, del_2) for del_1, del_2 in zip(x_delimiters, x_delimiters[1:])]
 
         # Compute vertical boundaries of title

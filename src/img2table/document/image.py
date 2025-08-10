@@ -1,8 +1,6 @@
-# coding: utf-8
 import typing
 from dataclasses import dataclass
 from functools import cached_property
-from typing import List
 
 import cv2
 import numpy as np
@@ -19,23 +17,22 @@ if typing.TYPE_CHECKING:
 class Image(Document):
     detect_rotation: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.pages = None
 
-        super(Image, self).__post_init__()
+        super().__post_init__()
 
     @cached_property
-    def images(self) -> List[np.ndarray]:
+    def images(self) -> list[np.ndarray]:
         img = cv2.imdecode(np.frombuffer(self.bytes, np.uint8), cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if self.detect_rotation:
             rotated_img, _ = fix_rotation_image(img=img)
             return [rotated_img]
-        else:
-            return [img]
+        return [img]
 
     def extract_tables(self, ocr: "OCRInstance" = None, implicit_rows: bool = False, implicit_columns: bool = False,
-                       borderless_tables: bool = False, min_confidence: int = 50) -> List[ExtractedTable]:
+                       borderless_tables: bool = False, min_confidence: int = 50) -> list[ExtractedTable]:
         """
         Extract tables from document
         :param ocr: OCRInstance object used to extract table content
@@ -45,7 +42,7 @@ class Image(Document):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: list of extracted tables
         """
-        extracted_tables = super(Image, self).extract_tables(ocr=ocr,
+        extracted_tables = super().extract_tables(ocr=ocr,
                                                              implicit_rows=implicit_rows,
                                                              implicit_columns=implicit_columns,
                                                              borderless_tables=borderless_tables,

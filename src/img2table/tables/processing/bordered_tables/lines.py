@@ -1,5 +1,4 @@
-# coding: utf-8
-from typing import List, Optional
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -9,7 +8,7 @@ from img2table.tables.objects.line import Line
 
 
 def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_length: float,
-                            vertical: bool = True) -> List[Line]:
+                            vertical: bool = True) -> list[Line]:
     """
     Identify straight lines in image in a specific direction
     :param thresh: thresholded edge image
@@ -39,7 +38,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     # Get stats
     _, _, stats, _ = cv2.connectedComponentsWithStats(final_mask, 8, cv2.CV_32S)
 
-    lines = list()
+    lines = []
     # Get relevant CC that correspond to lines
     for idx, stat in enumerate(stats):
         if idx == 0:
@@ -85,8 +84,8 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     return lines
 
 
-def detect_lines(img: np.ndarray, contours: Optional[List[Cell]], char_length: Optional[float],
-                 min_line_length: Optional[float]) -> (List[Line], List[Line]):
+def detect_lines(img: np.ndarray, contours: Optional[list[Cell]], char_length: Optional[float],
+                 min_line_length: Optional[float]) -> (list[Line], list[Line]):
     """
     Detect horizontal and vertical rows on image
     :param img: image array

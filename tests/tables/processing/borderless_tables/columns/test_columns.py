@@ -46,8 +46,7 @@ def test_identify_columns():
     ])
 
     result = identify_columns(table_segment=table_segment,
-                              char_length=14,
-                              median_line_sep=16)
+                              char_length=14)
 
     with open("test_data/delimiter_group.json", "r") as f:
         data = json.load(f)
