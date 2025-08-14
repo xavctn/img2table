@@ -49,7 +49,7 @@ def coherent_table(tb: Table, elements: list[Cell]) -> Optional[Table]:
                 .to_dicts()
                 )
 
-    if len(rel_rows) > 0:
+    if len(rel_rows) > 0 and rel_rows[0].get("min_row") is not None and rel_rows[0].get("max_row") is not None:
         # Get new rows
         new_rows = tb.items[rel_rows[0].get("min_row"):rel_rows[0].get("max_row") + 1]
         if len(new_rows) >= 2:
