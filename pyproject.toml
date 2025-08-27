@@ -1,6 +1,109 @@
 [build-system]
-requires = ["pbr>=5.7.0", "setuptools>=42"]
-build-backend = "pbr.build"
+requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "img2table"
+dynamic = ["version"]
+description = "img2table is a table identification and extraction Python Library for PDF and images, based on OpenCV image processing"
+readme = "README.md"
+authors = [
+    { name = "Xavier Canton" },
+]
+license = "MIT"
+requires-python = ">=3.9, <3.14"
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+]
+
+# Dépendances de base du projet (contenu de requirements.txt).
+dependencies = [
+    "polars[pandas]>=1.2",
+    "pyarrow>=7",
+    "numpy",
+    "pypdfium2>=4.30.0",
+    "opencv-contrib-python>=4",
+    "numba",
+    "beautifulsoup4",
+    "xlsxwriter>=3.0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/xavctn/img2table"
+
+[project.optional-dependencies]
+gcp = [
+    "google-cloud-vision",
+    "requests",
+]
+aws = [
+    "boto3",
+]
+azure = [
+    "azure-cognitiveservices-vision-computervision",
+]
+paddle = [
+    "paddlepaddle",
+    "paddleocr>=2.0.6",
+]
+easyocr = [
+    "easyocr>=1.7.0",
+    "pillow>=10.0.1",
+]
+surya = [
+    "surya-ocr>=0.15.0; python_version>='3.10'",
+]
+
+[dependency-groups]
+dev = [
+    "python-doctr",
+    "torch",
+    "torchvision",
+    "ruff",
+    "pytest >= 6",
+    "pytest-cov",
+    "pytest-xdist",
+    "openpyxl",
+    "sewar",
+    "pipdeptree",
+    "pyinstrument",
+    "jupyter",
+    "ipython-autotime",
+    "wheel",
+    "setuptools-scm",
+    "twine"
+]
+
+[tool.uv]
+allow-insecure-host = ["download.pytorch.org"]
+override-dependencies = [
+    "opencv-python ; sys_platform == 'never'",
+    "opencv-python-headless ; sys_platform == 'never'",
+    "opencv-contrib-python-headless ; sys_platform == 'never'",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+torchvision = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+pythonpath = [".", "src"]
+testpaths = ["tests"]
+log_level = "INFO"
+python_files = "test_*.py"
+filterwarnings = [
+    "ignore::UserWarning",
+]
 
 [tool.ruff.lint]
 select = ["ANN", "B", "A", "C4", "ICN", "INP", "PIE", "PYI", "RSE", "RET", "SLF", "SIM", "TID", "TC", "ARG", "PTH", "NPY", "E", "W", "PL", "F", "UP", "RUF"]

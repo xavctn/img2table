@@ -7,7 +7,9 @@ __pycache__
 dist
 build
 
+.venv
 certs
 venv
 profiling*
 examples/testing
+.python_version

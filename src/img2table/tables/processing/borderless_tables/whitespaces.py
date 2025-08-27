@@ -2,10 +2,9 @@
 from typing import Union
 
 import numpy as np
-from numba import njit, prange
-
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import ImageSegment, ColumnGroup, Whitespace
+from numba import njit, prange
 
 
 @njit("List(List(List(int64)))(float64[:,:],float64,float64,float64,boolean)", cache=True, fastmath=True)
