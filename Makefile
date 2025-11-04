@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SHELL := /bin/bash
 VENV = ./activate_venv
 DIR := $(shell pwd)
 export PYTHONPATH := $(DIR)/src

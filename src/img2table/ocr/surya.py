@@ -2,7 +2,6 @@
 import typing
 
 import polars as pl
-from PIL import Image
 
 from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
@@ -24,6 +23,7 @@ class SuryaOCR(OCRInstance):
             from surya.recognition import RecognitionPredictor
             from surya.detection import DetectionPredictor
             from surya.foundation import FoundationPredictor
+            from PIL import Image
 
         except ModuleNotFoundError as err:
             raise ModuleNotFoundError("Missing dependencies, please install 'img2table[surya]' to use this class.") from err
@@ -41,6 +41,7 @@ class SuryaOCR(OCRInstance):
         self.rec_predictor = RecognitionPredictor(FoundationPredictor())
 
     def content(self, document: Document) -> list["surya.recognition.schema.OCRResult"]:
+        from PIL import Image
         # Get OCR of all images
         return self.rec_predictor(images=[Image.fromarray(img) for img in document.images],
                                   langs=[self.langs],
