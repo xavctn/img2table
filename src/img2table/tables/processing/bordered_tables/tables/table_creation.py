@@ -14,6 +14,9 @@ def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
     :param cluster_cells: list of cells that form a table
     :return: list of normalized cells
     """
+    if len(cluster_cells) == 0:
+        return []
+
     # Compute table shape
     width = max(map(lambda c: c.x2, cluster_cells)) - min(map(lambda c: c.x1, cluster_cells))
     height = max(map(lambda c: c.y2, cluster_cells)) - min(map(lambda c: c.y1, cluster_cells))
