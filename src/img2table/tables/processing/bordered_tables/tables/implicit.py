@@ -21,6 +21,10 @@ def implicit_rows_lines(table: Table, segment: ImageSegment) -> list[Line]:
                            vertical=False,
                            pct=1)
 
+    # Return early if no whitespaces found
+    if not h_ws:
+        return []
+
     # Create whitespaces at the top or the bottom if they are missing
     if h_ws[0].y1 > segment.y1:
         up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
