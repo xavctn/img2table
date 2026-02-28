@@ -1,4 +1,5 @@
-# coding: utf-8
+from pathlib import Path
+from pydantic import ValidationError
 from io import BytesIO
 
 import pytest
@@ -9,59 +10,53 @@ from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import BBox
 
 
-def test_validators():
-    with pytest.raises(TypeError) as e_info:
-        img = Image(src=1)
+def test_validators() -> None:
+    with pytest.raises(ValidationError):
+        Image(src=1)  # ty:ignore[invalid-argument-type]
 
-    with pytest.raises(TypeError) as e_info:
-        img = Image(src="img", detect_rotation=3)
+    with pytest.raises(ValidationError):
+        Image(src="img", detect_rotation=3)  # ty:ignore[invalid-argument-type]
 
 
-def test_load_image():
+def test_load_image() -> None:
     # Load from path
     img_from_path = Image(src="test_data/test.png")
 
     # Load from bytes
-    with open("test_data/test.png", "rb") as f:
+    with Path("test_data/test.png").open("rb") as f:
         img_from_bytes = Image(src=f.read())
 
     # Load from BytesIO
-    with open("test_data/test.png", "rb") as f:
+    with Path("test_data/test.png").open("rb") as f:
         img_from_bytesio = Image(src=BytesIO(f.read()))
 
     assert img_from_path.bytes == img_from_bytes.bytes == img_from_bytesio.bytes
 
-    assert list(img_from_path.images)[0].shape == (417, 1365, 3)
+    assert next(iter(img_from_path.images)).shape == (417, 1365, 3)
 
 
-def test_blank_image(mock_tesseract):
+def test_blank_image(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     ocr = TesseractOCR()
-    img = Image(src="test_data/blank.png",
-                detect_rotation=True)
+    img = Image(src="test_data/blank.png", detect_rotation=True)
 
-    result = img.extract_tables(ocr=ocr,
-                                implicit_rows=True,
-                                borderless_tables=True,
-                                min_confidence=50)
+    result = img.extract_tables(
+        ocr=ocr, implicit_rows=True, borderless_tables=True, min_confidence=50
+    )
 
     assert result == []
 
 
-def test_blank_no_ocr():
-    img = Image(src="test_data/blank.png",
-                detect_rotation=True)
+def test_blank_no_ocr() -> None:
+    img = Image(src="test_data/blank.png", detect_rotation=True)
 
-    result = img.extract_tables(implicit_rows=True,
-                                borderless_tables=True,
-                                min_confidence=50)
+    result = img.extract_tables(implicit_rows=True, borderless_tables=True, min_confidence=50)
 
     assert result == []
 
 
-def test_image_tables(mock_tesseract):
+def test_image_tables(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     ocr = TesseractOCR()
-    img = Image(src="test_data/test.png",
-                detect_rotation=True)
+    img = Image(src="test_data/test.png", detect_rotation=True)
 
     result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
@@ -78,9 +73,8 @@ def test_image_tables(mock_tesseract):
     assert len(result[1].content[0]) == 2
 
 
-def test_no_ocr():
-    img = Image(src="test_data/dark.png",
-                detect_rotation=True)
+def test_no_ocr() -> None:
+    img = Image(src="test_data/dark.png", detect_rotation=True)
 
     result = img.extract_tables(implicit_rows=True, min_confidence=50)
 
@@ -92,10 +86,9 @@ def test_no_ocr():
     assert len(result[0].content[0]) == 5
 
 
-def test_image_excel(mock_tesseract):
+def test_image_excel(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     ocr = TesseractOCR()
-    img = Image(src="test_data/test.png",
-                detect_rotation=True)
+    img = Image(src="test_data/test.png", detect_rotation=True)
 
     result = img.to_xlsx(dest=BytesIO(), ocr=ocr, implicit_rows=True, min_confidence=50)
 

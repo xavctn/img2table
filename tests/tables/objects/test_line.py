@@ -1,9 +1,7 @@
-# coding: utf-8
-
 from img2table.tables.objects.line import Line
 
 
-def test_line():
+def test_line() -> None:
     line = Line(x1=0, y1=20, x2=46, y2=73)
 
     assert round(line.angle) == 49
@@ -14,7 +12,7 @@ def test_line():
     assert not line.horizontal
 
 
-def test_reprocess_line():
+def test_reprocess_line() -> None:
     line = Line(x1=20, y1=73, x2=19, y2=20, thickness=18)
 
     reprocessed_line = line.reprocess()

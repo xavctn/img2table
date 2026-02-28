@@ -1,5 +1,5 @@
-# coding: utf-8
 import json
+from pathlib import Path
 
 import cv2
 
@@ -8,18 +8,15 @@ from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables import segment_image
 
 
-def test_segment_image():
+def test_segment_image() -> None:
     img = cv2.cvtColor(cv2.imread("test_data/test.bmp"), cv2.COLOR_BGR2RGB)
     thresh = threshold_dark_areas(img=img, char_length=6)
 
-    with open("test_data/lines.json", 'r') as f:
+    with Path("test_data/lines.json").open() as f:
         data = json.load(f)
-    lines = [Line(**el) for el in data.get('h_lines') + data.get('v_lines')]
+    lines = [Line(**el) for el in data.get("h_lines") + data.get("v_lines")]
 
-    result = segment_image(thresh=thresh,
-                           lines=lines,
-                           char_length=6.0,
-                           median_line_sep=16)
+    result = segment_image(thresh=thresh, lines=lines, char_length=6.0, median_line_sep=16)
 
     assert len(result) == 2
 

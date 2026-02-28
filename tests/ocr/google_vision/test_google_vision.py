@@ -1,26 +1,26 @@
-# coding: utf-8
 import json
 import os
 import pickle
+from pathlib import Path
 
 import polars as pl
 import pytest
 
 from img2table.document import Image
 from img2table.ocr.data import OCRDataframe
-from img2table.ocr.google_vision import VisionEndpointContent, VisionAPIContent, VisionOCR
+from img2table.ocr.google_vision import VisionAPIContent, VisionEndpointContent, VisionOCR
 from tests import MOCK_DIR
 
 
-def test_vision_endpoint_content(mock_vision):
-    image = Image("test_data/test.png")
+def test_vision_endpoint_content(mock_vision) -> None:  # noqa: ANN001, ARG001
+    image = Image(src="test_data/test.png")
     content = VisionEndpointContent(api_key="api_key", timeout=10)
 
-    with open("test_data/expected_content.json", "r") as f:
+    with Path("test_data/expected_content.json").open() as f:
         expected = json.load(f)
 
     # Test for map_response method
-    with open(os.path.join(MOCK_DIR, "vision.json"), "r") as f:
+    with (Path(MOCK_DIR) / "vision.json").open() as f:
         response = json.load(f)
 
     result_map_response = content.map_response(response=response, page=0, height=417, width=1365)
@@ -31,15 +31,15 @@ def test_vision_endpoint_content(mock_vision):
     assert result_get_content == expected
 
 
-def test_vision_api_content(mock_vision):
-    image = Image("test_data/test.png")
+def test_vision_api_content(mock_vision) -> None:  # noqa: ANN001, ARG001
+    image = Image(src="test_data/test.png")
     content = VisionAPIContent(timeout=10)
 
-    with open("test_data/expected_content.json", "r") as f:
+    with Path("test_data/expected_content.json").open() as f:
         expected = json.load(f)
 
     # Test for map_response method
-    with open(os.path.join(MOCK_DIR, "vision.pkl"), "rb") as f:
+    with (Path(MOCK_DIR) / "vision.pkl").open("rb") as f:
         response = pickle.load(f)
 
     result_map_response = content.map_response(response=response, shapes=[(417, 1365)])
@@ -50,19 +50,19 @@ def test_vision_api_content(mock_vision):
     assert result_get_content == expected
 
 
-def test_vision_ocr(mock_vision):
-    image = Image("test_data/test.png")
+def test_vision_ocr(mock_vision) -> None:  # noqa: ANN001, ARG001
+    image = Image(src="test_data/test.png")
 
-    with open("test_data/expected_content.json", "r") as f:
+    with Path("test_data/expected_content.json").open() as f:
         content = json.load(f)
 
     expected_ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
 
     # Test init error
-    with pytest.raises(TypeError) as e_info:
-        VisionOCR(api_key=8)
+    with pytest.raises(TypeError):
+        VisionOCR(api_key=8)  # ty:ignore[invalid-argument-type]
 
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         VisionOCR()
 
     # Test with api_key

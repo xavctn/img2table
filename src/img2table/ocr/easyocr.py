@@ -1,17 +1,20 @@
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import polars as pl
 
-from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
+
+if TYPE_CHECKING:
+    from img2table.document.base import Document, MockDocument
 
 
 class EasyOCR(OCRInstance):
     """
     EAsyOCR instance
     """
-    def __init__(self, lang: Optional[list[str]] = None, kw: Optional[dict] = None) -> None:
+
+    def __init__(self, lang: list[str] | None = None, kw: dict | None = None) -> None:
         """
         Initialization of EasyOCR instance
         :param lang: lang parameter used in EasyOCR
@@ -20,7 +23,9 @@ class EasyOCR(OCRInstance):
         try:
             from easyocr import Reader
         except ModuleNotFoundError as err:
-            raise ModuleNotFoundError("Missing dependencies, please install 'img2table[easyocr]' to use this class.") from err
+            raise ModuleNotFoundError(
+                "Missing dependencies, please install 'img2table[easyocr]' to use this class."
+            ) from err
 
         lang = lang or ["en"]
         if isinstance(lang, list):
@@ -36,11 +41,11 @@ class EasyOCR(OCRInstance):
 
         self.reader = Reader(**kw)
 
-    def content(self, document: Document) -> list[list[tuple]]:
+    def content(self, document: "Document | MockDocument") -> list[list[tuple]]:
         # Get OCR of all images
         return [self.reader.readtext(image) for image in document.images]
 
-    def to_ocr_dataframe(self, content: list[list]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list]) -> OCRDataframe | None:
         """
         Convert hOCR HTML to OCRDataframe object
         :param content: hOCR HTML string
@@ -61,7 +66,7 @@ class EasyOCR(OCRInstance):
                     "x1": round(min([edge[0] for edge in word[0]])),
                     "y1": round(min([edge[1] for edge in word[0]])),
                     "x2": round(max([edge[0] for edge in word[0]])),
-                    "y2": round(max([edge[1] for edge in word[0]]))
+                    "y2": round(max([edge[1] for edge in word[0]])),
                 }
 
                 list_elements.append(dict_word)

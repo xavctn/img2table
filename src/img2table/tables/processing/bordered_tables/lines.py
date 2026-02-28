@@ -1,5 +1,3 @@
-from typing import Optional
-
 import cv2
 import numpy as np
 
@@ -7,8 +5,9 @@ from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 
 
-def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_length: float,
-                            vertical: bool = True) -> list[Line]:
+def identify_straight_lines(
+    thresh: np.ndarray, min_line_length: int, char_length: float, vertical: bool = True
+) -> list[Line]:
     """
     Identify straight lines in image in a specific direction
     :param thresh: thresholded edge image
@@ -18,7 +17,9 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     :return: list of detected lines
     """
     # Apply masking on image
-    kernel_dims = (1, round(min_line_length / 3) or 1) if vertical else (round(min_line_length / 3) or 1, 1)
+    kernel_dims = (
+        (1, round(min_line_length / 3) or 1) if vertical else (round(min_line_length / 3) or 1, 1)
+    )
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_dims)
     mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
 
@@ -27,16 +28,21 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
     mask_closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, hollow_kernel)
 
     # Apply closing for dotted lines
-    dotted_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, round(min_line_length / 6) or 1) if vertical else (round(min_line_length / 6) or 1, 1))
+    dotted_kernel = cv2.getStructuringElement(
+        cv2.MORPH_RECT,
+        (1, round(min_line_length / 6) or 1) if vertical else (round(min_line_length / 6) or 1, 1),
+    )
     mask_dotted = cv2.morphologyEx(mask_closed, cv2.MORPH_CLOSE, dotted_kernel)
 
     # Apply masking on line length
     kernel_dims = (1, min_line_length or 1) if vertical else (min_line_length or 1, 1)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_dims)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, ksize=kernel_dims)
     final_mask = cv2.morphologyEx(mask_dotted, cv2.MORPH_OPEN, kernel, iterations=1)
 
     # Get stats
-    _, _, stats, _ = cv2.connectedComponentsWithStats(final_mask, 8, cv2.CV_32S)
+    _, _, stats, _ = cv2.connectedComponentsWithStats(
+        image=final_mask, connectivity=8, ltype=cv2.CV_32S
+    )
 
     lines = []
     # Get relevant CC that correspond to lines
@@ -45,7 +51,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
             continue
 
         # Get stats
-        x, y, w, h, area = stat
+        x, y, w, h, _area = stat
 
         # Filter on aspect ratio
         if max(w, h) / min(w, h) < 5 and min(w, h) >= char_length:
@@ -54,7 +60,7 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
         if max(w, h) < min_line_length:
             continue
 
-        cropped = thresh[y:y+h, x:x+w]
+        cropped = thresh[y : y + h, x : x + w]
         if w >= h:
             non_blank_pixels = np.where(np.sum(cropped, axis=0) > 0)
             line_rows = np.where((np.sum(cropped, axis=1) / 255) >= 0.5 * w)
@@ -62,11 +68,13 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
             if len(line_rows[0]) == 0:
                 continue
 
-            line = Line(x1=x + np.min(non_blank_pixels),
-                        y1=y + round(np.mean(line_rows)),
-                        x2=x + np.max(non_blank_pixels),
-                        y2=y + round(np.mean(line_rows)),
-                        thickness=np.max(line_rows) - np.min(line_rows) + 1)
+            line = Line(
+                x1=x + np.min(non_blank_pixels),
+                y1=y + round(np.mean(line_rows)),
+                x2=x + np.max(non_blank_pixels),
+                y2=y + round(np.mean(line_rows)),
+                thickness=np.max(line_rows) - np.min(line_rows) + 1,  # ty:ignore[invalid-argument-type]
+            )
         else:
             non_blank_pixels = np.where(np.sum(cropped, axis=1) > 0)
             line_cols = np.where((np.sum(cropped, axis=0) / 255) >= 0.5 * h)
@@ -74,18 +82,21 @@ def identify_straight_lines(thresh: np.ndarray, min_line_length: float, char_len
             if len(line_cols[0]) == 0:
                 continue
 
-            line = Line(x1=x + round(np.mean(line_cols)),
-                        y1=y + np.min(non_blank_pixels),
-                        x2=x + round(np.mean(line_cols)),
-                        y2=y + np.max(non_blank_pixels),
-                        thickness=np.max(line_cols) - np.min(line_cols) + 1)
+            line = Line(
+                x1=x + round(np.mean(line_cols)),
+                y1=y + np.min(non_blank_pixels),
+                x2=x + round(np.mean(line_cols)),
+                y2=y + np.max(non_blank_pixels),
+                thickness=np.max(line_cols) - np.min(line_cols) + 1,  # ty:ignore[invalid-argument-type]
+            )
         lines.append(line)
 
     return lines
 
 
-def detect_lines(img: np.ndarray, contours: Optional[list[Cell]], char_length: Optional[float],
-                 min_line_length: Optional[float]) -> (list[Line], list[Line]):
+def detect_lines(
+    img: np.ndarray, contours: list[Cell], char_length: float, min_line_length: int
+) -> tuple[list[Line], list[Line]]:
     """
     Detect horizontal and vertical rows on image
     :param img: image array
@@ -104,17 +115,15 @@ def detect_lines(img: np.ndarray, contours: Optional[list[Cell]], char_length: O
 
     # Remove contours and convert to binary image
     for c in contours:
-        edge_img[c.y1 - 1:c.y2 + 1, c.x1 - 1:c.x2 + 1] = 0
-    binary_img = 255 * (edge_img >= min(2.5 * np.mean(edge_img), np.max(edge_img))).astype(np.uint8)
+        edge_img[c.y1 - 1 : c.y2 + 1, c.x1 - 1 : c.x2 + 1] = 0
+    binary_img = 255 * (edge_img >= min(2.5 * np.mean(edge_img), np.max(edge_img))).astype(np.uint8)  # ty:ignore[no-matching-overload]
 
     # Detect lines
-    h_lines = identify_straight_lines(thresh=binary_img,
-                                      min_line_length=min_line_length,
-                                      char_length=char_length,
-                                      vertical=False)
-    v_lines = identify_straight_lines(thresh=binary_img,
-                                      min_line_length=min_line_length,
-                                      char_length=char_length,
-                                      vertical=True)
+    h_lines = identify_straight_lines(
+        thresh=binary_img, min_line_length=min_line_length, char_length=char_length, vertical=False
+    )
+    v_lines = identify_straight_lines(
+        thresh=binary_img, min_line_length=min_line_length, char_length=char_length, vertical=True
+    )
 
     return h_lines, v_lines

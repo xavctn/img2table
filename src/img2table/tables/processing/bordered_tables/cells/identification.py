@@ -1,4 +1,3 @@
-
 import numpy as np
 from numba import njit, prange
 
@@ -16,9 +15,9 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     """
     # Get potential cells from horizontal lines
     potential_cells = []
-    for i in prange(h_lines_arr.shape[0]):
-        x1i, y1i, x2i, y2i = h_lines_arr[i][:]
-        for j in prange(h_lines_arr.shape[0]):
+    for i in prange(h_lines_arr.shape[0]):  # ty:ignore[not-iterable]
+        x1i, y1i, x2i, _y2i = h_lines_arr[i][:]
+        for j in prange(h_lines_arr.shape[0]):  # ty:ignore[not-iterable]
             x1j, y1j, x2j, y2j = h_lines_arr[j][:]
 
             if y1i >= y1j:
@@ -63,7 +62,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     cells_array = np.array(dedup_lower)
     cells = []
 
-    for i in prange(cells_array.shape[0]):
+    for i in prange(cells_array.shape[0]):  # ty:ignore[not-iterable]
         x1, x2, y1, y2 = cells_array[i][:]
 
         # Compute horizontal margin
@@ -71,7 +70,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
 
         delimiters = []
         for j in range(v_lines_arr.shape[0]):
-            x1v, y1v, x2v, y2v = v_lines_arr[j][:]
+            x1v, y1v, _x2v, y2v = v_lines_arr[j][:]
 
             if x1 - margin <= x1v <= x2 + margin:
                 # Check vertical overlapping and tolerance
@@ -102,11 +101,14 @@ def get_cells_dataframe(horizontal_lines: list[Line], vertical_lines: list[Line]
         return []
 
     # Create arrays from horizontal and vertical rows
-    h_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in horizontal_lines], dtype=np.int64)
-    v_lines_array = np.array([[line.x1, line.y1, line.x2, line.y2] for line in vertical_lines], dtype=np.int64)
+    h_lines_array = np.array(
+        [[line.x1, line.y1, line.x2, line.y2] for line in horizontal_lines], dtype=np.int64
+    )
+    v_lines_array = np.array(
+        [[line.x1, line.y1, line.x2, line.y2] for line in vertical_lines], dtype=np.int64
+    )
 
     # Compute cells
-    cells_array = identify_cells(h_lines_arr=h_lines_array,
-                                 v_lines_arr=v_lines_array)
+    cells_array = identify_cells(h_lines_arr=h_lines_array, v_lines_arr=v_lines_array)
 
     return [Cell(x1=c[0], y1=c[1], x2=c[2], y2=c[3]) for c in cells_array]

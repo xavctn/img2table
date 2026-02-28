@@ -1,4 +1,3 @@
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -18,7 +17,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
     """
     cc_to_keep = []
 
-    for idx in prange(len(stats)):
+    for idx in prange(len(stats)):  # ty:ignore[not-iterable]
         if idx == 0:
             continue
 
@@ -26,22 +25,20 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
 
         # Check number of inner pixels
         inner_pixels = 0
-        for row in prange(y, y + h):
+        for row in prange(y, y + h):  # ty:ignore[not-iterable]
             prev_position = -1
             for col in range(x, x + w):
                 value = cc_labels[row][col]
-                if value == idx:
-                    if prev_position >= 0:
-                        inner_pixels += col - prev_position - 1
+                if value == idx and prev_position >= 0:
+                    inner_pixels += col - prev_position - 1
                     prev_position = col
 
-        for col in prange(x, x + w):
+        for col in prange(x, x + w):  # ty:ignore[not-iterable]
             prev_position = -1
             for row in range(y, y + h):
                 value = cc_labels[row][col]
-                if value == idx:
-                    if prev_position >= 0:
-                        inner_pixels += row - prev_position - 1
+                if value == idx and prev_position >= 0:
+                    inner_pixels += row - prev_position - 1
                     prev_position = row
 
         # Compute roundness
@@ -65,8 +62,16 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     ### Identify horizontal lines
     complete_stats = complete_stats[complete_stats[:, 6].argsort()]
 
-    x1_area, y1_area, x2_area, y2_area, width_area, prev_y_middle, area_count = 0, 0, 0, 0, 0, -10, 0
-    for idx in prange(complete_stats.shape[0]):
+    x1_area, y1_area, x2_area, y2_area, width_area, prev_y_middle, area_count = (
+        0,
+        0,
+        0,
+        0,
+        0,
+        -10,
+        0,
+    )
+    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
         if w / h < 2:
@@ -74,8 +79,12 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
 
         if y_middle - prev_y_middle <= 2:
             # Add to previous area
-            x1_area, y1_area, x2_area, y2_area = min(x, x1_area), min(y, y1_area), max(x + w, x2_area), max(y + h,
-                                                                                                            y2_area)
+            x1_area, y1_area, x2_area, y2_area = (
+                min(x, x1_area),
+                min(y, y1_area),
+                max(x + w, x2_area),
+                max(y + h, y2_area),
+            )
             width_area += w
             area_count += 1
             prev_y_middle = y_middle
@@ -94,8 +103,16 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     ### Identify vertical lines
     complete_stats = complete_stats[complete_stats[:, 5].argsort()]
 
-    x1_area, y1_area, x2_area, y2_area, height_area, prev_x_middle, area_count = 0, 0, 0, 0, 0, -10, 0
-    for idx in prange(complete_stats.shape[0]):
+    x1_area, y1_area, x2_area, y2_area, height_area, prev_x_middle, area_count = (
+        0,
+        0,
+        0,
+        0,
+        0,
+        -10,
+        0,
+    )
+    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
         if h / w < 2:
@@ -103,8 +120,12 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
 
         if x_middle - prev_x_middle <= 2:
             # Add to previous area
-            x1_area, y1_area, x2_area, y2_area = min(x, x1_area), min(y, y1_area), max(x + w, x2_area), max(y + h,
-                                                                                                            y2_area)
+            x1_area, y1_area, x2_area, y2_area = (
+                min(x, x1_area),
+                min(y, y1_area),
+                max(x + w, x2_area),
+                max(y + h, y2_area),
+            )
             height_area += h
             area_count += 1
             prev_x_middle = x_middle
@@ -128,7 +149,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
 
     # Check if connected components is located in areas
     kept_cc = []
-    for idx in prange(complete_stats.shape[0]):
+    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
         x, y, w, h, area, x_middle, y_middle = complete_stats[idx][:]
 
         intersection_area = 0
@@ -155,7 +176,7 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     kept_cc, discarded_cc = [], []
 
-    for idx in prange(stats.shape[0]):
+    for idx in prange(stats.shape[0]):  # ty:ignore[not-iterable]
         x, y, w, h, area = stats[idx][:]
 
         # Compute aspect ratio and fill ratio
@@ -170,7 +191,9 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if len(kept_cc) == 0:
         # Map to arrays
         kept_array = np.array(kept_cc) if kept_cc else np.empty((0, 5), dtype=np.int32)
-        discarded_array = np.array(discarded_cc) if discarded_cc else np.empty((0, 5), dtype=np.int32)
+        discarded_array = (
+            np.array(discarded_cc) if discarded_cc else np.empty((0, 5), dtype=np.int32)
+        )
         return kept_array, discarded_array
 
     # Map kept_cc to array and compute metrics
@@ -183,7 +206,7 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     lower_bound = 0.2 * median_width * median_height
 
     kept_cc = []
-    for idx in prange(kept_stats.shape[0]):
+    for idx in prange(kept_stats.shape[0]):  # ty:ignore[not-iterable]
         x, y, w, h, area = kept_stats[idx][:]
 
         # Check area
@@ -202,10 +225,15 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return kept_array, discarded_array
 
 
-@njit("Tuple((uint8[:,:],int32[:,:]))(uint8[:,:],int32[:,:],int32[:,:],float64)", fastmath=True, cache=True,
-      parallel=False)
-def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_stats: np.ndarray,
-                            char_length: float) -> tuple[np.ndarray, np.ndarray]:
+@njit(
+    "Tuple((uint8[:,:],int32[:,:]))(uint8[:,:],int32[:,:],int32[:,:],float64)",
+    fastmath=True,
+    cache=True,
+    parallel=False,
+)
+def create_character_thresh(
+    thresh: np.ndarray, stats: np.ndarray, discarded_stats: np.ndarray, char_length: float
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Create thresholded image containing uniquely characters
     :param thresh: thresholded image
@@ -219,14 +247,14 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
 
     # Identify CC from discarded connected components that can be characters
     list_relevant_chars = []
-    for idx in prange(len(stats)):
+    for idx in prange(len(stats)):  # ty:ignore[not-iterable]
         x, y, w, h, area = stats[idx][:]
 
         # Add character to thresholded image
         list_relevant_chars.append([x, y, w, h, area])
-        character_thresh[y:y + h, x:x + w] = thresh[y:y + h, x:x + w]
+        character_thresh[y : y + h, x : x + w] = thresh[y : y + h, x : x + w]
 
-        for idx_discarded in prange(1, len(discarded_stats)):
+        for idx_discarded in prange(1, len(discarded_stats)):  # ty:ignore[not-iterable]
             cc_x, cc_y, cc_w, cc_h, cc_area = discarded_stats[idx_discarded][:]
 
             # Compute y overlap
@@ -238,24 +266,34 @@ def create_character_thresh(thresh: np.ndarray, stats: np.ndarray, discarded_sta
                 continue
 
             # Compute horizontal distance
-            distance = min(abs(cc_x - x), abs(cc_x - x - w), abs(cc_x + cc_w - x), abs(cc_x + cc_w - x - w))
+            distance = min(
+                abs(cc_x - x), abs(cc_x - x - w), abs(cc_x + cc_w - x), abs(cc_x + cc_w - x - w)
+            )
 
             if y_overlap > 0 and distance <= char_length:
                 # Add new character to thresholded image
                 list_relevant_chars.append([cc_x, cc_y, cc_w, cc_h, cc_area])
-                character_thresh[cc_y:cc_y + cc_h, cc_x:cc_x + cc_w] = thresh[cc_y:cc_y + cc_h, cc_x:cc_x + cc_w]
+                character_thresh[cc_y : cc_y + cc_h, cc_x : cc_x + cc_w] = thresh[
+                    cc_y : cc_y + cc_h, cc_x : cc_x + cc_w
+                ]
 
-    return character_thresh, np.array(list_relevant_chars) if list_relevant_chars else np.empty((0, 5), dtype=np.int32)
+    return character_thresh, np.array(list_relevant_chars) if list_relevant_chars else np.empty(
+        (0, 5), dtype=np.int32
+    )
 
 
-def compute_char_length(thresh: np.ndarray) -> tuple[Optional[float], Optional[np.ndarray], Optional[np.ndarray]]:
+def compute_char_length(
+    thresh: np.ndarray,
+) -> tuple[float | None, np.ndarray | None, np.ndarray | None]:
     """
     Compute average character length based on connected components' analysis
     :param thresh: threshold image array
     :return: tuple with average character length, thresholded image of characters and array of image characters
     """
     # Connected components
-    _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
+    _, cc_labels, stats, _ = cv2.connectedComponentsWithStats(
+        image=thresh, connectivity=8, ltype=cv2.CV_32S
+    )
 
     # Remove dots
     stats = remove_dots(cc_labels=cc_labels, stats=stats)
@@ -268,7 +306,9 @@ def compute_char_length(thresh: np.ndarray) -> tuple[Optional[float], Optional[n
         return None, None, None
 
     # Remove dotted lines
-    complete_stats = np.c_[stats, (2 * stats[:, 0] + stats[:, 2]) / 2, (2 * stats[:, 1] + stats[:, 3]) / 2]
+    complete_stats = np.c_[
+        stats, (2 * stats[:, 0] + stats[:, 2]) / 2, (2 * stats[:, 1] + stats[:, 3]) / 2
+    ]
     stats = remove_dotted_lines(complete_stats=complete_stats)
 
     if len(stats) == 0:
@@ -281,13 +321,17 @@ def compute_char_length(thresh: np.ndarray) -> tuple[Optional[float], Optional[n
         # Compute average character length
         argmax_char_length = float(np.argmax(np.bincount(relevant_stats[:, cv2.CC_STAT_WIDTH])))
         mean_char_length = np.mean(relevant_stats[:, cv2.CC_STAT_WIDTH])
-        char_length = mean_char_length if 1.5 * argmax_char_length <= mean_char_length else argmax_char_length
+        char_length = (
+            mean_char_length if 1.5 * argmax_char_length <= mean_char_length else argmax_char_length
+        )
 
         # Create thresholded image with characters
-        characters_thresh, chars_array = create_character_thresh(thresh=thresh,
-                                                                 stats=relevant_stats,
-                                                                 discarded_stats=discarded_stats,
-                                                                 char_length=char_length)
+        characters_thresh, chars_array = create_character_thresh(
+            thresh=thresh,
+            stats=relevant_stats,
+            discarded_stats=discarded_stats,
+            char_length=char_length,
+        )
 
         return char_length, characters_thresh, chars_array
     return None, None, None
@@ -302,15 +346,15 @@ def recompute_contours(stats: np.ndarray, chars_array: np.ndarray) -> np.ndarray
     :return: array of contours with dimensions recomputed
     """
     list_contours = []
-    for idx in prange(stats.shape[0]):
+    for idx in prange(stats.shape[0]):  # ty:ignore[not-iterable]
         if idx == 0:
             continue
-        x, y, w, h, area = stats[idx][:]
+        x, y, w, h, _ = stats[idx][:]
 
         # Identify contour coordinates by matching included characters
-        x1, y1, x2, y2, nb_chars = 10 ** 6, 10 ** 6, 0, 0, 0
+        x1, y1, x2, y2, nb_chars = 10**6, 10**6, 0, 0, 0
         for id_c in range(chars_array.shape[0]):
-            xc, yc, wc, hc, area = chars_array[id_c][:]
+            xc, yc, wc, hc, _area = chars_array[id_c][:]
 
             # Compute overlaps
             x_overlap = max(0, min(x + w, xc + wc) - max(x, xc))
@@ -337,17 +381,17 @@ def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
     """
     row_separations = []
 
-    for i in prange(len(stats)):
+    for i in prange(len(stats)):  # ty:ignore[not-iterable]
         # Get statistics
-        xi, yi, wi, hi = stats[i][:]
-        row_separation = 10 ** 6
+        xi, yi, _wi, hi = stats[i][:]
+        row_separation = 10**6
 
         for j in range(len(stats)):
             if i == j:
                 continue
 
             # Get statistics
-            xj, yj, wj, hj = stats[j][:]
+            xj, yj, _wj, hj = stats[j][:]
 
             # Compute horizontal overlap and vertical positions
             h_overlap = min(xi + hi, xj + hj) - max(xi, xj)
@@ -357,14 +401,15 @@ def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
 
             row_separation = min(row_separation, v_pos_j - v_pos_i)
 
-        if row_separation < 10 ** 6:
+        if row_separation < 10**6:
             row_separations.append(row_separation)
 
     return row_separations
 
 
-def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
-                            char_length: float) -> tuple[Optional[float], Optional[list[Cell]]]:
+def compute_median_line_sep(
+    thresh_chars: np.ndarray, chars_array: np.ndarray, char_length: float
+) -> tuple[float | None, list[Cell] | None]:
     """
     Compute median separation between rows
     :param thresh_chars: thresholded image of characters
@@ -373,10 +418,14 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     """
     # Identify characters that belong to the same word and create merged contours, by closing image and retrieving
     # connected components
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(char_length // 2 + 1), int(char_length // 3 + 1)))
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_RECT, (int(char_length // 2 + 1), int(char_length // 3 + 1))
+    )
     thresh_chars = cv2.morphologyEx(thresh_chars, cv2.MORPH_CLOSE, kernel)
 
-    _, _, stats, _ = cv2.connectedComponentsWithStats(thresh_chars, 8, cv2.CV_32S)
+    _, _, stats, _ = cv2.connectedComponentsWithStats(
+        image=thresh_chars, connectivity=8, ltype=cv2.CV_32S
+    )
 
     # Recompute contours
     stats_contours = recompute_contours(stats=stats, chars_array=chars_array)
@@ -385,23 +434,33 @@ def compute_median_line_sep(thresh_chars: np.ndarray, chars_array: np.ndarray,
     row_separations = get_row_separations(stats=stats_contours, char_length=char_length)
 
     if row_separations:
-        median_line_sep = (pl.DataFrame(row_separations, schema={"sep": float})
-                           .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
-                           .group_by("sep").len().sort(by=['len', 'sep'], descending=[True, False])
-                           .limit(1).to_dicts().pop().get("sep")
-                           )
+        median_line_sep = (
+            pl.DataFrame(row_separations, schema={"sep": float})
+            .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
+            .group_by("sep")
+            .len()
+            .sort(by=["len", "sep"], descending=[True, False])
+            .limit(1)
+            .to_dicts()
+            .pop()
+            .get("sep")
+        )
     else:
         median_line_sep = None
 
     # Get contours cells
-    contours_cells = [Cell(x1=x, y1=y, x2=x + w, y2=y + h)
-                      for idx, (x, y, w, h) in enumerate(stats_contours)
-                      if idx > 0]
+    contours_cells = [
+        Cell(x1=x, y1=y, x2=x + w, y2=y + h)
+        for idx, (x, y, w, h) in enumerate(stats_contours)
+        if idx > 0
+    ]
 
     return median_line_sep, contours_cells
 
 
-def compute_img_metrics(thresh: np.ndarray) -> tuple[Optional[float], Optional[float], Optional[list[Cell]]]:
+def compute_img_metrics(
+    thresh: np.ndarray,
+) -> tuple[float | None, float | None, list[Cell] | None]:
     """
     Compute metrics from image
     :param thresh: threshold image array
@@ -410,12 +469,12 @@ def compute_img_metrics(thresh: np.ndarray) -> tuple[Optional[float], Optional[f
     # Compute average character length based on connected components analysis
     char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh)
 
-    if char_length is None:
+    if char_length is None or thresh_chars is None or chars_array is None:
         return None, None, None
 
     # Compute median separation between rows
-    median_line_sep, contours = compute_median_line_sep(thresh_chars=thresh_chars,
-                                                        chars_array=chars_array,
-                                                        char_length=char_length)
+    median_line_sep, contours = compute_median_line_sep(
+        thresh_chars=thresh_chars, chars_array=chars_array, char_length=char_length
+    )
 
     return char_length, median_line_sep, contours

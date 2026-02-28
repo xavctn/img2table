@@ -18,7 +18,10 @@ fast-test:
 	uv run pytest --cov-report term --cov=src --ignore=tests/ocr --ignore=tests/document/base
 
 lint:
-	uv run ruff check src
+	uv run ruff check
+
+type-check:
+	uv run ty check src tests
 
 # Examples commands
 jupyter-examples:

@@ -1,8 +1,19 @@
-from functools import cached_property
+from typing import Protocol
+
+from pydantic import BaseModel
 
 
-class TableObject:
-    def bbox(self, margin: int = 0, height_margin: int = 0, width_margin: int = 0) -> tuple:
+class CoordinateProvider(Protocol):
+    x1: int
+    y1: int
+    x2: int
+    y2: int
+
+
+class TableObject(BaseModel):
+    def bbox(
+        self: "CoordinateProvider", margin: int = 0, height_margin: int = 0, width_margin: int = 0
+    ) -> tuple[int, int, int, int]:
         """
         Return bounding box corresponding to the object
         :param margin: general margin used for the bounding box
@@ -12,26 +23,25 @@ class TableObject:
         """
         # Apply margin on bbox
         if margin != 0:
-            bbox = (self.x1 - margin,
-                    self.y1 - margin,
-                    self.x2 + margin,
-                    self.y2 + margin)
+            bbox = (self.x1 - margin, self.y1 - margin, self.x2 + margin, self.y2 + margin)
         else:
-            bbox = (self.x1 - width_margin,
-                    self.y1 - height_margin,
-                    self.x2 + width_margin,
-                    self.y2 + height_margin)
+            bbox = (
+                self.x1 - width_margin,
+                self.y1 - height_margin,
+                self.x2 + width_margin,
+                self.y2 + height_margin,
+            )
 
         return bbox
 
-    @cached_property
-    def height(self) -> int:
+    @property
+    def height(self: "CoordinateProvider") -> int:
         return self.y2 - self.y1
 
-    @cached_property
-    def width(self) -> int:
+    @property
+    def width(self: "CoordinateProvider") -> int:
         return self.x2 - self.x1
 
-    @cached_property
+    @property
     def area(self) -> int:
         return self.height * self.width

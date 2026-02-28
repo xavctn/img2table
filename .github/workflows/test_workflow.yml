@@ -4,7 +4,6 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -12,14 +11,12 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv and set the python version to ${{ matrix.python-version }}
-      uses: astral-sh/setup-uv@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: make update
-    - name: Perform lint / tests
-      run: make lint test
-      env:
-        NUMBA_DISABLE_JIT: 1
+      - uses: actions/checkout@v4
+      - name: Install uv and set the python version to ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Perform lint / tests
+        run: make update lint type-check test
+        env:
+          NUMBA_DISABLE_JIT: 1

@@ -1,19 +1,17 @@
 import math
-from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Any
 
 import numpy as np
 
 from img2table.tables.objects import TableObject
 
 
-@dataclass
 class Line(TableObject):
     x1: int
     y1: int
     x2: int
     y2: int
-    thickness: Optional[int] = None
+    thickness: int = 1
 
     @property
     def angle(self) -> float:
@@ -24,7 +22,7 @@ class Line(TableObject):
 
     @property
     def length(self) -> float:
-        return np.sqrt(self.height ** 2 + self.width ** 2)
+        return np.sqrt(self.height**2 + self.width**2)
 
     @property
     def horizontal(self) -> bool:
@@ -36,13 +34,15 @@ class Line(TableObject):
 
     @property
     def dict(self) -> dict[str, Any]:
-        return {"x1": self.x1,
-                "x2": self.x2,
-                "y1": self.y1,
-                "y2": self.y2,
-                "width": self.width,
-                "height": self.height,
-                "thickness": self.thickness}
+        return {
+            "x1": self.x1,
+            "x2": self.x2,
+            "y1": self.y1,
+            "y2": self.y2,
+            "width": self.width,
+            "height": self.height,
+            "thickness": self.thickness,
+        }
 
     @property
     def transpose(self) -> "Line":

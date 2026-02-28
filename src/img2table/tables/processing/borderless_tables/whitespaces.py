@@ -1,15 +1,26 @@
-
-from typing import Union
-
 import numpy as np
-from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.borderless_tables.model import ImageSegment, ColumnGroup, Whitespace
 from numba import njit, prange
 
+from img2table.tables.objects.cell import Cell
+from img2table.tables.processing.borderless_tables.model import (
+    ColumnGroup,
+    ImageSegment,
+    Whitespace,
+)
 
-@njit("List(List(List(int64)))(float64[:,:],float64,float64,float64,boolean)", cache=True, fastmath=True)
-def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height: float, total_height: float,
-                        continuous: bool = True) -> list[list[list[int]]]:
+
+@njit(
+    "List(List(List(int64)))(float64[:,:],float64,float64,float64,boolean)",
+    cache=True,
+    fastmath=True,
+)
+def compute_whitespaces(
+    elements_array: np.ndarray,
+    min_width: float,
+    min_height: float,
+    total_height: float,
+    continuous: bool = True,
+) -> list[list[list[int]]]:
     """
     Compute whitespaces in segment
     :param elements_array: array of elements
@@ -21,8 +32,8 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
     """
     # Get x values in elements
     x_vals = set()
-    for idx in prange(elements_array.shape[0]):
-        x1, y1, x2, y2, y_middle = elements_array[idx][:]
+    for idx in prange(elements_array.shape[0]):  # ty:ignore[not-iterable]
+        x1, y1, x2, y2, _ = elements_array[idx][:]
         x_vals.add(x1)
         x_vals.add(x2)
 
@@ -32,7 +43,7 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
 
     # Check ranges
     final_whitespaces = []
-    for idx in prange(x_array.shape[0] - 1):
+    for idx in prange(x_array.shape[0] - 1):  # ty:ignore[not-iterable]
         x_min, x_max = x_array[idx][0], x_array[idx + 1][0]
 
         # Check array elements
@@ -40,9 +51,9 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
             continue
 
         # Identify whitespaces positions
-        list_ws, prev_y = [], 10 ** 6
+        list_ws, prev_y = [], 10**6
         for idx_el in range(elements_array.shape[0]):
-            x1, y1, x2, y2, y_middle = elements_array[idx_el][:]
+            x1, y1, x2, y2, _y_middle = elements_array[idx_el][:]
 
             # Check if it overlaps segment
             overlap = min(x_max, x2) - max(x_min, x1)
@@ -56,7 +67,7 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
         if continuous:
             y_min, y_max = -1000, -1000
             for id_ws in range(len(list_ws)):
-                x1_ws, y1_ws, x2_ws, y2_ws = list_ws[id_ws]
+                _, y1_ws, _, y2_ws = list_ws[id_ws]
 
                 # Check with previous ws
                 if y1_ws == y_max:
@@ -71,10 +82,10 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
             if y_max - y_min >= total_height:
                 final_whitespaces.append([[int(x_min), int(y_min), int(x_max), int(y_max)]])
         else:
-            nb_ws, tot_height_ws, min_height_ws, max_height_ws = 0, 0, 10 ** 6, 0
+            nb_ws, tot_height_ws, min_height_ws, max_height_ws = 0, 0, 10**6, 0
             ws_group = []
             for id_ws in range(len(list_ws)):
-                x1_ws, y1_ws, x2_ws, y2_ws = list_ws[id_ws]
+                _x1_ws, y1_ws, _x2_ws, y2_ws = list_ws[id_ws]
 
                 # Update metrics
                 nb_ws += 1
@@ -83,9 +94,10 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
                 ws_group.append([int(x_min), int(y1_ws), int(x_max), int(y2_ws)])
 
             # Check group relevance
-            if ((tot_height_ws >= total_height)
-                    and (tot_height_ws >= 0.8 * (max_height_ws - min_height_ws))
-                    and ((nb_ws == 1) or (x_max - x_min >= 2 * min_width))
+            if (
+                (tot_height_ws >= total_height)
+                and (tot_height_ws >= 0.8 * (max_height_ws - min_height_ws))
+                and ((nb_ws == 1) or (x_max - x_min >= 2 * min_width))
             ):
                 final_whitespaces.append(ws_group)
 
@@ -115,8 +127,14 @@ def compute_whitespaces(elements_array: np.ndarray, min_width: float, min_height
     return final_whitespaces
 
 
-def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = True, min_width: float = 0,
-                    min_height: float = 1, pct: float = 0.25, continuous: bool = True) -> list[Whitespace]:
+def get_whitespaces(
+    segment: ImageSegment | ColumnGroup,
+    vertical: bool = True,
+    min_width: float = 0,
+    min_height: float = 1,
+    pct: float = 0.25,
+    continuous: bool = True,
+) -> list[Whitespace]:
     """
     Identify whitespaces in segment
     :param segment: image segment
@@ -129,32 +147,36 @@ def get_whitespaces(segment: Union[ImageSegment, ColumnGroup], vertical: bool = 
     """
     # Flip object coordinates in horizontal case
     if not vertical:
-        flipped_elements = [Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements]
-        segment = ImageSegment(x1=segment.y1,
-                               y1=segment.x1,
-                               x2=segment.y2,
-                               y2=segment.x2,
-                               elements=flipped_elements)
+        flipped_elements = [Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements or []]
+        segment = ImageSegment(
+            x1=segment.y1, y1=segment.x1, x2=segment.y2, y2=segment.x2, elements=flipped_elements
+        )
 
     # Get min/max height of elements in segment
-    y_min, y_max = min([el.y1 for el in segment.elements]), max([el.y2 for el in segment.elements])
+    y_min, y_max = min([el.y1 for el in segment.elements or []]), max([el.y2 for el in segment.elements or []])
 
     # Create array containing elements
-    elements_array = np.array([[el.x1, el.y1, el.x2, el.y2] for el in segment.elements]
-                              + [[segment.x1, y, segment.x2, y] for y in [y_min, y_max]])
+    elements_array = np.array(
+        [[el.x1, el.y1, el.x2, el.y2] for el in segment.elements or []]
+        + [[segment.x1, y, segment.x2, y] for y in [y_min, y_max]]
+    )
     elements_array = np.c_[elements_array, (elements_array[:, 1] + elements_array[:, 3]) / 2]
     elements_array = elements_array[elements_array[:, 4].argsort()]
 
     # Compute whitespace groups
-    ws_groups = compute_whitespaces(elements_array=elements_array,
-                                    min_width=min_width,
-                                    min_height=min_height,
-                                    total_height=pct * (y_max - y_min),
-                                    continuous=continuous)
+    ws_groups = compute_whitespaces(
+        elements_array=elements_array,
+        min_width=min_width,
+        min_height=min_height,
+        total_height=pct * (y_max - y_min),
+        continuous=continuous,
+    )
 
     # Map to whitespaces
-    whitespaces = [Whitespace(cells=[Cell(x1=c[0], y1=c[1], x2=c[2], y2=c[3]) for c in ws_gp])
-                   for ws_gp in ws_groups]
+    whitespaces = [
+        Whitespace(cells=[Cell(x1=c[0], y1=c[1], x2=c[2], y2=c[3]) for c in ws_gp])
+        for ws_gp in ws_groups
+    ]
 
     # Flip object coordinates in horizontal case
     if not vertical:
@@ -217,15 +239,20 @@ def deduplicate_whitespaces(ws: list[Whitespace], elements: list[Cell]) -> list[
                         continue
 
                     # Get common area
-                    common_area = Cell(x1=min(ws_1.x2, ws_2.x2),
-                                       y1=max(ws_1.y1, ws_2.y1),
-                                       x2=max(ws_1.x1, ws_2.x1),
-                                       y2=min(ws_1.y2, ws_2.y2))
+                    common_area = Cell(
+                        x1=min(ws_1.x2, ws_2.x2),
+                        y1=max(ws_1.y1, ws_2.y1),
+                        x2=max(ws_1.x1, ws_2.x1),
+                        y2=min(ws_1.y2, ws_2.y2),
+                    )
 
                     # Identify matching elements
-                    matching_elements += [el for el in elements
-                                          if min(el.x2, common_area.x2) - max(el.x1, common_area.x1) > 0
-                                          and min(el.y2, common_area.y2) - max(el.y1, common_area.y1) > 0]
+                    matching_elements += [
+                        el
+                        for el in elements
+                        if min(el.x2, common_area.x2) - max(el.x1, common_area.x1) > 0
+                        and min(el.y2, common_area.y2) - max(el.y1, common_area.y1) > 0
+                    ]
 
             if len(matching_elements) == 0:
                 # Add smallest element to deleted ws
@@ -235,19 +262,23 @@ def deduplicate_whitespaces(ws: list[Whitespace], elements: list[Cell]) -> list[
                     deleted_idx.append(i)
                 else:
                     # Create a merged whitespace
-                    new_cells = [Cell(x1=min(ws[i].x1, ws[j].x1),
-                                      y1=c.y1,
-                                      x2=max(ws[i].x2, ws[j].x2),
-                                      y2=c.y2)
-                                 for c in ws[i].cells + ws[j].cells]
+                    new_cells = [
+                        Cell(
+                            x1=min(ws[i].x1, ws[j].x1), y1=c.y1, x2=max(ws[i].x2, ws[j].x2), y2=c.y2
+                        )
+                        for c in ws[i].cells + ws[j].cells
+                    ]
                     merged_ws.append(Whitespace(cells=list(set(new_cells))))
                     deleted_idx += [i, j]
 
     filtered_ws = [w for idx, w in enumerate(ws) if idx not in deleted_idx]
 
     # Remove merged whitespaces that are incoherent with filtered whitespaces
-    merged_ws = [m_ws for m_ws in merged_ws
-                 if not any(min(w.x2, m_ws.x2) - max(w.x1, m_ws.x1) > 0 for w in filtered_ws)]
+    merged_ws = [
+        m_ws
+        for m_ws in merged_ws
+        if not any(min(w.x2, m_ws.x2) - max(w.x1, m_ws.x1) > 0 for w in filtered_ws)
+    ]
 
     if len(merged_ws) > 1:
         # Deduplicate overlapping merged ws
@@ -262,8 +293,12 @@ def deduplicate_whitespaces(ws: list[Whitespace], elements: list[Cell]) -> list[
     return filtered_ws + filtered_merged_ws
 
 
-def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, ColumnGroup], char_length: float,
-                                      median_line_sep: float, pct: float = 0.25) -> list[Whitespace]:
+def get_relevant_vertical_whitespaces(
+    segment: ImageSegment,
+    char_length: float,
+    median_line_sep: float,
+    pct: float = 0.25,
+) -> list[Whitespace]:
     """
     Identify vertical whitespaces that can be column delimiters
     :param segment: image segment
@@ -273,14 +308,16 @@ def get_relevant_vertical_whitespaces(segment: Union[ImageSegment, ColumnGroup],
     :return: list of vertical whitespaces that can be column delimiters
     """
     # Identify vertical whitespaces
-    v_whitespaces = get_whitespaces(segment=segment,
-                                    vertical=True,
-                                    pct=pct,
-                                    min_width=char_length,
-                                    min_height=min(median_line_sep, segment.element_height),
-                                    continuous=True)
+    v_whitespaces = get_whitespaces(
+        segment=segment,
+        vertical=True,
+        pct=pct,
+        min_width=char_length,
+        min_height=min(median_line_sep, segment.element_height),
+        continuous=True,
+    )
 
     # Identify relevant vertical whitespaces that can be column delimiters
     vertical_delims = identify_coherent_v_whitespaces(v_whitespaces=v_whitespaces)
 
-    return deduplicate_whitespaces(ws=vertical_delims, elements=segment.elements)
+    return deduplicate_whitespaces(ws=vertical_delims, elements=segment.elements or [])

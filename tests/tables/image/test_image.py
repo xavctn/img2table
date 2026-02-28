@@ -1,15 +1,12 @@
-# coding: utf-8
-
 import cv2
 
 from img2table.tables.image import TableImage
 
 
-def test_table_image():
+def test_table_image() -> None:
     image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
 
-    tb_image = TableImage(img=image,
-                          min_confidence=50)
+    tb_image = TableImage(img=image, min_confidence=50)
 
     result = tb_image.extract_tables(implicit_rows=True)
     result = sorted(result, key=lambda tb: tb.x1 + tb.x2)

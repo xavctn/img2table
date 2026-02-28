@@ -1,16 +1,14 @@
-from dataclasses import dataclass
 
 from img2table.tables.objects import TableObject
-from img2table.tables.objects.extraction import TableCell, BBox
+from img2table.tables.objects.extraction import BBox, TableCell
 
 
-@dataclass
 class Cell(TableObject):
     x1: int
     y1: int
     x2: int
     y2: int
-    content: str = None
+    content: str | None = None
 
     @property
     def table_cell(self) -> TableCell:

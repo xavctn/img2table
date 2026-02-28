@@ -1,13 +1,13 @@
 import typing
 from collections import OrderedDict
 from functools import cached_property
-from typing import Union
+from itertools import pairwise
 
 import numpy as np
 
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.extraction import ExtractedTable, BBox
+from img2table.tables.objects.extraction import BBox, ExtractedTable
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.row import Row
 
@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
 
 
 class Table(TableObject):
-    def __init__(self, rows: Union[Row, list[Row]], borderless: bool = False) -> None:
+    def __init__(self, rows: Row | list[Row], borderless: bool = False) -> None:
         if rows is None:
             self._items = []
         elif isinstance(rows, Row):
@@ -31,7 +31,7 @@ class Table(TableObject):
         return self._items
 
     @property
-    def title(self) -> str:
+    def title(self) -> str | None:
         return self._title
 
     def set_title(self, title: str) -> None:
@@ -47,19 +47,19 @@ class Table(TableObject):
 
     @property
     def x1(self) -> int:
-        return min(map(lambda x: x.x1, self.items))
+        return min(x.x1 for x in self.items)
 
     @property
     def x2(self) -> int:
-        return max(map(lambda x: x.x2, self.items))
+        return max(x.x2 for x in self.items)
 
     @property
     def y1(self) -> int:
-        return min(map(lambda x: x.y1, self.items))
+        return min(x.y1 for x in self.items)
 
     @property
     def y2(self) -> int:
-        return max(map(lambda x: x.y2, self.items))
+        return max(x.y2 for x in self.items)
 
     @property
     def cell(self) -> Cell:
@@ -95,11 +95,15 @@ class Table(TableObject):
                 h_lines_groups.append([])
             h_lines_groups[-1].append(line)
 
-        return [Line(x1=min([ln.x1 for ln in gp]),
-                     y1=min([ln.y1 for ln in gp]),
-                     x2=max([ln.x2 for ln in gp]),
-                     y2=max([ln.y2 for ln in gp]))
-                for gp in v_lines_groups + h_lines_groups]
+        return [
+            Line(
+                x1=min([ln.x1 for ln in gp]),
+                y1=min([ln.y1 for ln in gp]),
+                x2=max([ln.x2 for ln in gp]),
+                y2=max([ln.y2 for ln in gp]),
+            )
+            for gp in v_lines_groups + h_lines_groups
+        ]
 
     def remove_rows(self, row_ids: list[int]) -> None:
         """
@@ -111,8 +115,11 @@ class Table(TableObject):
 
         if len(remaining_rows) > 1:
             # Check created gaps between rows
-            gaps = [(id_row, id_next) for id_row, id_next in zip(remaining_rows, remaining_rows[1:])
-                    if id_next - id_row > 1]
+            gaps = [
+                (id_row, id_next)
+                for id_row, id_next in pairwise(remaining_rows)
+                if id_next - id_row > 1
+            ]
 
             for id_row, id_next in gaps:
                 # Normalize y value between rows
@@ -138,12 +145,18 @@ class Table(TableObject):
 
         if len(remaining_cols) > 1:
             # Check created gaps between columns
-            gaps = [(id_col, id_next) for id_col, id_next in zip(remaining_cols, remaining_cols[1:])
-                    if id_next - id_col > 1]
+            gaps = [
+                (id_col, id_next)
+                for id_col, id_next in pairwise(remaining_cols)
+                if id_next - id_col > 1
+            ]
 
             for id_col, id_next in gaps:
                 # Normalize x value between columns
-                x_gap = round(np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items]) / 2)
+                x_gap = round(
+                    np.mean([row.items[id_col].x2 + row.items[id_next].x1 for row in self.items])
+                    / 2
+                )
 
                 # Put x value in both columns
                 for row in self.items:
@@ -163,12 +176,12 @@ class Table(TableObject):
         :return: Table object with data attribute containing dataframe
         """
         # Get content for each cell
-        self = ocr_df.get_text_table(table=self, min_confidence=min_confidence) # noqa: PLW0642
+        self = ocr_df.get_text_table(table=self, min_confidence=min_confidence)  # noqa: PLW0642
 
         # Check for empty rows and remove if necessary
         empty_rows = []
         for idx, row in enumerate(self.items):
-            if all(map(lambda c: c.content is None, row.items)):
+            if all(c.content is None for c in row.items):
                 empty_rows.append(idx)
         self.remove_rows(row_ids=empty_rows)
 
@@ -176,7 +189,7 @@ class Table(TableObject):
         empty_cols = []
         for idx in range(self.nb_columns):
             col_cells = [row.items[idx] for row in self.items]
-            if all(map(lambda c: c.content is None, col_cells)):
+            if all(c.content is None for c in col_cells):
                 empty_cols.append(idx)
         self.remove_columns(col_ids=empty_cols)
 
@@ -190,7 +203,9 @@ class Table(TableObject):
     @property
     def extracted_table(self) -> ExtractedTable:
         bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
-        content = OrderedDict({idx: [cell.table_cell for cell in row.items] for idx, row in enumerate(self.items)})
+        content = OrderedDict(
+            {idx: [cell.table_cell for cell in row.items] for idx, row in enumerate(self.items)}
+        )
         return ExtractedTable(bbox=bbox, title=self.title, content=content)
 
     def __hash__(self) -> int:
@@ -208,4 +223,3 @@ class Table(TableObject):
             except AssertionError:
                 return False
         return False
-

@@ -1,4 +1,3 @@
-
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import ColumnGroup, Whitespace
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
@@ -15,23 +14,41 @@ def identify_row_delimiters(column_group: ColumnGroup) -> list[Cell]:
 
     # Create whitespaces at the top or the bottom if they are missing
     if h_ws[0].y1 > column_group.y1:
-        up_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
-                                       x2=max([ws.x2 for ws in h_ws]),
-                                       y1=column_group.y1,
-                                       y2=min([el.y1 for el in column_group.elements]))])
+        up_ws = Whitespace(
+            cells=[
+                Cell(
+                    x1=min([ws.x1 for ws in h_ws]),
+                    x2=max([ws.x2 for ws in h_ws]),
+                    y1=column_group.y1,
+                    y2=min([el.y1 for el in column_group.elements]),
+                )
+            ]
+        )
         h_ws.insert(0, up_ws)
 
     if h_ws[-1].y2 < column_group.y2:
-        down_ws = Whitespace(cells=[Cell(x1=min([ws.x1 for ws in h_ws]),
-                                         x2=max([ws.x2 for ws in h_ws]),
-                                         y1=column_group.y2,
-                                         y2=max([el.y2 for el in column_group.elements]))])
+        down_ws = Whitespace(
+            cells=[
+                Cell(
+                    x1=min([ws.x1 for ws in h_ws]),
+                    x2=max([ws.x2 for ws in h_ws]),
+                    y1=column_group.y2,
+                    y2=max([el.y2 for el in column_group.elements]),
+                )
+            ]
+        )
         h_ws.append(down_ws)
 
     # Identify relevant whitespace height
     if len(h_ws) > 2:
-        full_ws_h = sorted([ws.height for ws in h_ws[1:-1] if ws.width == max([w.width for w in h_ws])])
-        min_height = 0.5 * full_ws_h[len(full_ws_h) // 2 + len(full_ws_h) % 2 - 1] if len(full_ws_h) >= 3 else 1
+        full_ws_h = sorted(
+            [ws.height for ws in h_ws[1:-1] if ws.width == max([w.width for w in h_ws])]
+        )
+        min_height = (
+            0.5 * full_ws_h[len(full_ws_h) // 2 + len(full_ws_h) % 2 - 1]
+            if len(full_ws_h) >= 3
+            else 1
+        )
         h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Filter relevant whitespaces
@@ -55,21 +72,30 @@ def identify_row_delimiters(column_group: ColumnGroup) -> list[Cell]:
         if ws.y1 == column_group.y1 or ws.y2 == column_group.y2:
             continue
 
-        final_delims.append(Cell(x1=ws.x1,
-                                 x2=ws.x2,
-                                 y1=(ws.y1 + ws.y2) // 2,
-                                 y2=(ws.y1 + ws.y2) // 2))
+        final_delims.append(
+            Cell(x1=ws.x1, x2=ws.x2, y1=(ws.y1 + ws.y2) // 2, y2=(ws.y1 + ws.y2) // 2)
+        )
 
     # Add top and bottom row delimiters
-    x1_els, x2_els = min([el.x1 for el in column_group.elements]), max([el.x2 for el in column_group.elements])
-    y1_els, y2_els = min([el.y1 for el in column_group.elements]), max([el.y2 for el in column_group.elements])
-    final_delims += [Cell(x1=x1_els, x2=x2_els, y1=y1_els, y2=y1_els),
-                     Cell(x1=x1_els, x2=x2_els, y1=y2_els, y2=y2_els)]
+    x1_els, x2_els = (
+        min([el.x1 for el in column_group.elements]),
+        max([el.x2 for el in column_group.elements]),
+    )
+    y1_els, y2_els = (
+        min([el.y1 for el in column_group.elements]),
+        max([el.y2 for el in column_group.elements]),
+    )
+    final_delims += [
+        Cell(x1=x1_els, x2=x2_els, y1=y1_els, y2=y1_els),
+        Cell(x1=x1_els, x2=x2_els, y1=y2_els, y2=y2_els),
+    ]
 
     return sorted(final_delims, key=lambda d: d.y1)
 
 
-def filter_coherent_row_delimiters(row_delimiters: list[Cell], column_group: ColumnGroup) -> list[Cell]:
+def filter_coherent_row_delimiters(
+    row_delimiters: list[Cell], column_group: ColumnGroup
+) -> list[Cell]:
     """
     Filter coherent row delimiters (i.e that properly delimit relevant text)
     :param row_delimiters: list of row delimiters
@@ -77,7 +103,7 @@ def filter_coherent_row_delimiters(row_delimiters: list[Cell], column_group: Col
     :return: filtered row delimiters
     """
     # Get max width of delimiters
-    max_width = max(map(lambda d: d.width, row_delimiters))
+    max_width = max(d.width for d in row_delimiters)
 
     delimiters_to_delete = []
     for idx, delim in enumerate(row_delimiters):
@@ -86,33 +112,67 @@ def filter_coherent_row_delimiters(row_delimiters: list[Cell], column_group: Col
 
         # Get area above delimiter and corresponding columns
         upper_delim = row_delimiters[idx - 1]
-        upper_area = Cell(x1=max(delim.x1, upper_delim.x1),
-                          y1=upper_delim.y2,
-                          x2=min(delim.x2, upper_delim.x2),
-                          y2=delim.y1)
-        upper_columns = sorted([col for col in column_group.columns
-                                if min(upper_area.y2, col.y2) - max(upper_area.y1, col.y1) >= 0.8 * upper_area.height
-                                and upper_area.x1 <= col.x1 <= upper_area.x2],
-                               key=lambda c: c.x1)
+        upper_area = Cell(
+            x1=max(delim.x1, upper_delim.x1),
+            y1=upper_delim.y2,
+            x2=min(delim.x2, upper_delim.x2),
+            y2=delim.y1,
+        )
+        upper_columns = sorted(
+            [
+                col
+                for col in column_group.columns
+                if min(upper_area.y2, col.y2) - max(upper_area.y1, col.y1)
+                >= 0.8 * upper_area.height
+                and upper_area.x1 <= col.x1 <= upper_area.x2
+            ],
+            key=lambda c: c.x1,
+        )
         # Get contained elements in upper area
-        upper_contained_elements = [el for el in column_group.elements if el.y1 >= upper_area.y1
-                                    and el.y2 <= upper_area.y2 and el.x1 >= upper_columns[0].x2
-                                    and el.x2 <= upper_columns[-1].x1] if upper_columns else []
+        upper_contained_elements = (
+            [
+                el
+                for el in column_group.elements
+                if el.y1 >= upper_area.y1
+                and el.y2 <= upper_area.y2
+                and el.x1 >= upper_columns[0].x2
+                and el.x2 <= upper_columns[-1].x1
+            ]
+            if upper_columns
+            else []
+        )
 
         # Get area below delimiter and corresponding columns
         bottom_delim = row_delimiters[idx + 1]
-        bottom_area = Cell(x1=max(delim.x1, bottom_delim.x1),
-                           y1=delim.y2,
-                           x2=min(delim.x2, bottom_delim.x2),
-                           y2=bottom_delim.y1)
-        bottom_columns = sorted([col for col in column_group.columns
-                                 if min(bottom_area.y2, col.y2) - max(bottom_area.y1, col.y1) >= 0.8 * bottom_area.height
-                                 and bottom_area.x1 <= col.x1 <= bottom_area.x2],
-                                key=lambda c: c.x1)
+        bottom_area = Cell(
+            x1=max(delim.x1, bottom_delim.x1),
+            y1=delim.y2,
+            x2=min(delim.x2, bottom_delim.x2),
+            y2=bottom_delim.y1,
+        )
+        bottom_columns = sorted(
+            [
+                col
+                for col in column_group.columns
+                if min(bottom_area.y2, col.y2) - max(bottom_area.y1, col.y1)
+                >= 0.8 * bottom_area.height
+                and bottom_area.x1 <= col.x1 <= bottom_area.x2
+            ],
+            key=lambda c: c.x1,
+        )
         # Get contained elements in bottom area
-        bottom_contained_elements = [el for el in column_group.elements if el.y1 >= bottom_area.y1
-                                     and el.y2 <= bottom_area.y2 and el.x1 >= bottom_columns[0].x2
-                                     and el.x2 <= bottom_columns[-1].x1] if bottom_columns else []
+        bottom_contained_elements = (
+            [
+                el
+                for el in column_group.elements
+                if el.y1 >= bottom_area.y1
+                and el.y2 <= bottom_area.y2
+                and el.x1 >= bottom_columns[0].x2
+                and el.x2 <= bottom_columns[-1].x1
+            ]
+            if bottom_columns
+            else []
+        )
 
         # If one of the area is empty, the delimiter is irrelevant
         if len(upper_contained_elements) * len(bottom_contained_elements) == 0:
@@ -135,13 +195,21 @@ def correct_delimiter_width(row_delimiters: list[Cell], contours: list[Cell]) ->
             continue
 
         # Check if there are contours on the left of the delimiter
-        left_contours = [c for c in contours if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
-                         and min(c.x2, delim.x1) - max(c.x1, x_min) > 0]
+        left_contours = [
+            c
+            for c in contours
+            if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
+            and min(c.x2, delim.x1) - max(c.x1, x_min) > 0
+        ]
         delim_x_min = max([c.x2 for c in left_contours] + [x_min])
 
         # Check if there are contours on the right of the delimiter
-        right_contours = [c for c in contours if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
-                          and min(c.x2, x_max) - max(c.x1, delim.x2) > 0]
+        right_contours = [
+            c
+            for c in contours
+            if c.y1 + c.height // 6 < delim.y1 < c.y2 - c.height // 6
+            and min(c.x2, x_max) - max(c.x1, delim.x2) > 0
+        ]
         delim_x_max = min([c.x1 for c in right_contours] + [x_max])
 
         # Update delimiter width
@@ -163,13 +231,14 @@ def identify_delimiter_group_rows(column_group: ColumnGroup, contours: list[Cell
 
     if row_delimiters:
         # Filter coherent delimiters
-        coherent_delimiters = filter_coherent_row_delimiters(row_delimiters=row_delimiters,
-                                                             column_group=column_group)
+        coherent_delimiters = filter_coherent_row_delimiters(
+            row_delimiters=row_delimiters, column_group=column_group
+        )
 
         # Correct delimiters width
-        corrected_delimiters = correct_delimiter_width(row_delimiters=coherent_delimiters,
-                                                       contours=contours)
+        corrected_delimiters = correct_delimiter_width(
+            row_delimiters=coherent_delimiters, contours=contours
+        )
 
         return corrected_delimiters if len(corrected_delimiters) >= 3 else []
     return []
-

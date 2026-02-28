@@ -1,10 +1,12 @@
-from dataclasses import dataclass, field
+from typing import Any
+from collections.abc import Iterator
+
+from pydantic import BaseModel, Field
 
 from img2table.tables.objects.cell import Cell
 
 
-@dataclass
-class Whitespace:
+class Whitespace(BaseModel):
     cells: list[Cell]
 
     @property
@@ -43,21 +45,25 @@ class Whitespace:
         return Whitespace(cells=[Cell(x1=c.y1, y1=c.x1, x2=c.y2, y2=c.x2) for c in self.cells])
 
     def __contains__(self, item: "Whitespace") -> bool:
-        return self.x1 <= item.x1 and self.y1 <= item.y1 and self.x2 >= item.x2 and self.y2 >= item.y2
+        return (
+            self.x1 <= item.x1 and self.y1 <= item.y1 and self.x2 >= item.x2 and self.y2 >= item.y2
+        )
 
     def __hash__(self) -> int:
         return hash(repr(self))
 
 
-@dataclass
-class ImageSegment:
+class ImageSegment(BaseModel):
     x1: int
     y1: int
     x2: int
     y2: int
-    elements: list[Cell] = None
-    whitespaces: list[Whitespace] = None
-    position: int = None
+    elements: list[Cell] | None = None
+    whitespaces: list[Whitespace] = Field(default_factory=list)
+    position: int | None = None
+
+    def __iter__(self) -> Iterator[Cell]:  # ty:ignore[invalid-method-override]
+        yield from self.elements or []
 
     @property
     def width(self) -> int:
@@ -83,8 +89,7 @@ class ImageSegment:
         return hash(repr(self))
 
 
-@dataclass
-class TableSegment:
+class TableSegment(BaseModel):
     table_areas: list[ImageSegment]
 
     @property
@@ -105,15 +110,14 @@ class TableSegment:
 
     @property
     def elements(self) -> list[Cell]:
-        return [el for tb_area in self.table_areas for el in tb_area.elements]
+        return [el for tb_area in self.table_areas for el in tb_area]
 
     @property
     def whitespaces(self) -> list[Whitespace]:
         return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
 
 
-@dataclass
-class VerticalWS:
+class VerticalWS(BaseModel):
     ws: Whitespace
     position: int = 0
     top: bool = True
@@ -149,8 +153,7 @@ class VerticalWS:
         return self.ws.continuous
 
 
-@dataclass
-class Column:
+class Column(BaseModel):
     whitespaces: list[VerticalWS]
     top: bool = True
     bottom: bool = True
@@ -175,7 +178,9 @@ class Column:
 
     @property
     def height(self) -> int:
-        y_values = {y for v_ws in self.whitespaces for c in v_ws.ws.cells for y in range(c.y1, c.y2 + 1)}
+        y_values = {
+            y for v_ws in self.whitespaces for c in v_ws.ws.cells for y in range(c.y1, c.y2 + 1)
+        }
         return len(y_values) - 1
 
     @property
@@ -184,8 +189,13 @@ class Column:
 
     @classmethod
     def from_ws(cls, v_ws: VerticalWS) -> "Column":
-        return cls(whitespaces=[v_ws], top=v_ws.top, bottom=v_ws.bottom, top_position=v_ws.position,
-                   bottom_position=v_ws.position)
+        return cls(
+            whitespaces=[v_ws],
+            top=v_ws.top,
+            bottom=v_ws.bottom,
+            top_position=v_ws.position,
+            bottom_position=v_ws.position,
+        )
 
     def corresponds(self, v_ws: VerticalWS, char_length: float) -> bool:
         if self.bottom_position is None:
@@ -210,37 +220,59 @@ class Column:
             self.bottom = v_ws.bottom
 
 
-@dataclass
-class ColumnGroup:
+class ColumnGroup(BaseModel):
     columns: list[Column]
     char_length: float
-    elements: list[Cell] = field(default_factory=list)
+    elements: list[Cell] = Field(default_factory=list)
 
-    def __post_init__(self) -> None:
+    def model_post_init(self, context: Any) -> None:  # noqa: ARG002
         # Reprocess left and right columns positions
         self.columns = sorted(self.columns, key=lambda col: col.x1)
 
         if len(self.columns) >= 2 and len(self.elements) > 0:
-            x_left, x_right = min([el.x1 for el in self.elements]), max([el.x2 for el in self.elements])
+            x_left, x_right = (
+                min([el.x1 for el in self.elements]),
+                max([el.x2 for el in self.elements]),
+            )
             # Left column
-            self.columns[0] = Column(whitespaces=[
-                VerticalWS(ws=Whitespace(cells=[Cell(x1=x_left - int(0.5 * self.char_length),
-                                                     y1=c.y1,
-                                                     x2=x_left - int(0.5 * self.char_length),
-                                                     y2=c.y2)
-                                                for c in v_ws.ws.cells]))
-                for v_ws in self.columns[0].whitespaces
-            ])
+            self.columns[0] = Column(
+                whitespaces=[
+                    VerticalWS(
+                        ws=Whitespace(
+                            cells=[
+                                Cell(
+                                    x1=x_left - int(0.5 * self.char_length),
+                                    y1=c.y1,
+                                    x2=x_left - int(0.5 * self.char_length),
+                                    y2=c.y2,
+                                )
+                                for c in v_ws.ws.cells
+                            ]
+                        )
+                    )
+                    for v_ws in self.columns[0].whitespaces
+                ]
+            )
 
             # Right column
-            self.columns[-1] = Column(whitespaces=[
-                VerticalWS(ws=Whitespace(cells=[Cell(x1=x_right + int(0.5 * self.char_length),
-                                                     y1=c.y1,
-                                                     x2=x_right + int(0.5 * self.char_length),
-                                                     y2=c.y2)
-                                                for c in v_ws.ws.cells]))
-                for v_ws in self.columns[-1].whitespaces
-            ])
+            self.columns[-1] = Column(
+                whitespaces=[
+                    VerticalWS(
+                        ws=Whitespace(
+                            cells=[
+                                Cell(
+                                    x1=x_right + int(0.5 * self.char_length),
+                                    y1=c.y1,
+                                    x2=x_right + int(0.5 * self.char_length),
+                                    y2=c.y2,
+                                )
+                                for c in v_ws.ws.cells
+                            ]
+                        )
+                    )
+                    for v_ws in self.columns[-1].whitespaces
+                ]
+            )
 
     @property
     def x1(self) -> int:

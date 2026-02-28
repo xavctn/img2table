@@ -1,6 +1,5 @@
 import typing
-from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -16,32 +15,10 @@ if typing.TYPE_CHECKING:
     from img2table.tables.objects.table import Table
 
 
-@dataclass
 class PDF(Document):
-    pages: list[int] = None
-    detect_rotation: bool = False
     pdf_text_extraction: bool = True
     _rotated: bool = False
-    _images: list[np.ndarray] = None
-
-    def validate_pages(self, value: Any, **_) -> Optional[list[int]]:
-        if value is not None:
-            if not isinstance(value, list):
-                raise TypeError(f"Invalid type {type(value)} for pages argument")
-            if not all(isinstance(x, int) for x in value):
-                raise TypeError("All values in pages argument should be integers")
-        return value
-
-    def validate_pdf_text_extraction(self, value: Any, **_) -> int:
-        if not isinstance(value, bool):
-            raise TypeError(f"Invalid type {type(value)} for pdf_text_extraction argument")
-        return value
-
-    def validate__rotated(self, value: Any, **_) -> int:
-        return value
-
-    def validate__images(self, value: Any, **_) -> int:
-        return value
+    _images: list[np.ndarray] | None = None
 
     @property
     def images(self) -> list[np.ndarray]:
@@ -66,19 +43,21 @@ class PDF(Document):
         doc.close()
         return images
 
-    def get_table_content(self, tables: dict[int, list["Table"]], ocr: "OCRInstance",
-                          min_confidence: int) -> dict[int, list["ExtractedTable"]]:
+    def get_table_content(
+        self, tables: dict[int, list["Table"]], ocr: Optional["OCRInstance"], min_confidence: int
+    ) -> dict[int, list["ExtractedTable"]]:
         if not self._rotated and self.pdf_text_extraction:
             # Get pages where tables have been detected
-            table_pages = [self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0]
+            table_pages = [
+                self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0
+            ]
             images = [self.images[k] for k, v in tables.items() if len(v) > 0]
 
             if table_pages:
                 # Create PDF object for OCR
-                pdf_ocr = PDF(src=self.bytes,
-                              pages=table_pages,
-                              _images=images,
-                              _rotated=self._rotated)
+                pdf_ocr = PDF(
+                    src=self.bytes, pages=table_pages, _images=images, _rotated=self._rotated
+                )
 
                 # Try to get OCRDataframe from PDF
                 self.ocr_df = PdfOCR().of(document=pdf_ocr)

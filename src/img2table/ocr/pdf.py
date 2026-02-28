@@ -1,17 +1,15 @@
-from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import polars as pl
+from pydantic import BaseModel
 from pypdfium2 import PdfDocument, PdfTextPage
 
-from img2table.document.base import Document
+from img2table.document.base import Document, MockDocument
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
 
-@dataclass
-class Char:
+class Char(BaseModel):
     value: str
     x1: int
     y1: int
@@ -27,12 +25,13 @@ class Char:
         return (self.y2 - self.y1) or 1
 
     def distance(self, char: "Char") -> float:
-        return (((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2 + (
-                    (self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2) ** 0.5
+        return (
+            ((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2
+            + ((self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2
+        ) ** 0.5
 
 
-@dataclass
-class Word:
+class Word(BaseModel):
     idx: int
     line_idx: int
     chars: list[Char]
@@ -62,10 +61,10 @@ class Word:
         return (self.y2 - self.y1) or 1
 
     @property
-    def value(self) -> Optional[str]:
+    def value(self) -> str | None:
         return "".join([c.value for c in self.chars]) if self.chars else None
 
-    def dict(self, page_idx: int) -> dict:
+    def asdict(self, page_idx: int) -> dict:
         return {
             "page": page_idx,
             "class": "ocrx_word",
@@ -76,7 +75,7 @@ class Word:
             "x1": self.x1,
             "y1": self.y1,
             "x2": self.x2,
-            "y2": self.y2
+            "y2": self.y2,
         }
 
     @property
@@ -106,9 +105,13 @@ class Word:
     def corresponds(self, char: Char) -> bool:
         if self.chars:
             if self.direction == "horizontal":
-                return min(self.y2, char.y2) - max(self.y1, char.y1) >= 0.5 * min(self.height, char.height)
+                return min(self.y2, char.y2) - max(self.y1, char.y1) >= 0.5 * min(
+                    self.height, char.height
+                )
             if self.direction == "vertical":
-                return min(self.x2, char.x2) - max(self.x1, char.x1) >= 0.5 * min(self.width, char.width)
+                return min(self.x2, char.x2) - max(self.x1, char.x1) >= 0.5 * min(
+                    self.width, char.width
+                )
             return self.distance(char=char) <= 3 * self.size
         return True
 
@@ -116,9 +119,15 @@ class Word:
         self.chars.append(char)
 
 
-def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: float,
-                         page_height: float, page_rotation: int, x_offset: float,
-                         y_offset: float) -> tuple[int, int, int, int]:
+def get_char_coordinates(
+    text_page: PdfTextPage,
+    idx_char: int,
+    page_width: float,
+    page_height: float,
+    page_rotation: int,
+    x_offset: float,
+    y_offset: float,
+) -> tuple[int, int, int, int]:
     """
     Compute character coordinates within page
     :param text_page: PdfTextPage object from pypdfium2
@@ -139,7 +148,12 @@ def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: floa
     if page_rotation == 90:
         _x1, _y1, _x2, _y2 = _y1, page_height - _x2, _y2, page_height - _x1
     elif page_rotation == 180:
-        _x1, _y1, _x2, _y2 = page_width - _x1, page_height - _y2, page_width - _x2, page_height - _y1
+        _x1, _y1, _x2, _y2 = (
+            page_width - _x1,
+            page_height - _y2,
+            page_width - _x2,
+            page_height - _y1,
+        )
     elif page_rotation == 270:
         _x1, _y1, _x2, _y2 = page_height - _y2, _x1, page_height - _y2, _x2
 
@@ -153,8 +167,11 @@ def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: floa
 
 
 class PdfOCR(OCRInstance):
-    def content(self, document: Document) -> list[list[dict]]:
+    def content(self, document: "Document | MockDocument") -> list[list[dict]]:
         list_pages = []
+
+        if isinstance(document, MockDocument) or not document.pages:
+            return list_pages
 
         doc = PdfDocument(input=document.bytes)
         for idx, page_number in enumerate(document.pages):
@@ -162,7 +179,11 @@ class PdfOCR(OCRInstance):
             page = doc.get_page(index=page_number)
 
             # Get page characteristics
-            page_height, page_width, page_rotation = page.get_height(), page.get_width(), page.get_cropbox()
+            page_height, page_width, page_rotation = (
+                page.get_height(),
+                page.get_width(),
+                page.get_cropbox(),
+            )
             x_offset, y_offset, _, _ = page.get_cropbox()
 
             # Get text page
@@ -173,20 +194,25 @@ class PdfOCR(OCRInstance):
             for idx_char in range(text_page.count_chars()):
                 # Get character
                 value = text_page.get_text_range(index=idx_char, count=1)
-                x1, y1, x2, y2 = get_char_coordinates(text_page=text_page,
-                                                      idx_char=idx_char,
-                                                      page_width=page_width,
-                                                      page_height=page_height,
-                                                      page_rotation=page_rotation,
-                                                      x_offset=x_offset,
-                                                      y_offset=y_offset)
+                x1, y1, x2, y2 = get_char_coordinates(
+                    text_page=text_page,
+                    idx_char=idx_char,
+                    page_width=page_width,
+                    page_height=page_height,
+                    page_rotation=page_rotation,
+                    x_offset=x_offset,
+                    y_offset=y_offset,
+                )
                 char = Char(value=value, x1=x1, y1=y1, x2=x2, y2=y2)
 
                 # Check coherency of character with previous characters / words
                 if char.value.strip() == "":
                     word_id += 1
                 elif words[-1].corresponds(char=char):
-                    if words[-1].distance(char=char) <= 2 * words[-1].size and word_id == words[-1].idx:
+                    if (
+                        words[-1].distance(char=char) <= 2 * words[-1].size
+                        and word_id == words[-1].idx
+                    ):
                         words[-1].add_char(char=char)
                     else:
                         word_id += 1
@@ -197,7 +223,7 @@ class PdfOCR(OCRInstance):
                     words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
 
             # Get only words that hold values
-            list_words = [w.dict(page_idx=idx) for w in words if w.value]
+            list_words = [w.asdict(page_idx=idx) for w in words if w.value]
 
             if list_words:
                 # Append to list of pages
@@ -214,7 +240,7 @@ class PdfOCR(OCRInstance):
                     "x1": 0,
                     "y1": 0,
                     "x2": int(page_width * 200 / 72),
-                    "y2": int(page_height * 200 / 72)
+                    "y2": int(page_height * 200 / 72),
                 }
                 list_pages.append([page_item])
             else:
@@ -223,13 +249,16 @@ class PdfOCR(OCRInstance):
         doc.close()
         return list_pages
 
-    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe:
+    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe | None:
         # Check if any page has words
         if min(map(len, content)) == 0:
             return None
 
         # Create OCRDataframe
-        list_dfs = [pl.DataFrame(data=page_elements, schema=self.pl_schema)
-                    for page_elements in content if page_elements]
+        list_dfs = [
+            pl.DataFrame(data=page_elements, schema=self.pl_schema)
+            for page_elements in content
+            if page_elements
+        ]
 
         return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None

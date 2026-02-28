@@ -1,28 +1,31 @@
-
-import typing
+from typing import TYPE_CHECKING
 
 import polars as pl
 
-from img2table.document.base import Document
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     import doctr
+
+    from img2table.document.base import Document, MockDocument
 
 
 class DocTR(OCRInstance):
     """
     DocTR instance
     """
-    def __init__(self, detect_language: bool = False, kw: typing.Optional[dict] = None) -> None:
+
+    def __init__(self, detect_language: bool = False, kw: dict | None = None) -> None:
         """
         Initialization of EasyOCR instance
         """
         try:
             from doctr.models import ocr_predictor
         except ModuleNotFoundError as err:
-            raise ModuleNotFoundError("Missing dependencies, please install doctr to use this class.") from err
+            raise ModuleNotFoundError(
+                "Missing dependencies, please install doctr to use this class."
+            ) from err
 
         # Create kwargs dict for constructor
         kw = kw or {}
@@ -31,11 +34,11 @@ class DocTR(OCRInstance):
 
         self.model = ocr_predictor(**kw)
 
-    def content(self, document: Document) -> "doctr.io.elements.Document":
+    def content(self, document: "Document | MockDocument") -> "doctr.io.elements.Document":
         # Get OCR of all images
         return self.model(document.images)
 
-    def to_ocr_dataframe(self, content: "doctr.io.elements.Document") -> OCRDataframe:
+    def to_ocr_dataframe(self, content: "doctr.io.elements.Document") -> OCRDataframe | None:
         """
         Convert docTR Document object to OCRDataframe object
         :param content: docTR Document object
@@ -61,7 +64,7 @@ class DocTR(OCRInstance):
                             "x1": round(word.geometry[0][0] * dimensions[1]),
                             "y1": round(word.geometry[0][1] * dimensions[0]),
                             "x2": round(word.geometry[1][0] * dimensions[1]),
-                            "y2": round(word.geometry[1][1] * dimensions[0])
+                            "y2": round(word.geometry[1][1] * dimensions[0]),
                         }
 
                         list_elements.append(dict_word)

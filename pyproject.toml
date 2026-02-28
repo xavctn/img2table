@@ -27,6 +27,7 @@ dependencies = [
     "numba",
     "beautifulsoup4",
     "xlsxwriter>=3.0.6",
+    "pydantic>=2.12.5",
 ]
 
 [project.urls]
@@ -72,7 +73,9 @@ dev = [
     "ipython-autotime",
     "wheel",
     "setuptools-scm",
-    "twine"
+    "twine",
+    "ty>=0.0.19",
+    "colordict>=1.2.6",
 ]
 
 [tool.uv]
@@ -84,7 +87,8 @@ override-dependencies = [
     "torch<2.9",
     "torchvision<0.24",
     "paddleocr>=3.0",
-    "paddlepaddle>=3.0"
+    "paddlepaddle>=3.0,<3.3",
+    "transformers<5",
 ]
 
 [tool.uv.sources]
@@ -109,8 +113,16 @@ filterwarnings = [
     "ignore::UserWarning",
 ]
 
+[tool.ruff]
+exclude = ["**/*.ipynb"]
+line-length = 100
+
 [tool.ruff.lint]
 select = ["ANN", "B", "A", "C4", "ICN", "INP", "PIE", "PYI", "RSE", "RET", "SLF", "SIM", "TID", "TC", "ARG", "PTH",
-    "NPY", "E", "W", "PL", "F", "UP", "RUF"]
-ignore = ["ANN401", "ANN003", "C417", "SLF001", "SIM105", "SIM300", "E501", "PLR2004", "PLR0912", "PLR0913", "PLR0915",
-    "PLC0415", "UP007", "UP035", "UP045", "RUF059", "RUF007", "B905"]
+    "NPY", "E", "W", "PL", "F", "UP", "RUF", "C90"]
+ignore = ["PLR2004", "SLF001", "ANN401", "PLC0415", "E501", "ANN003", "PLR0913",
+    "C901", "PLR0912", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+

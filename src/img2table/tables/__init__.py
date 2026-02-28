@@ -1,39 +1,48 @@
 from collections import defaultdict
-from typing import Any, Callable, Optional
+from typing import Any
+from collections.abc import Callable
 
 import cv2
 import numpy as np
 
 
-def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.ndarray:
+def threshold_dark_areas(img: np.ndarray, char_length: float | None) -> np.ndarray:
     """
     Threshold image by differentiating areas with light and dark backgrounds
     :param img: image array
     :param char_length: average character length
     :return: threshold image
     """
+    char_length = char_length or 11
+
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     # If image is mainly black, revert the image
-    if np.mean(gray) <= 127:
+    if np.mean(gray) <= 127:  # ty:ignore[no-matching-overload]
         gray = 255 - gray
 
     thresh_kernel = int(char_length) // 2 * 2 + 1
 
     # Threshold original image
-    t_sauvola = cv2.ximgproc.niBlackThreshold(gray, 255, cv2.THRESH_BINARY_INV, thresh_kernel, 0.2,
-                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
+    t_sauvola = cv2.ximgproc.niBlackThreshold(
+        gray,
+        255,
+        cv2.THRESH_BINARY_INV,
+        thresh_kernel,
+        0.2,
+        binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
+    )
     thresh = 255 * (gray <= t_sauvola).astype(np.uint8)
     binary_thresh = None
 
     # Mask on areas with dark background
     blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
     blur = cv2.GaussianBlur(gray, (blur_size, blur_size), 0)
-    mask = cv2.inRange(blur, 0, 100)
+    mask = cv2.inRange(src=blur, lowerb=0, upperb=100)  # ty:ignore[no-matching-overload]
 
     # Identify dark areas
-    _, _, stats, _ = cv2.connectedComponentsWithStats(mask, 8, cv2.CV_32S)
+    _, _, stats, _ = cv2.connectedComponentsWithStats(image=mask, connectivity=8, ltype=cv2.CV_32S)
 
     # For each dark area, use binary threshold instead of regular threshold
     for idx, row in enumerate(stats):
@@ -46,11 +55,16 @@ def threshold_dark_areas(img: np.ndarray, char_length: Optional[float]) -> np.nd
         if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 5 * char_length:
             if binary_thresh is None:
                 # Threshold binary image
-                bin_t_sauvola = cv2.ximgproc.niBlackThreshold(255 - gray, 255, cv2.THRESH_BINARY_INV, thresh_kernel,
-                                                              0.2,
-                                                              binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA)
+                bin_t_sauvola = cv2.ximgproc.niBlackThreshold(
+                    255 - gray,
+                    255,
+                    cv2.THRESH_BINARY_INV,
+                    thresh_kernel,
+                    0.2,
+                    binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
+                )
                 binary_thresh = 255 * (255 - gray <= bin_t_sauvola).astype(np.uint8)
-            thresh[y:y+h, x:x+w] = binary_thresh[y:y+h, x:x+w]
+            thresh[y : y + h, x : x + w] = binary_thresh[y : y + h, x : x + w]
 
     return thresh
 
@@ -71,10 +85,16 @@ def cluster_items(items: list[Any], clustering_func: Callable) -> list[list[Any]
 
             # If both items correspond, find matching clusters or create a new one
             if corresponds:
-                matching_clusters = [idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)]
+                matching_clusters = [
+                    idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)
+                ]
                 if matching_clusters:
-                    remaining_clusters = [cl for idx, cl in enumerate(clusters) if idx not in matching_clusters]
-                    new_cluster = {i, j}.union(*[cl for idx, cl in enumerate(clusters) if idx in matching_clusters])
+                    remaining_clusters = [
+                        cl for idx, cl in enumerate(clusters) if idx not in matching_clusters
+                    ]
+                    new_cluster = {i, j}.union(
+                        *[cl for idx, cl in enumerate(clusters) if idx in matching_clusters]
+                    )
                     clusters = [*remaining_clusters, new_cluster]
                 else:
                     clusters.append({i, j})
@@ -112,7 +132,7 @@ class UnionFind(dict):
                 node_a.size += node_b.size
 
 
-def find_components(edges: list[list[Any]]) -> list[list[Any]]:
+def find_components(edges: list[list[Any] | set[Any] | tuple[Any]]) -> list[list[Any]]:
     forest = UnionFind()
 
     for edge in edges:

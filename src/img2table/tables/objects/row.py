@@ -1,12 +1,12 @@
 import copy
-from typing import Union
+from itertools import pairwise
 
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
 
 
 class Row(TableObject):
-    def __init__(self, cells: Union[Cell, list[Cell]]) -> None:
+    def __init__(self, cells: Cell | list[Cell]) -> None:
         if cells is None:
             raise ValueError("cells parameter is null")
         if isinstance(cells, Cell):
@@ -25,19 +25,19 @@ class Row(TableObject):
 
     @property
     def x1(self) -> int:
-        return min(map(lambda x: x.x1, self.items))
+        return min(x.x1 for x in self.items)
 
     @property
     def x2(self) -> int:
-        return max(map(lambda x: x.x2, self.items))
+        return max(x.x2 for x in self.items)
 
     @property
     def y1(self) -> int:
-        return min(map(lambda x: x.y1, self.items))
+        return min(x.y1 for x in self.items)
 
     @property
     def y2(self) -> int:
-        return max(map(lambda x: x.y2, self.items))
+        return max(x.y2 for x in self.items)
 
     @property
     def v_consistent(self) -> bool:
@@ -45,9 +45,9 @@ class Row(TableObject):
         Indicate if the row is vertically consistent (i.e all cells in row have the same vertical position)
         :return: boolean indicating if the row is vertically consistent
         """
-        return all(map(lambda x: (x.y1 == self.y1) and (x.y2 == self.y2), self.items))
+        return all((x.y1 == self.y1) and (x.y2 == self.y2) for x in self.items)
 
-    def add_cells(self, cells: Union[Cell, list[Cell]]) -> "Row":
+    def add_cells(self, cells: Cell | list[Cell]) -> "Row":
         """
         Add cells to existing row items
         :param cells: Cell object or list
@@ -68,7 +68,7 @@ class Row(TableObject):
         """
         # Create list of tuples for vertical boundaries
         row_delimiters = [self.y1, *vertical_delimiters, self.y2]
-        row_boundaries = [(i, j) for i, j in zip(row_delimiters, row_delimiters[1:])]
+        row_boundaries = [(i, j) for i, j in pairwise(row_delimiters)]
 
         # Create new list of rows
         l_new_rows = []

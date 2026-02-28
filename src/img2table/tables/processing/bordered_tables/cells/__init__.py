@@ -12,8 +12,7 @@ def get_cells(horizontal_lines: list[Line], vertical_lines: list[Line]) -> list[
     :return: list of all cells in image
     """
     # Create dataframe with cells from horizontal and vertical rows
-    cells = get_cells_dataframe(horizontal_lines=horizontal_lines,
-                                vertical_lines=vertical_lines)
+    cells = get_cells_dataframe(horizontal_lines=horizontal_lines, vertical_lines=vertical_lines)
 
     # Deduplicate cells
     return deduplicate_cells(cells=cells)
