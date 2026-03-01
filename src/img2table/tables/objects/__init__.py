@@ -1,6 +1,5 @@
+from dataclasses import dataclass
 from typing import Protocol
-
-from pydantic import BaseModel
 
 
 class CoordinateProvider(Protocol):
@@ -10,7 +9,8 @@ class CoordinateProvider(Protocol):
     y2: int
 
 
-class TableObject(BaseModel):
+@dataclass
+class TableObject:
     def bbox(
         self: "CoordinateProvider", margin: int = 0, height_margin: int = 0, width_margin: int = 0
     ) -> tuple[int, int, int, int]:

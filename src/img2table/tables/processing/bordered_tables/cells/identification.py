@@ -1,5 +1,3 @@
-from itertools import pairwise
-
 import numpy as np
 from numba import njit, prange
 

@@ -6,7 +6,6 @@ import numpy as np
 import pypdfium2
 
 from img2table.document.base import Document
-from img2table.document.base.rotation import fix_rotation_image
 from img2table.ocr.pdf import PdfOCR
 
 if typing.TYPE_CHECKING:
@@ -34,6 +33,9 @@ class PDF(Document):
             img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
             # Handle rotation if needed
             if self.detect_rotation:
+                # Inline import to reduce library load time
+                from img2table.document.base.rotation import fix_rotation_image
+
                 final, self._rotated = fix_rotation_image(img=img)
             else:
                 final, self._rotated = img, False

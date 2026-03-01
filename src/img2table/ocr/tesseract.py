@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import cv2
 import numpy as np
 import polars as pl
-from bs4 import BeautifulSoup
 
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
@@ -68,7 +67,9 @@ class TesseractOCR(OCRInstance):
         # Check if requested languages are available
         try:
             lang_tess = subprocess.check_output(  # noqa: S602
-                "tesseract --list-langs", env=self.env, shell=True  # noqa: S607
+                "tesseract --list-langs",  # noqa: S607
+                env=self.env,
+                shell=True,
             ).decode()
             for lng in self.lang.split("+"):
                 if not any(
@@ -114,6 +115,8 @@ class TesseractOCR(OCRInstance):
         :param content: hOCR HTML string
         :return: OCRDataframe object corresponding to content
         """
+        from bs4 import BeautifulSoup
+
         # Create list of dataframes for each page
         list_dfs = []
 

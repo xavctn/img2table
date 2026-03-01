@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 
 def is_contained_cell(
-    inner_cell: "Cell | tuple | Whitespace", outer_cell: "Cell | tuple | Whitespace", percentage: float = 0.9
+    inner_cell: "Cell | tuple[int, int, int, int] | Whitespace",
+    outer_cell: "Cell | tuple[int, int, int, int] | Whitespace",
+    percentage: float = 0.9,
 ) -> bool:
     """
     Assert if the inner cell is contained in outer cell
@@ -23,10 +25,10 @@ def is_contained_cell(
     """
     # If needed, convert inner cell to Cell object
     if isinstance(inner_cell, tuple):
-        inner_cell = Cell(x1=inner_cell[0], y1=inner_cell[1], x2=inner_cell[2], y2=inner_cell[3])
+        inner_cell = Cell(*inner_cell)
     # If needed, convert outer cell to Cell object
     if isinstance(outer_cell, tuple):
-        outer_cell = Cell(x1=outer_cell[0], y1=outer_cell[1], x2=outer_cell[2], y2=outer_cell[3])
+        outer_cell = Cell(*outer_cell)
 
     # Compute common coordinates
     x_left = max(inner_cell.x1, outer_cell.x1)
@@ -105,7 +107,7 @@ def merge_overlapping_contours(contours: list[Cell]) -> list[Cell]:
     return [Cell(**d) for d in df_final.to_dicts()]
 
 
-def merge_contours(contours: list[Cell], vertically: bool = True) -> list[Cell]:
+def merge_contours(contours: list[Cell], vertically: bool | None = True) -> list[Cell]:
     """
     Create merge contours by an axis
     :param contours: list of contours

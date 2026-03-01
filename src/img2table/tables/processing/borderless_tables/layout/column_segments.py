@@ -1,8 +1,7 @@
 import random
+from dataclasses import dataclass
 from itertools import pairwise
 from queue import PriorityQueue
-
-from pydantic import BaseModel
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.cell import Cell
@@ -11,7 +10,8 @@ from img2table.tables.processing.borderless_tables.model import ImageSegment
 from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
 
 
-class Rectangle(BaseModel):
+@dataclass
+class Rectangle:
     x1: int
     y1: int
     x2: int

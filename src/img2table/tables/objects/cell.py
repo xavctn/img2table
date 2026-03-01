@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.extraction import BBox, TableCell
 
 
+@dataclass
 class Cell(TableObject):
     x1: int
     y1: int

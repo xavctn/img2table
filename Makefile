@@ -24,7 +24,7 @@ type-check:
 	uv run ty check src tests
 
 # Examples commands
-jupyter-examples:
+jupyter:
 	cd examples && uv run jupyter notebook
 
 update-examples:

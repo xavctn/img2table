@@ -1,5 +1,6 @@
 import typing
 from collections import OrderedDict
+from dataclasses import dataclass
 from functools import cached_property
 from itertools import pairwise
 
@@ -15,6 +16,7 @@ if typing.TYPE_CHECKING:
     from img2table.ocr.data import OCRDataframe
 
 
+@dataclass
 class Table(TableObject):
     def __init__(self, rows: Row | list[Row], borderless: bool = False) -> None:
         if rows is None:

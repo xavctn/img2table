@@ -6,15 +6,13 @@ import cv2
 import numpy as np
 
 
-def threshold_dark_areas(img: np.ndarray, char_length: float | None) -> np.ndarray:
+def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     """
     Threshold image by differentiating areas with light and dark backgrounds
     :param img: image array
     :param char_length: average character length
     :return: threshold image
     """
-    char_length = char_length or 11
-
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
@@ -34,7 +32,6 @@ def threshold_dark_areas(img: np.ndarray, char_length: float | None) -> np.ndarr
         binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
     )
     thresh = 255 * (gray <= t_sauvola).astype(np.uint8)
-    binary_thresh = None
 
     # Mask on areas with dark background
     blur_size = min(255, int(2 * char_length) // 2 * 2 + 1)
@@ -44,27 +41,24 @@ def threshold_dark_areas(img: np.ndarray, char_length: float | None) -> np.ndarr
     # Identify dark areas
     _, _, stats, _ = cv2.connectedComponentsWithStats(image=mask, connectivity=8, ltype=cv2.CV_32S)
 
-    # For each dark area, use binary threshold instead of regular threshold
     for idx, row in enumerate(stats):
-        # Get statistics
-        x, y, w, h, area = row
-
         if idx == 0:
             continue
+        x, y, w, h, area = row
 
         if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 5 * char_length:
-            if binary_thresh is None:
-                # Threshold binary image
-                bin_t_sauvola = cv2.ximgproc.niBlackThreshold(
-                    255 - gray,
-                    255,
-                    cv2.THRESH_BINARY_INV,
-                    thresh_kernel,
-                    0.2,
-                    binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
-                )
-                binary_thresh = 255 * (255 - gray <= bin_t_sauvola).astype(np.uint8)
-            thresh[y : y + h, x : x + w] = binary_thresh[y : y + h, x : x + w]
+            # Extract region of interest and apply Sauvola threshold on it
+            roi_inverted = 255 - gray[y : y + h, x : x + w]
+            bin_t_sauvola = cv2.ximgproc.niBlackThreshold(
+                255 - gray[y : y + h, x : x + w],
+                255,
+                cv2.THRESH_BINARY_INV,
+                thresh_kernel,
+                0.2,
+                binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
+            )
+            roi_binary = (roi_inverted <= bin_t_sauvola).astype(np.uint8) * 255
+            thresh[y : y + h, x : x + w] = roi_binary
 
     return thresh
 

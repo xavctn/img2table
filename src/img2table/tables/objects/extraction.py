@@ -1,21 +1,23 @@
 from collections import OrderedDict
-from typing import NamedTuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, NamedTuple
 
-import pandas as pd
-from bs4 import BeautifulSoup
-from pydantic import BaseModel
-from xlsxwriter.format import Format
-from xlsxwriter.worksheet import Worksheet
+if TYPE_CHECKING:
+    import pandas as pd
+    from xlsxwriter.format import Format
+    from xlsxwriter.worksheet import Worksheet
 
 
-class BBox(BaseModel):
+@dataclass
+class BBox:
     x1: int
     y1: int
     x2: int
     y2: int
 
 
-class TableCell(BaseModel):
+@dataclass
+class TableCell:
     bbox: BBox
     value: str | None
 
@@ -29,7 +31,8 @@ class CellPosition(NamedTuple):
     col: int
 
 
-class CellSpan(BaseModel):
+@dataclass
+class CellSpan:
     top_row: int
     bottom_row: int
     col_left: int
@@ -137,17 +140,20 @@ def create_all_rectangles(cell_positions: list[CellPosition]) -> list[CellSpan]:
     return [cell_span]
 
 
-class ExtractedTable(BaseModel):
+@dataclass
+class ExtractedTable:
     bbox: BBox
     title: str | None
     content: OrderedDict[int, list[TableCell]]
 
     @property
-    def df(self) -> pd.DataFrame:
+    def df(self) -> "pd.DataFrame":
         """
         Create pandas DataFrame representation of the table
         :return: pandas DataFrame containing table data
         """
+        import pandas as pd
+
         values = [[cell.value for cell in row] for k, row in self.content.items()]
         return pd.DataFrame(values)
 
@@ -157,6 +163,8 @@ class ExtractedTable(BaseModel):
         Create HTML representation of the table
         :return: HTML table
         """
+        from bs4 import BeautifulSoup
+
         # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
         dict_cells = {}
         for id_row, row in self.content.items():
@@ -190,7 +198,7 @@ class ExtractedTable(BaseModel):
 
         return BeautifulSoup(table_html, "html.parser").prettify().strip()
 
-    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Format | None = None) -> None:
+    def _to_worksheet(self, sheet: "Worksheet", cell_fmt: "Format | None" = None) -> None:
         """
         Populate xlsx worksheet with table data
         :param sheet: xlsxwriter Worksheet

@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 
 from img2table.document.base import Document
-from img2table.document.base.rotation import fix_rotation_image
 from img2table.tables.objects.extraction import ExtractedTable
 
 if typing.TYPE_CHECKING:
@@ -26,6 +25,9 @@ class Image(Document):
         )
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if self.detect_rotation:
+            # Inline import to reduce library load time
+            from img2table.document.base.rotation import fix_rotation_image
+
             rotated_img, _ = fix_rotation_image(img=img)
             return [rotated_img]
         return [img]

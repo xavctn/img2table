@@ -1,10 +1,12 @@
 import copy
+from dataclasses import dataclass
 from itertools import pairwise
 
 from img2table.tables.objects import TableObject
 from img2table.tables.objects.cell import Cell
 
 
+@dataclass
 class Row(TableObject):
     def __init__(self, cells: Cell | list[Cell]) -> None:
         if cells is None:

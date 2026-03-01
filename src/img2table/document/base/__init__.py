@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import xlsxwriter
 from pydantic import BaseModel, ConfigDict
 
 from img2table.tables.objects.extraction import ExtractedTable
@@ -180,6 +179,8 @@ class Document(BaseModel):
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
         :return: if a buffer is passed as dest arg, it is returned containing xlsx data
         """
+        import xlsxwriter
+
         # Extract tables
         extracted_tables = self.extract_tables(
             ocr=ocr,

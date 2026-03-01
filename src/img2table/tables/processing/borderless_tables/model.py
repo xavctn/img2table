@@ -1,12 +1,11 @@
 from collections.abc import Iterator
-from typing import Any
-
-from pydantic import BaseModel, Field
+from dataclasses import dataclass, field
 
 from img2table.tables.objects.cell import Cell
 
 
-class Whitespace(BaseModel):
+@dataclass
+class Whitespace:
     cells: list[Cell]
 
     @property
@@ -53,16 +52,17 @@ class Whitespace(BaseModel):
         return hash(repr(self))
 
 
-class ImageSegment(BaseModel):
+@dataclass
+class ImageSegment:
     x1: int
     y1: int
     x2: int
     y2: int
     elements: list[Cell] | None = None
-    whitespaces: list[Whitespace] = Field(default_factory=list)
+    whitespaces: list[Whitespace] = field(default_factory=list)
     position: int | None = None
 
-    def __iter__(self) -> Iterator[Cell]:  # ty:ignore[invalid-method-override]
+    def __iter__(self) -> Iterator[Cell]:
         yield from self.elements or []
 
     @property
@@ -89,7 +89,8 @@ class ImageSegment(BaseModel):
         return hash(repr(self))
 
 
-class TableSegment(BaseModel):
+@dataclass
+class TableSegment:
     table_areas: list[ImageSegment]
 
     @property
@@ -117,7 +118,8 @@ class TableSegment(BaseModel):
         return [ws for tb_area in self.table_areas for ws in tb_area.whitespaces]
 
 
-class VerticalWS(BaseModel):
+@dataclass
+class VerticalWS:
     ws: Whitespace
     position: int = 0
     top: bool = True
@@ -153,7 +155,8 @@ class VerticalWS(BaseModel):
         return self.ws.continuous
 
 
-class Column(BaseModel):
+@dataclass
+class Column:
     whitespaces: list[VerticalWS]
     top: bool = True
     bottom: bool = True
@@ -220,12 +223,13 @@ class Column(BaseModel):
             self.bottom = v_ws.bottom
 
 
-class ColumnGroup(BaseModel):
+@dataclass
+class ColumnGroup:
     columns: list[Column]
     char_length: float
-    elements: list[Cell] = Field(default_factory=list)
+    elements: list[Cell] = field(default_factory=list)
 
-    def model_post_init(self, context: Any) -> None:  # noqa: ARG002
+    def __post_init__(self) -> None:
         # Reprocess left and right columns positions
         self.columns = sorted(self.columns, key=lambda col: col.x1)
 

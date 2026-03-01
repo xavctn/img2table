@@ -1,4 +1,5 @@
 import math
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -6,6 +7,7 @@ import numpy as np
 from img2table.tables.objects import TableObject
 
 
+@dataclass
 class Line(TableObject):
     x1: int
     y1: int

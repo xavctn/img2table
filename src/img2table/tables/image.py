@@ -1,10 +1,9 @@
 import copy
+from dataclasses import dataclass
 from functools import cached_property
-from typing import Any
 
 import cv2
 import numpy as np
-from pydantic import BaseModel, ConfigDict
 
 from img2table.tables import threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
@@ -19,9 +18,8 @@ from img2table.tables.processing.bordered_tables.tables.implicit import implicit
 from img2table.tables.processing.borderless_tables import identify_borderless_tables
 
 
-class TableImage(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+@dataclass
+class TableImage:
     img: np.ndarray
     min_confidence: int = 50
     _char_length: float | None = None
@@ -31,7 +29,7 @@ class TableImage(BaseModel):
     _lines: list[Line] | None = None
     _tables: list[Table] | None = None
 
-    def model_post_init(self, context: Any, /) -> None:  # noqa: ARG002
+    def __post_init__(self) -> None:
         self._thresh = threshold_dark_areas(img=self.img, char_length=11)
 
         # Compute image metrics
@@ -112,7 +110,7 @@ class TableImage(BaseModel):
         # Compute parameters for line detection
         min_line_length = (
             int(min(1.5 * self.median_line_sep, 4 * self.char_length))
-            if self.median_line_sep
+            if self._median_line_sep
             else 20
         )
 

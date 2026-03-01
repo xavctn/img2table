@@ -1,9 +1,10 @@
+import math
 from itertools import pairwise
 
 import cv2
 import numpy as np
 import polars as pl
-from numba import njit, prange
+from numba import njit
 
 dixon_q_test_confidence_dict = {
     0.9: {3: 0.941, 4: 0.765, 5: 0.642, 6: 0.56, 7: 0.507, 8: 0.468, 9: 0.437, 10: 0.412},
@@ -62,25 +63,29 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
 
 @njit("List(float64)(float64[:,:],float64)", fastmath=True, cache=True, parallel=False)
 def compute_angles(centroids: np.ndarray, ref_height: float) -> list[float]:
-    angles = []
+    # Sort and prepare
+    idx = np.argsort(centroids[:, 1])
+    c_sorted = centroids[idx]
+    n = len(c_sorted)
 
-    for i in prange(len(centroids)):  # ty:ignore[not-iterable]
-        for j in prange(i + 1, len(centroids)):  # ty:ignore[not-iterable]
-            xi, yi = centroids[i][:]
-            xj, yj = centroids[j][:]
+    angles = []
+    y_threshold = 10.0 * ref_height
+    rad_to_deg = 180.0 / math.pi
+    for i in range(n):
+        xi, yi = c_sorted[i, 0], c_sorted[i, 1]
+        for j in range(i + 1, n):
+            xj, yj = c_sorted[j, 0], c_sorted[j, 1]
 
             # Continue if both elements are not relevant
+            if yj - yi > y_threshold:
+                break
             if xi == xj:
                 continue
-            if not -10 * ref_height <= yi - yj <= 10 * ref_height:
-                continue
 
-            # Compute slope and angle
-            slope = round((yi - yj) / (xi - xj), 3)
-            angle = np.arctan(slope) * 180 / np.pi
-
-            if not -45 <= angle <= 45:
-                angle = -min(angle + 90, 90 - angle) * np.sign(angle)
+            # Compute angle
+            angle = math.atan((yi - yj) / (xi - xj)) * rad_to_deg
+            if not -45.0 <= angle <= 45.0:
+                angle = -min(angle + 90.0, 90.0 - angle) * (1.0 if angle > 0 else -1.0)
             angles.append(angle)
 
     return angles
@@ -100,27 +105,22 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     # Compute angles
     angles = compute_angles(centroids=centroids, ref_height=ref_height)
 
+    if len(angles) == 0:
+        return [0]
+
     # Get n most represented angles
-    most_likely_angles = (
-        pl.DataFrame(angles, schema={"angle": float})
-        .group_by("angle")
-        .len()
-        .sort(by=["len", pl.col("angle").abs()], descending=[True, False])
-        .limit(n_max)
-        .to_dicts()
+    s = pl.Series("angle", angles).round(2)
+    relevant_angles = (
+        s.value_counts()
+        .sort(by=[pl.col("count"), pl.col("angle").abs()], descending=[True, False])
+        .head(n_max)
+        .filter(pl.col("count") >= pl.col("count").max() * 0.25)
     )
 
-    if most_likely_angles:
-        if most_likely_angles[0].get("angle") == 0:
-            return [0]
-        return sorted(
-            {
-                angle["angle"]
-                for angle in most_likely_angles
-                if angle["len"] >= 0.25 * max([a["len"] for a in most_likely_angles])
-            }
-        )
-    return [0]
+    if relevant_angles.is_empty() or relevant_angles["angle"][0] == 0:
+        return [0.0]
+
+    return relevant_angles["angle"].sort().to_list()
 
 
 def angle_dixon_q_test(angles: list[float], confidence: float = 0.9) -> float:
