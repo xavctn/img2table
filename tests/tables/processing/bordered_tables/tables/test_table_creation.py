@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
@@ -8,7 +9,6 @@ from img2table.tables.processing.bordered_tables.tables.table_creation import (
     normalize_table_cells,
     remove_unwanted_elements,
 )
-from pathlib import Path
 
 
 def test_normalize_table_cells() -> None:

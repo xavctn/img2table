@@ -61,14 +61,14 @@ class TesseractOCR(OCRInstance):
         self.env = env
 
         # Check if Tesseract is available
-        cmd_tess = subprocess.run("tesseract --version", env=self.env, shell=True, check=False)
+        cmd_tess = subprocess.run("tesseract --version", env=self.env, shell=True, check=False)  # noqa: S602, S607
         if cmd_tess.returncode != 0:
             raise OSError("Tesseract not found in environment. Check variables and PATH")
 
         # Check if requested languages are available
         try:
-            lang_tess = subprocess.check_output(
-                "tesseract --list-langs", env=self.env, shell=True
+            lang_tess = subprocess.check_output(  # noqa: S602
+                "tesseract --list-langs", env=self.env, shell=True  # noqa: S607
             ).decode()
             for lng in self.lang.split("+"):
                 if not any(
@@ -90,7 +90,7 @@ class TesseractOCR(OCRInstance):
             cv2.imwrite(tmp_file, image)
 
             # Get hOCR
-            hocr = subprocess.check_output(
+            hocr = subprocess.check_output(  # noqa: S602
                 f"tesseract {tmp_file} stdout --psm {self.psm} -l {self.lang} hocr",
                 env=self.env,
                 stderr=subprocess.STDOUT,

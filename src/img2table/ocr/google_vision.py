@@ -84,10 +84,18 @@ class VisionEndpointContent(VisionContent):
                         "parent": f"line_{id_block}_{id_par}_{id_line}",
                         "value": "".join([sym.get("text") for sym in word.get("symbols")]),
                         "confidence": round(100 * word.get("confidence")),
-                        "x1": min(el.get("x", x_repl) for el in word.get("boundingBox").get("vertices")),
-                        "x2": max(el.get("x", x_repl) for el in word.get("boundingBox").get("vertices")),
-                        "y1": min(el.get("y", y_repl) for el in word.get("boundingBox").get("vertices")),
-                        "y2": max(el.get("y", y_repl) for el in word.get("boundingBox").get("vertices")),
+                        "x1": min(
+                            el.get("x", x_repl) for el in word.get("boundingBox").get("vertices")
+                        ),
+                        "x2": max(
+                            el.get("x", x_repl) for el in word.get("boundingBox").get("vertices")
+                        ),
+                        "y1": min(
+                            el.get("y", y_repl) for el in word.get("boundingBox").get("vertices")
+                        ),
+                        "y2": max(
+                            el.get("y", y_repl) for el in word.get("boundingBox").get("vertices")
+                        ),
                     }
 
                     # Check for break
@@ -153,7 +161,7 @@ class VisionEndpointContent(VisionContent):
         with ThreadPoolExecutor(max_workers=20) as pool:
             args = ((image, idx) for idx, image in enumerate(document.images))
             for ocr in pool.map(lambda d: self.get_ocr_image(*d), args):
-                results.append(ocr)
+                results.append(ocr)  # noqa: PERF402
 
         return results
 
@@ -207,19 +215,14 @@ class VisionAPIContent(VisionContent):
                         y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
 
                         # Compute x and y values in bounding box
-                        x_vals = []
-                        for vertex in word.bounding_box.vertices:
-                            try:
-                                x_vals.append(vertex.x or x_repl)
-                            except AttributeError:
-                                x_vals.append(x_repl)
-
-                        y_vals = []
-                        for vertex in word.bounding_box.vertices:
-                            try:
-                                y_vals.append(vertex.y or y_repl)
-                            except AttributeError:
-                                y_vals.append(y_repl)
+                        x_vals = [
+                            vertex.x or x_repl if hasattr(vertex, "x") else x_repl
+                            for vertex in word.bounding_box.vertices
+                        ]
+                        y_vals = [
+                            vertex.y or y_repl if hasattr(vertex, "y") else y_repl
+                            for vertex in word.bounding_box.vertices
+                        ]
 
                         d_el = {
                             "page": id_page,

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import (
@@ -13,7 +14,6 @@ from img2table.tables.processing.borderless_tables.rows import (
     identify_delimiter_group_rows,
     identify_row_delimiters,
 )
-from pathlib import Path
 
 
 def test_identify_row_delimiters() -> None:
@@ -45,9 +45,7 @@ def test_filter_coherent_row_delimiters() -> None:
 
     column_group = ColumnGroup(
         columns=[
-            Column(
-                whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=0, x2=0, y1=0, y2=20)]))]
-            ),
+            Column(whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=0, x2=0, y1=0, y2=20)]))]),
             Column(
                 whitespaces=[VerticalWS(ws=Whitespace(cells=[Cell(x1=30, x2=30, y1=0, y2=20)]))]
             ),

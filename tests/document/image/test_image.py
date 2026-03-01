@@ -1,9 +1,9 @@
-from pathlib import Path
-from pydantic import ValidationError
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from openpyxl import load_workbook
+from pydantic import ValidationError
 
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR

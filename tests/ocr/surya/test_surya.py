@@ -1,5 +1,4 @@
 import pickle
-import sys
 from pathlib import Path
 
 import polars as pl
@@ -11,7 +10,6 @@ from img2table.ocr.data import OCRDataframe
 from tests import MOCK_DIR
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
 def test_content(mock_surya) -> None:  # noqa: ANN001, ARG001
     img = Image(src="test_data/test.png")
     ocr = SuryaOCR(langs=["en"])
@@ -24,7 +22,6 @@ def test_content(mock_surya) -> None:  # noqa: ANN001, ARG001
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
 def test_to_ocr_df() -> None:
     ocr = SuryaOCR(langs=["en"])
     with (Path(MOCK_DIR) / "surya.pkl").open("rb") as f:
@@ -37,7 +34,6 @@ def test_to_ocr_df() -> None:
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Library not available")
 def test_surya_ocr(mock_surya) -> None:  # noqa: ANN001, ARG001
     # Test init error
     with pytest.raises(TypeError):

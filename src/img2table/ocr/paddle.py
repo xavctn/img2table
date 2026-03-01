@@ -39,9 +39,9 @@ class PaddleOCR2(OCRInstance):
         kw["use_angle_cls"] = kw.get("use_angle_cls") or False
         kw["show_log"] = kw.get("show_log") or False
 
-        from paddleocr import PaddleOCR as OCR
+        from paddleocr import PaddleOCR as Ocr
 
-        self.ocr = OCR(**kw)
+        self.ocr = Ocr(**kw)
 
     def hocr(self, image: np.ndarray) -> list:
         """
@@ -130,9 +130,9 @@ class PaddleOCR3(OCRInstance):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            from paddleocr import PaddleOCR as OCR
+            from paddleocr import PaddleOCR as Ocr
 
-        self.ocr = OCR(**kw)
+        self.ocr = Ocr(**kw)
 
     def content(self, document: "Document | MockDocument") -> list[dict]:
         ocrs = self.ocr.predict(input=document.images)

@@ -147,13 +147,18 @@ def get_whitespaces(
     """
     # Flip object coordinates in horizontal case
     if not vertical:
-        flipped_elements = [Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements or []]
+        flipped_elements = [
+            Cell(x1=el.y1, y1=el.x1, x2=el.y2, y2=el.x2) for el in segment.elements or []
+        ]
         segment = ImageSegment(
             x1=segment.y1, y1=segment.x1, x2=segment.y2, y2=segment.x2, elements=flipped_elements
         )
 
     # Get min/max height of elements in segment
-    y_min, y_max = min([el.y1 for el in segment.elements or []]), max([el.y2 for el in segment.elements or []])
+    y_min, y_max = (
+        min([el.y1 for el in segment.elements or []]),
+        max([el.y2 for el in segment.elements or []]),
+    )
 
     # Create array containing elements
     elements_array = np.array(
@@ -282,11 +287,11 @@ def deduplicate_whitespaces(ws: list[Whitespace], elements: list[Cell]) -> list[
 
     if len(merged_ws) > 1:
         # Deduplicate overlapping merged ws
-        seq = iter(sorted(merged_ws, key=lambda w: w.area, reverse=True))
-        filtered_merged_ws = [next(seq)]
-        for w in seq:
-            if not any(f_ws for f_ws in filtered_ws if w in f_ws):
-                filtered_merged_ws.append(w)
+        filtered_merged_ws = [
+            ws
+            for ws in sorted(merged_ws, key=lambda w: w.area, reverse=True)
+            if not any(f_ws for f_ws in filtered_ws if ws in f_ws)
+        ]
     else:
         filtered_merged_ws = merged_ws
 

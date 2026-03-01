@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING
 import copy
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
@@ -105,7 +105,7 @@ def merge_overlapping_contours(contours: list[Cell]) -> list[Cell]:
     return [Cell(**d) for d in df_final.to_dicts()]
 
 
-def merge_contours(contours: list[Cell], vertically: bool | None = True) -> list[Cell]:
+def merge_contours(contours: list[Cell], vertically: bool = True) -> list[Cell]:
     """
     Create merge contours by an axis
     :param contours: list of contours
@@ -162,7 +162,7 @@ def get_contours_cell(
     margin: int = 5,
     blur_size: int = 9,
     kernel_size: int = 15,
-    merge_vertically: bool | None = True,
+    merge_vertically: bool = True,
 ) -> list[Cell]:
     """
     Get list of contours contained in cell

@@ -1,6 +1,6 @@
-from pathlib import Path
 import json
 from io import BytesIO
+from pathlib import Path
 
 from xlsxwriter import Workbook
 
@@ -72,9 +72,7 @@ def test_extracted_table_worksheet() -> None:
         ws_values = sorted(
             [str_map.get(c.string) for row in ws.table.values() for c in row.values()]
         )
-        table_values = sorted(
-            {c.value for row in extracted_table.content.values() for c in row}
-        )
+        table_values = sorted({c.value for row in extracted_table.content.values() for c in row})
         assert ws_values == table_values
 
     wb.close()

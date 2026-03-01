@@ -2,11 +2,11 @@ import copy
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.model import (
-    TableSegment,
-    Whitespace,
     Column,
-    VerticalWS,
     ColumnGroup,
+    TableSegment,
+    VerticalWS,
+    Whitespace,
 )
 
 

@@ -1,9 +1,9 @@
 import json
 import pickle
 import subprocess
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any, NamedTuple
-from collections.abc import Iterator, Mapping
 
 import azure.cognitiveservices.vision.computervision
 import boto3
@@ -74,7 +74,10 @@ class ApproxNestedMapping(ApproxBaseReprMixin, ApproxMapping):
 
 
 def nested_approx(
-    expected: Any, rel: float | None = None, abs: float | None = None, nan_ok: bool = False  # noqa: A002
+    expected: Any,
+    rel: float | None = None,
+    abs: float | None = None,  # noqa: A002
+    nan_ok: bool = False,
 ) -> ApproxBase:
     if isinstance(expected, dict):
         return ApproxNestedMapping(expected, rel, abs, nan_ok)

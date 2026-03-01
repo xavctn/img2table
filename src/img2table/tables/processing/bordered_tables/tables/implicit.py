@@ -57,14 +57,11 @@ def implicit_rows_lines(table: Table, segment: ImageSegment) -> list[Line]:
         h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
 
     # Identify created lines
-    created_lines = []
-    for ws in h_ws:
-        if not any(line for line in table.lines if ws.y1 <= line.y1 <= ws.y2 and line.horizontal):
-            created_lines.append(
-                Line(x1=table.x1, y1=(ws.y1 + ws.y2) // 2, x2=table.x2, y2=(ws.y1 + ws.y2) // 2)
-            )
-
-    return created_lines
+    return [
+        Line(x1=table.x1, y1=(ws.y1 + ws.y2) // 2, x2=table.x2, y2=(ws.y1 + ws.y2) // 2)
+        for ws in h_ws
+        if not any(line for line in table.lines if ws.y1 <= line.y1 <= ws.y2 and line.horizontal)
+    ]
 
 
 def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: float) -> list[Line]:
@@ -79,14 +76,11 @@ def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: flo
     v_ws = get_whitespaces(segment=segment, vertical=True, min_width=char_length, pct=1)
 
     # Identify created lines
-    created_lines = []
-    for ws in v_ws:
-        if not any(line for line in table.lines if ws.x1 <= line.x1 <= ws.x2 and line.vertical):
-            created_lines.append(
-                Line(x1=(ws.x1 + ws.x2) // 2, y1=table.y1, x2=(ws.x1 + ws.x2) // 2, y2=table.y2)
-            )
-
-    return created_lines
+    return [
+        Line(x1=(ws.x1 + ws.x2) // 2, y1=table.y1, x2=(ws.x1 + ws.x2) // 2, y2=table.y2)
+        for ws in v_ws
+        if not any(line for line in table.lines if ws.x1 <= line.x1 <= ws.x2 and line.vertical)
+    ]
 
 
 def implicit_content(

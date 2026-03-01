@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -7,7 +8,6 @@ from numba import config
 from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables.layout.rlsa import identify_text_mask
-from pathlib import Path
 
 
 def test_identify_text_mask() -> None:

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables.columns import (
@@ -13,7 +14,6 @@ from img2table.tables.processing.borderless_tables.model import (
     VerticalWS,
     Whitespace,
 )
-from pathlib import Path
 
 
 def test_get_columns_delimiters() -> None:

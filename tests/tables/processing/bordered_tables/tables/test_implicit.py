@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
@@ -9,7 +10,6 @@ from img2table.tables.processing.bordered_tables.tables.implicit import (
     implicit_rows_lines,
 )
 from img2table.tables.processing.borderless_tables.model import ImageSegment
-from pathlib import Path
 
 
 def test_implicit_rows_lines() -> None:

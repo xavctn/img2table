@@ -89,7 +89,7 @@ def identify_remaining_segments(
         for rect in rects:
             if rect.area > searched_rectangle.area / 100:
                 rect_obstacles = [o for o in obs if o.overlaps(rect)]
-                queue.put([-rect.area + random.uniform(0, 1), rect, rect_obstacles])
+                queue.put([-rect.area + random.uniform(0, 1), rect, rect_obstacles])  # noqa: S311
 
     return [seg.cell for seg in segments]
 

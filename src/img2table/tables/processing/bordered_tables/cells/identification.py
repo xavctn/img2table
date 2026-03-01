@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 import numpy as np
 from numba import njit, prange
 
@@ -84,7 +86,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
         if len(delimiters) >= 2:
             delimiters = sorted(delimiters)
             for j in range(len(delimiters) - 1):
-                cells.append([delimiters[j], y1, delimiters[j + 1], y2])
+                cells.append([delimiters[j], y1, delimiters[j + 1], y2])  # noqa: PERF401
 
     return np.array(cells).astype(np.int64) if cells else np.empty((0, 4), dtype=np.int64)
 

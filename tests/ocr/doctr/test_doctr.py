@@ -1,10 +1,8 @@
 import pickle
-import sys
 from pathlib import Path
 from typing import Any
 
 import polars as pl
-import pytest
 
 from img2table.document.image import Image
 from img2table.ocr import DocTR
@@ -29,7 +27,6 @@ def format_content(content: Any) -> dict:
     }
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Not supported anymore")
 def test_doctr_content() -> None:
     instance = DocTR()
     doc = Image(src="test_data/test.png")
@@ -42,7 +39,6 @@ def test_doctr_content() -> None:
     assert format_content(result) == format_content(expected)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Not supported anymore")
 def test_doctr_ocr_df() -> None:
     instance = DocTR()
 
@@ -56,7 +52,6 @@ def test_doctr_ocr_df() -> None:
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="Not supported anymore")
 def test_doctr_document() -> None:
     instance = DocTR()
     doc = Image(src="test_data/test.png")
