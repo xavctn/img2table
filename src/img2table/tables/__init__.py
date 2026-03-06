@@ -41,14 +41,20 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     # Identify dark areas
     _, _, stats, _ = cv2.connectedComponentsWithStats(image=mask, connectivity=8, ltype=cv2.CV_32S)
 
-    for idx, row in enumerate(stats):
+    for idx, (x, y, w, h, area) in enumerate(stats):
         if idx == 0:
             continue
-        x, y, w, h, area = row
 
+        # Filter for significant dark regions (likely text blocks on dark backgrounds)
         if area / (w * h) >= 0.5 and min(w, h) >= char_length and max(w, h) >= 5 * char_length:
-            # Extract region of interest and apply Sauvola threshold on it
-            roi_inverted = 255 - gray[y : y + h, x : x + w]
+            # Extract region of interest with margins
+            m_left = min(x, thresh_kernel)
+            m_right = min(gray.shape[1] - (x + w), thresh_kernel)
+            m_top = min(y, thresh_kernel)
+            m_bottom = min(gray.shape[0] - (y + h), thresh_kernel)
+            roi_inverted = 255 - gray[y - m_top : y + h + m_bottom, x - m_left : x + w + m_right]
+
+            # Apply Sauvola threshold
             bin_t_sauvola = cv2.ximgproc.niBlackThreshold(
                 roi_inverted,
                 255,
@@ -58,7 +64,9 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
                 binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,
             )
             roi_binary = (roi_inverted <= bin_t_sauvola).astype(np.uint8) * 255
-            thresh[y : y + h, x : x + w] = roi_binary
+
+            # Replace in threshold image
+            thresh[y : y + h, x : x + w] = roi_binary[m_top : m_top + h, m_left : m_left + w]
 
     return thresh
 
