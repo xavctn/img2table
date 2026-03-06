@@ -79,27 +79,27 @@ def remove_unwanted_elements(table: Table, elements: list[Cell]) -> Table:
             for id_col, c in enumerate(row.items)
         ]
     ).with_columns(
-        (pl.col("id_row").n_unique().over(["x1", "y1", "x2", "y2"]) > 1).alias("merged_col"),
-        (pl.col("id_col").n_unique().over(["x1", "y1", "x2", "y2"]) > 1).alias("merged_row"),
+        merged_col=pl.col("id_row").n_unique().over(["x1", "y1", "x2", "y2"]) > 1,
+        merged_row=pl.col("id_col").n_unique().over(["x1", "y1", "x2", "y2"]) > 1,
     )
 
     df_cells_elements = (
         df_cells.join(df_elements, how="cross")
         .with_columns(
-            (pl.min_horizontal(["x2", "x2_el"]) - pl.max_horizontal(["x1", "x1_el"])).alias(
-                "x_overlap"
-            ),
-            (pl.min_horizontal(["y2", "y2_el"]) - pl.max_horizontal(["y1", "y1_el"])).alias(
-                "y_overlap"
-            ),
+            x_overlap=pl.min_horizontal(["x2", "x2_el"]) - pl.max_horizontal(["x1", "x1_el"]),
+            y_overlap=pl.min_horizontal(["y2", "y2_el"]) - pl.max_horizontal(["y1", "y1_el"]),
         )
         .with_columns(
-            pl.max_horizontal(pl.col("x_overlap"), pl.lit(0)).alias("x_overlap"),
-            pl.max_horizontal(pl.col("y_overlap"), pl.lit(0)).alias("y_overlap"),
+            x_overlap=pl.max_horizontal(pl.col("x_overlap"), pl.lit(0)),
+            y_overlap=pl.max_horizontal(pl.col("y_overlap"), pl.lit(0)),
         )
         .with_columns(
-            ((pl.col("x_overlap") * pl.col("y_overlap")) / pl.col("area_el") >= 0.6).alias(
-                "contains"
+            contains=(
+                ((pl.col("x_overlap") * pl.col("y_overlap")) / pl.col("area_el") >= 0.6)
+                & (pl.col("x1_el") >= table.x1)
+                & (pl.col("x2_el") <= table.x2)
+                & (pl.col("y1_el") >= table.y1)
+                & (pl.col("y2_el") <= table.y2)
             )
         )
         .group_by("id_row", "id_col", "merged_row", "merged_col")

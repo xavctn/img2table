@@ -50,7 +50,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
             # Extract region of interest and apply Sauvola threshold on it
             roi_inverted = 255 - gray[y : y + h, x : x + w]
             bin_t_sauvola = cv2.ximgproc.niBlackThreshold(
-                255 - gray[y : y + h, x : x + w],
+                roi_inverted,
                 255,
                 cv2.THRESH_BINARY_INV,
                 thresh_kernel,

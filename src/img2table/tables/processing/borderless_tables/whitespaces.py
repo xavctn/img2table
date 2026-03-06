@@ -145,6 +145,11 @@ def get_whitespaces(
     :param continuous: boolean indicating if only continuous whitespaces are retrieved
     :return: list of vertical or horizontal whitespaces
     """
+    if len(segment.elements or []) == 0:
+        return [
+            Whitespace(cells=[Cell(x1=segment.x1, y1=segment.y1, x2=segment.x2, y2=segment.y2)])
+        ]
+
     # Flip object coordinates in horizontal case
     if not vertical:
         flipped_elements = [
