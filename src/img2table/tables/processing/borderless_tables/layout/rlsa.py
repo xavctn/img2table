@@ -3,10 +3,9 @@ Implementation of Adaptive RLSA algorithm based on https://www.sciencedirect.com
 and text line segmentation by
 """
 
-
 import cv2
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
@@ -26,7 +25,7 @@ def remove_noise(
     :param median_width: median connected components' width
     :return: connected components labels array without noisy components
     """
-    for idx in prange(len(cc_stats)):  # ty:ignore[not-iterable]
+    for idx in range(len(cc_stats)):
         if idx == 0:
             continue
 
@@ -41,7 +40,7 @@ def remove_noise(
 
         # Check removal conditions
         cond_height = h < average_height / 3
-        cond_elongation = max(h, w) / max(min(h, w), 1) < 0.33
+        cond_elongation = max(h, w) / max(min(h, w), 1) > 3.0
         cond_low_density = area / (max(w, 1) * max(h, 1)) < 0.08
 
         if cond_height or cond_elongation or cond_low_density:
@@ -74,7 +73,7 @@ def adaptive_rlsa(
     rsla_img = (cc > 0).astype(np.uint8)
 
     h, w = cc.shape
-    for row in prange(h):  # ty:ignore[not-iterable]
+    for row in range(h):
         prev_cc_position, prev_cc_label = -1, -1
         for col in range(w):
             label = cc[row][col]
@@ -103,12 +102,19 @@ def adaptive_rlsa(
 
                 # Presence of other CC
                 no_other_cc = True
-                list_ccs = [-1, 0, label, prev_cc_label]
                 for y in range(max(0, row - 2), min(row + 3, h)):
                     for x in range(prev_cc_position + 1, col):
-                        if cc[y][x] not in list_ccs:
+                        cc_value = cc[y][x]
+                        if (
+                            cc_value != -1  # noqa: PLR1714
+                            and cc_value != 0
+                            and cc_value != label
+                            and cc_value != prev_cc_label
+                        ):
                             no_other_cc = False
-
+                            break
+                    if not no_other_cc:
+                        break
                 # Check conditions
                 if (
                     (length <= a * min(height_cc, height_prev))
@@ -133,10 +139,10 @@ def find_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     :return: connected components labels array with obstacles identified
     """
     mask_obstacles = np.full(shape=img.shape, fill_value=False)
-    min_width = int(np.ceil(min_width))
+    min_width = max(1, int(np.ceil(min_width)))
     h, w = img.shape
 
-    for col in prange(w - min_width):  # ty:ignore[not-iterable]
+    for col in range(w - min_width + 1):
         prev_cc_position = -1
         for row in range(h):
             max_value = 0
@@ -193,24 +199,27 @@ def get_text_mask(
         denum += area
     Hm = num / max(denum, 1)
 
-    for cc_idx in prange(len(cc_stats_rlsa)):  # ty:ignore[not-iterable]
+    for cc_idx in range(len(cc_stats_rlsa)):
         x, y, w, h, area = cc_stats_rlsa[cc_idx][:]
+
+        if cc_idx == 0:
+            continue
 
         # Check for dashes
         if (w / h >= 2) and (0.5 * median_width <= w <= 1.5 * median_width):
-            for row in prange(y, y + h):  # ty:ignore[not-iterable]
-                for col in prange(x, x + w):  # ty:ignore[not-iterable]
+            for row in range(y, y + h):
+                for col in range(x, x + w):
                     text_mask[row][col] = True
             continue
 
-        if cc_idx == 0 or min(w, h) <= 2 * char_length / 3:
+        if min(w, h) <= 2 * char_length / 3:
             continue
 
         # Get horizontal white to black transitions
         h_tc = 0
-        for row in prange(y, y + h):  # ty:ignore[not-iterable]
+        for row in range(y, y + h):
             prev_value = 0
-            for col in prange(x, x + w):  # ty:ignore[not-iterable]
+            for col in range(x, x + w):
                 value = thresh[row][col]
 
                 if value == 255 and prev_value == 0:
@@ -219,9 +228,9 @@ def get_text_mask(
 
         # Get vertical white to black transitions
         v_tc, nb_cols = 0, 0
-        for col in prange(x, x + w):  # ty:ignore[not-iterable]
+        for col in range(x, x + w):
             has_pixel, prev_value = 0, 0
-            for row in prange(y, y + h):  # ty:ignore[not-iterable]
+            for row in range(y, y + h):
                 value = thresh[row][col]
 
                 if value == 255:
@@ -253,8 +262,8 @@ def get_text_mask(
             is_text = True
 
         if is_text:
-            for row in prange(y, y + h):  # ty:ignore[not-iterable]
-                for col in prange(x, x + w):  # ty:ignore[not-iterable]
+            for row in range(y, y + h):
+                for col in range(x, x + w):
                     text_mask[row][col] = True
 
     return text_mask
@@ -299,7 +308,9 @@ def identify_text_mask(
     )
 
     # Connected components
-    _, cc, cc_stats, _ = cv2.connectedComponentsWithStats(image=thresh, connectivity=8, ltype=cv2.CV_32S)
+    _, cc, cc_stats, _ = cv2.connectedComponentsWithStats(
+        image=thresh, connectivity=8, ltype=cv2.CV_32S
+    )
 
     if len(cc_stats) <= 1:
         return thresh
