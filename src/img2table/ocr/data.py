@@ -1,14 +1,13 @@
-
 import polars as pl
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.table import Table
 
 
-class OCRDataframe(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class OCRDataframe:
     df: pl.DataFrame
 
     def page(self, page_number: int = 0) -> "OCRDataframe":

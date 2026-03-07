@@ -27,19 +27,19 @@ class Row(TableObject):
 
     @property
     def x1(self) -> int:
-        return min(x.x1 for x in self.items)
+        return min((x.x1 for x in self.items), default=0)
 
     @property
     def x2(self) -> int:
-        return max(x.x2 for x in self.items)
+        return max((x.x2 for x in self.items), default=0)
 
     @property
     def y1(self) -> int:
-        return min(x.y1 for x in self.items)
+        return min((x.y1 for x in self.items), default=0)
 
     @property
     def y2(self) -> int:
-        return max(x.y2 for x in self.items)
+        return max((x.y2 for x in self.items), default=0)
 
     @property
     def v_consistent(self) -> bool:

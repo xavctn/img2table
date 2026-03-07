@@ -23,17 +23,15 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
     _, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # Connected components
-    _, _, stats, _ = cv2.connectedComponentsWithStats(
-        image=thresh, connectivity=8, ltype=cv2.CV_32S
-    )
+    _, _, stats, _ = cv2.connectedComponentsWithStats(thresh, connectivity=8, ltype=cv2.CV_32S)
 
     # Remove connected components with less than 5 pixels
     mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
     stats = stats[mask_pixels]
 
     # Compute median width and height
-    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])  # ty:ignore[no-matching-overload]
-    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT])  # ty:ignore[no-matching-overload]
+    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])
+    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT])
 
     # Compute bbox area bounds
     upper_bound = 4 * median_width * median_height
@@ -83,7 +81,7 @@ def compute_angles(centroids: np.ndarray, ref_height: float) -> list[float]:
                 continue
 
             # Compute angle
-            angle = math.atan((yi - yj) / (xi - xj)) * rad_to_deg
+            angle = math.atan(round((yi - yj) / (xi - xj), 3)) * rad_to_deg
             if not -45.0 <= angle <= 45.0:
                 angle = -min(angle + 90.0, 90.0 - angle) * (1.0 if angle > 0 else -1.0)
             angles.append(angle)

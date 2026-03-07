@@ -1,20 +1,22 @@
-import typing
 from functools import cached_property
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import cv2
 import numpy as np
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from img2table.document.base import Document
 from img2table.tables.objects.extraction import ExtractedTable
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
 
 
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Image(Document):
-    def __model_post_init__(self) -> None:
-        super().__model_post_init__()
+    def __post_init__(self) -> None:
+        super().__post_init__()
         self.pages = [0]
 
     @cached_property

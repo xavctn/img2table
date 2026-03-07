@@ -20,24 +20,16 @@ if typing.TYPE_CHECKING:
 class Table(TableObject):
     def __init__(self, rows: Row | list[Row], borderless: bool = False) -> None:
         if rows is None:
-            self._items = []
+            self.items = []
         elif isinstance(rows, Row):
-            self._items = [rows]
+            self.items = [rows]
         else:
-            self._items = rows
-        self._title = None
-        self._borderless = borderless
-
-    @property
-    def items(self) -> list[Row]:
-        return self._items
-
-    @property
-    def title(self) -> str | None:
-        return self._title
+            self.items = rows
+        self.title = None
+        self.borderless = borderless
 
     def set_title(self, title: str) -> None:
-        self._title = title
+        self.title = title
 
     @property
     def nb_rows(self) -> int:
@@ -49,19 +41,19 @@ class Table(TableObject):
 
     @property
     def x1(self) -> int:
-        return min(x.x1 for x in self.items)
+        return min((x.x1 for x in self.items), default=0)
 
     @property
     def x2(self) -> int:
-        return max(x.x2 for x in self.items)
+        return max((x.x2 for x in self.items), default=0)
 
     @property
     def y1(self) -> int:
-        return min(x.y1 for x in self.items)
+        return min((x.y1 for x in self.items), default=0)
 
     @property
     def y2(self) -> int:
-        return max(x.y2 for x in self.items)
+        return max((x.y2 for x in self.items), default=0)
 
     @property
     def cell(self) -> Cell:

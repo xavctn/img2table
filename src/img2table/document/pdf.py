@@ -1,19 +1,21 @@
-import typing
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import cv2
 import numpy as np
 import pypdfium2
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from img2table.document.base import Document
 from img2table.ocr.pdf import PdfOCR
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
     from img2table.tables.objects.extraction import ExtractedTable
     from img2table.tables.objects.table import Table
 
 
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class PDF(Document):
     pdf_text_extraction: bool = True
     _rotated: bool = False

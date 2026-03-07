@@ -1,35 +1,33 @@
 import io
-import typing
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from img2table.tables.objects.extraction import ExtractedTable
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
     from img2table.ocr.data import OCRDataframe
     from img2table.tables.objects.table import Table
 
 
-class MockDocument(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class MockDocument:
     images: list[np.ndarray]
 
 
-class Document(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class Document:
     src: str | Path | io.BytesIO | bytes
     detect_rotation: bool = False
     pages: list[int] | None = None
-    _ocr_df: Optional["OCRDataframe"] = None
+    _ocr_df: Any = None
 
-    def __model_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         if isinstance(self.pages, list):
             self.pages = sorted(self.pages)
 
@@ -116,7 +114,7 @@ class Document(BaseModel):
             k: [
                 tb.extracted_table
                 for tb in v
-                if (max(tb.nb_rows, tb.nb_columns) >= 2 and not tb._borderless)
+                if (max(tb.nb_rows, tb.nb_columns) >= 2 and not tb.borderless)
                 or (tb.nb_rows >= 2 and tb.nb_columns >= 3)
             ]
             for k, v in tables.items()
