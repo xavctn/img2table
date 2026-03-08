@@ -1,4 +1,7 @@
 from dataclasses import dataclass, field
+from itertools import pairwise
+
+import numpy as np
 
 from img2table.tables.objects.cell import Cell
 
@@ -41,6 +44,10 @@ class MergedRow(ItemHolder):
     def add(self, item: Cell) -> None:
         self.items.append(item)
 
+    @property
+    def y_center(self) -> float:
+        return (self.y1 + self.y2) / 2
+
 
 @dataclass
 class Whitespace:
@@ -69,6 +76,10 @@ class ColumnSection(ItemHolder):
     @property
     def nb_columns(self) -> int:
         return max(0, len(self.whitespaces) - 1)
+
+    @property
+    def last_y_center(self) -> float:
+        return max(((it.y1 + it.y2) / 2 for it in self.items), default=0)
 
 
 def compute_whitespaces(row: MergedRow, min_width: float, width: int) -> list[Whitespace]:
@@ -164,15 +175,20 @@ def identify_merged_rows(cnts: list[Cell]) -> list[MergedRow]:
 
 
 def compute_column_section(
-    merged_rows: list[MergedRow], min_width: float, width: int
+    merged_rows: list[MergedRow], min_width: float, width: int, ratio_vertical_separation: float
 ) -> list[ColumnSection]:
     """
     Compute column sections from merged rows.
     :param merged_rows: list of merged rows
     :param min_width: minimum width for a whitespace to be considered
     :param width: total width of the row
+    :param ratio_vertical_separation: ratio of median row separation to use as max vertical separation
     :return: list of column sections
     """
+    # Compute median row separation
+    row_separations = [nxt.y_center - prv.y_center for prv, nxt in pairwise(merged_rows)]
+    median_row_separation = np.median(row_separations) if row_separations else 0
+
     column_sections: list[ColumnSection] = []
     current_section = ColumnSection()
     for idx_row, row in enumerate(merged_rows):
@@ -181,6 +197,15 @@ def compute_column_section(
         # First iteration
         if idx_row == 0:
             current_section.update(row=row, whitespaces=row_ws)
+            continue
+        # Too large vertical separation, flush current section and start new one
+        if (
+            row.y_center - current_section.last_y_center
+            > median_row_separation * ratio_vertical_separation
+        ):
+            # Flush current section and create new one
+            column_sections.append(current_section)
+            current_section = ColumnSection(items=row.items, whitespaces=row_ws)
             continue
         # Going from no column to multi-column
         if current_section.nb_columns == 1 and len(row_ws) > 2:

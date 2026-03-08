@@ -383,7 +383,7 @@ def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
 
     for i in prange(len(stats)):  # ty:ignore[not-iterable]
         # Get statistics
-        xi, yi, _wi, hi = stats[i][:]
+        xi, yi, wi, hi = stats[i][:]
         row_separation = 10**6
 
         for j in range(len(stats)):
@@ -391,10 +391,10 @@ def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
                 continue
 
             # Get statistics
-            xj, yj, _wj, hj = stats[j][:]
+            xj, yj, wj, hj = stats[j][:]
 
             # Compute horizontal overlap and vertical positions
-            h_overlap = min(xi + hi, xj + hj) - max(xi, xj)
+            h_overlap = min(xi + wi, xj + wj) - max(xi, xj)
             v_pos_i, v_pos_j = (2 * yi + hi) / 2, (2 * yj + hj) / 2
             if h_overlap <= char_length // 2 or v_pos_j <= v_pos_i:
                 continue
