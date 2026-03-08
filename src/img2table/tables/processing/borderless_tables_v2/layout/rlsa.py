@@ -61,23 +61,31 @@ def remove_noise(
     :param median_width: median connected components' width
     :return: connected components labels array without noisy components
     """
-    for idx in range(1, len(cc_stats)):
-        x, y, w, h, area = cc_stats[idx][:5]
+    # Create lookup table of connected components labels to keep
+    keep_label = np.ones(len(cc_stats), dtype=np.bool_)
+    keep_label[0] = False
 
-        # Check dashes that are being kept
-        is_dash = (w / h >= 2) and (0.5 * median_width <= w <= 1.5 * median_width)
+    for idx in range(1, len(cc_stats)):
+        _, _, w_cc, h_cc, area = cc_stats[idx][:5]
+
+        # Check dashes
+        is_dash = (w_cc / h_cc >= 2) and (0.5 * median_width <= w_cc <= 1.5 * median_width)
         if is_dash:
             continue
 
-        # Compute metrics
-        elongation = min(h, w) / max(h, w, 1)
-        density = area / (max(w, 1) * max(h, 1))
+        # Metrics
+        elongation = min(h_cc, w_cc) / max(h_cc, w_cc, 1)
+        density = area / (max(w_cc, 1) * max(h_cc, 1))
 
-        if h < (average_height / 3.0) or density < 0.08 or elongation < 0.08:
-            for row in range(y, y + h):
-                for col in range(x, x + w):
-                    if cc[row][col] == idx:
-                        cc[row][col] = 0
+        # Mark for removal
+        if h_cc < (average_height / 3.0) or density < 0.08 or elongation < 0.08:
+            keep_label[idx] = False
+
+    for row in range(cc.shape[0]):
+        for col in range(cc.shape[1]):
+            idx = cc[row, col]
+            if idx > 0 and not keep_label[idx]:
+                cc[row, col] = 0
 
     return cc
 
@@ -226,30 +234,33 @@ def _remove_punctuation_marks(
     cleaned = np.zeros(shape=thresh.shape, dtype=np.uint8)
     punctuation = np.zeros(shape=thresh.shape, dtype=np.uint8)
 
-    # Identify punctuation connected components
-    for cc_idx in range(1, stats.shape[0]):
-        x, y, w, h, area = stats[cc_idx][:5]
+    # Compute number of non zeros elements by labels
+    non_zeros = np.zeros(shape=(stats.shape[0]), dtype=np.uint16)
+    for row in range(labels.shape[0]):
+        for col in range(labels.shape[1]):
+            cc_idx = labels[row, col]
+            if cc_idx > 0 and thresh[row, col] > 0:
+                non_zeros[cc_idx] += 1
 
-        # Count non zero pixels in CC area
-        non_zeros = 0
-        for col in range(x, x + w):
-            for row in range(y, y + h):
-                if labels[row, col] == cc_idx:
-                    non_zeros += int(thresh[row, col] > 0)
+    # Identify punctuation connected components
+    is_punct_map = np.zeros(stats.shape[0], dtype=np.bool_)
+    for cc_idx in range(1, stats.shape[0]):
+        area = stats[cc_idx, 4]
 
         # Assess if element is punctuation
-        is_punctuation = non_zeros > 0 and area / non_zeros <= 1.15
+        if non_zeros[cc_idx] > 0 and area / non_zeros[cc_idx] <= 1.15:
+            is_punct_map[cc_idx] = True
 
-        for col in range(x, x + w):
-            for row in range(y, y + h):
-                if labels[row, col] == cc_idx:
-                    val = thresh[row, col]
-                    if is_punctuation:
-                        # Add to punctuation image
-                        punctuation[row, col] = val
-                    else:
-                        # Add to cleaned image
-                        cleaned[row, col] = val
+    # Add to punctuation or cleaned image
+    for row in range(labels.shape[0]):
+        for col in range(labels.shape[1]):
+            cc_idx = labels[row, col]
+            if cc_idx > 0:
+                val = thresh[row, col]
+                if is_punct_map[cc_idx]:
+                    punctuation[row, col] = val
+                else:
+                    cleaned[row, col] = val
 
     return cleaned, punctuation
 
