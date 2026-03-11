@@ -238,7 +238,9 @@ def matching_whitespaces(
             overlap = min(ws_s.end, ws_l.end) - max(ws_s.start, ws_l.start)
 
             # Check overlap is sufficient or if bounds match
-            if overlap >= min_width or ws_s.matching_bound(ws_l):
+            if overlap >= 0.8 * min(ws_s.width, ws_l.width, 0.5 * min_width) or ws_s.matching_bound(
+                ws_l
+            ):
                 matching_ws.append(
                     Whitespace(
                         start=max(ws_s.start, ws_l.start),
@@ -333,7 +335,6 @@ def ensure_section_bounds_consistency(
 def assess_table_whitespace_coherency(
     list_ws_1: list[Whitespace],
     list_ws_2: list[Whitespace],
-    min_width: float,
     vertically_close: bool,
 ) -> bool:
     """
@@ -344,29 +345,37 @@ def assess_table_whitespace_coherency(
     :param vertically_close: Whether the two sections are vertically close.
     :return: True if the whitespaces are coherent, False otherwise.
     """
+    # Single column case
+    if min(len(list_ws_1), len(list_ws_2)) < 3:
+        return vertically_close & (len(list_ws_1) == len(list_ws_2))
+
     ws_short, ws_long = (
         (list_ws_1, list_ws_2) if len(list_ws_2) > len(list_ws_1) else (list_ws_2, list_ws_1)
     )
     # Check whitespaces coherency on "middle" whitespaces
-    ws_coherency = {
-        ws_l: [
-            ws_s
-            for ws_s in ws_short
-            if min(ws_l.end, ws_s.end) - max(ws_l.start, ws_s.start) >= 0.5 * min_width
-        ]
-        for ws_l in ws_long[1:-1]
-    }
+    ws_overlap_width = sum(
+        max(
+            (
+                overlap
+                for ws_s in ws_short
+                if (overlap := max(0, min(ws_l.end, ws_s.end) - max(ws_l.start, ws_s.start)))
+                >= 0.75 * min(ws_l.width, ws_s.width)
+            ),
+            default=0,
+        )
+        for ws_l in ws_long
+    )
 
     # Compute threshold for coherency
     if min(len(list_ws_1), len(list_ws_2)) < 4:
         threshold = 1
     elif vertically_close:
-        threshold = 0.66
+        threshold = 0.7
     else:
-        threshold = 0.8
+        threshold = 0.85
 
     # Compute coherency threshold
-    return sum(1 for v in ws_coherency.values() if len(v) == 1) >= threshold * len(ws_coherency)
+    return ws_overlap_width / sum(ws.width for ws in ws_long) >= threshold
 
 
 def _merge_section_whitespaces(sections: list[ColumnSection]) -> list[ColumnSection]:
@@ -405,7 +414,7 @@ def _merge_section_whitespaces(sections: list[ColumnSection]) -> list[ColumnSect
 
 
 def merge_column_sections(
-    column_sections: list[ColumnSection], max_gap: float, min_width: float
+    column_sections: list[ColumnSection], max_gap: float
 ) -> list[ColumnSection]:
     """
     Merge consecutive column sections that are close vertically if their whitespaces overlap.
@@ -441,7 +450,6 @@ def merge_column_sections(
             coherent = assess_table_whitespace_coherency(
                 list_ws_1=current_group[-1].whitespaces,
                 list_ws_2=section.whitespaces,
-                min_width=min_width,
                 vertically_close=(
                     section.first_y_center - current_group[-1].last_y_center <= 0.5 * max_gap
                 ),
@@ -517,9 +525,7 @@ def compute_column_section(
     ]
 
     # Pre-compute group scores: how many consecutive matching rows each row has above/below.
-    group_scores = [
-        _row_group_score(row_data, rd.index, max_gap, min_width) for rd in row_data
-    ]
+    group_scores = [_row_group_score(row_data, rd.index, max_gap, min_width) for rd in row_data]
 
     # Construct column sections by starting with the row with the most whitespaces and expanding upwards/downwards
     used_rows: set[int] = set()
@@ -582,6 +588,4 @@ def compute_column_section(
     column_sections.sort(key=lambda sec: sec.y1)
 
     # Attempt to merge column sections
-    return merge_column_sections(
-        column_sections=column_sections, max_gap=max_gap, min_width=min_width
-    )
+    return merge_column_sections(column_sections=column_sections, max_gap=max_gap)
