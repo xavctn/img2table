@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
@@ -15,9 +15,9 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     """
     # Get potential cells from horizontal lines
     potential_cells = []
-    for i in prange(h_lines_arr.shape[0]):  # ty:ignore[not-iterable]
+    for i in range(h_lines_arr.shape[0]):
         x1i, y1i, x2i, _y2i = h_lines_arr[i][:]
-        for j in prange(h_lines_arr.shape[0]):  # ty:ignore[not-iterable]
+        for j in range(h_lines_arr.shape[0]):
             x1j, y1j, x2j, y2j = h_lines_arr[j][:]
 
             if y1i >= y1j:
@@ -62,7 +62,7 @@ def identify_cells(h_lines_arr: np.ndarray, v_lines_arr: np.ndarray) -> np.ndarr
     cells_array = np.array(dedup_lower)
     cells = []
 
-    for i in prange(cells_array.shape[0]):  # ty:ignore[not-iterable]
+    for i in range(cells_array.shape[0]):
         x1, x2, y1, y2 = cells_array[i][:]
 
         # Compute horizontal margin
@@ -111,4 +111,4 @@ def get_cells_dataframe(horizontal_lines: list[Line], vertical_lines: list[Line]
     # Compute cells
     cells_array = identify_cells(h_lines_arr=h_lines_array, v_lines_arr=v_lines_array)
 
-    return [Cell(x1=c[0], y1=c[1], x2=c[2], y2=c[3]) for c in cells_array]
+    return [Cell(*c) for c in cells_array]

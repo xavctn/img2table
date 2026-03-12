@@ -85,58 +85,80 @@ class CellSpan:
         return [self]
 
 
+def _find_largest_rectangle(
+    pos_set: set[tuple[int, int]], min_row: int, max_row: int, min_col: int, max_col: int
+) -> tuple[int, int, int, int]:
+    """
+    Find the largest fully-covered rectangle using the histogram DP approach
+    :param pos_set: set of (row, col) positions occupied by cell positions
+    :param min_row: minimum row index
+    :param max_row: maximum row index
+    :param min_col: minimum column index
+    :param max_col: maximum column index
+    :return: (col_left, top_row, col_right, bottom_row) in absolute coordinates
+    """
+    rows = max_row - min_row + 1
+    cols = max_col - min_col + 1
+    heights = [0] * cols
+    best_area = 0
+    best = (min_col, min_row, min_col, min_row)
+
+    for r in range(rows):
+        for c in range(cols):
+            heights[c] = (heights[c] + 1) if (r + min_row, c + min_col) in pos_set else 0
+
+        # Largest rectangle in histogram via stack
+        stack: list[tuple[int, int]] = []  # (height, start_col)
+        for c in range(cols + 1):
+            h = heights[c] if c < cols else 0
+            start = c
+            while stack and stack[-1][0] > h:
+                height, start_c = stack.pop()
+                area = height * (c - start_c)
+                if area > best_area:
+                    best_area = area
+                    best = (
+                        start_c + min_col,
+                        r - height + 1 + min_row,
+                        c - 1 + min_col,
+                        r + min_row,
+                    )
+                start = start_c
+            stack.append((h, start))
+
+    return best
+
+
 def create_all_rectangles(cell_positions: list[CellPosition]) -> list[CellSpan]:
     """
     Create all possible rectangles from list of cell positions
     :param cell_positions: list of cell positions
     :return: list of CellSpan objects representing rectangle coordinates
     """
-    # Get cell value
-    cell_value = cell_positions[0].cell.value
+    # Compute the largest rectangle that covers all cell positions
+    col_left, top_row, col_right, bottom_row = _find_largest_rectangle(
+        pos_set={(cp.row, cp.col) for cp in cell_positions},
+        min_row=min(cp.row for cp in cell_positions),
+        max_row=max(cp.row for cp in cell_positions),
+        min_col=min(cp.col for cp in cell_positions),
+        max_col=max(cp.col for cp in cell_positions),
+    )
+    cell_span = CellSpan(
+        col_left=col_left,
+        top_row=top_row,
+        col_right=col_right,
+        bottom_row=bottom_row,
+        value=cell_positions[0].cell.value,
+    )
 
-    # Get bounding coordinates
-    min_col = min(x.col for x in cell_positions)
-    max_col = max(x.col for x in cell_positions)
-    min_row = min(x.row for x in cell_positions)
-    max_row = max(x.row for x in cell_positions)
+    # Compute covered cells and remaining positions
+    covered = {
+        (r, c) for r in range(top_row, bottom_row + 1) for c in range(col_left, col_right + 1)
+    }
+    remaining = [cp for cp in cell_positions if (cp.row, cp.col) not in covered]
 
-    # Get largest rectangle fully covered by cell positions
-    largest_area, area_cell_pos = 0, []
-    for col_left in range(min_col, max_col + 1):
-        for col_right in range(col_left, max_col + 1):
-            for top_row in range(min_row, max_row + 1):
-                for bottom_row in range(top_row, max_row + 1):
-                    # Get matching cell positions
-                    matching_cell_pos = [
-                        cp
-                        for cp in cell_positions
-                        if col_left <= cp.col <= col_right and top_row <= cp.row <= bottom_row
-                    ]
-
-                    # Check if the rectangle is fully covered
-                    fully_covered = len(matching_cell_pos) == (col_right - col_left + 1) * (
-                        bottom_row - top_row + 1
-                    )
-
-                    # If rectangle is the largest, update values
-                    if fully_covered and (len(matching_cell_pos) > largest_area):
-                        largest_area = len(matching_cell_pos)
-                        area_cell_pos = matching_cell_pos
-                        cell_span = CellSpan(
-                            col_left=col_left,
-                            top_row=top_row,
-                            col_right=col_right,
-                            bottom_row=bottom_row,
-                            value=cell_value,
-                        )
-
-    # Get remaining cell positions
-    remaining_cell_positions = [cp for cp in cell_positions if cp not in area_cell_pos]
-
-    if remaining_cell_positions:
-        # Get remaining rectangles
-        return [cell_span, *create_all_rectangles(remaining_cell_positions)]
-    # Return coordinates
+    if remaining:
+        return [cell_span, *create_all_rectangles(remaining)]
     return [cell_span]
 
 

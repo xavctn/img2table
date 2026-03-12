@@ -1,4 +1,4 @@
-import polars as pl
+import numpy as np
 
 from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
@@ -13,69 +13,41 @@ def get_adjacent_cells(cells: list[Cell]) -> list[set[int]]:
     if len(cells) == 0:
         return []
 
-    df_cells = pl.DataFrame(
-        [
-            {
-                "idx": idx,
-                "x1": c.x1,
-                "y1": c.y1,
-                "x2": c.x2,
-                "y2": c.y2,
-                "height": c.height,
-                "width": c.width,
-            }
-            for idx, c in enumerate(cells)
-        ]
+    n = len(cells)
+    x1 = np.array([c.x1 for c in cells], dtype=np.float32)
+    y1 = np.array([c.y1 for c in cells], dtype=np.float32)
+    x2 = np.array([c.x2 for c in cells], dtype=np.float32)
+    y2 = np.array([c.y2 for c in cells], dtype=np.float32)
+    widths = x2 - x1
+    heights = y2 - y1
+
+    # Compute overlaps
+    x_overlap = np.minimum(x2[:, None], x2[None, :]) - np.maximum(x1[:, None], x1[None, :])
+    y_overlap = np.minimum(y2[:, None], y2[None, :]) - np.maximum(y1[:, None], y1[None, :])
+
+    # Compute distances
+    diff_x = np.minimum(
+        np.minimum(np.abs(x1[:, None] - x1[None, :]), np.abs(x1[:, None] - x2[None, :])),
+        np.minimum(np.abs(x2[:, None] - x1[None, :]), np.abs(x2[:, None] - x2[None, :])),
+    )
+    diff_y = np.minimum(
+        np.minimum(np.abs(y1[:, None] - y1[None, :]), np.abs(y1[:, None] - y2[None, :])),
+        np.minimum(np.abs(y2[:, None] - y1[None, :]), np.abs(y2[:, None] - y2[None, :])),
     )
 
-    # Crossjoin and identify adjacent cells
-    df_adjacent_cells = (
-        df_cells.join(df_cells, how="cross")
-        # Compute horizontal and vertical overlap
-        .with_columns(
-            (pl.min_horizontal(["x2", "x2_right"]) - pl.max_horizontal(["x1", "x1_right"])).alias(
-                "x_overlap"
-            ),
-            (pl.min_horizontal(["y2", "y2_right"]) - pl.max_horizontal(["y1", "y1_right"])).alias(
-                "y_overlap"
-            ),
-        )
-        # Compute horizontal and vertical differences
-        .with_columns(
-            pl.min_horizontal(
-                (pl.col("x1") - pl.col("x1_right")).abs(),
-                (pl.col("x1") - pl.col("x2_right")).abs(),
-                (pl.col("x2") - pl.col("x1_right")).abs(),
-                (pl.col("x2") - pl.col("x2_right")).abs(),
-            ).alias("diff_x"),
-            pl.min_horizontal(
-                (pl.col("y1") - pl.col("y1_right")).abs(),
-                (pl.col("y1") - pl.col("y2_right")).abs(),
-                (pl.col("y2") - pl.col("y1_right")).abs(),
-                (pl.col("y2") - pl.col("y2_right")).abs(),
-            ).alias("diff_y"),
-        )
-        # Compute thresholds for horizontal and vertical differences
-        .with_columns(
-            pl.min_horizontal(
-                pl.lit(5), 0.05 * pl.min_horizontal(pl.col("width"), pl.col("width_right"))
-            ).alias("thresh_x"),
-            pl.min_horizontal(
-                pl.lit(5), 0.05 * pl.min_horizontal(pl.col("height"), pl.col("height_right"))
-            ).alias("thresh_y"),
-        )
-        # Filter adjacent cells
-        .filter(
-            ((pl.col("y_overlap") > 5) & (pl.col("diff_x") <= pl.col("thresh_x")))
-            | ((pl.col("x_overlap") > 5) & (pl.col("diff_y") <= pl.col("thresh_y")))
-        )
-        .select("idx", "idx_right")
-        .unique()
-        .sort(by=["idx", "idx_right"])
-    )
+    # Thresholds
+    thresh_x = np.minimum(5.0, 0.05 * np.minimum(widths[:, None], widths[None, :]))
+    thresh_y = np.minimum(5.0, 0.05 * np.minimum(heights[:, None], heights[None, :]))
 
-    # Get sets of adjacent cells indexes
-    return [{row["idx"], row["idx_right"]} for row in df_adjacent_cells.to_dicts()]
+    # Adjacency: upper triangle only (i < j) avoids duplicate pairs
+    adjacent = (y_overlap > 5) & (diff_x <= thresh_x) | (x_overlap > 5) & (diff_y <= thresh_y)
+    rows_idx, cols_idx = np.where(np.triu(adjacent, k=1))
+    result: list[set[int]] = [{int(i), int(j)} for i, j in zip(rows_idx, cols_idx, strict=True)]
+
+    # Add cells not appearing in any pair
+    result.extend({i} for i in range(n) if i not in set().union(*result))
+
+    return result
 
 
 def cluster_cells_in_tables(cells: list[Cell]) -> list[list[Cell]]:
@@ -88,7 +60,7 @@ def cluster_cells_in_tables(cells: list[Cell]) -> list[list[Cell]]:
     adjacent_cells = get_adjacent_cells(cells=cells)
 
     # Loop over couples to create clusters
-    clusters = find_components(edges=adjacent_cells)  # ty:ignore[invalid-argument-type]
+    clusters = find_components(edges=adjacent_cells)
 
     # Return list of cell objects
     return [[cells[idx] for idx in cl] for cl in clusters]

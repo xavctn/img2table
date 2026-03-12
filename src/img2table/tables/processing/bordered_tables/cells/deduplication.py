@@ -10,7 +10,7 @@ def deduplicate_cells(cells: list[Cell]) -> list[Cell]:
     :return: cells after deduplication of the nested ones
     """
     # Create array of cell coverages
-    x_max, y_max = max([c.x2 for c in cells] + [0]), max([c.y2 for c in cells] + [0])
+    x_max, y_max = max((c.x2 for c in cells), default=0), max((c.y2 for c in cells), default=0)
     coverage_array = np.ones((y_max, x_max), dtype=np.uint8)
 
     dedup_cells = []
