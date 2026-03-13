@@ -1,4 +1,4 @@
-﻿"""
+"""
 ARLSA pipeline based on:
 Nikolaou et al., "A segmentation framework for historical machine-printed documents",
 Image and Vision Computing 28 (2010) 590-604.

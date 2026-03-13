@@ -13,3 +13,4 @@ venv
 profiling*
 examples/testing
 .python-version
+.claude
