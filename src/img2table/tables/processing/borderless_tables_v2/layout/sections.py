@@ -225,6 +225,12 @@ def matching_whitespaces(
     :param min_width: minimum column width
     :return: boolean indicating whether two sets of whitespaces match and resultant whitespaces
     """
+    # Check that content overlaps (based on whitespaces)
+    ws1_min, ws1_max = min(ws.end for ws in ws1_list), max(ws.start for ws in ws1_list)
+    ws2_min, ws2_max = min(ws.end for ws in ws2_list), max(ws.start for ws in ws2_list)
+    if min(ws1_max, ws2_max) - max(ws1_min, ws2_min) < min_width:
+        return False, []
+
     # Get largest and smallest list of whitespaces and iterate over the shortest list
     ws_short, ws_long = (
         (ws1_list, ws2_list) if len(ws1_list) <= len(ws2_list) else (ws2_list, ws1_list)
@@ -238,9 +244,9 @@ def matching_whitespaces(
             overlap = min(ws_s.end, ws_l.end) - max(ws_s.start, ws_l.start)
 
             # Check overlap is sufficient or if bounds match
-            if overlap >= 0.8 * min(ws_s.width, ws_l.width, 0.5 * min_width) or ws_s.matching_bound(
-                ws_l
-            ):
+            if overlap >= max(
+                0.8 * min(ws_s.width, ws_l.width), 0.5 * min_width
+            ) or ws_s.matching_bound(ws_l):
                 matching_ws.append(
                     Whitespace(
                         start=max(ws_s.start, ws_l.start),
@@ -349,8 +355,8 @@ def assess_table_whitespace_coherency(
     if min(len(list_ws_1), len(list_ws_2)) < 3:
         return vertically_close & (len(list_ws_1) == len(list_ws_2))
 
-    ws_short, ws_long = (
-        (list_ws_1, list_ws_2) if len(list_ws_2) > len(list_ws_1) else (list_ws_2, list_ws_1)
+    ws_short, ws_long = sorted(
+        [list_ws_1, list_ws_2], key=lambda lst: (len(lst), -sum(ws.width for ws in lst))
     )
     # Check whitespaces coherency on "middle" whitespaces
     ws_overlap_width = sum(
@@ -361,7 +367,7 @@ def assess_table_whitespace_coherency(
                 if (overlap := max(0, min(ws_l.end, ws_s.end) - max(ws_l.start, ws_s.start)))
                 >= 0.75 * min(ws_l.width, ws_s.width)
             ),
-            default=0,
+            default=-ws_l.width / 2,
         )
         for ws_l in ws_long
     )
@@ -370,9 +376,9 @@ def assess_table_whitespace_coherency(
     if min(len(list_ws_1), len(list_ws_2)) < 4:
         threshold = 1
     elif vertically_close:
-        threshold = 0.7
+        threshold = 0.66
     else:
-        threshold = 0.85
+        threshold = 0.8
 
     # Compute coherency threshold
     return ws_overlap_width / sum(ws.width for ws in ws_long) >= threshold
@@ -387,30 +393,78 @@ def _merge_section_whitespaces(sections: list[ColumnSection]) -> list[ColumnSect
     if len(sections) <= 1:
         return sections
 
-    # Compute common whitespaces across sections
-    common_ws = sections[0].whitespaces
-    for section in sections[1:]:
-        _common_ws = []
-        for ws in common_ws:
-            matching_ws = [
-                Whitespace(
-                    start=max(ws.start, section_ws.start),
-                    end=min(ws.end, section_ws.end),
-                    start_bound=ws.start_bound and section_ws.start_bound,
-                    end_bound=ws.end_bound and section_ws.end_bound,
-                )
-                for section_ws in section.whitespaces
-            ]
-            _common_ws += [m_ws for m_ws in matching_ws if m_ws.width > 0]
-        common_ws = _common_ws
+    # Use the section with the most whitespaces as the reference for candidates
+    ref_whitespaces = max(sections, key=lambda s: len(s.whitespaces)).whitespaces
 
-    return [
-        ColumnSection(
-            items=[it for section in sections for it in section.items],
-            rows=[row for section in sections for row in section.rows],
-            whitespaces=common_ws,
+    # Compute total number of rows in all sections
+    total_rows = sum(len(section.rows) for section in sections)
+
+    # Compute common whitespaces across sections
+    common_ws = []
+    for ref_ws in ref_whitespaces:
+        # Find the matching whitespace in each section
+        matched, matched_rows = [], 0
+        for section in sections:
+            for section_ws in section.whitespaces:
+                m_start = max(ref_ws.start, section_ws.start)
+                m_end = min(ref_ws.end, section_ws.end)
+                if m_end > m_start:
+                    matched.append(
+                        Whitespace(
+                            start=m_start,
+                            end=m_end,
+                            start_bound=ref_ws.start_bound and section_ws.start_bound,
+                            end_bound=ref_ws.end_bound and section_ws.end_bound,
+                        )
+                    )
+                    matched_rows += len(section.rows)
+                    break
+
+        # Keep the whitespace if it is present in a majority of rows
+        if matched_rows > total_rows / 2:
+            final = Whitespace(
+                start=max(m.start for m in matched),
+                end=min(m.end for m in matched),
+                start_bound=all(m.start_bound for m in matched),
+                end_bound=all(m.end_bound for m in matched),
+            )
+            if final.width > 0:
+                common_ws.append(final)
+
+    if not common_ws:
+        return sections
+
+    # Only merge sections that share all majority whitespaces; keep others as singular
+    def shares_majority(section: ColumnSection) -> bool:
+        return all(
+            any(
+                min(ws.end, section_ws.end) > max(ws.start, section_ws.start)
+                for section_ws in section.whitespaces
+            )
+            for ws in common_ws
         )
-    ]
+
+    mergeable = [s for s in sections if shares_majority(s)]
+    if not mergeable:
+        return sections
+
+    merged = ColumnSection(
+        items=[it for s in mergeable for it in s.items],
+        rows=[row for s in mergeable for row in s.rows],
+        whitespaces=common_ws,
+    )
+
+    # Return sections in original order, replacing the first mergeable with the merged
+    # result and discarding the rest; non-mergeable sections are kept as singular
+    result, merged_inserted = [], False
+    for section in sections:
+        if shares_majority(section):
+            if not merged_inserted:
+                result.append(merged)
+                merged_inserted = True
+        else:
+            result.append(section)
+    return result
 
 
 def merge_column_sections(
@@ -423,48 +477,51 @@ def merge_column_sections(
     :param min_width: Minimum width of a whitespace to be considered valid.
     :return: Merged list of column sections.
     """
-    # Identify first section index with at least 2 columns
-    first_section_with_columns = next(
-        (idx for idx, sec in enumerate(column_sections) if sec.nb_columns >= 2), None
-    )
-    if first_section_with_columns is None:
-        return column_sections
+    while True:
+        # Identify first section index with at least 2 columns
+        first_section_with_columns = next(
+            (idx for idx, sec in enumerate(column_sections) if sec.nb_columns >= 2), None
+        )
+        if first_section_with_columns is None:
+            return column_sections
 
-    # Create groups of columns that are close vertically
-    merged_sections: list[ColumnSection] = column_sections[:first_section_with_columns]
-    current_group: list[ColumnSection] = [column_sections[first_section_with_columns]]
-    for section in column_sections[first_section_with_columns + 1 :]:
-        if section.nb_columns < 2:
-            # Flush current group
-            merged_sections += _merge_section_whitespaces(sections=current_group)
-            merged_sections.append(section)
-            current_group = []
-        elif len(current_group) == 0:
-            current_group = [section]
-        elif section.first_y_center - current_group[-1].last_y_center > max_gap:
-            # Flush current group
-            merged_sections += _merge_section_whitespaces(sections=current_group)
-            current_group = [section]
-        else:
-            # Check coherency of whitespaces with previous section of the current group
-            coherent = assess_table_whitespace_coherency(
-                list_ws_1=current_group[-1].whitespaces,
-                list_ws_2=section.whitespaces,
-                vertically_close=(
-                    section.first_y_center - current_group[-1].last_y_center <= 0.5 * max_gap
-                ),
-            )
-            if coherent:
-                current_group.append(section)
-            else:
-                # Flush current group and start a new one
+        # Create groups of columns that are close vertically
+        merged_sections: list[ColumnSection] = column_sections[:first_section_with_columns]
+        current_group: list[ColumnSection] = [column_sections[first_section_with_columns]]
+        for section in column_sections[first_section_with_columns + 1 :]:
+            if section.nb_columns < 2:
+                # Flush current group
+                merged_sections += _merge_section_whitespaces(sections=current_group)
+                merged_sections.append(section)
+                current_group = []
+            elif len(current_group) == 0:
+                current_group = [section]
+            elif section.first_y_center - current_group[-1].last_y_center > max_gap:
+                # Flush current group
                 merged_sections += _merge_section_whitespaces(sections=current_group)
                 current_group = [section]
+            else:
+                # Check coherency of whitespaces with previous section of the current group
+                coherent = assess_table_whitespace_coherency(
+                    list_ws_1=current_group[-1].whitespaces,
+                    list_ws_2=section.whitespaces,
+                    vertically_close=(
+                        section.first_y_center - current_group[-1].last_y_center <= 0.5 * max_gap
+                    ),
+                )
+                if coherent:
+                    current_group.append(section)
+                else:
+                    # Flush current group and start a new one
+                    merged_sections += _merge_section_whitespaces(sections=current_group)
+                    current_group = [section]
 
-    # Flush remaining group
-    merged_sections += _merge_section_whitespaces(sections=current_group)
+        # Flush remaining group
+        merged_sections += _merge_section_whitespaces(sections=current_group)
 
-    return merged_sections
+        if len(merged_sections) == len(column_sections):
+            return merged_sections
+        column_sections = merged_sections
 
 
 def _row_group_score(
@@ -580,12 +637,15 @@ def compute_column_section(
             else:
                 break
 
-        # Check top / bottom elements of section to ensure consistency
-        column_sections += ensure_section_bounds_consistency(
-            section=section, min_width=min_width, width=width
-        )
+        column_sections.append(section)
 
     column_sections.sort(key=lambda sec: sec.y1)
 
     # Attempt to merge column sections
-    return merge_column_sections(column_sections=column_sections, max_gap=max_gap)
+    return [
+        sec
+        for section in merge_column_sections(column_sections=column_sections, max_gap=max_gap)
+        for sec in ensure_section_bounds_consistency(
+            section=section, min_width=min_width, width=width
+        )
+    ]
