@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from numba import njit
 
+from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
@@ -47,6 +48,41 @@ def _mask_detected_lines(
     return thresh
 
 
+@njit("boolean(int32[:,:],int32[:,:],int64)", fastmath=True, cache=True, parallel=False)
+def _is_dot_component(cc: np.ndarray, cc_stats: np.ndarray, idx: int) -> bool:
+    """
+    Identify round dot-like connected components.
+    :param cc: connected components labels array
+    :param cc_stats: connected components' statistics array
+    :param idx: connected component index
+    :return: flag indicating whether the component is dot-like
+    """
+    x_cc, y_cc, w_cc, h_cc, area = cc_stats[idx][:5]
+
+    if area <= 0:
+        return False
+
+    inner_pixels = 0
+    for row in range(y_cc, y_cc + h_cc):
+        prev_position = -1
+        for col in range(x_cc, x_cc + w_cc):
+            if cc[row][col] == idx:
+                if prev_position >= 0:
+                    inner_pixels += col - prev_position - 1
+                prev_position = col
+
+    for col in range(x_cc, x_cc + w_cc):
+        prev_position = -1
+        for row in range(y_cc, y_cc + h_cc):
+            if cc[row][col] == idx:
+                if prev_position >= 0:
+                    inner_pixels += row - prev_position - 1
+                prev_position = row
+
+    roundness = 4.0 * area / (np.pi * max(h_cc, w_cc) ** 2)
+    return (inner_pixels / (2.0 * area) <= 0.1) and (roundness >= 0.7)
+
+
 @njit(
     "int32[:,:](int32[:,:],int32[:,:],float64,float64)", fastmath=True, cache=True, parallel=False
 )
@@ -70,7 +106,8 @@ def remove_noise(
 
         # Check dashes
         is_dash = (w_cc / h_cc >= 2) and (0.5 * median_width <= w_cc <= 1.5 * median_width)
-        if is_dash:
+        is_dot = _is_dot_component(cc=cc, cc_stats=cc_stats, idx=idx)
+        if is_dash or is_dot:
             continue
 
         # Metrics
@@ -304,7 +341,7 @@ def detect_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
                 continue
 
             length = row - prev_cc_position - 1
-            if length > h / 10:
+            if length > h / 20:
                 for id_row in range(prev_cc_position + 1, row):
                     for idx in range(min_width):
                         mask_obstacles[id_row][col + idx] = 1
@@ -314,7 +351,7 @@ def detect_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
 
         # Check ending
         length = row + 1 - prev_cc_position - 1
-        if length > h / 10:
+        if length > h / 20:
             for id_row in range(prev_cc_position + 1, row + 1):
                 for idx in range(min_width):
                     mask_obstacles[id_row][col + idx] = 1
@@ -357,11 +394,11 @@ def identify_text_mask(
     cleaned, punctuation = remove_punctuation_marks(thresh=denoised)
 
     # Stage 3: obstacle detection on ARLSA(a=1.5) result
-    obstacle_input = _apply_arlsa(cleaned, a=1)
+    obstacle_input = _apply_arlsa(cleaned, a=0.75)
     obstacles = detect_obstacles(img=obstacle_input, min_width=char_length)
 
     # Identify text lines and put back punctuation in final mask
-    text_lines = _apply_arlsa(img=cleaned, a=5.0, obstacle_mask=obstacles)
+    text_lines = _apply_arlsa(img=cleaned, a=4.0, obstacle_mask=obstacles)
     final_mask = np.maximum(text_lines, punctuation)
 
     # Remove elements from existing table positions
@@ -369,6 +406,50 @@ def identify_text_mask(
         final_mask[tb.y1 : tb.y2, tb.x1 : tb.x2] = 0
 
     return final_mask
+
+
+def regroup_contours(cnts: list[Cell], char_length: float) -> list[Cell]:
+    """
+    Merge close contours together
+    :param cnts: list of contours
+    :param char_length: average character length
+    :return: list of grouped contours
+    """
+    cnts = sorted(cnts, key=lambda cnt: (cnt.y1, cnt.x1))
+
+    # Identify matching contours
+    edges = []
+    for i, cnt1 in enumerate(cnts):
+        for j in range(i, len(cnts)):
+            cnt2 = cnts[j]
+
+            if cnt2.y1 >= cnt1.y2:
+                break
+
+            # Compute y overlap and check correspondence
+            y_overlap = min(cnt1.y2, cnt2.y2) - max(cnt1.y1, cnt2.y1)
+            if y_overlap < 0.25 * min(cnt1.height, cnt2.height):
+                continue
+
+            # Compute x overlap / distance and check correspondence
+            x_overlap = min(cnt1.x2, cnt2.x2) - max(cnt1.x1, cnt2.x1)
+            if x_overlap < -char_length:
+                continue
+
+            edges.append({i, j})
+
+    # Identify groups
+    contour_groups = find_components(edges=edges)
+
+    return [
+        Cell(
+            x1=min(cnts[idx].x1 for idx in gp),
+            y1=min(cnts[idx].y1 for idx in gp),
+            x2=max(cnts[idx].x2 for idx in gp),
+            y2=max(cnts[idx].y2 for idx in gp),
+        )
+        for gp in contour_groups
+    ]
 
 
 def identify_image_contours(
@@ -393,13 +474,17 @@ def identify_image_contours(
     # Find contours, highlight text areas, and extract ROIs
     cnts, _ = cv2.findContours(text_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Get list of contours
+    # Regroup raw contours first so nearby dots can merge into their text contour.
     contours = []
     for c in cnts:
         x, y, w, h = cv2.boundingRect(c)
-        if (min(h, w) >= 0.5 * char_length and max(h, w) >= char_length) or (
-            w / h >= 2 and 0.5 * char_length <= w <= 1.5 * char_length
-        ):
-            contours.append(Cell(x1=x, y1=y, x2=x + w, y2=y + h))
+        contours.append(Cell(x1=x, y1=y, x2=x + w, y2=y + h))
 
-    return contours
+    grouped_contours = regroup_contours(cnts=contours, char_length=char_length)
+
+    return [
+        cnt
+        for cnt in grouped_contours
+        if (min(cnt.height, cnt.width) >= 0.5 * char_length and max(cnt.height, cnt.width) >= char_length)
+        or (cnt.width / cnt.height >= 2 and 0.5 * char_length <= cnt.width <= 1.5 * char_length)
+    ]

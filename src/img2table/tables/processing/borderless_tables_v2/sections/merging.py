@@ -58,13 +58,14 @@ def assess_table_whitespace_coherency(
 
 
 def _flush_sections_group(
-    group: list[ColumnSection], common_ws: list[Whitespace], width: int
+    group: list[ColumnSection], common_ws: list[Whitespace], x_min: int, x_max: int
 ) -> list[ColumnSection]:
     """
     Creates a single merged ColumnSection if the group has 2+ elements.
     :param group: List of column sections to merge.
     :param common_ws: List of common whitespaces between the sections.
-    :param width: Image width in pixels.
+    :param x_min: start of span
+    :param x_max: end of span
     :return: Merged list of column sections.
     """
     if len(group) < 2:
@@ -72,7 +73,7 @@ def _flush_sections_group(
 
     # Compute whitespaces for group items and keep only ones matching with common_ws
     items = [it for s in group for it in s.items]
-    whitespaces = compute_whitespaces(items=items, min_width=1, width=width)
+    whitespaces = compute_whitespaces(items=items, min_width=1, x_min=x_min, x_max=x_max)
     filtered_ws = [
         ws
         for ws in whitespaces
@@ -87,13 +88,14 @@ def _flush_sections_group(
 
 
 def _merge_section_whitespaces(
-    sections: list[ColumnSection], min_width: float, width: int
+    sections: list[ColumnSection], min_width: float, x_min: int, x_max: int
 ) -> list[ColumnSection]:
     """
     Try merging consecutive column sections that have overlapping whitespaces.
     :param sections: List of column sections to merge.
     :param min_width: Minimum width of a whitespace to be considered valid.
-    :param width: Image width in pixels.
+    :param x_min: start of span
+    :param x_max: end of span
     :return: Merged list of column sections.
     """
     if len(sections) <= 1:
@@ -122,7 +124,8 @@ def _merge_section_whitespaces(
         *compute_whitespaces(
             items=[it for section in sections for it in section.items],
             min_width=0.5 * min_width,
-            width=width,
+            x_min=x_min,
+            x_max=x_max,
         ),
         *all_candidates,
     ]
@@ -189,25 +192,30 @@ def _merge_section_whitespaces(
             current_group.append(section)
         else:
             # Flush current group and add non-mergeable section
-            result += _flush_sections_group(group=current_group, common_ws=common_ws, width=width)
+            result += _flush_sections_group(
+                group=current_group, common_ws=common_ws, x_min=x_min, x_max=x_max
+            )
             result.append(section)
             current_group = []
 
     # Flush remaining sections
-    result += _flush_sections_group(group=current_group, common_ws=common_ws, width=width)
+    result += _flush_sections_group(
+        group=current_group, common_ws=common_ws, x_min=x_min, x_max=x_max
+    )
 
     return result
 
 
 def merge_column_sections(
-    column_sections: list[ColumnSection], min_width: float, max_gap: float, width: int
+    column_sections: list[ColumnSection], min_width: float, max_gap: float, x_min: int, x_max: int
 ) -> list[ColumnSection]:
     """
     Merge consecutive column sections that are close vertically if their whitespaces overlap.
     :param column_sections: List of column sections to merge.
     :param min_width: Minimum width of a whitespace to be considered valid.
     :param max_gap: Maximum vertical gap between sections to consider them close.
-    :param width: Image width in pixels.
+    :param x_min: start of span
+    :param x_max: end of span
     :return: Merged list of column sections.
     """
     while True:
@@ -225,7 +233,7 @@ def merge_column_sections(
             if section.nb_columns < 2:
                 # Flush current group
                 merged_sections += _merge_section_whitespaces(
-                    sections=current_group, min_width=min_width, width=width
+                    sections=current_group, min_width=min_width, x_min=x_min, x_max=x_max
                 )
                 merged_sections.append(section)
                 current_group = []
@@ -234,7 +242,7 @@ def merge_column_sections(
             elif section.first_y_center - current_group[-1].last_y_center > max_gap:
                 # Flush current group
                 merged_sections += _merge_section_whitespaces(
-                    sections=current_group, min_width=min_width, width=width
+                    sections=current_group, min_width=min_width, x_min=x_min, x_max=x_max
                 )
                 current_group = [section]
             else:
@@ -251,13 +259,13 @@ def merge_column_sections(
                 else:
                     # Flush current group and start a new one
                     merged_sections += _merge_section_whitespaces(
-                        sections=current_group, min_width=min_width, width=width
+                        sections=current_group, min_width=min_width, x_min=x_min, x_max=x_max
                     )
                     current_group = [section]
 
         # Flush remaining group
         merged_sections += _merge_section_whitespaces(
-            sections=current_group, min_width=min_width, width=width
+            sections=current_group, min_width=min_width, x_min=x_min, x_max=x_max
         )
 
         if len(merged_sections) == len(column_sections):
@@ -266,13 +274,14 @@ def merge_column_sections(
 
 
 def ensure_section_bounds_consistency(
-    section: ColumnSection, min_width: float, width: int
+    section: ColumnSection, min_width: float, x_min: int, x_max: int
 ) -> list[ColumnSection]:
     """
     Check that top / bottom elements of the column section are consistent with its correspondence
     :param section: Column section to check.
     :param min_width: minimum width for a whitespace to be considered
-    :param width: total width of the row
+    :param x_min: start of span
+    :param x_max: end of span
     :return: List of consistent column sections.
     """
     if section.nb_columns < 2 or len(section.rows) < 2:
@@ -281,12 +290,14 @@ def ensure_section_bounds_consistency(
     # Identify core elements (with at least 2 columns)
     rows: list[MergedRow] = sorted(section.rows, key=lambda x: x.y1)
     core_indices = [
-        i for i, r in enumerate(rows) if len(r.compute_whitespaces(min_width, width)) > 2
+        i for i, r in enumerate(rows) if len(r.compute_whitespaces(min_width, x_min, x_max)) > 2
     ]
 
     # Only one row with columns: split the section into multiple sections
     if len(core_indices) < 2:
-        return [ColumnSection().update(r, r.compute_whitespaces(min_width, width)) for r in rows]
+        return [
+            ColumnSection().update(r, r.compute_whitespaces(min_width, x_min, x_max)) for r in rows
+        ]
 
     # Compute median row separation in core rows
     row_gaps = [
@@ -319,17 +330,17 @@ def ensure_section_bounds_consistency(
         items=[it for r in core_rows for it in r.items],
         rows=core_rows,
         whitespaces=compute_whitespaces(
-            [it for r in core_rows for it in r.items], 0.5 * min_width, width
+            [it for r in core_rows for it in r.items], 0.5 * min_width, x_min, x_max
         ),
     )
 
     # Create top and bottom sections
     top_sections = [
-        ColumnSection().update(row, row.compute_whitespaces(min_width, width))
+        ColumnSection().update(row, row.compute_whitespaces(min_width, x_min, x_max))
         for row in rows[:core_start]
     ]
     bottom_sections = [
-        ColumnSection().update(row, row.compute_whitespaces(min_width, width))
+        ColumnSection().update(row, row.compute_whitespaces(min_width, x_min, x_max))
         for row in rows[core_end:]
     ]
 

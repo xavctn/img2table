@@ -6,10 +6,10 @@ from img2table.tables.objects.extraction import BBox, TableCell
 
 @dataclass
 class Cell(TableObject):
-    x1: int
-    y1: int
-    x2: int
-    y2: int
+    x1: int | float
+    y1: int | float
+    x2: int | float
+    y2: int | float
     content: str | None = None
 
     @property

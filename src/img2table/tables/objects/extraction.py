@@ -10,10 +10,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class BBox:
-    x1: int
-    y1: int
-    x2: int
-    y2: int
+    x1: int | float
+    y1: int | float
+    x2: int | float
+    y2: int | float
 
 
 @dataclass

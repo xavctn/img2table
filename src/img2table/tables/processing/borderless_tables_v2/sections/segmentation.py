@@ -2,42 +2,12 @@ from itertools import pairwise
 
 import numpy as np
 
-from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables_v2._model import (
     ColumnSection,
     MergedRow,
     RowCharacteristic,
     Whitespace,
 )
-
-
-def identify_merged_rows(cnts: list[Cell]) -> list[MergedRow]:
-    """
-    Identify merged rows in a list of cells.
-    :param cnts: list of cells
-    :return: list of merged rows
-    """
-    if not cnts:
-        return []
-
-    current_row, merged_rows = None, []
-    for cnt in sorted(cnts, key=lambda cnt: (cnt.y1, cnt.x1)):
-        if current_row is None:
-            current_row = MergedRow(items=[cnt])
-            continue
-
-        # Compute overlap
-        overlap = min(current_row.y2, cnt.y2) - max(current_row.y1, cnt.y1)
-        if overlap <= 0.33 * min(cnt.height, current_row.height):
-            # Flush current row
-            merged_rows.append(current_row)
-            current_row = MergedRow()
-        current_row.add(cnt)
-
-    # Add last row
-    merged_rows.append(current_row)
-
-    return merged_rows
 
 
 def matching_whitespaces(
@@ -50,11 +20,6 @@ def matching_whitespaces(
     :param min_width: minimum column width
     :return: boolean indicating whether two sets of whitespaces match and resultant whitespaces
     """
-    # Check that content overlaps (based on whitespaces)
-    ws1_min, ws1_max = min(ws.end for ws in ws1_list), max(ws.start for ws in ws1_list)
-    ws2_min, ws2_max = min(ws.end for ws in ws2_list), max(ws.start for ws in ws2_list)
-    if min(ws1_max, ws2_max) - max(ws1_min, ws2_min) < min_width:
-        return False, []
 
     # Get largest and smallest list of whitespaces and iterate over the shortest list
     ws_short, ws_long = (
@@ -88,6 +53,12 @@ def matching_whitespaces(
 
     if len(covered_long_indices) < len(ws_long):
         return False, []
+
+    # Check that content overlaps (based on whitespaces)
+    ws1_min, ws1_max = min(ws.end for ws in ws1_list), max(ws.start for ws in ws1_list)
+    ws2_min, ws2_max = min(ws.end for ws in ws2_list), max(ws.start for ws in ws2_list)
+    if min(ws1_max, ws2_max) - max(ws1_min, ws2_min) < min_width:
+        return False, sorted(matching_ws, key=lambda x: x.start)
 
     return True, sorted(matching_ws, key=lambda x: x.start)
 
@@ -126,13 +97,14 @@ def _row_group_score(
 
 
 def compute_column_section(
-    merged_rows: list[MergedRow], min_width: float, width: int, ratio_vertical_separation: float
+    merged_rows: list[MergedRow], min_width: float, x_min: int, x_max: int, ratio_vertical_separation: float
 ) -> tuple[list[ColumnSection], float]:
     """
     Compute column sections from merged rows.
     :param merged_rows: list of merged rows
     :param min_width: minimum width for a whitespace to be considered
-    :param width: total width of the section
+    :param x_min: start of span
+    :param x_max: end of span
     :param ratio_vertical_separation: ratio of median row separation to use as max vertical separation
     :return: list of column sections and maximum gap between rows
     """
@@ -144,7 +116,7 @@ def compute_column_section(
     # Compute all rows characteristics
     row_data = [
         RowCharacteristic(
-            index=idx, row=row, ws=row.compute_whitespaces(min_width=min_width, width=width)
+            index=idx, row=row, ws=row.compute_whitespaces(min_width=min_width, x_min=x_min, x_max=x_max)
         )
         for idx, row in enumerate(merged_rows)
     ]
@@ -176,12 +148,12 @@ def compute_column_section(
             target = row_data[row_idx]
 
             # Check vertical gap
-            if abs(section.last_y_center - target.row.y_center) > max_gap:
+            if gap := abs(section.last_y_center - target.row.y_center) > max_gap:
                 break
 
             # Check whitespace correspondence
             is_match, match_ws = matching_whitespaces(section.whitespaces, target.ws, min_width)
-            if is_match:
+            if is_match or (gap < 0.66 * median_row_separation and match_ws):
                 section.update(row=target.row, whitespaces=match_ws)
                 used_rows.add(row_idx)
             else:
@@ -194,12 +166,12 @@ def compute_column_section(
             target = row_data[row_idx]
 
             # Check vertical gap
-            if abs(section.first_y_center - target.row.y_center) > max_gap:
+            if gap := abs(section.first_y_center - target.row.y_center) > max_gap:
                 break
 
             # Check whitespace correspondence
             is_match, match_ws = matching_whitespaces(section.whitespaces, target.ws, min_width)
-            if is_match:
+            if is_match or (gap < 0.75 * median_row_separation and match_ws):
                 section.update(row=target.row, whitespaces=match_ws)
                 used_rows.add(row_idx)
             else:

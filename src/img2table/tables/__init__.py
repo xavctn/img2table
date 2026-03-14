@@ -71,6 +71,38 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     return thresh
 
 
+def find_components(edges: list[list[Any] | set[Any] | tuple[Any]]) -> list[list[Any]]:
+    # Construct adjacency mapping
+    adjacency_mapping = defaultdict(set)
+    for edge in map(list, edges):
+        for cmp in edge:
+            adjacency_mapping[cmp].add(cmp)
+        if len(edge) == 2:
+            cmp1, cmp2 = edge
+            adjacency_mapping[cmp1].add(cmp2)
+            adjacency_mapping[cmp2].add(cmp1)
+
+    # DFS
+    visited, components = set(), []
+    for node in adjacency_mapping:
+        if node in visited:
+            continue
+
+        stack, component = [node], []
+        visited.add(node)
+        while stack:
+            current = stack.pop()
+            component.append(current)
+            for neighbor in adjacency_mapping[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    stack.append(neighbor)
+
+        components.append(component)
+
+    return components
+
+
 def cluster_items(items: list[Any], clustering_func: Callable) -> list[list[Any]]:
     """
     Cluster items based on a function
@@ -79,70 +111,15 @@ def cluster_items(items: list[Any], clustering_func: Callable) -> list[list[Any]
     :return: list of list of items based on clustering function
     """
     # Create clusters based on clustering function between items
-    clusters = []
+    edges: list[set[int]] = []
     for i in range(len(items)):
-        for j in range(i, len(items)):
+        edges.append({i})
+        for j in range(i + 1, len(items)):
             # Check if both items corresponds according to the clustering function
-            corresponds = clustering_func(items[i], items[j]) or (items[i] == items[j])
+            corresponds = clustering_func(items[i], items[j])
 
             # If both items correspond, find matching clusters or create a new one
             if corresponds:
-                matching_clusters = [
-                    idx for idx, cl in enumerate(clusters) if {i, j}.intersection(cl)
-                ]
-                if matching_clusters:
-                    remaining_clusters = [
-                        cl for idx, cl in enumerate(clusters) if idx not in matching_clusters
-                    ]
-                    new_cluster = {i, j}.union(
-                        *[cl for idx, cl in enumerate(clusters) if idx in matching_clusters]
-                    )
-                    clusters = [*remaining_clusters, new_cluster]
-                else:
-                    clusters.append({i, j})
+                edges.append({i, j})
 
-    return [[items[idx] for idx in c] for c in clusters]
-
-
-class Node:
-    def __init__(self, key: Any) -> None:
-        self.key = key
-        self.parent = self
-        self.size = 1
-
-
-class UnionFind(dict):
-    def find(self, key: Any) -> Node:
-        node = self.get(key, None)
-        if node is None:
-            node = self[key] = Node(key)
-        else:
-            while node.parent != node:
-                # walk up & perform path compression
-                node.parent, node = node.parent.parent, node.parent
-        return node
-
-    def union(self, key_a: Any, key_b: Any) -> None:
-        node_a = self.find(key_a)
-        node_b = self.find(key_b)
-        if node_a != node_b:  # disjoint? -> join!
-            if node_a.size < node_b.size:
-                node_a.parent = node_b
-                node_b.size += node_a.size
-            else:
-                node_b.parent = node_a
-                node_a.size += node_b.size
-
-
-def find_components(edges: list[list[Any] | set[Any] | tuple[Any]]) -> list[list[Any]]:
-    forest = UnionFind()
-
-    for edge in edges:
-        forest.union(*(edge if len(edge) > 1 else list(edge) * 2))
-
-    result = defaultdict(list)
-    for key in forest:
-        root = forest.find(key)
-        result[root.key].append(key)
-
-    return list(result.values())
+    return [[items[idx] for idx in c] for c in find_components(edges=edges)]

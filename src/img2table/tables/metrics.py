@@ -1,8 +1,7 @@
-
 import cv2
 import numpy as np
 import polars as pl
-from numba import njit, prange
+from numba import njit
 
 from img2table.tables.objects.cell import Cell
 
@@ -17,7 +16,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
     """
     cc_to_keep = []
 
-    for idx in prange(len(stats)):  # ty:ignore[not-iterable]
+    for idx in range(len(stats)):
         if idx == 0:
             continue
 
@@ -25,7 +24,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
 
         # Check number of inner pixels
         inner_pixels = 0
-        for row in prange(y, y + h):  # ty:ignore[not-iterable]
+        for row in range(y, y + h):
             prev_position = -1
             for col in range(x, x + w):
                 value = cc_labels[row][col]
@@ -33,7 +32,7 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
                     inner_pixels += col - prev_position - 1
                     prev_position = col
 
-        for col in prange(x, x + w):  # ty:ignore[not-iterable]
+        for col in range(x, x + w):
             prev_position = -1
             for row in range(y, y + h):
                 value = cc_labels[row][col]
@@ -71,7 +70,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
         -10,
         0,
     )
-    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
         if w / h < 2:
@@ -112,7 +111,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
         -10,
         0,
     )
-    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
         if h / w < 2:
@@ -149,7 +148,7 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
 
     # Check if connected components is located in areas
     kept_cc = []
-    for idx in prange(complete_stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(complete_stats.shape[0]):
         x, y, w, h, area, x_middle, y_middle = complete_stats[idx][:]
 
         intersection_area = 0
@@ -176,7 +175,7 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     kept_cc, discarded_cc = [], []
 
-    for idx in prange(stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(stats.shape[0]):
         x, y, w, h, area = stats[idx][:]
 
         # Compute aspect ratio and fill ratio
@@ -206,7 +205,7 @@ def filter_cc(stats: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     lower_bound = 0.2 * median_width * median_height
 
     kept_cc = []
-    for idx in prange(kept_stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(kept_stats.shape[0]):
         x, y, w, h, area = kept_stats[idx][:]
 
         # Check area
@@ -247,14 +246,14 @@ def create_character_thresh(
 
     # Identify CC from discarded connected components that can be characters
     list_relevant_chars = []
-    for idx in prange(len(stats)):  # ty:ignore[not-iterable]
+    for idx in range(len(stats)):
         x, y, w, h, area = stats[idx][:]
 
         # Add character to thresholded image
         list_relevant_chars.append([x, y, w, h, area])
         character_thresh[y : y + h, x : x + w] = thresh[y : y + h, x : x + w]
 
-        for idx_discarded in prange(1, len(discarded_stats)):  # ty:ignore[not-iterable]
+        for idx_discarded in range(1, len(discarded_stats)):
             cc_x, cc_y, cc_w, cc_h, cc_area = discarded_stats[idx_discarded][:]
 
             # Compute y overlap
@@ -346,7 +345,7 @@ def recompute_contours(stats: np.ndarray, chars_array: np.ndarray) -> np.ndarray
     :return: array of contours with dimensions recomputed
     """
     list_contours = []
-    for idx in prange(stats.shape[0]):  # ty:ignore[not-iterable]
+    for idx in range(stats.shape[0]):
         if idx == 0:
             continue
         x, y, w, h, _ = stats[idx][:]
@@ -381,7 +380,7 @@ def get_row_separations(stats: np.ndarray, char_length: float) -> list[float]:
     """
     row_separations = []
 
-    for i in prange(len(stats)):  # ty:ignore[not-iterable]
+    for i in range(len(stats)):
         # Get statistics
         xi, yi, wi, hi = stats[i][:]
         row_separation = 10**6
