@@ -1,5 +1,3 @@
-from itertools import pairwise
-
 import numpy as np
 
 from img2table.tables.processing.borderless_tables_v2._model import (
@@ -97,7 +95,11 @@ def _row_group_score(
 
 
 def compute_column_section(
-    merged_rows: list[MergedRow], min_width: float, x_min: int, x_max: int, ratio_vertical_separation: float
+    merged_rows: list[MergedRow],
+    min_width: float,
+    x_min: int,
+    x_max: int,
+    ratio_vertical_separation: float,
 ) -> tuple[list[ColumnSection], float]:
     """
     Compute column sections from merged rows.
@@ -108,15 +110,24 @@ def compute_column_section(
     :param ratio_vertical_separation: ratio of median row separation to use as max vertical separation
     :return: list of column sections and maximum gap between rows
     """
-    # Compute median row separation
-    row_separations = [nxt.y_center - prv.y_center for prv, nxt in pairwise(merged_rows)]
+    # Compute median row separation on overlapping rows
+    row_separations: list[float] = []
+    for idx, row in enumerate(merged_rows[:-1]):
+        for other_row in merged_rows[idx + 1 :]:
+            # Check if rows overlap
+            overlap = min(row.x2, other_row.x2) - max(row.x1, other_row.x1) >= min_width
+            if overlap:
+                row_separations.append(other_row.y_center - row.y_center)
+                break
     median_row_separation = np.median(row_separations) if row_separations else 0
     max_gap = median_row_separation * ratio_vertical_separation
 
     # Compute all rows characteristics
     row_data = [
         RowCharacteristic(
-            index=idx, row=row, ws=row.compute_whitespaces(min_width=min_width, x_min=x_min, x_max=x_max)
+            index=idx,
+            row=row,
+            ws=row.compute_whitespaces(min_width=min_width, x_min=x_min, x_max=x_max),
         )
         for idx, row in enumerate(merged_rows)
     ]
@@ -148,7 +159,7 @@ def compute_column_section(
             target = row_data[row_idx]
 
             # Check vertical gap
-            if gap := abs(section.last_y_center - target.row.y_center) > max_gap:
+            if (gap := abs(section.last_y_center - target.row.y_center)) > max_gap:
                 break
 
             # Check whitespace correspondence
@@ -166,12 +177,12 @@ def compute_column_section(
             target = row_data[row_idx]
 
             # Check vertical gap
-            if gap := abs(section.first_y_center - target.row.y_center) > max_gap:
+            if (gap := abs(section.first_y_center - target.row.y_center)) > max_gap:
                 break
 
             # Check whitespace correspondence
             is_match, match_ws = matching_whitespaces(section.whitespaces, target.ws, min_width)
-            if is_match or (gap < 0.75 * median_row_separation and match_ws):
+            if is_match or (gap < 0.66 * median_row_separation and match_ws):
                 section.update(row=target.row, whitespaces=match_ws)
                 used_rows.add(row_idx)
             else:

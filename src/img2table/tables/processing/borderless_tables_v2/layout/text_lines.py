@@ -485,6 +485,6 @@ def identify_image_contours(
     return [
         cnt
         for cnt in grouped_contours
-        if (min(cnt.height, cnt.width) >= 0.5 * char_length and max(cnt.height, cnt.width) >= char_length)
-        or (cnt.width / cnt.height >= 2 and 0.5 * char_length <= cnt.width <= 1.5 * char_length)
+        if min(cnt.height, cnt.width) >= 0.5 * char_length
+        and max(cnt.height, cnt.width) >= char_length
     ]

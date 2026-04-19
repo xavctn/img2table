@@ -15,7 +15,7 @@ from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.consecutive import merge_consecutive_tables
 from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
-from img2table.tables.processing.borderless_tables import identify_borderless_tables
+from img2table.tables.processing.borderless_tables_v2 import extract_borderless_tables
 
 
 @dataclass
@@ -159,19 +159,15 @@ class TableImage:
             self._thresh = threshold_dark_areas(img=self.img, char_length=self.char_length)
 
             # Extract borderless tables
-            borderless_tbs = identify_borderless_tables(
+            borderless_tbs = extract_borderless_tables(
                 thresh=self.thresh,
                 char_length=self.char_length,
-                median_line_sep=self.median_line_sep,
                 lines=self.lines,
-                contours=self.contours,
                 existing_tables=self.tables,
             )
 
             # Add to tables
-            self._tables = (self._tables or []) + [
-                tb for tb in borderless_tbs if tb.nb_rows >= 2 and tb.nb_columns >= 3
-            ]
+            self._tables = (self._tables or []) + borderless_tbs
 
     def extract_tables(
         self,
