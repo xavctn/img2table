@@ -13,6 +13,7 @@ def test_is_contained_cell() -> None:
     assert not is_contained_cell(inner_cell=cell_2, outer_cell=cell_1)
     assert not is_contained_cell(inner_cell=cell_1, outer_cell=cell_3)
     assert not is_contained_cell(inner_cell=cell_2, outer_cell=cell_3)
+    assert is_contained_cell(inner_cell=(0, 0, 20, 20), outer_cell=(0, 0, 40, 25))
 
 
 def test_merge_contours() -> None:

@@ -25,10 +25,10 @@ class Table(TableObject):
             self.items = [rows]
         else:
             self.items = rows
-        self.title = None
+        self.title: str | None = None
         self.borderless = borderless
 
-    def set_title(self, title: str) -> None:
+    def set_title(self, title: str | None) -> None:
         self.title = title
 
     @property

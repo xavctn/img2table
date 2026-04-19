@@ -3,83 +3,72 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables.model import ImageSegment, Whitespace
-from img2table.tables.processing.borderless_tables.whitespaces import get_whitespaces
+from img2table.tables.processing.borderless_tables_v2._model import (
+    compute_whitespaces,
+    identify_merged_rows,
+)
+from img2table.tables.processing.common import compute_row_ranges
 
 
-def implicit_rows_lines(table: Table, segment: ImageSegment) -> list[Line]:
+def implicit_rows_lines(table: Table, contours: list[Cell]) -> list[Line]:
     """
     Identify lines corresponding to implicit rows
     :param table: table
-    :param segment: ImageSegment used for whitespaces computation
+    :param contours: list of contours
     :return: list of lines corresponding to implicit rows
     """
-    # Horizontal whitespaces
-    h_ws = get_whitespaces(segment=segment, vertical=False, pct=1)
+    # Compute merged rows
+    merged_rows = identify_merged_rows(cnts=contours)
 
-    # Create whitespaces at the top or the bottom if they are missing
-    if h_ws[0].y1 > segment.y1:
-        up_ws = Whitespace(
-            cells=[
-                Cell(
-                    x1=min([ws.x1 for ws in h_ws]),
-                    x2=max([ws.x2 for ws in h_ws]),
-                    y1=segment.y1,
-                    y2=min([el.y1 for el in segment]),
-                )
-            ]
+    # Identify new lines
+    new_lines = []
+    for tb_row in table.items:
+        if not tb_row.v_consistent:
+            # Skip rows containing merged cells
+            continue
+
+        # Get corresponding merged rows and compute row ranges
+        row_ranges = compute_row_ranges(
+            rows=[row for row in merged_rows if row.y1 >= tb_row.y1 and row.y2 <= tb_row.y2],
+            y_min=tb_row.y1,
+            y_max=tb_row.y2,
+            enforce_gap=True,
         )
-        h_ws.insert(0, up_ws)
 
-    if h_ws[-1].y2 < segment.y2:
-        down_ws = Whitespace(
-            cells=[
-                Cell(
-                    x1=min([ws.x1 for ws in h_ws]),
-                    x2=max([ws.x2 for ws in h_ws]),
-                    y1=segment.y2,
-                    y2=max([el.y2 for el in segment]),
-                )
-            ]
-        )
-        h_ws.append(down_ws)
+        # Identify new lines
+        relevant_y_vals = {
+            bound
+            for bounds in row_ranges
+            for bound in bounds
+            if bound not in {tb_row.y1, tb_row.y2}
+        }
+        new_lines += [
+            Line(x1=tb_row.x1, y1=y, x2=tb_row.x2, y2=y, thickness=1) for y in relevant_y_vals
+        ]
 
-    # Identify relevant whitespace height
-    if len(h_ws) > 2:
-        full_ws_h = sorted(
-            [ws.height for ws in h_ws[1:-1] if ws.width == max([w.width for w in h_ws])]
-        )
-        min_height = (
-            0.5 * full_ws_h[len(full_ws_h) // 2 + len(full_ws_h) % 2 - 1]
-            if len(full_ws_h) >= 3
-            else 1
-        )
-        h_ws = [h_ws[0]] + [ws for ws in h_ws[1:-1] if ws.height >= min_height] + [h_ws[-1]]
-
-    # Identify created lines
-    return [
-        Line(x1=table.x1, y1=(ws.y1 + ws.y2) // 2, x2=table.x2, y2=(ws.y1 + ws.y2) // 2)
-        for ws in h_ws
-        if not any(line for line in table.lines if ws.y1 <= line.y1 <= ws.y2 and line.horizontal)
-    ]
+    return new_lines
 
 
-def implicit_columns_lines(table: Table, segment: ImageSegment, char_length: float) -> list[Line]:
+def implicit_columns_lines(table: Table, contours: list[Cell], char_length: float) -> list[Line]:
     """
     Identify lines corresponding to implicit columns
     :param table: table
-    :param segment: ImageSegment used for whitespaces computation
+    :param contours: list of contours
     :param char_length: average character length
     :return: list of lines corresponding to implicit columns
     """
-    # Vertical whitespaces
-    v_ws = get_whitespaces(segment=segment, vertical=True, min_width=char_length, pct=1)
+    # Get vertical whitespaces
+    v_ws = compute_whitespaces(
+        items=contours, min_width=char_length, x_min=table.x1, x_max=table.x2
+    )
 
     # Identify created lines
     return [
-        Line(x1=(ws.x1 + ws.x2) // 2, y1=table.y1, x2=(ws.x1 + ws.x2) // 2, y2=table.y2)
+        Line(x1=(ws.start + ws.end) // 2, y1=table.y1, x2=(ws.start + ws.end) // 2, y2=table.y2)
         for ws in v_ws
-        if not any(line for line in table.lines if ws.x1 <= line.x1 <= ws.x2 and line.vertical)
+        if not ws.start_bound
+        and not ws.end_bound
+        and not any(line for line in table.lines if ws.start <= line.x1 <= ws.end and line.vertical)
     ]
 
 
@@ -108,14 +97,13 @@ def implicit_content(
         for c in contours
         if c.x1 >= table.x1 and c.x2 <= table.x2 and c.y1 >= table.y1 and c.y2 <= table.y2
     ]
-    segment = ImageSegment(x1=table.x1, y1=table.y1, x2=table.x2, y2=table.y2, elements=tb_contours)
 
     # Create new lines
     lines = table.lines
     if implicit_rows:
-        lines += implicit_rows_lines(table=table, segment=segment)
+        lines += implicit_rows_lines(table=table, contours=tb_contours)
     if implicit_columns:
-        lines += implicit_columns_lines(table=table, segment=segment, char_length=char_length)
+        lines += implicit_columns_lines(table=table, contours=tb_contours, char_length=char_length)
 
     # Create
     cells = get_cells(

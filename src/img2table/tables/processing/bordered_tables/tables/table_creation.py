@@ -20,7 +20,7 @@ def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
     h_values = sorted({x_val for cell in cluster_cells for x_val in [cell.x1, cell.x2]})
     cluster_mapping = defaultdict(list)
     for cl_idx, value in zip(
-        _cluster_values(values=h_values, median_gap_multiple=0.2), h_values, strict=True
+        _cluster_values(values=h_values, median_gap_multiple=0.1), h_values, strict=True
     ):
         cluster_mapping[cl_idx].append(value)
     # Get horizontal delimiters from cluster mapping
@@ -30,7 +30,7 @@ def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
     v_values = sorted({y_val for cell in cluster_cells for y_val in [cell.y1, cell.y2]})
     cluster_mapping = defaultdict(list)
     for cl_idx, value in zip(
-        _cluster_values(values=v_values, median_gap_multiple=0.2), v_values, strict=True
+        _cluster_values(values=v_values, median_gap_multiple=0.1), v_values, strict=True
     ):
         cluster_mapping[cl_idx].append(value)
     # Get vertical delimiters from cluster mapping

@@ -196,15 +196,18 @@ def estimate_skew(angles: list[float], thresh: np.ndarray) -> float:
         # Evaluate angles by rotation
         best_angle = None
         best_evaluation = 0
-        for angle in sorted(angles, key=abs):
+        for angle in angles:
             # Get angle evaluation
             angle_evaluation = evaluate_angle(img=thresh, angle=angle)
 
-            if angle_evaluation > best_evaluation:
+            if angle_evaluation > best_evaluation or (
+                angle_evaluation == best_evaluation
+                and (best_angle is None or abs(angle) < abs(best_angle))
+            ):
                 best_angle = angle
                 best_evaluation = angle_evaluation
 
-    return best_angle or 0
+    return best_angle if best_angle is not None else 0.0
 
 
 def rotate_img_with_border(

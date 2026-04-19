@@ -1,6 +1,6 @@
 from collections import defaultdict
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Collection, Hashable, Sequence
+from typing import TypeVar
 
 import cv2
 import numpy as np
@@ -17,7 +17,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     # If image is mainly black, revert the image
-    if np.mean(gray) <= 127:  # ty:ignore[no-matching-overload]
+    if np.mean(gray) <= 127:
         gray = 255 - gray
 
     thresh_kernel = int(char_length) // 2 * 2 + 1
@@ -71,7 +71,10 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     return thresh
 
 
-def find_components(edges: list[list[Any] | set[Any] | tuple[Any]]) -> list[list[Any]]:
+T = TypeVar("T", bound=Hashable)
+
+
+def find_components(edges: Sequence[Collection[T]]) -> list[list[T]]:
     # Construct adjacency mapping
     adjacency_mapping = defaultdict(set)
     for edge in map(list, edges):
@@ -103,7 +106,7 @@ def find_components(edges: list[list[Any] | set[Any] | tuple[Any]]) -> list[list
     return components
 
 
-def cluster_items(items: list[Any], clustering_func: Callable) -> list[list[Any]]:
+def cluster_items(items: list[T], clustering_func: Callable[[T, T], bool]) -> list[list[T]]:
     """
     Cluster items based on a function
     :param items: list of items

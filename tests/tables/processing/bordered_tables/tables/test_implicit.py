@@ -9,7 +9,6 @@ from img2table.tables.processing.bordered_tables.tables.implicit import (
     implicit_content,
     implicit_rows_lines,
 )
-from img2table.tables.processing.borderless_tables.model import ImageSegment
 
 
 def test_implicit_rows_lines() -> None:
@@ -19,9 +18,7 @@ def test_implicit_rows_lines() -> None:
     with Path("test_data/contours_implicit.json").open() as f:
         contours = [Cell(**el) for el in json.load(f)]
 
-    segment = ImageSegment(x1=table.x1, y1=table.y1, x2=table.x2, y2=table.y2, elements=contours)
-
-    result = implicit_rows_lines(table=table, segment=segment)
+    result = implicit_rows_lines(table=table, contours=contours)
 
     # Check that all created lines have right width
     assert all(line.width == table.width for line in result)
@@ -58,9 +55,7 @@ def test_implicit_columns_lines() -> None:
     with Path("test_data/contours_implicit.json").open() as f:
         contours = [Cell(**el) for el in json.load(f)]
 
-    segment = ImageSegment(x1=table.x1, y1=table.y1, x2=table.x2, y2=table.y2, elements=contours)
-
-    result = implicit_columns_lines(table=table, segment=segment, char_length=11)
+    result = implicit_columns_lines(table=table, contours=contours, char_length=11)
 
     # Check that all created lines have right height
     assert all(line.height == table.height for line in result)

@@ -25,6 +25,10 @@ class ItemHolder:
         return max((it.y2 for it in self.items), default=0)
 
     @property
+    def y_center(self) -> float:
+        return (self.y1 + self.y2) / 2
+
+    @property
     def width(self) -> int:
         return self.x2 - self.x1
 
@@ -63,10 +67,6 @@ class MergedRow(ItemHolder):
 
     def add(self, item: Cell) -> None:
         self.items.append(item)
-
-    @property
-    def y_center(self) -> float:
-        return (self.y1 + self.y2) / 2
 
     def compute_whitespaces(self, min_width: float, x_min: int, x_max: int) -> list[Whitespace]:
         """

@@ -1,9 +1,6 @@
-from collections import Counter
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import pairwise
-
-import numpy as np
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
@@ -17,7 +14,7 @@ from img2table.tables.processing.borderless_tables_v2._model import (
 from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics import (
     TableMetrics,
 )
-from img2table.tables.processing.common import _cluster_values
+from img2table.tables.processing.common import compute_row_ranges
 
 
 @dataclass
@@ -98,85 +95,14 @@ class StructuredSection:
 
         return col_rows
 
-    def _evaluate_key_separation_value(
-        self, rows: list[MergedRow], ref_separation: float
-    ) -> tuple[float, list]:
-        """
-        Evaluate pertinence of separation value based on created rows consistency
-        :param rows: list of merged rows from the section
-        :param ref_separation: reference separation value
-        :return: key consistency score and created ranges
-        """
-        # Create sections
-        sections = [[rows[0]]]
-        for row in rows[1:]:
-            prev_row = sections[-1][-1]
-            separation = row.y_center - prev_row.y_center
-            if separation <= 0.75 * ref_separation:
-                sections[-1].append(row)
-            else:
-                sections.append([row])
-
-        # Define ranges
-        ranges = []
-        current_y = self.y_min
-        for prev_section, nxt_section in pairwise(sections):
-            # Get middle point to compute separator between sections
-            middle_point = int((prev_section[-1].y2 + nxt_section[0].y1) / 2)
-            ranges.append((current_y, middle_point))
-            current_y = middle_point
-
-        # Add last range
-        ranges.append((current_y, self.y_max))
-
-        # Compute range heights
-        range_heights = [rng[1] - rng[0] for rng in ranges]
-
-        return 1 - np.std(range_heights) / self.height if len(ranges) > 1 else 0, ranges
-
     def row_ranges(self) -> list[tuple[int, int]]:
         """
         Identify vertical position ranges corresponding to rows in a section
         :return: list of (start, end) vertical ranges
         """
         if self._row_ranges is None:
-            # Compute bounds and merged rows
-            rows = self.merged_rows
-
-            if len(rows) <= 1:
-                self._row_ranges = [(self.y_min, self.y_max)]
-                return self._row_ranges
-
-            # Compute separation between elements
-            separations: list[float] = [nxt.y_center - prv.y_center for prv, nxt in pairwise(rows)]
-            median_sep = np.median(separations)
-            median_row_height = np.median([row.height for row in rows])
-
-            # Cluster separations to identify distinct spacing patterns
-            cluster_labels = _cluster_values(values=separations, median_gap_multiple=3)
-
-            # Find the most common cluster that corresponds to rows to get eligible separations
-            eligible_separations = {median_sep}
-            for cluster_id, _ in Counter(cluster_labels).most_common(2):
-                cluster_separations = [
-                    sep
-                    for sep, label in zip(separations, cluster_labels, strict=True)
-                    if label == cluster_id
-                ]
-                if (cluster_median_sep := np.median(cluster_separations)) > median_row_height:
-                    eligible_separations.add(cluster_median_sep)
-
-            # Evaluate best separation value
-            best_score, best_ranges = 0, []
-            for ref_sep in eligible_separations:
-                score, ranges = self._evaluate_key_separation_value(
-                    rows=rows, ref_separation=ref_sep
-                )
-                if score > best_score:
-                    best_score = score
-                    best_ranges = ranges
-
-            self._row_ranges = best_ranges or [(self.y_min, self.y_max)]
+            # Compute row ranges
+            self._row_ranges = compute_row_ranges(rows=self.merged_rows, y_min=self.y_min, y_max=self.y_max)
         return self._row_ranges
 
     def table_score(self) -> float:
