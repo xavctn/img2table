@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import pairwise
 
 import numpy as np
@@ -6,7 +7,7 @@ import polars as pl
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.common import is_contained_cell
+from img2table.tables.processing.common import _cluster_values, is_contained_cell
 
 
 def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
@@ -15,38 +16,34 @@ def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
     :param cluster_cells: list of cells that form a table
     :return: list of normalized cells
     """
-    # Compute table shape
-    width = max(cell.x2 for cell in cluster_cells) - min(cell.x1 for cell in cluster_cells)
-    height = max(cell.y2 for cell in cluster_cells) - min(cell.y1 for cell in cluster_cells)
-
-    # Get list of existing horizontal values
+    # Get list of existing horizontal values and cluster them
     h_values = sorted({x_val for cell in cluster_cells for x_val in [cell.x1, cell.x2]})
-    # Compute delimiters by grouping close values together
-    h_delims = [
-        round(np.mean(h_group))
-        for h_group in np.split(
-            h_values, np.where(np.diff(h_values) >= min(width * 0.02, 10))[0] + 1
-        )
-    ]
+    cluster_mapping = defaultdict(list)
+    for cl_idx, value in zip(
+        _cluster_values(values=h_values, median_gap_multiple=0.2), h_values, strict=True
+    ):
+        cluster_mapping[cl_idx].append(value)
+    # Get horizontal delimiters from cluster mapping
+    h_delims = sorted(round(np.mean(vals)) for vals in cluster_mapping.values())
 
-    # Get list of existing vertical values
+    # Get list of existing vertical values and cluster them
     v_values = sorted({y_val for cell in cluster_cells for y_val in [cell.y1, cell.y2]})
-    # Compute delimiters by grouping close values together
-    v_delims = [
-        round(np.mean(v_group))
-        for v_group in np.split(
-            v_values, np.where(np.diff(v_values) >= min(height * 0.02, 10))[0] + 1
-        )
-    ]
+    cluster_mapping = defaultdict(list)
+    for cl_idx, value in zip(
+        _cluster_values(values=v_values, median_gap_multiple=0.2), v_values, strict=True
+    ):
+        cluster_mapping[cl_idx].append(value)
+    # Get vertical delimiters from cluster mapping
+    v_delims = sorted(round(np.mean(vals)) for vals in cluster_mapping.values())
 
     # Normalize all cells
     normalized_cells: list[Cell] = []
     for cell in cluster_cells:
         normalized_cell = Cell(
-            x1=sorted(h_delims, key=lambda d: abs(d - cell.x1)).pop(0),
-            x2=sorted(h_delims, key=lambda d: abs(d - cell.x2)).pop(0),
-            y1=sorted(v_delims, key=lambda d: abs(d - cell.y1)).pop(0),
-            y2=sorted(v_delims, key=lambda d: abs(d - cell.y2)).pop(0),
+            x1=min(h_delims, key=lambda d: abs(d - cell.x1)),
+            x2=min(h_delims, key=lambda d: abs(d - cell.x2)),
+            y1=min(v_delims, key=lambda d: abs(d - cell.y1)),
+            y2=min(v_delims, key=lambda d: abs(d - cell.y2)),
         )
         # Check if cell is not empty
         if normalized_cell.area > 0:

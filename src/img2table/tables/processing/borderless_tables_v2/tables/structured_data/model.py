@@ -17,38 +17,7 @@ from img2table.tables.processing.borderless_tables_v2._model import (
 from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics import (
     TableMetrics,
 )
-
-
-def _cluster_values(values: list[float]) -> list[int]:
-    """
-    Cluster values
-    :param values: list of float values
-    :return: cluster label (0, 1, 2, ...) for each value
-    """
-    if len(values) <= 1:
-        return [0] * len(values)
-
-    # Sort values while tracking original indices
-    sorted_with_idx = sorted(enumerate(values), key=lambda x: x[1])
-    sorted_values = [val for _, val in sorted_with_idx]
-
-    # Compute gaps between consecutive sorted values
-    gaps = [nxt - prv for prv, nxt in pairwise(sorted_values)]
-    gap_threshold = 3 * (np.median(gaps) if len(gaps) > 2 else min(gaps))
-
-    # Create clusters
-    cluster_id, cluster_labels_sorted = 0, [0]
-    for gap in gaps:
-        if gap > gap_threshold:
-            cluster_id += 1
-        cluster_labels_sorted.append(cluster_id)
-
-    # Map back to original order
-    cluster_labels = [0] * len(values)
-    for i, (orig_idx, _) in enumerate(sorted_with_idx):
-        cluster_labels[orig_idx] = cluster_labels_sorted[i]
-
-    return cluster_labels
+from img2table.tables.processing.common import _cluster_values
 
 
 @dataclass
@@ -184,7 +153,7 @@ class StructuredSection:
             median_row_height = np.median([row.height for row in rows])
 
             # Cluster separations to identify distinct spacing patterns
-            cluster_labels = _cluster_values(separations)
+            cluster_labels = _cluster_values(values=separations, median_gap_multiple=3)
 
             # Find the most common cluster that corresponds to rows to get eligible separations
             eligible_separations = {median_sep}
@@ -253,7 +222,7 @@ class StructuredSection:
         # Compute x delimiters
         x_delimiters = [
             self.whitespaces[0].end,
-            *[int((ws.start + ws.end) / 2) for ws in self.whitespaces[1:-1]],
+            *[(ws.start + ws.end) // 2 for ws in self.whitespaces[1:-1]],
             self.whitespaces[-1].start,
         ]
 
