@@ -59,31 +59,32 @@ def _cluster_values(values: list[float]) -> list[int]:
 
 @dataclass
 class StructuredSection:
-    char_height: float
-    char_width: float
+    height: int
+    width: int
+    char_length: float
     items: list[Cell]
     whitespaces: list[Whitespace]
-    _row_ranges: list[tuple[float, float]] | None = None
+    _row_ranges: list[tuple[int, int]] | None = None
 
     @cached_property
-    def x_min(self) -> float:
+    def x_min(self) -> int:
         return min((item.x1 for item in self.items), default=0)
 
     @cached_property
-    def x_max(self) -> float:
+    def x_max(self) -> int:
         return max((item.x2 for item in self.items), default=0)
 
     @cached_property
-    def y_min(self) -> float:
+    def y_min(self) -> int:
         return min((item.y1 for item in self.items), default=0)
 
     @cached_property
-    def y_max(self) -> float:
+    def y_max(self) -> int:
         return max((item.y2 for item in self.items), default=0)
 
     @cached_property
     def spacing_regularization(self) -> float:
-        return max(0.025, 3 * self.char_height)
+        return max(0.025 * self.height, 3 * self.char_length)
 
     @property
     def nb_columns(self) -> int:
@@ -105,36 +106,16 @@ class StructuredSection:
         :param char_length: Character length in pixels.
         :return: Structured section with normalized coordinates
         """
-        # Normalize items
-        norm_items = [
-            Cell(
-                x1=cell.x1 / width,
-                y1=cell.y1 / height,
-                x2=cell.x2 / width,
-                y2=cell.y2 / height,
-                content=cell.content,
-            )
-            for cell in section.items
-        ]
-        norm_whitespaces = [
-            Whitespace(
-                start=ws.start / width,
-                end=ws.end / width,
-                start_bound=ws.start_bound,
-                end_bound=ws.end_bound,
-            )
-            for ws in section.whitespaces
-        ]
-
         return cls(
-            char_height=char_length / height,
-            char_width=char_length / width,
-            items=norm_items,
-            whitespaces=norm_whitespaces,
+            height=height,
+            width=width,
+            char_length=char_length,
+            items=section.items,
+            whitespaces=section.whitespaces,
         )
 
     @property
-    def cols(self) -> list[tuple[float, ...]]:
+    def cols(self) -> list[tuple[int, ...]]:
         return [(prv.end, nxt.start) for prv, nxt in pairwise(self.whitespaces)]
 
     @cached_property
@@ -199,7 +180,7 @@ class StructuredSection:
         # Check column width
         if (
             max((cnt.x2 for cnt in col), default=0) - min((cnt.x1 for cnt in col), default=0)
-            < 3 * self.char_width
+            < 3 * self.char_length
         ):
             return 0.0
 
@@ -226,23 +207,23 @@ class StructuredSection:
         best_alignment = min(deviations, key=lambda k: deviations[k])
 
         if best_alignment == "center_alignment":
-            score = 1 - deviations["center_alignment"] / 0.02
+            score = 1 - deviations["center_alignment"] / (0.02 * self.width)
         elif best_alignment == "left_alignment":
             # Check that main alignment is at the left bound
             values, deviation = alignments["left_alignment"], deviations["left_alignment"]
             if (np.median(values) - min(values)) / (max(values) - min(values) + 10e-6) <= 0.05:
-                score = 1 - deviation / 0.02
+                score = 1 - deviation / (0.02 * self.width)
             else:
                 # Apply penalization
-                score = 1 - (2 * deviation) / 0.02
+                score = 1 - (2 * deviation) / (0.02 * self.width)
         else:
             # Check that main alignment is at the right bound
             values, deviation = alignments["right_alignment"], deviations["right_alignment"]
             if (max(values) - np.median(values)) / (max(values) - min(values) + 10e-6) <= 0.05:
-                score = 1 - deviation / 0.02
+                score = 1 - deviation / (0.02 * self.width)
             else:
                 # Apply penalization
-                score = 1 - 2 * deviation / 0.02
+                score = 1 - 2 * deviation / (0.02 * self.width)
 
         return max(0.0, score)
 
@@ -270,7 +251,7 @@ class StructuredSection:
         current_y = self.y_min
         for prev_section, nxt_section in pairwise(sections):
             # Get middle point to compute separator between sections
-            middle_point = (prev_section[-1].y2 + nxt_section[0].y1) / 2
+            middle_point = int((prev_section[-1].y2 + nxt_section[0].y1) / 2)
             ranges.append((current_y, middle_point))
             current_y = middle_point
 
@@ -280,9 +261,9 @@ class StructuredSection:
         # Compute range heights
         range_heights = [rng[1] - rng[0] for rng in ranges]
 
-        return 1 - np.std(range_heights) if len(ranges) > 1 else 0, ranges
+        return 1 - np.std(range_heights) / self.height if len(ranges) > 1 else 0, ranges
 
-    def row_ranges(self) -> list[tuple[float, float]]:
+    def row_ranges(self) -> list[tuple[int, int]]:
         """
         Identify vertical position ranges corresponding to rows in a section
         :return: list of (start, end) vertical ranges
@@ -304,7 +285,7 @@ class StructuredSection:
 
             # Find the most common cluster that corresponds to rows to get eligible separations
             eligible_separations = {median_sep}
-            for _, (cluster_id, _) in enumerate(Counter(cluster_labels).most_common(2)):
+            for cluster_id, _ in Counter(cluster_labels).most_common(2):
                 cluster_separations = [
                     sep
                     for sep, label in zip(separations, cluster_labels, strict=True)
@@ -466,50 +447,46 @@ class StructuredSection:
         Compute weighted table confidence score.
         :return: score between 0 and 1
         """
+        # Check hard rejection criterias
+        if self.nb_columns < 2:
+            # Insufficient columns
+            return 0.0
+        if self.nb_rows < 2:
+            # Insufficient rows
+            return 0.0
+
+        presence_ratios = self.column_presence_ratios()
+        if sum(ratio >= 0.5 for ratio in presence_ratios) < 2:
+            # Insufficient column presence
+            return 0.0
+
+        network_connectivity = self.network_connectivity_score()
+        if network_connectivity < 0.35:
+            # Weak network connectivity
+            return 0.0
+
         _, mean_column_alignment, min_column_alignment = self._alignment_summary()
+        spacing_consistency = self.content_spacing_consistency()
+        if mean_column_alignment < 0.35 and spacing_consistency < 0.35:
+            # Weak alignment and spacing
+            return 0.0
+
         score = (
             0.20 * mean_column_alignment
             + 0.15 * min_column_alignment
-            + 0.15 * self.content_spacing_consistency()
-            + 0.20 * self.network_connectivity_score()
+            + 0.15 * spacing_consistency
+            + 0.20 * network_connectivity
             + 0.05 * self.row_pattern_consistency_score()
             + 0.05 * self.sparsity_score()
             - 0.025 * self.full_text_score()
         )
         return max(0.0, min(1.0, score))
 
-    def hard_reject_reason(self) -> str | None:
-        """
-        Identify obvious non-table patterns before scoring.
-        :return: rejection reason or None
-        """
-        reason = None
-        if self.nb_rows < 2:
-            reason = "insufficient_rows"
-        elif self.nb_columns < 2:
-            reason = "insufficient_columns"
-        else:
-            presence_ratios = self.column_presence_ratios()
-            network_connectivity = self.network_connectivity_score()
-            _, mean_column_alignment, _ = self._alignment_summary()
-            spacing_consistency = self.content_spacing_consistency()
-
-            if sum(ratio >= 0.5 for ratio in presence_ratios) < 2:
-                reason = "insufficient_column_presence"
-            elif network_connectivity < 0.35:
-                reason = "weak_network_connectivity"
-            elif mean_column_alignment < 0.35 and spacing_consistency < 0.35:
-                reason = "weak_alignment_and_spacing"
-
-        return reason
-
     def is_structured(self) -> bool:
         """
         Assess whether the section behaves like a table
         :return: True if the table is structured, False otherwise
         """
-        if self.hard_reject_reason() is not None:
-            return False
         return self.table_score() >= 0.425
 
     @property
@@ -529,5 +506,4 @@ class StructuredSection:
             "sparsity_score": self.sparsity_score(),
             "full_text_score": self.full_text_score(),
             "table_score": self.table_score(),
-            "hard_reject_reason": self.hard_reject_reason(),
         }

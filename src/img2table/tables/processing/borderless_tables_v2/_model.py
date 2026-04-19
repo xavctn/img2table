@@ -9,43 +9,43 @@ class ItemHolder:
     items: list[Cell] = field(default_factory=list, repr=False)
 
     @property
-    def x1(self) -> float:
+    def x1(self) -> int:
         return min((it.x1 for it in self.items), default=0)
 
     @property
-    def y1(self) -> float:
+    def y1(self) -> int:
         return min((it.y1 for it in self.items), default=0)
 
     @property
-    def x2(self) -> float:
+    def x2(self) -> int:
         return max((it.x2 for it in self.items), default=0)
 
     @property
-    def y2(self) -> float:
+    def y2(self) -> int:
         return max((it.y2 for it in self.items), default=0)
 
     @property
-    def width(self) -> float:
+    def width(self) -> int:
         return self.x2 - self.x1
 
     @property
-    def height(self) -> float:
+    def height(self) -> int:
         return self.y2 - self.y1
 
     @property
-    def area(self) -> float:
+    def area(self) -> int:
         return self.width * self.height
 
 
 @dataclass
 class Whitespace:
-    start: int | float
-    end: int | float
+    start: int
+    end: int
     start_bound: bool = False
     end_bound: bool = False
 
     @property
-    def width(self) -> float:
+    def width(self) -> int:
         return self.end - self.start
 
     def matching_bound(self, other: "Whitespace") -> bool:
@@ -148,7 +148,7 @@ class RowCharacteristic:
         return len(self.ws)
 
     @property
-    def inner_ws_width(self) -> float:
+    def inner_ws_width(self) -> int:
         inner_ws = [ws for ws in self.ws if not ws.start_bound and not ws.end_bound]
         return sum(ws.width for ws in inner_ws) if inner_ws else 0
 
