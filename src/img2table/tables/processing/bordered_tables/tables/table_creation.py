@@ -10,17 +10,20 @@ from img2table.tables.objects.table import Table
 from img2table.tables.processing.common import _cluster_values, is_contained_cell
 
 
-def normalize_table_cells(cluster_cells: list[Cell]) -> list[Cell]:
+def normalize_table_cells(cluster_cells: list[Cell], char_length: float) -> list[Cell]:
     """
     Normalize cells from table cells
     :param cluster_cells: list of cells that form a table
+    :param char_length: average character length
     :return: list of normalized cells
     """
     # Get list of existing horizontal values and cluster them
     h_values = sorted({x_val for cell in cluster_cells for x_val in [cell.x1, cell.x2]})
     cluster_mapping = defaultdict(list)
     for cl_idx, value in zip(
-        _cluster_values(values=h_values, median_gap_multiple=0.1), h_values, strict=True
+        _cluster_values(values=h_values, median_gap_multiple=0.1, min_gap=char_length),
+        h_values,
+        strict=True,
     ):
         cluster_mapping[cl_idx].append(value)
     # Get horizontal delimiters from cluster mapping

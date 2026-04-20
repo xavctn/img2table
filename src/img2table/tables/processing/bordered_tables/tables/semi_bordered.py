@@ -258,11 +258,14 @@ def identify_potential_new_cells(
     return new_cells
 
 
-def update_cluster_cells(cluster: list[Cell], new_cells: list[Cell]) -> list[Cell]:
+def update_cluster_cells(
+    cluster: list[Cell], new_cells: list[Cell], char_length: float
+) -> list[Cell]:
     """
     Update cluster cells with new ones if relevant
     :param cluster: cluster of cells
     :param new_cells: list of potential new cells
+    :param char_length: average character length
     :return: list of updated cluster cells
     """
     if len(new_cells) == 0:
@@ -273,7 +276,7 @@ def update_cluster_cells(cluster: list[Cell], new_cells: list[Cell]) -> list[Cel
     final_cells = [cell for cell in dict.fromkeys(new_cells) if cell not in cluster_set]
 
     if final_cells:
-        return normalize_table_cells(cluster_cells=cluster + final_cells)
+        return normalize_table_cells(cluster_cells=cluster + final_cells, char_length=char_length)
     return cluster
 
 
@@ -314,4 +317,4 @@ def add_semi_bordered_cells(
         bottom=bottom,
     )
 
-    return update_cluster_cells(cluster=cluster, new_cells=new_cells)
+    return update_cluster_cells(cluster=cluster, new_cells=new_cells, char_length=char_length)
