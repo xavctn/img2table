@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2.tables.structured_data.model import (
+    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
         StructuredSection,
     )
 

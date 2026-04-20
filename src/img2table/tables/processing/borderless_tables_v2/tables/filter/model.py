@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from itertools import pairwise
 
+import numpy as np
+
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
@@ -9,9 +11,8 @@ from img2table.tables.processing.borderless_tables_v2._model import (
     ColumnSection,
     MergedRow,
     Whitespace,
-    identify_merged_rows,
 )
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics import (
     TableMetrics,
 )
 from img2table.tables.processing.common import compute_row_ranges
@@ -23,6 +24,7 @@ class StructuredSection:
     width: int
     char_length: float
     items: list[Cell]
+    merged_rows: list[MergedRow]
     whitespaces: list[Whitespace]
     _row_ranges: list[tuple[int, int]] | None = None
 
@@ -43,6 +45,7 @@ class StructuredSection:
             width=width,
             char_length=char_length,
             items=section.items,
+            merged_rows=section.rows,
             whitespaces=section.whitespaces,
         )
 
@@ -69,10 +72,6 @@ class StructuredSection:
     @property
     def nb_rows(self) -> int:
         return len(self.row_ranges())
-
-    @cached_property
-    def merged_rows(self) -> list[MergedRow]:
-        return identify_merged_rows(cnts=self.items)
 
     @property
     def cols(self) -> list[tuple[int, ...]]:
@@ -102,9 +101,18 @@ class StructuredSection:
         """
         if self._row_ranges is None:
             # Compute row ranges
-            self._row_ranges = compute_row_ranges(rows=self.merged_rows, y_min=self.y_min, y_max=self.y_max)
+            self._row_ranges = compute_row_ranges(
+                rows=self.merged_rows, y_min=self.y_min, y_max=self.y_max
+            )
         return self._row_ranges
 
+    @property
+    def row_height(self) -> float:
+        if self.is_structured():
+            return np.mean([y_end - y_start for y_start, y_end in self.row_ranges()])
+        return 0.0
+
+    @cached_property
     def table_score(self) -> float:
         """
         Compute weighted table confidence score.
@@ -138,19 +146,33 @@ class StructuredSection:
         Assess whether the section behaves like a table
         :return: True if the table is structured, False otherwise
         """
-        return self.table_score() >= 0.425
+        return self.table_score >= 0.425
 
-    def table(self) -> Table:
+    def table(
+        self, x_min: int | None, x_max: int | None, y_min: int | None, y_max: int | None
+    ) -> Table:
         """
         Create Table object from section
+        :param x_min: left bound for the table
+        :param x_max: right bound for the table
+        :param y_min: upper bound for the table
+        :param y_max: lower bound for the table
         :return: Table object
         """
         # Compute x delimiters
         x_delimiters = [
-            self.whitespaces[0].end,
+            x_min or self.whitespaces[0].end,
             *[(ws.start + ws.end) // 2 for ws in self.whitespaces[1:-1]],
-            self.whitespaces[-1].start,
+            x_max or self.whitespaces[-1].start,
         ]
+
+        # Compute y delimiters
+        row_delimiters = sorted(
+            {y_start for y_start, _ in self.row_ranges()}.union(
+                {y_end for _, y_end in self.row_ranges()}
+            )
+        )
+        y_delimiters = [y_min or self.y_min, *row_delimiters[1:-1], y_max or self.y_max]
 
         # Create rows
         rows = [
@@ -160,7 +182,7 @@ class StructuredSection:
                     for x_start, x_end in pairwise(x_delimiters)
                 ]
             )
-            for y_start, y_end in self.row_ranges()
+            for y_start, y_end in pairwise(y_delimiters)
         ]
 
         return Table(rows=rows)

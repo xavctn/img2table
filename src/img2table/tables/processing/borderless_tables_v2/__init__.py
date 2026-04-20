@@ -4,7 +4,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables_v2.layout import identify_image_layout
 from img2table.tables.processing.borderless_tables_v2.sections import identify_column_sections
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.model import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
     StructuredSection,
 )
 

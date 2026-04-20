@@ -1,22 +1,22 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics.columns import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics.columns import (
     compute_columns_metrics,
 )
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics.content import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics.content import (
     compute_content_layout_metrics,
 )
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics.misc import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics.misc import (
     full_text_score,
     sparsity_score,
 )
-from img2table.tables.processing.borderless_tables_v2.tables.structured_data.metrics.rows import (
+from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics.rows import (
     content_spacing_consistency,
 )
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2.tables.structured_data.model import (
+    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
         StructuredSection,
     )
 
