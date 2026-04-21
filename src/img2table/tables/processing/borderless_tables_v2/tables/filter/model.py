@@ -149,7 +149,12 @@ class StructuredSection:
         return self.table_score >= 0.425
 
     def table(
-        self, x_min: int | None, x_max: int | None, y_min: int | None, y_max: int | None
+        self,
+        x_min: int | None = None,
+        x_max: int | None = None,
+        y_min: int | None = None,
+        y_max: int | None = None,
+        ref_whitespaces: list[Whitespace] | None = None,
     ) -> Table:
         """
         Create Table object from section
@@ -157,21 +162,50 @@ class StructuredSection:
         :param x_max: right bound for the table
         :param y_min: upper bound for the table
         :param y_max: lower bound for the table
+        :param ref_whitespaces: list of reference whitespaces to follow
         :return: Table object
         """
-        # Compute x delimiters
+        # Fill reference whitespaces if not provided
+        ref_whitespaces = sorted(ref_whitespaces or self.whitespaces, key=lambda ws: ws.start)
+
+        # Compute column ranges from reference separators
+        ref_ranges = [(prv.end, nxt.start) for prv, nxt in pairwise(ref_whitespaces)]
+
+        # Keep only own whitespaces that overlap any reference whitespaces
+        kept_ws = []
+        for ws in self.whitespaces:
+            overlapping_ws = [ref_ws for ref_ws in ref_whitespaces if ws.overlaps(ref_ws)]
+            if not overlapping_ws:
+                continue
+
+            matched_ws = [ws, *overlapping_ws]
+            kept_ws.append(
+                Whitespace(
+                    start=max(item.start for item in matched_ws),
+                    end=min(item.end for item in matched_ws),
+                    start_bound=all(item.start_bound for item in matched_ws),
+                    end_bound=all(item.end_bound for item in matched_ws),
+                )
+            )
+
+        # Get created horizontal delimiters
         x_delimiters = [
-            x_min or self.whitespaces[0].end,
-            *[(ws.start + ws.end) // 2 for ws in self.whitespaces[1:-1]],
-            x_max or self.whitespaces[-1].start,
+            x_min or kept_ws[0].end,
+            *[(ws.start + ws.end) // 2 for ws in kept_ws[1:-1]],
+            x_max or kept_ws[-1].start,
+        ]
+
+        # Compute relevant column ranges (duplicate multiple times the range if it overlaps with multiple reference ranges)
+        column_ranges = [
+            (x_start, x_end)
+            for x_start, x_end in pairwise(x_delimiters)
+            for _ in range(
+                sum(1 for start, end in ref_ranges if min(x_end, end) - max(x_start, start) > 0)
+            )
         ]
 
         # Compute y delimiters
-        row_delimiters = sorted(
-            {y_start for y_start, _ in self.row_ranges()}.union(
-                {y_end for _, y_end in self.row_ranges()}
-            )
-        )
+        row_delimiters = sorted({y for rng in self.row_ranges() for y in rng})
         y_delimiters = [y_min or self.y_min, *row_delimiters[1:-1], y_max or self.y_max]
 
         # Create rows
@@ -179,7 +213,7 @@ class StructuredSection:
             Row(
                 cells=[
                     Cell(x1=x_start, y1=y_start, x2=x_end, y2=y_end)
-                    for x_start, x_end in pairwise(x_delimiters)
+                    for x_start, x_end in column_ranges
                 ]
             )
             for y_start, y_end in pairwise(y_delimiters)

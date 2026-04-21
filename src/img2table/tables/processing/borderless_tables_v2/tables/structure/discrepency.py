@@ -1,43 +1,13 @@
 from itertools import pairwise
 
 from img2table.tables import find_components
-from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables_v2._model import ColumnSection
 from img2table.tables.processing.borderless_tables_v2.tables.filter.model import StructuredSection
 
 
-# TODO: Handle varying number of columns -> creating merged rows or discarding separators in non structured data
-def _section_group_to_table(section_group: list[StructuredSection]) -> Table:
-    """
-    Create table from sections
-    :param column_sections: list of structued sections
-    :return: created table
-    """
-    # Compute vertical separators
-    separators = [
-        min(sec.y_min for sec in section_group),
-        *[(prv.y_max + nxt.y_min) // 2 for prv, nxt in pairwise(section_group)],
-        max(sec.y_max for sec in section_group),
-    ]
-
-    # Compute all tables
-    sections_tbs = [
-        sec.table(
-            x_min=min(sec.x_min for sec in section_group),
-            x_max=max(sec.x_max for sec in section_group),
-            y_min=y_min,
-            y_max=y_max,
-        )
-        for sec, (y_min, y_max) in zip(section_group, pairwise(separators), strict=True)
-    ]
-
-    # Create resulting table
-    return Table(rows=[row for sec_tb in sections_tbs for row in sec_tb.items])
-
-
 def bridge_small_discrepencies(
     column_sections: list[ColumnSection], width: int, height: int, char_length: float
-) -> list[Table]:
+) -> list[list[StructuredSection]]:
     """
     Create groups of tables by bridging small discrepencies
     :param column_sections: list of column sections
@@ -85,6 +55,8 @@ def bridge_small_discrepencies(
             if prv.nb_columns < nxt.nb_columns
             else (nxt.whitespaces, prv.whitespaces)
         )
+
+        # If all whitespaces match (except one), the sections are likely connected
         if sum(
             1
             for ws_l in ws_large
@@ -93,9 +65,7 @@ def bridge_small_discrepencies(
             edges.append({idx, idx + 1})
 
     # Identify groups of related sections that form a table
-    table_groups = [
+    return [
         [structured_sections[idx] for idx in sorted(cluster)]
         for cluster in find_components(edges=edges)
     ]
-
-    return [_section_group_to_table(section_group=group) for group in table_groups]

@@ -57,6 +57,9 @@ class Whitespace:
             return True
         return self.end_bound and other.end_bound
 
+    def overlaps(self, other: "Whitespace") -> bool:
+        return min(self.end, other.end) - max(self.start, other.start) >= 0
+
     def __hash__(self) -> int:
         return hash((self.start, self.end, self.start_bound, self.end_bound))
 

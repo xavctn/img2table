@@ -4,9 +4,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables_v2.layout import identify_image_layout
 from img2table.tables.processing.borderless_tables_v2.sections import identify_column_sections
-from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
-    StructuredSection,
-)
+from img2table.tables.processing.borderless_tables_v2.tables import identify_tables
 
 
 def extract_borderless_tables(
@@ -35,14 +33,11 @@ def extract_borderless_tables(
         column_sections = identify_column_sections(layout_region=region, min_width=char_length)
 
         # Identify tables
-        tables += [
-            struct_section.table()
-            for section in column_sections
-            if (
-                struct_section := StructuredSection.from_section(
-                    section=section, width=w, height=h, char_length=char_length
-                )
-            ).is_structured()
-        ]
+        tables += identify_tables(
+            column_sections=column_sections,
+            char_length=char_length,
+            height=h,
+            width=w,
+        )
 
     return tables
