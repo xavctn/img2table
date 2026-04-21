@@ -29,6 +29,7 @@ class TableMetrics:
     min_column_alignment: float
     spacing_consistency: float
     row_pattern_consistency: float
+    nonsense_cell_ratio: float
     sparsity: float
     full_text: float
 
@@ -52,9 +53,12 @@ class TableMetrics:
         # Compute metrics
         mean_column_alignment, min_column_alignment = compute_columns_metrics(section=section)
         spacing_consistency = content_spacing_consistency(section=section)
-        presence_ratios, connectivity, row_pattern_consistency = compute_content_layout_metrics(
-            section=section
-        )
+        (
+            presence_ratios,
+            connectivity,
+            row_pattern_consistency,
+            nonsense_cell_ratio,
+        ) = compute_content_layout_metrics(section=section)
         full_text = full_text_score(section=section)
         sparsity = sparsity_score(section=section)
 
@@ -65,6 +69,7 @@ class TableMetrics:
             min_column_alignment=min_column_alignment,
             spacing_consistency=spacing_consistency,
             row_pattern_consistency=row_pattern_consistency,
+            nonsense_cell_ratio=nonsense_cell_ratio,
             sparsity=sparsity,
             full_text=full_text,
         )

@@ -1,20 +1,22 @@
 from collections import Counter
 from typing import TYPE_CHECKING
 
+from img2table.tables.processing.borderless_tables_v2._model import identify_merged_rows
+
 if TYPE_CHECKING:
     from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
         StructuredSection,
     )
 
 
-def _occupancy_matrix(section: "StructuredSection") -> list[list[bool]]:
+def _cell_content_map(section: "StructuredSection") -> list[list[list]]:
     """
     Assign each row item to the column containing its x-center.
     :param section: The structured section to compute the metric for.
-    :return: row/column occupancy matrix
+    :return: row/column inferred cell contents
     """
     # Initialize matrix
-    matrix = [[False] * section.nb_columns for _ in section.row_ranges()]
+    matrix = [[[] for _ in range(section.nb_columns)] for _ in section.row_ranges()]
     if section.nb_columns == 0:
         return matrix
 
@@ -34,10 +36,19 @@ def _occupancy_matrix(section: "StructuredSection") -> list[list[bool]]:
             center = (cell.x1 + cell.x2) / 2
             for col_idx, (start, end) in enumerate(section.cols):
                 if start <= center <= end:
-                    matrix[row_idx][col_idx] = True
+                    matrix[row_idx][col_idx].append(cell)
                     break
 
     return matrix
+
+
+def _occupancy_matrix(cell_content_map: list[list[list]]) -> list[list[bool]]:
+    """
+    Convert inferred cell contents into an occupancy matrix.
+    :param cell_content_map: row/column inferred cell contents
+    :return: row/column occupancy matrix
+    """
+    return [[bool(cell_items) for cell_items in row] for row in cell_content_map]
 
 
 def column_presence_ratios(
@@ -106,20 +117,69 @@ def row_pattern_consistency_score(occupancy_matrix: list[list[bool]]) -> float:
     return dominant_ratio
 
 
+def nonsense_cell_ratio(section: "StructuredSection", cell_content_map: list[list[list]]) -> float:
+    """
+    Measure the share of occupied inferred cells whose content looks unlike regular text.
+    :param section: The structured section to compute the metric for.
+    :param cell_content_map: row/column inferred cell contents
+    :return: score between 0 and 1
+    """
+    suspicious_cells, occupied_cells = 0, 0
+    row_ranges = section.row_ranges()
+
+    for row_idx, row in enumerate(cell_content_map):
+        y_start, y_end = row_ranges[row_idx]
+        cell_height = max(1, y_end - y_start)
+
+        for col_idx, cell_items in enumerate(row):
+            if not cell_items:
+                continue
+
+            occupied_cells += 1
+            col_start, col_end = section.cols[col_idx]
+            cell_width = max(1, col_end - col_start)
+
+            merged_rows = identify_merged_rows(cnts=cell_items)
+            vertical_span = (
+                max(item.y2 for item in cell_items) - min(item.y1 for item in cell_items)
+            ) / cell_height
+            small_fragment_ratio = sum(
+                item.width <= 1.5 * section.char_length and item.height <= 1.25 * section.char_length
+                for item in cell_items
+            ) / len(cell_items)
+            bbox_fill_ratio = min(
+                sum(item.area for item in cell_items),
+                cell_width * cell_height,
+            ) / (cell_width * cell_height)
+
+            if len(cell_items) < 2:
+                continue
+            if len(merged_rows) < 2 and vertical_span < 0.5:
+                continue
+            if small_fragment_ratio < 0.3 and bbox_fill_ratio < 0.3:
+                continue
+
+            suspicious_cells += 1
+
+    return suspicious_cells / occupied_cells if occupied_cells else 0.0
+
+
 def compute_content_layout_metrics(
     section: "StructuredSection",
-) -> tuple[list[float], float, float]:
+) -> tuple[list[float], float, float, float]:
     """
     Compute content layout / consistency metrics.
     :param section: The structured section to compute metrics for.
     :return: A tuple of the mean and minimum alignment score.
     """
-    # Compute occupancy matrix
-    occupancy_matrix = _occupancy_matrix(section=section)
+    # Compute inferred cell contents and occupancy matrix
+    cell_content_map = _cell_content_map(section=section)
+    occupancy_matrix = _occupancy_matrix(cell_content_map=cell_content_map)
 
     # Compute content layout metrics
     presence_ratios = column_presence_ratios(section=section, occupancy_matrix=occupancy_matrix)
     connectivity = network_connectivity_score(section=section, occupancy_matrix=occupancy_matrix)
     row_pattern_consistency = row_pattern_consistency_score(occupancy_matrix=occupancy_matrix)
+    cell_nonsense_ratio = nonsense_cell_ratio(section=section, cell_content_map=cell_content_map)
 
-    return presence_ratios, connectivity, row_pattern_consistency
+    return presence_ratios, connectivity, row_pattern_consistency, cell_nonsense_ratio
