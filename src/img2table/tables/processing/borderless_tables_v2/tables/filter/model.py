@@ -113,7 +113,7 @@ class StructuredSection:
         return 0.0
 
     @cached_property
-    def table_score(self) -> float:
+    def table_score(self) -> float:  # noqa: PLR0911
         """
         Compute weighted table confidence score.
         :return: score between 0 and 1
@@ -130,6 +130,9 @@ class StructuredSection:
             return 0.0
         if sum(ratio >= 0.5 for ratio in metrics.presence_ratios) < 2:
             # Insufficient column presence
+            return 0.0
+        if metrics.full_text >= 0.85 and np.mean([it.width for it in self.items]) >= 40:
+            # Most likely text columns
             return 0.0
         if metrics.network_connectivity < 0.35:
             # Weak network connectivity
