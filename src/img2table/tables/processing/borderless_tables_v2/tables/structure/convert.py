@@ -17,8 +17,28 @@ def _reference_column_separators(section_group: list[StructuredSection]) -> list
 
     if len(ref_sections) == 0:
         return []
-    if len(ref_sections) == 1:
+    if len(ref_sections) == len(section_group) == 1:
         return ref_sections[0].whitespaces
+    if len(ref_sections) == 1:
+        # Try to reduce reference whitespaces based on other "non structured" sections
+        unit_other_ws = [
+            ws
+            for sec in section_group
+            if not sec.is_structured()
+            for ws in sec.whitespaces
+            if sum(ws.overlaps(ref_ws) for ref_ws in ref_sections[0].whitespaces) == 1
+        ]
+        ref_whitespaces: list[Whitespace] = []
+        for ref_ws in ref_sections[0].whitespaces:
+            # Get matching whitespaces from other sections
+            matching_ws = [other_ws for other_ws in unit_other_ws if other_ws.overlaps(ref_ws)]
+            ref_whitespaces.append(
+                Whitespace(
+                    start=max((ref_ws.start, *(ws.start for ws in matching_ws))),
+                    end=min((ref_ws.end, *(ws.end for ws in matching_ws))),
+                )
+            )
+        return ref_whitespaces
 
     # Get unit whitespaces and cluster them
     unit_ws = [

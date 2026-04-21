@@ -341,7 +341,7 @@ def detect_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
                 continue
 
             length = row - prev_cc_position - 1
-            if length > h / 20:
+            if length > h / 10:
                 for id_row in range(prev_cc_position + 1, row):
                     for idx in range(min_width):
                         mask_obstacles[id_row][col + idx] = 1
@@ -351,7 +351,7 @@ def detect_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
 
         # Check ending
         length = row + 1 - prev_cc_position - 1
-        if length > h / 20:
+        if length > h / 10:
             for id_row in range(prev_cc_position + 1, row + 1):
                 for idx in range(min_width):
                     mask_obstacles[id_row][col + idx] = 1

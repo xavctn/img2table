@@ -30,7 +30,7 @@ def bridge_small_discrepencies(
     edges = [{idx} for idx, struct in enumerate(structured_sections) if struct.is_structured()]
 
     for idx, (prv, nxt) in enumerate(pairwise(structured_sections)):
-        if min(prv.nb_columns, nxt.nb_columns) < 2:
+        if min(prv.nb_columns, nxt.nb_columns) < 3:
             # Too few columns
             continue
         if max(prv.nb_columns, nxt.nb_columns) - min(prv.nb_columns, nxt.nb_columns) > 1:
