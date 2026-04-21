@@ -6,7 +6,7 @@ from img2table.tables.processing.borderless_tables_v2._model import ColumnSectio
 from img2table.tables.processing.borderless_tables_v2.tables.filter.model import StructuredSection
 
 
-# TODO: Handle varying number of columns -> creating merged rows or discarding separators
+# TODO: Handle varying number of columns -> creating merged rows or discarding separators in non structured data
 def _section_group_to_table(section_group: list[StructuredSection]) -> Table:
     """
     Create table from sections
