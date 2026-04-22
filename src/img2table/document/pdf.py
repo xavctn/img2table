@@ -1,7 +1,9 @@
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
+import numpy as np  # noqa: TC002
 import pypdfium2
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
@@ -26,7 +28,7 @@ class PDF(Document):
         if self._images is not None:
             return self._images
 
-        doc = pypdfium2.PdfDocument(input=self.bytes)
+        doc = pypdfium2.PdfDocument(input=self.file_bytes)
 
         # Get all images
         images = []
@@ -48,8 +50,8 @@ class PDF(Document):
         return images
 
     def get_table_content(
-        self, tables: dict[int, list["Table"]], ocr: Optional["OCRInstance"], min_confidence: int
-    ) -> dict[int, list["ExtractedTable"]]:
+        self, tables: dict[int, list[Table]], ocr: OCRInstance | None, min_confidence: int
+    ) -> dict[int, list[ExtractedTable]]:
         if not self._rotated and self.pdf_text_extraction:
             # Get pages where tables have been detected
             table_pages = [
@@ -60,7 +62,7 @@ class PDF(Document):
             if table_pages:
                 # Create PDF object for OCR
                 pdf_ocr = PDF(
-                    src=self.bytes, pages=table_pages, _images=images, _rotated=self._rotated
+                    src=self.file_bytes, pages=table_pages, _images=images, _rotated=self._rotated
                 )
 
                 # Try to get OCRDataframe from PDF

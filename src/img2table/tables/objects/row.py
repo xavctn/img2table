@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
 from itertools import pairwise
@@ -49,7 +51,7 @@ class Row(TableObject):
         """
         return all((x.y1 == self.y1) and (x.y2 == self.y2) for x in self.items)
 
-    def add_cells(self, cells: Cell | list[Cell]) -> "Row":
+    def add_cells(self, cells: Cell | list[Cell]) -> Row:
         """
         Add cells to existing row items
         :param cells: Cell object or list
@@ -62,7 +64,7 @@ class Row(TableObject):
 
         return self
 
-    def split_in_rows(self, vertical_delimiters: list[int]) -> list["Row"]:
+    def split_in_rows(self, vertical_delimiters: list[int]) -> list[Row]:
         """
         Split Row object into multiple objects based on vertical delimiters values
         :param vertical_delimiters: list of vertical delimiters values

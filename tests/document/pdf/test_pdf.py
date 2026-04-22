@@ -36,7 +36,7 @@ def test_load_pdf() -> None:
     with Path("test_data/test.pdf").open("rb") as f:
         pdf_from_bytesio = PDF(src=BytesIO(f.read()))
 
-    assert pdf_from_path.bytes == pdf_from_bytes.bytes == pdf_from_bytesio.bytes
+    assert pdf_from_path.file_bytes == pdf_from_bytes.file_bytes == pdf_from_bytesio.file_bytes
 
     assert next(iter(pdf_from_path.images)).shape == (2200, 1700, 3)
 

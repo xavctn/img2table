@@ -4,14 +4,20 @@ Nikolaou et al., "A segmentation framework for historical machine-printed docume
 Image and Vision Computing 28 (2010) 590-604.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cv2
 import numpy as np
 from numba import njit
 
 from img2table.tables import find_components
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
-from img2table.tables.objects.table import Table
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.line import Line
+    from img2table.tables.objects.table import Table
 
 
 def _mask_detected_lines(

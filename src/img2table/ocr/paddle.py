@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import warnings
 from contextlib import suppress
 from importlib.metadata import version
@@ -7,13 +9,14 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING, Any
 
 import cv2
-import numpy as np
 import polars as pl
 
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from img2table.document.base import Document, MockDocument
 
 
@@ -70,7 +73,7 @@ class PaddleOCR2(OCRInstance):
             else []
         )
 
-    def content(self, document: "Document | MockDocument") -> list[list]:
+    def content(self, document: Document | MockDocument) -> list[list]:
         # Get OCR of all images
         return [self.hocr(image=image) for image in document.images]
 
@@ -134,7 +137,7 @@ class PaddleOCR3(OCRInstance):
 
         self.ocr = Ocr(**kw)
 
-    def content(self, document: "Document | MockDocument") -> list[dict]:
+    def content(self, document: Document | MockDocument) -> list[dict]:
         ocrs = self.ocr.predict(input=document.images)
         return [
             {
@@ -208,7 +211,7 @@ class PaddleOCR(OCRInstance):
         else:
             self.instance = PaddleOCR2(lang=lang, kw=kw)
 
-    def content(self, document: "Document | MockDocument") -> Any:
+    def content(self, document: Document | MockDocument) -> Any:
         return self.instance.content(document=document)
 
     def to_ocr_dataframe(self, content: Any) -> OCRDataframe | None:

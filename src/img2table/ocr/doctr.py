@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import polars as pl
@@ -34,11 +36,11 @@ class DocTR(OCRInstance):
 
         self.model = ocr_predictor(**kw)
 
-    def content(self, document: "Document | MockDocument") -> "doctr.io.elements.Document":
+    def content(self, document: Document | MockDocument) -> doctr.io.elements.Document:
         # Get OCR of all images
         return self.model(document.images)
 
-    def to_ocr_dataframe(self, content: "doctr.io.elements.Document") -> OCRDataframe | None:
+    def to_ocr_dataframe(self, content: doctr.io.elements.Document) -> OCRDataframe | None:
         """
         Convert docTR Document object to OCRDataframe object
         :param content: docTR Document object

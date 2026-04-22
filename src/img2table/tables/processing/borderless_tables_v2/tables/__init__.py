@@ -1,11 +1,17 @@
-from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables_v2._model import ColumnSection
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from img2table.tables.processing.borderless_tables_v2.tables.structure.convert import (
     section_group_to_table,
 )
 from img2table.tables.processing.borderless_tables_v2.tables.structure.discrepency import (
     bridge_small_discrepencies,
 )
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.table import Table
+    from img2table.tables.processing.borderless_tables_v2._model import ColumnSection
 
 
 def identify_tables(

@@ -1,14 +1,18 @@
-from collections.abc import Iterator
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
 import polars as pl
 
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    import numpy as np
+
     from img2table.document.base import Document, MockDocument
 
 
@@ -89,27 +93,23 @@ class TextractOCR(OCRInstance):
                     "value": block.get("Text"),
                     "confidence": round(block.get("Confidence", 0)),
                     "x1": round(
-                        min(el.get("X") for el in block.get("Geometry").get("Polygon"))
-                        * width
+                        min(el.get("X") for el in block.get("Geometry").get("Polygon")) * width
                     ),
                     "x2": round(
-                        max(el.get("X") for el in block.get("Geometry").get("Polygon"))
-                        * width
+                        max(el.get("X") for el in block.get("Geometry").get("Polygon")) * width
                     ),
                     "y1": round(
-                        min(el.get("Y") for el in block.get("Geometry").get("Polygon"))
-                        * height
+                        min(el.get("Y") for el in block.get("Geometry").get("Polygon")) * height
                     ),
                     "y2": round(
-                        max(el.get("Y") for el in block.get("Geometry").get("Polygon"))
-                        * height
+                        max(el.get("Y") for el in block.get("Geometry").get("Polygon")) * height
                     ),
                 }
                 word_elements.append(d_block)
 
         return word_elements
 
-    def content(self, document: "Document | MockDocument") -> Iterator[list[dict]]:
+    def content(self, document: Document | MockDocument) -> Iterator[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object

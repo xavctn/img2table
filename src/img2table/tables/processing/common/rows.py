@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import Counter
 from itertools import pairwise
 from typing import TYPE_CHECKING
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def _evaluate_key_separation_value(
-    rows: list["MergedRow"],
+    rows: list[MergedRow],
     ref_separation: float,
     y_min: int,
     y_max: int,
@@ -58,7 +60,7 @@ def _evaluate_key_separation_value(
 
 
 def compute_row_ranges(
-    rows: list["MergedRow"], y_min: int, y_max: int, enforce_gap: bool = False
+    rows: list[MergedRow], y_min: int, y_max: int, enforce_gap: bool = False
 ) -> list[tuple[int, int]]:
     """
     Identify vertical position ranges corresponding to rows

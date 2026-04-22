@@ -1,6 +1,8 @@
-from img2table.tables.objects.cell import Cell
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from img2table.tables.objects.line import Line
-from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
 from img2table.tables.processing.borderless_tables_v2._model import (
@@ -8,6 +10,10 @@ from img2table.tables.processing.borderless_tables_v2._model import (
     identify_merged_rows,
 )
 from img2table.tables.processing.common import compute_row_ranges
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.table import Table
 
 
 def implicit_rows_lines(table: Table, contours: list[Cell]) -> list[Line]:

@@ -1,6 +1,7 @@
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
-from img2table.tables.objects.table import Table
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from img2table.tables.processing.bordered_tables.tables.cell_clustering import (
     cluster_cells_in_tables,
 )
@@ -9,6 +10,11 @@ from img2table.tables.processing.bordered_tables.tables.table_creation import (
     cluster_to_table,
     normalize_table_cells,
 )
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.line import Line
+    from img2table.tables.objects.table import Table
 
 
 def get_tables(

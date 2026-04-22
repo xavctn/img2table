@@ -1,7 +1,13 @@
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from img2table.tables.processing.bordered_tables.cells.deduplication import deduplicate_cells
 from img2table.tables.processing.bordered_tables.cells.identification import get_cells_dataframe
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.line import Line
 
 
 def get_cells(horizontal_lines: list[Line], vertical_lines: list[Line]) -> list[Cell]:

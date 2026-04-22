@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -162,7 +164,7 @@ class Table(TableObject):
             for id_row in range(self.nb_rows):
                 self.items[id_row].items.pop(idx)
 
-    def get_content(self, ocr_df: "OCRDataframe", min_confidence: int = 50) -> "Table":
+    def get_content(self, ocr_df: OCRDataframe, min_confidence: int = 50) -> Table:
         """
         Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
         :param ocr_df: OCRDataframe object
@@ -202,7 +204,7 @@ class Table(TableObject):
         )
         return ExtractedTable(bbox=bbox, title=self.title, content=content)
 
-    def overlaps(self, other: "Table", pct: float = 0.5) -> bool:
+    def overlaps(self, other: Table, pct: float = 0.5) -> bool:
         """
         Check if this table overlaps with another table.
         :param other: The other table to check for overlap.

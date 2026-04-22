@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 import polars as pl
 
-from img2table.ocr.data import OCRDataframe
-
 if TYPE_CHECKING:
     from img2table.document.base import Document, MockDocument
+    from img2table.ocr.data import OCRDataframe
 
 
 class OCRInstance:
@@ -24,13 +25,13 @@ class OCRInstance:
             "y2": pl.Int64,
         }
 
-    def content(self, document: "Document | MockDocument") -> Any:
+    def content(self, document: Document | MockDocument) -> Any:
         raise NotImplementedError
 
     def to_ocr_dataframe(self, content: Any) -> OCRDataframe | None:
         raise NotImplementedError
 
-    def of(self, document: "Document | MockDocument") -> OCRDataframe | None:
+    def of(self, document: Document | MockDocument) -> OCRDataframe | None:
         """
         Extract text from Document to OCRDataframe object
         :param document: Document object

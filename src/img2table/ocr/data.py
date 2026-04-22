@@ -1,16 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import polars as pl
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.table import Table
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.table import Table
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class OCRDataframe:
     df: pl.DataFrame
 
-    def page(self, page_number: int = 0) -> "OCRDataframe":
+    def page(self, page_number: int = 0) -> OCRDataframe:
         # Filter dataframe on specific page
         df_page = self.df.filter(pl.col("page") == page_number)
         return OCRDataframe(df=df_page)

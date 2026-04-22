@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import Counter
 from typing import TYPE_CHECKING
 
@@ -9,7 +11,7 @@ if TYPE_CHECKING:
     )
 
 
-def _cell_content_map(section: "StructuredSection") -> list[list[list]]:
+def _cell_content_map(section: StructuredSection) -> list[list[list]]:
     """
     Assign each row item to the column containing its x-center.
     :param section: The structured section to compute the metric for.
@@ -52,7 +54,7 @@ def _occupancy_matrix(cell_content_map: list[list[list]]) -> list[list[bool]]:
 
 
 def column_presence_ratios(
-    section: "StructuredSection", occupancy_matrix: list[list[bool]]
+    section: StructuredSection, occupancy_matrix: list[list[bool]]
 ) -> list[float]:
     """
     Fraction of inferred rows containing content for each column.
@@ -70,7 +72,7 @@ def column_presence_ratios(
 
 
 def network_connectivity_score(
-    section: "StructuredSection", occupancy_matrix: list[list[bool]]
+    section: StructuredSection, occupancy_matrix: list[list[bool]]
 ) -> float:
     """
     Measure how many occupied cells belong to a coherent row/column network.
@@ -117,7 +119,7 @@ def row_pattern_consistency_score(occupancy_matrix: list[list[bool]]) -> float:
     return dominant_ratio
 
 
-def nonsense_cell_ratio(section: "StructuredSection", cell_content_map: list[list[list]]) -> float:
+def nonsense_cell_ratio(section: StructuredSection, cell_content_map: list[list[list]]) -> float:
     """
     Measure the share of occupied inferred cells whose content looks unlike regular text.
     :param section: The structured section to compute the metric for.
@@ -144,7 +146,8 @@ def nonsense_cell_ratio(section: "StructuredSection", cell_content_map: list[lis
                 max(item.y2 for item in cell_items) - min(item.y1 for item in cell_items)
             ) / cell_height
             small_fragment_ratio = sum(
-                item.width <= 1.5 * section.char_length and item.height <= 1.25 * section.char_length
+                item.width <= 1.5 * section.char_length
+                and item.height <= 1.25 * section.char_length
                 for item in cell_items
             ) / len(cell_items)
             bbox_fill_ratio = min(
@@ -165,7 +168,7 @@ def nonsense_cell_ratio(section: "StructuredSection", cell_content_map: list[lis
 
 
 def compute_content_layout_metrics(
-    section: "StructuredSection",
+    section: StructuredSection,
 ) -> tuple[list[float], float, float, float]:
     """
     Compute content layout / consistency metrics.

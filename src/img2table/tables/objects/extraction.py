@@ -1,8 +1,11 @@
-from collections import OrderedDict
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
+    from collections import OrderedDict
+
     import pandas as pd
     from xlsxwriter.format import Format
     from xlsxwriter.worksheet import Worksheet
@@ -57,7 +60,7 @@ class CellSpan:
     def html(self) -> str:
         return f'<td colspan="{self.colspan}" rowspan="{self.rowspan}">{self.html_value}</td>'
 
-    def html_cell_span(self) -> list["CellSpan"]:
+    def html_cell_span(self) -> list[CellSpan]:
         if self.colspan > 1 and self.rowspan > 1:
             # Check largest coordinate and split
             if self.colspan > self.rowspan:
@@ -169,7 +172,7 @@ class ExtractedTable:
     content: OrderedDict[int, list[TableCell]]
 
     @property
-    def df(self) -> "pd.DataFrame":
+    def df(self) -> pd.DataFrame:
         """
         Create pandas DataFrame representation of the table
         :return: pandas DataFrame containing table data
@@ -220,7 +223,7 @@ class ExtractedTable:
 
         return BeautifulSoup(table_html, "html.parser").prettify().strip()
 
-    def _to_worksheet(self, sheet: "Worksheet", cell_fmt: "Format | None" = None) -> None:
+    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Format | None = None) -> None:
         """
         Populate xlsx worksheet with table data
         :param sheet: xlsxwriter Worksheet

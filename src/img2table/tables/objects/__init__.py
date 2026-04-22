@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -12,7 +14,7 @@ class CoordinateProvider(Protocol):
 @dataclass
 class TableObject:
     def bbox(
-        self: "CoordinateProvider", margin: int = 0, height_margin: int = 0, width_margin: int = 0
+        self: CoordinateProvider, margin: int = 0, height_margin: int = 0, width_margin: int = 0
     ) -> tuple[int, int, int, int]:
         """
         Return bounding box corresponding to the object
@@ -35,11 +37,11 @@ class TableObject:
         return bbox
 
     @property
-    def height(self: "CoordinateProvider") -> int:
+    def height(self: CoordinateProvider) -> int:
         return self.y2 - self.y1
 
     @property
-    def width(self: "CoordinateProvider") -> int:
+    def width(self: CoordinateProvider) -> int:
         return self.x2 - self.x1
 
     @property

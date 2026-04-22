@@ -30,7 +30,7 @@ def test_load_image() -> None:
     with Path("test_data/test.png").open("rb") as f:
         img_from_bytesio = Image(src=BytesIO(f.read()))
 
-    assert img_from_path.bytes == img_from_bytes.bytes == img_from_bytesio.bytes
+    assert img_from_path.file_bytes == img_from_bytes.file_bytes == img_from_bytesio.file_bytes
 
     assert next(iter(img_from_path.images)).shape == (417, 1365, 3)
 

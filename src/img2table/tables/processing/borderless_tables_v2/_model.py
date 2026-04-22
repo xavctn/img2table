@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from img2table.tables.objects import TableObject
-from img2table.tables.objects.cell import Cell
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
 
 
 @dataclass
@@ -52,12 +57,12 @@ class Whitespace:
     def width(self) -> int:
         return self.end - self.start
 
-    def matching_bound(self, other: "Whitespace") -> bool:
+    def matching_bound(self, other: Whitespace) -> bool:
         if self.start_bound and other.start_bound:
             return True
         return self.end_bound and other.end_bound
 
-    def overlaps(self, other: "Whitespace") -> bool:
+    def overlaps(self, other: Whitespace) -> bool:
         return min(self.end, other.end) - max(self.start, other.start) >= 0
 
     def __hash__(self) -> int:
@@ -95,7 +100,7 @@ class ColumnSection(ItemHolder):
     rows: list[MergedRow] = field(default_factory=list, repr=False)
     whitespaces: list[Whitespace] = field(default_factory=list)
 
-    def update(self, row: MergedRow, whitespaces: list[Whitespace]) -> "ColumnSection":
+    def update(self, row: MergedRow, whitespaces: list[Whitespace]) -> ColumnSection:
         self.items += row.items
         self.rows += [row]
         self.whitespaces = whitespaces
@@ -124,7 +129,7 @@ class LayoutRegion(TableObject):
     contours: list[Cell] = field(default_factory=list, repr=False)
 
     @classmethod
-    def build(cls, x1: int, y1: int, x2: int, y2: int, contours: list[Cell]) -> "LayoutRegion":
+    def build(cls, x1: int, y1: int, x2: int, y2: int, contours: list[Cell]) -> LayoutRegion:
         return cls(
             x1=x1,
             y1=y1,

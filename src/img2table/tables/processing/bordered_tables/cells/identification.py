@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 from numba import njit
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.line import Line
 
 
 @njit("int64[:,:](int64[:,:],int64[:,:])", cache=True, fastmath=True)

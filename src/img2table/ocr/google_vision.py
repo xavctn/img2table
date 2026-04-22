@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import binascii
 import os
@@ -150,7 +152,7 @@ class VisionEndpointContent(VisionContent):
             response=response, page=page, width=img.shape[1], height=img.shape[0]
         )
 
-    def get_content(self, document: "Document | MockDocument") -> list[list[dict]]:
+    def get_content(self, document: Document | MockDocument) -> list[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -184,7 +186,7 @@ class VisionAPIContent(VisionContent):
 
     @staticmethod
     def map_response(
-        response: "vision_v1.types.BatchAnnotateImagesResponse", shapes: list[tuple[int, int]]
+        response: vision_v1.types.BatchAnnotateImagesResponse, shapes: list[tuple[int, int]]
     ) -> list[list[dict]]:
         """
         Extract data from API endpoint response object
@@ -256,7 +258,7 @@ class VisionAPIContent(VisionContent):
 
         return elements
 
-    def get_content(self, document: "Document | MockDocument") -> list[list[dict]]:
+    def get_content(self, document: Document | MockDocument) -> list[list[dict]]:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -322,7 +324,7 @@ class VisionOCR(OCRInstance):
         else:
             raise ValueError("No credentials or API key provided")
 
-    def content(self, document: "Document | MockDocument") -> list[list[dict]]:
+    def content(self, document: Document | MockDocument) -> list[list[dict]]:
         return self.content_getter.get_content(document=document)
 
     def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe | None:

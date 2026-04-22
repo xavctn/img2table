@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from img2table.tables.processing.borderless_tables_v2._model import identify_merged_rows
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     )
 
 
-def full_text_score(section: "StructuredSection") -> float:
+def full_text_score(section: StructuredSection) -> float:
     """
     Identify tables where content occupies the entire span of columns
     :param section: The structured section to compute the metric for.
@@ -25,7 +27,7 @@ def full_text_score(section: "StructuredSection") -> float:
     return nb_full_rows / nb_rows if nb_rows else 0.0
 
 
-def sparsity_score(section: "StructuredSection") -> float:
+def sparsity_score(section: StructuredSection) -> float:
     """
     Compute table sparsity score
     :param section: The structured section to compute the metric for.

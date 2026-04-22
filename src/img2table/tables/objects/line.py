@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from typing import Any
@@ -35,7 +37,7 @@ class Line(TableObject):
         return self.angle % 180 == 90
 
     @property
-    def dict(self) -> dict[str, Any]:
+    def dict_repr(self) -> dict[str, Any]:
         return {
             "x1": self.x1,
             "x2": self.x2,
@@ -47,10 +49,10 @@ class Line(TableObject):
         }
 
     @property
-    def transpose(self) -> "Line":
+    def transpose(self) -> Line:
         return Line(x1=self.y1, y1=self.x1, x2=self.y2, y2=self.x2, thickness=self.thickness)
 
-    def reprocess(self) -> "Line":
+    def reprocess(self) -> Line:
         # Reallocate coordinates in proper order
         _x1 = min(self.x1, self.x2)
         _x2 = max(self.x1, self.x2)

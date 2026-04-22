@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import pairwise
@@ -31,7 +33,7 @@ class StructuredSection:
     @classmethod
     def from_section(
         cls, section: ColumnSection, width: int, height: int, char_length: float
-    ) -> "StructuredSection":
+    ) -> StructuredSection:
         """
         Create a StructuredSection from a ColumnSection.
         :param section: the column section to convert
@@ -131,7 +133,10 @@ class StructuredSection:
         if sum(ratio >= 0.5 for ratio in metrics.presence_ratios) < 2:
             # Insufficient column presence
             return 0.0
-        if metrics.full_text >= 2 / 3 and np.mean([it.width for it in self.items]) >= 30 * self.char_length:
+        if (
+            metrics.full_text >= 2 / 3
+            and np.mean([it.width for it in self.items]) >= 30 * self.char_length
+        ):
             # Most likely text columns
             return 0.0
         if metrics.network_connectivity < 0.35:

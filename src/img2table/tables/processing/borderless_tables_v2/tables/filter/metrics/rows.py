@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
@@ -9,7 +11,7 @@ if TYPE_CHECKING:
     )
 
 
-def content_spacing_consistency(section: "StructuredSection") -> float:
+def content_spacing_consistency(section: StructuredSection) -> float:
     """
     Check if vertical spacing between content rows is consistent
     :param section: The structured section to compute the metric for.

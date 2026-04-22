@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from img2table.tables.objects.cell import Cell
 from img2table.tables.processing.borderless_tables_v2._model import identify_merged_rows
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2.tables.structured_data.model import (
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
         StructuredSection,
     )
 
@@ -81,7 +83,7 @@ def _col_alignment_score(col: list[Cell], char_length: float, width: int) -> flo
     return max(0.0, score)
 
 
-def compute_columns_metrics(section: "StructuredSection") -> tuple[float, float]:
+def compute_columns_metrics(section: StructuredSection) -> tuple[float, float]:
     """
     Compute the column alignment metric for a structured section.
     :param section: The structured section to compute the metric for.

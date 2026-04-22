@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.table import Table
 from img2table.tables.processing.borderless_tables_v2._model import Whitespace
-from img2table.tables.processing.borderless_tables_v2.tables.filter.model import StructuredSection
+
+if TYPE_CHECKING:
+    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
+        StructuredSection,
+    )
 
 
 def _reference_column_separators(section_group: list[StructuredSection]) -> list[Whitespace]:
@@ -20,55 +27,58 @@ def _reference_column_separators(section_group: list[StructuredSection]) -> list
     if len(ref_sections) == len(section_group) == 1:
         return ref_sections[0].whitespaces
     if len(ref_sections) == 1:
-        # Try to reduce reference whitespaces based on other "non structured" sections
-        unit_other_ws = [
+        # Set reference whitespaces as the unique reference section whitespaces
+        ref_whitespaces = ref_sections[0].whitespaces
+    else:
+        # Get unit whitespaces for structured sections and cluster them
+        structured_unit_ws = [
             ws
-            for sec in section_group
-            if not sec.is_structured()
+            for sec in ref_sections
             for ws in sec.whitespaces
-            if sum(ws.overlaps(ref_ws) for ref_ws in ref_sections[0].whitespaces) == 1
-        ]
-        ref_whitespaces: list[Whitespace] = []
-        for ref_ws in ref_sections[0].whitespaces:
-            # Get matching whitespaces from other sections
-            matching_ws = [other_ws for other_ws in unit_other_ws if other_ws.overlaps(ref_ws)]
-            ref_whitespaces.append(
-                Whitespace(
-                    start=max((ref_ws.start, *(ws.start for ws in matching_ws))),
-                    end=min((ref_ws.end, *(ws.end for ws in matching_ws))),
-                )
+            if max(
+                sum(ws.overlaps(other_ws) for other_ws in other_sec.whitespaces)
+                for other_sec in ref_sections
+                if sec != other_sec
             )
-        return ref_whitespaces
+            == 1
+        ]
+        ws_clusters = cluster_items(
+            items=structured_unit_ws,
+            clustering_func=lambda ws1, ws2: ws1.overlaps(ws2),
+        )
 
-    # Get unit whitespaces and cluster them
-    unit_ws = [
+        # Get whitespaces from cluster
+        ref_whitespaces = [
+            Whitespace(
+                start=min(max(ws.start for ws in cl), *(ws.end for ws in cl)),
+                end=max(*(ws.start for ws in cl), min(ws.end for ws in cl)),
+                start_bound=min(ws.start_bound for ws in cl),
+                end_bound=min(ws.end_bound for ws in cl),
+            )
+            for cl in ws_clusters
+        ]
+
+    # Try to reduce reference whitespaces based on other "non structured" sections
+    unit_other_ws = [
         ws
-        for sec in ref_sections
+        for sec in section_group
+        if not sec.is_structured()
         for ws in sec.whitespaces
-        if max(
-            sum(ws.overlaps(other_ws) for other_ws in other_sec.whitespaces)
-            for other_sec in ref_sections
-            if sec != other_sec
-        )
-        == 1
-    ]
-    ws_clusters = cluster_items(
-        items=unit_ws,
-        clustering_func=lambda ws1, ws2: ws1.overlaps(ws2),
-    )
-
-    # Get whitespaces from cluster
-    ref_ws = [
-        Whitespace(
-            start=min(max(ws.start for ws in cl), *(ws.end for ws in cl)),
-            end=max(*(ws.start for ws in cl), min(ws.end for ws in cl)),
-            start_bound=min(ws.start_bound for ws in cl),
-            end_bound=min(ws.end_bound for ws in cl),
-        )
-        for cl in ws_clusters
+        if sum(ws.overlaps(ref_ws) for ref_ws in ref_whitespaces) == 1
     ]
 
-    return sorted(ref_ws, key=lambda ws: ws.start)
+    final_whitespaces: list[Whitespace] = []
+    for ref_ws in ref_whitespaces:
+        # Get matching whitespaces from other sections
+        matching_ws = [other_ws for other_ws in unit_other_ws if other_ws.overlaps(ref_ws)]
+        final_whitespaces.append(
+            Whitespace(
+                start=max((ref_ws.start, *(ws.start for ws in matching_ws))),
+                end=min((ref_ws.end, *(ws.end for ws in matching_ws))),
+            )
+        )
+
+    return sorted(final_whitespaces, key=lambda ws: ws.start)
 
 
 def section_group_to_table(section_group: list[StructuredSection]) -> Table:

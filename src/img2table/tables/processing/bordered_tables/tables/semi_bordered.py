@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
 from img2table.tables.processing.bordered_tables.tables.table_creation import normalize_table_cells
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.line import Line
 
 
 @dataclass

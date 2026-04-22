@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import copy
+from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
 import polars as pl
 
 from img2table.tables.objects.cell import Cell
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def is_contained_cell(

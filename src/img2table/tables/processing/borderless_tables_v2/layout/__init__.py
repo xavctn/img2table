@@ -1,12 +1,18 @@
-import numpy as np
+from __future__ import annotations
 
-from img2table.tables.objects.line import Line
-from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables_v2._model import LayoutRegion
+from typing import TYPE_CHECKING
+
 from img2table.tables.processing.borderless_tables_v2.layout.layout import identify_layout
 from img2table.tables.processing.borderless_tables_v2.layout.text_lines import (
     identify_image_contours,
 )
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from img2table.tables.objects.line import Line
+    from img2table.tables.objects.table import Table
+    from img2table.tables.processing.borderless_tables_v2._model import LayoutRegion
 
 
 def identify_image_layout(

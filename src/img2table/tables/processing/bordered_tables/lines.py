@@ -1,8 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import cv2
 import numpy as np
 
-from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
 
 
 def identify_straight_lines(

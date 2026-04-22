@@ -1,17 +1,18 @@
+from __future__ import annotations
+
 import io
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
+import numpy as np  # noqa: TC002
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-
-from img2table.tables.objects.extraction import ExtractedTable
 
 if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
     from img2table.ocr.data import OCRDataframe
+    from img2table.tables.objects.extraction import ExtractedTable
     from img2table.tables.objects.table import Table
 
 
@@ -36,17 +37,17 @@ class Document:
         raise NotImplementedError
 
     @property
-    def ocr_df(self) -> "OCRDataframe":
+    def ocr_df(self) -> OCRDataframe:
         if self._ocr_df is None:
             raise ValueError("ocr_df is not set")
         return self._ocr_df
 
     @ocr_df.setter
-    def ocr_df(self, value: Optional["OCRDataframe"]) -> None:
+    def ocr_df(self, value: OCRDataframe | None) -> None:
         self._ocr_df = value
 
     @cached_property
-    def bytes(self) -> bytes:
+    def file_bytes(self) -> bytes:
         if isinstance(self.src, bytes):
             return self.src
         if isinstance(self.src, io.BytesIO):
@@ -61,7 +62,7 @@ class Document:
         raise ValueError(f"Unsupported source type: {type(self.src)}")
 
     def get_table_content(
-        self, tables: dict[int, list["Table"]], ocr: Optional["OCRInstance"], min_confidence: int
+        self, tables: dict[int, list[Table]], ocr: OCRInstance | None, min_confidence: int
     ) -> dict[int, list[ExtractedTable]]:
         """
         Retrieve table content with OCR
@@ -122,7 +123,7 @@ class Document:
 
     def extract_tables(
         self,
-        ocr: Optional["OCRInstance"] = None,
+        ocr: OCRInstance | None = None,
         implicit_rows: bool = False,
         implicit_columns: bool = False,
         borderless_tables: bool = False,
@@ -161,7 +162,7 @@ class Document:
     def to_xlsx(
         self,
         dest: str | Path | io.BytesIO,
-        ocr: Optional["OCRInstance"] = None,
+        ocr: OCRInstance | None = None,
         implicit_rows: bool = False,
         implicit_columns: bool = False,
         borderless_tables: bool = False,

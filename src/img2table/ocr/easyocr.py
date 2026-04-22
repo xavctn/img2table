@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import polars as pl
@@ -41,7 +43,7 @@ class EasyOCR(OCRInstance):
 
         self.reader = Reader(**kw)
 
-    def content(self, document: "Document | MockDocument") -> list[list[tuple]]:
+    def content(self, document: Document | MockDocument) -> list[list[tuple]]:
         # Get OCR of all images
         return [self.reader.readtext(image) for image in document.images]
 

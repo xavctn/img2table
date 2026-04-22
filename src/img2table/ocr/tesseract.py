@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import os
 import re
 import subprocess
-from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
@@ -9,13 +10,16 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
 import polars as pl
 
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    import numpy as np
+
     from img2table.document.base import Document, MockDocument
 
 
@@ -105,7 +109,7 @@ class TesseractOCR(OCRInstance):
 
         return hocr.decode("utf-8")
 
-    def content(self, document: "Document | MockDocument") -> Iterator[str]:
+    def content(self, document: Document | MockDocument) -> Iterator[str]:
         with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
             return pool.map(self.hocr, document.images)
 

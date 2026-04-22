@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from img2table.tables.objects.cell import Cell
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
 
 
 def deduplicate_cells(cells: list[Cell]) -> list[Cell]:

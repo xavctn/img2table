@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import polars as pl
@@ -44,8 +46,8 @@ class SuryaOCR(OCRInstance):
         self.rec_predictor = RecognitionPredictor(FoundationPredictor())
 
     def content(
-        self, document: "Document | MockDocument"
-    ) -> list["surya.recognition.schema.OCRResult"]:
+        self, document: Document | MockDocument
+    ) -> list[surya.recognition.schema.OCRResult]:
         # Get OCR of all images
         return self.rec_predictor(
             images=[Image.fromarray(img) for img in document.images],
@@ -54,7 +56,7 @@ class SuryaOCR(OCRInstance):
         )
 
     def to_ocr_dataframe(
-        self, content: list["surya.recognition.schema.OCRResult"]
+        self, content: list[surya.recognition.schema.OCRResult]
     ) -> OCRDataframe | None:
         """
         Convert docTR Document object to OCRDataframe object

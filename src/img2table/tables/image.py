@@ -1,21 +1,27 @@
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import cv2
-import numpy as np
 
 from img2table.tables import threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
-from img2table.tables.objects.table import Table
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.consecutive import merge_consecutive_tables
 from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
 from img2table.tables.processing.borderless_tables_v2 import extract_borderless_tables
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.line import Line
+    from img2table.tables.objects.table import Table
 
 
 @dataclass

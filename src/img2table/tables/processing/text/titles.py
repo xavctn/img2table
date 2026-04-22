@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import copy
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
-import numpy as np
-
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.table import Table
 from img2table.tables.processing.common import get_contours_cell
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from img2table.ocr.data import OCRDataframe
+    from img2table.tables.objects.table import Table
 
 
 def get_title_tables(

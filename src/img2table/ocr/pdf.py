@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -25,7 +27,7 @@ class Char:
     def height(self) -> int:
         return (self.y2 - self.y1) or 1
 
-    def distance(self, char: "Char") -> float:
+    def distance(self, char: Char) -> float:
         return (
             ((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2
             + ((self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2
@@ -161,13 +163,13 @@ def get_all_char_data(
 
 
 class PdfOCR(OCRInstance):
-    def content(self, document: "Document | MockDocument") -> list[list[dict]]:
+    def content(self, document: Document | MockDocument) -> list[list[dict]]:
         list_pages = []
 
         if isinstance(document, MockDocument) or not document.pages:
             return list_pages
 
-        doc = PdfDocument(input=document.bytes)
+        doc = PdfDocument(input=document.file_bytes)
         for idx, page_number in enumerate(document.pages):
             # Get page
             page = doc.get_page(index=page_number)

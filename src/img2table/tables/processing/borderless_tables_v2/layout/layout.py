@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from functools import cached_property
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
 from img2table.tables import cluster_items
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.line import Line
 from img2table.tables.processing.borderless_tables_v2._model import (
     LayoutRegion,
     identify_merged_rows,
 )
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
+    from img2table.tables.objects.line import Line
 
 
 @dataclass

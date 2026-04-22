@@ -1,7 +1,12 @@
-from itertools import pairwise
+from __future__ import annotations
 
-from img2table.tables.objects.cell import Cell
+from itertools import pairwise
+from typing import TYPE_CHECKING
+
 from img2table.tables.objects.table import Table
+
+if TYPE_CHECKING:
+    from img2table.tables.objects.cell import Cell
 
 
 def merge_consecutive_tables(tables: list[Table], contours: list[Cell]) -> list[Table]:

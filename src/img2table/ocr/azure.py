@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import time
 from io import BytesIO
@@ -20,9 +22,7 @@ class AzureOCR(OCRInstance):
     Azure Cognitive Services OCR instance
     """
 
-    def __init__(
-        self, endpoint: str | None = None, subscription_key: str | None = None
-    ) -> None:
+    def __init__(self, endpoint: str | None = None, subscription_key: str | None = None) -> None:
         """
         Initialization of Azure Cognitive Services OCR instance
         :param endpoint: Azure Cognitive Services endpoint
@@ -61,7 +61,7 @@ class AzureOCR(OCRInstance):
             credentials=CognitiveServicesCredentials(subscription_key=subscription_key),
         )
 
-    def content(self, document: "Document | MockDocument") -> list["ReadOperationResult"]:
+    def content(self, document: Document | MockDocument) -> list[ReadOperationResult]:
         """
         Extract document text using Azure OCR API
         :param document: Document object
@@ -96,7 +96,7 @@ class AzureOCR(OCRInstance):
 
         return results
 
-    def to_ocr_dataframe(self, content: list["ReadOperationResult"]) -> OCRDataframe | None:
+    def to_ocr_dataframe(self, content: list[ReadOperationResult]) -> OCRDataframe | None:
         """
         Convert list of OCR results by page to OCRDataframe object
         :param content: list of OCR results by page

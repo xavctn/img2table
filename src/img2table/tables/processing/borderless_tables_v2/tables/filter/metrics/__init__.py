@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -49,7 +51,7 @@ class TableMetrics:
         )
 
     @classmethod
-    def from_section(cls, section: "StructuredSection") -> "TableMetrics":
+    def from_section(cls, section: StructuredSection) -> TableMetrics:
         # Compute metrics
         mean_column_alignment, min_column_alignment = compute_columns_metrics(section=section)
         spacing_consistency = content_spacing_consistency(section=section)

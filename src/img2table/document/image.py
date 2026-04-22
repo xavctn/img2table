@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from functools import cached_property
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
@@ -7,10 +9,10 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from img2table.document.base import Document
-from img2table.tables.objects.extraction import ExtractedTable
 
 if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
+    from img2table.tables.objects.extraction import ExtractedTable
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
@@ -22,7 +24,7 @@ class Image(Document):
     @cached_property
     def images(self) -> list[np.ndarray]:
         img = cv2.imdecode(
-            buf=np.frombuffer(buffer=self.bytes, dtype=np.uint8),
+            buf=np.frombuffer(buffer=self.file_bytes, dtype=np.uint8),
             flags=cv2.IMREAD_COLOR,
         )
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -36,7 +38,7 @@ class Image(Document):
 
     def extract_tables(
         self,
-        ocr: Optional["OCRInstance"] = None,
+        ocr: OCRInstance | None = None,
         implicit_rows: bool = False,
         implicit_columns: bool = False,
         borderless_tables: bool = False,
