@@ -40,4 +40,9 @@ def extract_borderless_tables(
             width=w,
         )
 
-    return tables
+    # Filter out tables that overlap with existing tables
+    return [
+        tb
+        for tb in tables
+        if not any(tb.overlaps(existing_tb, pct=0.2) for existing_tb in existing_tables or [])
+    ]

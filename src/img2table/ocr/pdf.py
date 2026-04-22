@@ -176,7 +176,7 @@ class PdfOCR(OCRInstance):
             page_height, page_width, page_rotation = (
                 page.get_height(),
                 page.get_width(),
-                page.get_cropbox(),
+                page.get_rotation(),
             )
             x_offset, y_offset, _, _ = page.get_cropbox()
 

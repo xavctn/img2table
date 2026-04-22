@@ -277,7 +277,7 @@ def ensure_section_bounds_consistency(
     section: ColumnSection, min_width: float, x_min: int, x_max: int
 ) -> list[ColumnSection]:
     """
-    Check that top / bottom elements of the column section are consistent with its correspondence
+    Check that top / bottom elements of the column section are consistent with the rest of the section
     :param section: Column section to check.
     :param min_width: minimum width for a whitespace to be considered
     :param x_min: start of span

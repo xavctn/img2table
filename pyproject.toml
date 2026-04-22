@@ -123,3 +123,6 @@ ignore = ["PLR2004", "SLF001", "ANN401", "PLC0415", "E501", "ANN003", "PLR0913",
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.ty.rules]
+all = "error"

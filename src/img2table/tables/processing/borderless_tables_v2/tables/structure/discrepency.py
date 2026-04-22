@@ -57,11 +57,14 @@ def bridge_small_discrepencies(
         )
 
         # If all whitespaces match (except one), the sections are likely connected
-        if sum(
+        nb_matching_whitespaces = sum(
             1
             for ws_l in ws_large
             if any(ws for ws in ws_small if min(ws_l.end, ws.end) - max(ws_l.start, ws.start) > 0)
-        ) == max(prv.nb_columns, nxt.nb_columns):
+        )
+        if nb_matching_whitespaces == max(prv.nb_columns, nxt.nb_columns):
+            edges.append({idx, idx + 1})
+        if nb_matching_whitespaces == len(prv.whitespaces) == len(nxt.whitespaces):
             edges.append({idx, idx + 1})
 
     # Identify groups of related sections that form a table

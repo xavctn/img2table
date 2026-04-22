@@ -202,6 +202,20 @@ class Table(TableObject):
         )
         return ExtractedTable(bbox=bbox, title=self.title, content=content)
 
+    def overlaps(self, other: "Table", pct: float = 0.5) -> bool:
+        """
+        Check if this table overlaps with another table.
+        :param other: The other table to check for overlap.
+        :param pct: The minimum percentage of overlap required.
+        :return: True if the tables overlap, False otherwise.
+        """
+        # Compute intersection area
+        intersection_area = max(0, min(self.x2, other.x2) - max(self.x1, other.x1)) * max(
+            0, min(self.y2, other.y2) - max(self.y1, other.y1)
+        )
+
+        return intersection_area / min(self.area, other.area) >= pct
+
     def __hash__(self) -> int:
         return hash(repr(self))
 
