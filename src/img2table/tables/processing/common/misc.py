@@ -16,13 +16,12 @@ def _cluster_values(
     if len(values) <= 1:
         return [0] * len(values)
 
-    # Sort values while tracking original indices
-    sorted_with_idx = sorted(enumerate(values), key=lambda x: x[1])
-    sorted_values = [val for _, val in sorted_with_idx]
+    # Sort distinct values for gap computation, but keep cluster assignment for every input value
+    sorted_values = sorted(set(values))
 
     # Compute gaps between consecutive sorted values
     gaps = [nxt - prv for prv, nxt in pairwise(sorted_values)]
-    gap_threshold = median_gap_multiple * (np.median(gaps) if len(gaps) > 2 else min(gaps))
+    gap_threshold = median_gap_multiple * (np.median(gaps) if len(gaps) > 2 else min(gaps, default=0))
 
     # Create clusters
     cluster_id, cluster_labels_sorted = 0, [0]
@@ -31,9 +30,5 @@ def _cluster_values(
             cluster_id += 1
         cluster_labels_sorted.append(cluster_id)
 
-    # Map back to original order
-    cluster_labels = [0] * len(values)
-    for i, (orig_idx, _) in enumerate(sorted_with_idx):
-        cluster_labels[orig_idx] = cluster_labels_sorted[i]
-
-    return cluster_labels
+    cluster_by_value = dict(zip(sorted_values, cluster_labels_sorted, strict=True))
+    return [cluster_by_value[value] for value in values]

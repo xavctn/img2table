@@ -1,7 +1,12 @@
 import cv2
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.common import get_contours_cell, is_contained_cell, merge_contours
+from img2table.tables.processing.common import (
+    _cluster_values,
+    get_contours_cell,
+    is_contained_cell,
+    merge_contours,
+)
 
 
 def test_is_contained_cell() -> None:
@@ -56,3 +61,9 @@ def test_get_contours_cell() -> None:
     ]
 
     assert result == expected
+
+
+def test_cluster_values_uses_distinct_values_for_gap_computation() -> None:
+    values = [0, 0, 0, 5, 20]
+
+    assert _cluster_values(values=values, median_gap_multiple=1.5) == [0, 0, 0, 0, 1]
