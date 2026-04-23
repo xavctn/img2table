@@ -16,7 +16,7 @@ def display_borderless_tables(img: Image, ocr: OCRInstance) -> np.ndarray:
     extracted_tables = img.extract_tables(ocr=ocr, borderless_tables=True)
 
     # Create image displaying extracted tables
-    display_image = next(iter(img.images)).copy()
+    display_image: np.ndarray = next(iter(img.images)).copy()
     for tb in extracted_tables:
         for row in tb.content.values():
             for cell in row:

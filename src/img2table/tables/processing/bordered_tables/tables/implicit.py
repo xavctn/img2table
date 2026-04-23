@@ -39,7 +39,6 @@ def implicit_rows_lines(table: Table, contours: list[Cell]) -> list[Line]:
             rows=[row for row in merged_rows if row.y1 >= tb_row.y1 and row.y2 <= tb_row.y2],
             y_min=tb_row.y1,
             y_max=tb_row.y2,
-            enforce_gap=True,
         )
 
         # Identify new lines

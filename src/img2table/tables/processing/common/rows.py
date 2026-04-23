@@ -17,7 +17,7 @@ def _evaluate_key_separation_value(
     ref_separation: float,
     y_min: int,
     y_max: int,
-    enforce_gap: bool = False,
+    enforce_gap: bool = True,
 ) -> tuple[float, list]:
     """
     Evaluate pertinence of separation value based on created rows consistency
@@ -60,7 +60,7 @@ def _evaluate_key_separation_value(
 
 
 def compute_row_ranges(
-    rows: list[MergedRow], y_min: int, y_max: int, enforce_gap: bool = False
+    rows: list[MergedRow], y_min: int, y_max: int, enforce_gap: bool = True
 ) -> list[tuple[int, int]]:
     """
     Identify vertical position ranges corresponding to rows

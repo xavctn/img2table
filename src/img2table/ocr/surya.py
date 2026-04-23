@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import polars as pl
-from PIL import Image
 
 from img2table.ocr.base import OCRInstance
 from img2table.ocr.data import OCRDataframe
@@ -48,6 +47,8 @@ class SuryaOCR(OCRInstance):
     def content(
         self, document: Document | MockDocument
     ) -> list[surya.recognition.schema.OCRResult]:
+        from PIL import Image
+
         # Get OCR of all images
         return self.rec_predictor(
             images=[Image.fromarray(img) for img in document.images],
