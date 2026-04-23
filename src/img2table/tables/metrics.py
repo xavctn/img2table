@@ -49,6 +49,55 @@ def remove_dots(cc_labels: np.ndarray, stats: np.ndarray) -> np.ndarray:
     return np.array(cc_to_keep) if cc_to_keep else np.empty((0, 5), dtype=np.int32)
 
 
+@njit("float64(float64[:],float64[:],int32)", cache=True, fastmath=True, parallel=False)
+def compute_interval_union_length(
+    starts: np.ndarray, ends: np.ndarray, interval_count: int
+) -> float:
+    """
+    Compute union length of projected intervals
+    :param starts: interval starts
+    :param ends: interval ends
+    :param interval_count: number of valid intervals
+    :return: union length
+    """
+    if interval_count == 0:
+        return 0.0
+
+    sorted_starts = np.empty(interval_count, dtype=np.float64)
+    sorted_ends = np.empty(interval_count, dtype=np.float64)
+
+    for idx in range(interval_count):
+        sorted_starts[idx] = starts[idx]
+        sorted_ends[idx] = ends[idx]
+
+    for idx in range(1, interval_count):
+        start = sorted_starts[idx]
+        end = sorted_ends[idx]
+        prev_idx = idx - 1
+
+        while prev_idx >= 0 and sorted_starts[prev_idx] > start:
+            sorted_starts[prev_idx + 1] = sorted_starts[prev_idx]
+            sorted_ends[prev_idx + 1] = sorted_ends[prev_idx]
+            prev_idx -= 1
+
+        sorted_starts[prev_idx + 1] = start
+        sorted_ends[prev_idx + 1] = end
+
+    current_start, current_end = sorted_starts[0], sorted_ends[0]
+    union_length = 0.0
+
+    for idx in range(1, interval_count):
+        start, end = sorted_starts[idx], sorted_ends[idx]
+
+        if start <= current_end:
+            current_end = max(current_end, end)
+        else:
+            union_length += current_end - current_start
+            current_start, current_end = start, end
+
+    return union_length + current_end - current_start
+
+
 @njit("int32[:,:](float64[:,:])", cache=True, fastmath=True, parallel=False)
 def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     """
@@ -61,15 +110,9 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
     ### Identify horizontal lines
     complete_stats = complete_stats[complete_stats[:, 6].argsort()]
 
-    x1_area, y1_area, x2_area, y2_area, width_area, prev_y_middle, area_count = (
-        0,
-        0,
-        0,
-        0,
-        0,
-        -10,
-        0,
-    )
+    x_starts = np.empty(complete_stats.shape[0], dtype=np.float64)
+    x_ends = np.empty(complete_stats.shape[0], dtype=np.float64)
+    x1_area, y1_area, x2_area, y2_area, prev_y_middle, area_count = (0, 0, 0, 0, -10, 0)
     for idx in range(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
@@ -84,33 +127,34 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
                 max(x + w, x2_area),
                 max(y + h, y2_area),
             )
-            width_area += w
+            x_starts[area_count] = x
+            x_ends[area_count] = x + w
             area_count += 1
             prev_y_middle = y_middle
         else:
             # Check if previously defined area is relevant
+            width_area = compute_interval_union_length(
+                starts=x_starts, ends=x_ends, interval_count=area_count
+            )
             if area_count >= 5 and width_area / ((x2_area - x1_area) or 1) >= 0.66:
                 line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
             # Create new area
             x1_area, y1_area, x2_area, y2_area = x, y, x + w, y + h
-            width_area, prev_y_middle, area_count = w, y_middle, 1
+            x_starts[0] = x
+            x_ends[0] = x + w
+            prev_y_middle, area_count = y_middle, 1
 
     # Check last area
+    width_area = compute_interval_union_length(starts=x_starts, ends=x_ends, interval_count=area_count)
     if area_count >= 5 and width_area / ((x2_area - x1_area) or 1) >= 0.66:
         line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
 
     ### Identify vertical lines
     complete_stats = complete_stats[complete_stats[:, 5].argsort()]
 
-    x1_area, y1_area, x2_area, y2_area, height_area, prev_x_middle, area_count = (
-        0,
-        0,
-        0,
-        0,
-        0,
-        -10,
-        0,
-    )
+    y_starts = np.empty(complete_stats.shape[0], dtype=np.float64)
+    y_ends = np.empty(complete_stats.shape[0], dtype=np.float64)
+    x1_area, y1_area, x2_area, y2_area, prev_x_middle, area_count = (0, 0, 0, 0, -10, 0)
     for idx in range(complete_stats.shape[0]):
         x, y, w, h, _, x_middle, y_middle = complete_stats[idx][:]
 
@@ -125,18 +169,27 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
                 max(x + w, x2_area),
                 max(y + h, y2_area),
             )
-            height_area += h
+            y_starts[area_count] = y
+            y_ends[area_count] = y + h
             area_count += 1
             prev_x_middle = x_middle
         else:
             # Check if previously defined area is relevant
+            height_area = compute_interval_union_length(
+                starts=y_starts, ends=y_ends, interval_count=area_count
+            )
             if area_count >= 5 and height_area / ((y2_area - y1_area) or 1) >= 0.66:
                 line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
             # Create new area
             x1_area, y1_area, x2_area, y2_area = x, y, x + w, y + h
-            height_area, prev_x_middle, area_count = h, x_middle, 1
+            y_starts[0] = y
+            y_ends[0] = y + h
+            prev_x_middle, area_count = x_middle, 1
 
     # Check last area
+    height_area = compute_interval_union_length(
+        starts=y_starts, ends=y_ends, interval_count=area_count
+    )
     if area_count >= 5 and height_area / ((y2_area - y1_area) or 1) >= 0.66:
         line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
 
