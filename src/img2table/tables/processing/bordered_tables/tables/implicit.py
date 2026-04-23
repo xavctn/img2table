@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from img2table.tables.objects.line import Line
@@ -68,6 +69,14 @@ def implicit_columns_lines(table: Table, contours: list[Cell], char_length: floa
         items=contours, min_width=char_length, x_min=table.x1, x_max=table.x2
     )
 
+    # Identify columns with merged cells and their span
+    horizontal_merged_span = {
+        (prv_cell.x1, prv_cell.x2)
+        for row in table.items
+        for prv_cell, nxt_cell in pairwise(row.items)
+        if prv_cell == nxt_cell
+    }
+
     # Identify created lines
     return [
         Line(x1=(ws.start + ws.end) // 2, y1=table.y1, x2=(ws.start + ws.end) // 2, y2=table.y2)
@@ -75,6 +84,11 @@ def implicit_columns_lines(table: Table, contours: list[Cell], char_length: floa
         if not ws.start_bound
         and not ws.end_bound
         and not any(line for line in table.lines if ws.start <= line.x1 <= ws.end and line.vertical)
+        and not any(
+            1
+            for (start, end) in horizontal_merged_span
+            if max(ws.end, end) - min(ws.start, start) > 0
+        )
     ]
 
 
@@ -111,10 +125,15 @@ def implicit_content(
     if implicit_columns:
         lines += implicit_columns_lines(table=table, contours=tb_contours, char_length=char_length)
 
-    # Create
+    if len(lines) == len(table.lines):
+        # Nothing added
+        return table
+
+    # Create new cells
     cells = get_cells(
         horizontal_lines=[line for line in lines if line.horizontal],
         vertical_lines=[line for line in lines if line.vertical],
     )
 
+    # Compute updated table
     return cluster_to_table(cluster_cells=cells, elements=tb_contours, borderless=False)
