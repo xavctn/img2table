@@ -27,7 +27,6 @@ dependencies = [
     "numba",
     "beautifulsoup4",
     "xlsxwriter>=3.0.6",
-    "pydantic>=2.12.5",
 ]
 
 [project.urls]

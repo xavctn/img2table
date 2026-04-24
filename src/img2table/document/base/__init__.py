@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import io
+from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np  # noqa: TC002
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
+
+from img2table._validation import ValidationError, validate_bool, validate_pages, validate_src
 
 if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
@@ -16,12 +17,12 @@ if TYPE_CHECKING:
     from img2table.tables.objects.table import Table
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class MockDocument:
     images: list[np.ndarray]
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class Document:
     src: str | Path | io.BytesIO | bytes
     detect_rotation: bool = False
@@ -29,7 +30,10 @@ class Document:
     _ocr_df: Any = None
 
     def __post_init__(self) -> None:
-        if isinstance(self.pages, list):
+        validate_src(self.src)
+        validate_bool(self.detect_rotation, "detect_rotation")
+        validate_pages(self.pages)
+        if self.pages is not None:
             self.pages = sorted(self.pages)
 
     @property
@@ -59,7 +63,7 @@ class Document:
         if isinstance(self.src, Path):
             with self.src.open("rb") as f:
                 return f.read()
-        raise ValueError(f"Unsupported source type: {type(self.src)}")
+        raise ValidationError(f"Unsupported source type: {type(self.src)}")
 
     def get_table_content(
         self, tables: dict[int, list[Table]], ocr: OCRInstance | None, min_confidence: int

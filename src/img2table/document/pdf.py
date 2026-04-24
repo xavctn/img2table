@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np  # noqa: TC002
 import pypdfium2
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 
+from img2table._validation import validate_bool
 from img2table.document.base import Document
 from img2table.ocr.pdf import PdfOCR
 
@@ -17,11 +17,15 @@ if TYPE_CHECKING:
     from img2table.tables.objects.table import Table
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class PDF(Document):
     pdf_text_extraction: bool = True
     _rotated: bool = False
     _images: list[np.ndarray] | None = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        validate_bool(self.pdf_text_extraction, "pdf_text_extraction")
 
     @property
     def images(self) -> list[np.ndarray]:

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 
 from img2table.document.base import Document
 
@@ -15,7 +14,7 @@ if TYPE_CHECKING:
     from img2table.tables.objects.extraction import ExtractedTable
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class Image(Document):
     def __post_init__(self) -> None:
         super().__post_init__()

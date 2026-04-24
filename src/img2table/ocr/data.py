@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import polars as pl
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
+
+from img2table._validation import validate_polars_dataframe
 
 if TYPE_CHECKING:
     from img2table.tables.objects.cell import Cell
     from img2table.tables.objects.table import Table
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+@dataclass
 class OCRDataframe:
     df: pl.DataFrame
+
+    def __post_init__(self) -> None:
+        validate_polars_dataframe(self.df, "df")
 
     def page(self, page_number: int = 0) -> OCRDataframe:
         # Filter dataframe on specific page

@@ -3,8 +3,8 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
+from img2table._validation import ValidationError
 from img2table.document.pdf import PDF
 from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import BBox
@@ -22,6 +22,15 @@ def test_validators() -> None:
 
     with pytest.raises(ValidationError):
         PDF(src="img", pages=[1], detect_rotation="a")  # ty:ignore[invalid-argument-type]
+
+    with pytest.raises(ValidationError):
+        PDF(src="img", pages=(0, 1))  # ty:ignore[invalid-argument-type]
+
+    with pytest.raises(ValidationError):
+        PDF(src="img", pages=[True])
+
+    with pytest.raises(ValidationError):
+        PDF(src="img", pdf_text_extraction="a")  # ty:ignore[invalid-argument-type]
 
 
 def test_load_pdf() -> None:

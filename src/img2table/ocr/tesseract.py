@@ -143,8 +143,10 @@ class TesseractOCR(OCRInstance):
                 }
 
                 # Get word confidence
-                if (title := element["title"]) and (
-                    str_conf := re.findall(r"x_wconf \d{1,2}", title)  # ty:ignore[no-matching-overload]
+                if (
+                    (title := element["title"])
+                    and isinstance(title, str)
+                    and (str_conf := re.findall(r"x_wconf \d{1,2}", title))
                 ):
                     d_el["confidence"] = int(str_conf[0].split()[1])
                 else:

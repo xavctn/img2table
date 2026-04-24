@@ -2,11 +2,18 @@ import json
 from pathlib import Path
 
 import polars as pl
+import pytest
 
+from img2table.ocr import ValidationError
 from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
+
+
+def test_validators() -> None:
+    with pytest.raises(ValidationError):
+        OCRDataframe(df={})  # ty:ignore[invalid-argument-type]
 
 
 def test_pages() -> None:

@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 from openpyxl import load_workbook
-from pydantic import ValidationError
 
+from img2table._validation import ValidationError
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
 from img2table.tables.objects.extraction import BBox
@@ -81,7 +81,7 @@ def test_no_ocr() -> None:
     assert len(result) == 1
 
     assert result[0].title is None
-    assert result[0].bbox == BBox(x1=40, y1=37, x2=834, y2=526)
+    assert result[0].bbox == BBox(x1=40, y1=37, x2=834, y2=529)
     assert len(result[0].content) == 19
     assert len(result[0].content[0]) == 5
 

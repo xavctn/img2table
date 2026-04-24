@@ -118,20 +118,20 @@ def implicit_content(
     ]
 
     # Create new lines
-    lines = table.lines
+    new_lines = []
     if implicit_rows:
-        lines += implicit_rows_lines(table=table, contours=tb_contours)
+        new_lines += implicit_rows_lines(table=table, contours=tb_contours)
     if implicit_columns:
-        lines += implicit_columns_lines(table=table, contours=tb_contours, char_length=char_length)
+        new_lines += implicit_columns_lines(table=table, contours=tb_contours, char_length=char_length)
 
-    if len(lines) == len(table.lines):
+    if len(new_lines) == 0:
         # Nothing added
         return table
 
     # Create new cells
     cells = get_cells(
-        horizontal_lines=[line for line in lines if line.horizontal],
-        vertical_lines=[line for line in lines if line.vertical],
+        horizontal_lines=[line for line in table.lines + new_lines if line.horizontal],
+        vertical_lines=[line for line in table.lines + new_lines if line.vertical],
     )
 
     # Compute updated table
