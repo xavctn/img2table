@@ -25,11 +25,9 @@ def is_contained_cell(
     :return: boolean indicating if the inner cell is contained in the outer cell
     """
     # If needed, convert inner cell to Cell object
-    if isinstance(inner_cell, tuple):
-        inner_cell = Cell(*inner_cell)
+    inner_cell = Cell(*inner_cell) if not isinstance(inner_cell, Cell) else inner_cell
     # If needed, convert outer cell to Cell object
-    if isinstance(outer_cell, tuple):
-        outer_cell = Cell(*outer_cell)
+    outer_cell = Cell(*outer_cell) if not isinstance(outer_cell, Cell) else outer_cell
 
     # Compute common coordinates
     x_left = max(inner_cell.x1, outer_cell.x1)

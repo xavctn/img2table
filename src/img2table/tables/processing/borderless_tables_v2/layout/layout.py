@@ -201,7 +201,7 @@ def vertical_ws_matches(ws1: VerticalWhitespace, ws2: VerticalWhitespace) -> boo
     return min(abs(ws1.y1 - ws2.y1), abs(ws1.y2 - ws2.y2)) / max(ws1.height, ws2.height) <= 0.05
 
 
-def identify_column_sections(
+def identify_column_regions(
     vertical_ws: list[VerticalWhitespace], x_min: int, x_max: int, width: int
 ) -> list[ColumnDelimiters]:
     """
@@ -286,7 +286,7 @@ def identify_layout(
         min((cnt.y1 for cnt in contours), default=0),
         max((cnt.y2 for cnt in contours), default=0),
     )
-    column_dels = identify_column_sections(
+    column_dels = identify_column_regions(
         vertical_ws=vertical_ws,
         x_min=min((cnt.x1 for cnt in contours), default=0),
         x_max=max((cnt.x2 for cnt in contours), default=0),

@@ -336,7 +336,7 @@ def detect_obstacles(img: np.ndarray, min_width: float) -> np.ndarray:
     h, w = img.shape
 
     for col in range(w - min_width + 1):
-        prev_cc_position = -1
+        row, prev_cc_position = 0, -1
         for row in range(h):
             max_value = 0
             for idx in range(min_width):
