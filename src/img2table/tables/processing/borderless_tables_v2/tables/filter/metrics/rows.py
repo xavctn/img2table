@@ -45,4 +45,4 @@ def content_spacing_consistency(section: StructuredSection) -> float:
 
     # Apply penalization
     spacing_regularization = max(0.025 * section.height, 3 * section.char_length)
-    return max(0, 1 - max(np.std(range_seps), np.std(range_heights)) / spacing_regularization)
+    return max(0, float(1 - max(np.std(range_seps), np.std(range_heights)) / spacing_regularization))

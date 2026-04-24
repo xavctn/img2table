@@ -58,7 +58,7 @@ class PaddleOCR2(OCRInstance):
             cv2.imwrite(tmp_file, image)
 
             # Get OCR
-            ocr_result = self.ocr.ocr(img=tmp_file, cls=False)
+            ocr_result = self.ocr.ocr(img=tmp_file, cls=False) # ty: ignore[deprecated]
 
         # Remove temporary file
         while Path(tmp_file).exists():

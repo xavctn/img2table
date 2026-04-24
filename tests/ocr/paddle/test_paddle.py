@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 import polars as pl
@@ -7,6 +8,10 @@ import pytest
 from img2table.document.image import Image
 from img2table.ocr.data import OCRDataframe
 from tests.conftest import nested_approx
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14), reason="Paddle unsupported on Python 3.14+"
+)
 
 
 def test_validators() -> None:

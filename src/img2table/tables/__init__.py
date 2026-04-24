@@ -17,7 +17,7 @@ def threshold_dark_areas(img: np.ndarray, char_length: float) -> np.ndarray:
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
     # If image is mainly black, revert the image
-    if np.mean(gray) <= 127:
+    if np.mean(gray) <= 127: # ty: ignore[no-matching-overload]
         gray = 255 - gray
 
     thresh_kernel = int(char_length) // 2 * 2 + 1

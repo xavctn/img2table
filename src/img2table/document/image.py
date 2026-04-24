@@ -26,6 +26,10 @@ class Image(Document):
             buf=np.frombuffer(buffer=self.file_bytes, dtype=np.uint8),
             flags=cv2.IMREAD_COLOR,
         )
+
+        if img is None:
+            raise ValueError("Image could not be decoded")
+
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if self.detect_rotation:
             # Inline import to reduce library load time

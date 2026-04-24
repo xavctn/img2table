@@ -12,7 +12,10 @@ from img2table.tables.processing.borderless_tables_v2.layout.text_lines import (
 
 
 def test_identify_image_contours() -> None:
-    img = cv2.cvtColor(cv2.imread("test_data/test.bmp"), cv2.COLOR_BGR2RGB)
+    img = cv2.imread("test_data/test.bmp")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
     thresh = threshold_dark_areas(img=img, char_length=6)
 
     with Path("test_data/lines.json").open() as f:

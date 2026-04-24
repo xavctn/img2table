@@ -12,7 +12,10 @@ from img2table.tables.processing.text.titles import get_title_tables
 
 
 def test_get_title_tables() -> None:
-    img = cv2.cvtColor(cv2.imread("test_data/test.jpg"), cv2.COLOR_BGR2RGB)
+    img = cv2.imread("test_data/test.jpg")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
     with Path("test_data/table.json").open("r") as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
     ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";"))

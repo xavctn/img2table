@@ -13,6 +13,7 @@ from img2table.document.base.rotation import (
 
 def test_get_connected_components() -> None:
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    assert img is not None
 
     cc, _ref_height, _thresh = get_connected_components(img=img)
 
@@ -57,6 +58,7 @@ def test_fix_rotation_image() -> None:
         ]
 
     img = cv2.imread("test_data/test.png")
+    assert img is not None
 
     similarities = []
     for angle in range(-30, 30, 3):

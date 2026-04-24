@@ -30,8 +30,8 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
     stats = stats[mask_pixels]
 
     # Compute median width and height
-    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])
-    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT])
+    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH]) # ty: ignore[no-matching-overload]
+    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT]) # ty: ignore[no-matching-overload]
 
     # Compute bbox area bounds
     upper_bound = 4 * median_width * median_height
@@ -56,7 +56,7 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
     centroids_y = stats[:, cv2.CC_STAT_TOP] + stats[:, cv2.CC_STAT_HEIGHT] / 2
     filtered_centroids = np.column_stack([centroids_x, centroids_y])
 
-    return filtered_centroids, median_height, thresh
+    return filtered_centroids, float(median_height), thresh
 
 
 @njit("List(float64)(float64[:,:],float64)", fastmath=True, cache=True, parallel=False)

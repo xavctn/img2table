@@ -389,8 +389,8 @@ def identify_text_mask(
     if len(cc_stats) <= 1:
         return thresh
 
-    average_height = float(np.mean(cc_stats[1:, cv2.CC_STAT_HEIGHT]))
-    median_width = float(np.median(cc_stats[1:, cv2.CC_STAT_WIDTH]))
+    average_height = float(np.mean(cc_stats[1:, cv2.CC_STAT_HEIGHT])) # ty: ignore[no-matching-overload]
+    median_width = float(np.median(cc_stats[1:, cv2.CC_STAT_WIDTH])) # ty: ignore[no-matching-overload]
     cc_denoised = remove_noise(
         cc=cc.copy(), cc_stats=cc_stats, average_height=average_height, median_width=median_width
     )

@@ -17,7 +17,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-# Dépendances de base du projet (contenu de requirements.txt).
 dependencies = [
     "polars[pandas]>=1.2",
     "pyarrow>=7",
@@ -44,8 +43,8 @@ azure = [
     "azure-cognitiveservices-vision-computervision",
 ]
 paddle = [
-    "paddlepaddle",
-    "paddleocr>=2.0.6",
+    "paddlepaddle; python_version<'3.14'",
+    "paddleocr>=2.0.6; python_version<'3.14'",
 ]
 easyocr = [
     "easyocr>=1.7.0",
@@ -83,9 +82,10 @@ override-dependencies = [
     "opencv-python ; sys_platform == 'never'",
     "opencv-python-headless ; sys_platform == 'never'",
     "opencv-contrib-python-headless ; sys_platform == 'never'",
-    "paddleocr>=3.0",
-    "paddlepaddle>=3.0,<3.3",
+    "paddleocr>=3.0; python_version<'3.14'",
+    "paddlepaddle>=3.0,<3.3; python_version<'3.14'",
     "transformers<5",
+    "pillow>=12",
 ]
 
 [tool.uv.sources]
@@ -124,4 +124,6 @@ ignore = ["PLR2004", "SLF001", "ANN401", "PLC0415", "E501", "ANN003", "PLR0913",
 max-complexity = 10
 
 [tool.ty.rules]
+unused-ignore-comment = "ignore"
+unresolved-import = "warn"
 all = "error"

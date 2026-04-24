@@ -47,7 +47,10 @@ def test_merge_contours() -> None:
 
 
 def test_get_contours_cell() -> None:
-    img = cv2.cvtColor(cv2.imread("test_data/test.jpg"), cv2.COLOR_BGR2RGB)
+    img = cv2.imread("test_data/test.jpg")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
     cell = Cell(x1=0, x2=img.shape[1], y1=0, y2=img.shape[0])
 
     result = get_contours_cell(

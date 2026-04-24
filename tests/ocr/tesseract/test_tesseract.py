@@ -35,6 +35,7 @@ def test_lang_validators(mock_tesseract) -> None:  # noqa: ANN001, ARG001
 def test_tesseract_hocr(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     instance = TesseractOCR()
     img = cv2.imread("test_data/test.png", cv2.IMREAD_GRAYSCALE)
+    assert img is not None
 
     result = instance.hocr(image=img)
 

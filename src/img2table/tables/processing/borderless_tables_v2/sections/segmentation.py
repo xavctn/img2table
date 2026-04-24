@@ -120,7 +120,7 @@ def compute_column_section(
                 row_separations.append(other_row.y_center - row.y_center)
                 break
     median_row_separation = np.median(row_separations) if row_separations else 0
-    max_gap = median_row_separation * ratio_vertical_separation
+    max_gap = float(median_row_separation * ratio_vertical_separation)
 
     # Compute all rows characteristics
     row_data = [

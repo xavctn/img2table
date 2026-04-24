@@ -79,7 +79,7 @@ def identify_straight_lines(
                 y1=y + round(np.mean(line_rows)),
                 x2=x + np.max(non_blank_pixels),
                 y2=y + round(np.mean(line_rows)),
-                thickness=np.max(line_rows) - np.min(line_rows) + 1,
+                thickness=int(np.max(line_rows) - np.min(line_rows) + 1),
             )
         else:
             non_blank_pixels = np.where(np.sum(cropped, axis=1) > 0)
@@ -93,7 +93,7 @@ def identify_straight_lines(
                 y1=y + np.min(non_blank_pixels),
                 x2=x + round(np.mean(line_cols)),
                 y2=y + np.max(non_blank_pixels),
-                thickness=np.max(line_cols) - np.min(line_cols) + 1,
+                thickness=int(np.max(line_cols) - np.min(line_cols) + 1),
             )
         lines.append(line)
 
@@ -122,7 +122,7 @@ def detect_lines(
     # Remove contours and convert to binary image
     for c in contours:
         edge_img[c.y1 - 1 : c.y2 + 1, c.x1 - 1 : c.x2 + 1] = 0
-    binary_img = 255 * (edge_img >= min(2.5 * np.mean(edge_img), np.max(edge_img))).astype(np.uint8)
+    binary_img = 255 * (edge_img >= min(2.5 * np.mean(edge_img), np.max(edge_img))).astype(np.uint8) # ty: ignore[no-matching-overload]
 
     # Detect lines
     h_lines = identify_straight_lines(

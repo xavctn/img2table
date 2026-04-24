@@ -1,5 +1,4 @@
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -56,7 +55,6 @@ def test_easyocr_ocr_df() -> None:
     assert result == expected
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
 def test_easyocr_document() -> None:
     instance = EasyOCR()
     doc = Image(src="test_data/test.png")

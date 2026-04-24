@@ -9,8 +9,11 @@ from img2table.tables.metrics import (
 
 
 def test_compute_char_length() -> None:
-    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
-    thresh = threshold_dark_areas(img=image, char_length=11)
+    img = cv2.imread("test_data/test.png")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
+    thresh = threshold_dark_areas(img=img, char_length=11)
 
     char_length, thresh_chars, _chars_array = compute_char_length(thresh=thresh)
     assert char_length is not None
@@ -18,13 +21,19 @@ def test_compute_char_length() -> None:
     assert thresh_chars is not None
     assert thresh_chars.shape == (417, 1365)
 
-    image = 255 - cv2.cvtColor(cv2.imread("test_data/blank.png"), cv2.COLOR_BGR2GRAY)
-    assert compute_char_length(thresh=image) == (None, None, None)
+    img = cv2.imread("test_data/blank.png")
+    assert img is not None
+    img = 255 - cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY)
+
+    assert compute_char_length(thresh=img) == (None, None, None)
 
 
 def test_compute_median_line_sep() -> None:
-    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
-    thresh = threshold_dark_areas(img=image, char_length=11)
+    img = cv2.imread("test_data/test.png")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
+    thresh = threshold_dark_areas(img=img, char_length=11)
     char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh)
 
     median_line_sep, contours = compute_median_line_sep(
@@ -38,8 +47,11 @@ def test_compute_median_line_sep() -> None:
 
 
 def test_compute_img_metrics() -> None:
-    image = cv2.cvtColor(cv2.imread("test_data/test.png"), cv2.COLOR_BGR2RGB)
-    thresh = threshold_dark_areas(img=image, char_length=11)
+    img = cv2.imread("test_data/test.png")
+    assert img is not None
+    img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+
+    thresh = threshold_dark_areas(img=img, char_length=11)
     char_length, median_line_sep, contours = compute_img_metrics(thresh=thresh)
 
     assert char_length is not None
@@ -49,5 +61,8 @@ def test_compute_img_metrics() -> None:
     assert contours is not None
     assert len(contours) == 83
 
-    image = 255 - cv2.cvtColor(cv2.imread("test_data/blank.png"), cv2.COLOR_BGR2GRAY)
-    assert compute_img_metrics(thresh=image) == (None, None, None)
+    img = cv2.imread("test_data/blank.png")
+    assert img is not None
+    img = 255 - cv2.cvtColor(src=img, code=cv2.COLOR_BGR2GRAY)
+
+    assert compute_img_metrics(thresh=img) == (None, None, None)

@@ -82,7 +82,7 @@ def compute_row_ranges(
     cluster_labels = _cluster_values(values=separations, median_gap_multiple=3)
 
     # Find the most common cluster that corresponds to rows to get eligible separations
-    eligible_separations = {median_sep}
+    eligible_separations = {float(median_sep)}
     for cluster_id, _ in Counter(cluster_labels).most_common(2):
         cluster_separations = [
             sep
@@ -90,7 +90,7 @@ def compute_row_ranges(
             if label == cluster_id
         ]
         if (cluster_median_sep := np.median(cluster_separations)) > median_row_height:
-            eligible_separations.add(cluster_median_sep)
+            eligible_separations.add(float(cluster_median_sep))
 
     # Evaluate best separation value
     best_score, best_ranges = 0, []
