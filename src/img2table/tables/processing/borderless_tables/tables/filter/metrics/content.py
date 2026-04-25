@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import Counter
 from typing import TYPE_CHECKING
 
-from img2table.tables.processing.borderless_tables_v2._model import identify_merged_rows
+from img2table.tables.processing.borderless_tables._model import identify_merged_rows
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
+    from img2table.tables.processing.borderless_tables.tables.filter.model import (
         StructuredSection,
     )
 

@@ -4,10 +4,10 @@ from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from img2table.tables import find_components
-from img2table.tables.processing.borderless_tables_v2.tables.filter.model import StructuredSection
+from img2table.tables.processing.borderless_tables.tables.filter.model import StructuredSection
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2._model import ColumnSection
+    from img2table.tables.processing.borderless_tables._model import ColumnSection
 
 
 def bridge_small_discrepencies(

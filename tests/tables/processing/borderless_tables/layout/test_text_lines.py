@@ -6,7 +6,7 @@ import cv2
 from img2table.tables import threshold_dark_areas
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables_v2.layout.text_lines import (
+from img2table.tables.processing.borderless_tables.layout.text_lines import (
     identify_image_contours,
 )
 

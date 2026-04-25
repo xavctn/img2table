@@ -3,7 +3,7 @@ from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.borderless_tables_v2.layout.layout import (
+from img2table.tables.processing.borderless_tables.layout.layout import (
     ColumnDelimiters,
     VerticalWhitespace,
     create_all_layout_areas,

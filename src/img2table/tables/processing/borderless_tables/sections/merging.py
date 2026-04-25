@@ -3,7 +3,7 @@ from itertools import pairwise
 
 import numpy as np
 
-from img2table.tables.processing.borderless_tables_v2._model import (
+from img2table.tables.processing.borderless_tables._model import (
     ColumnSection,
     MergedRow,
     Whitespace,

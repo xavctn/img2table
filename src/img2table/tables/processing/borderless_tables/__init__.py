@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from img2table.tables.processing.borderless_tables_v2.layout import identify_image_layout
-from img2table.tables.processing.borderless_tables_v2.sections import identify_column_sections
-from img2table.tables.processing.borderless_tables_v2.tables import identify_tables
+from img2table.tables.processing.borderless_tables.layout import identify_image_layout
+from img2table.tables.processing.borderless_tables.sections import identify_column_sections
+from img2table.tables.processing.borderless_tables.tables import identify_tables
 
 if TYPE_CHECKING:
     import numpy as np

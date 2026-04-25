@@ -9,7 +9,7 @@ import numpy as np
 from img2table.tables.processing.common.misc import _cluster_values
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2._model import MergedRow
+    from img2table.tables.processing.borderless_tables._model import MergedRow
 
 
 def _evaluate_key_separation_value(

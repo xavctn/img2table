@@ -1,13 +1,13 @@
-from img2table.tables.processing.borderless_tables_v2._model import (
+from img2table.tables.processing.borderless_tables._model import (
     ColumnSection,
     LayoutRegion,
     identify_merged_rows,
 )
-from img2table.tables.processing.borderless_tables_v2.sections.merging import (
+from img2table.tables.processing.borderless_tables.sections.merging import (
     ensure_section_bounds_consistency,
     merge_column_sections,
 )
-from img2table.tables.processing.borderless_tables_v2.sections.segmentation import (
+from img2table.tables.processing.borderless_tables.sections.segmentation import (
     compute_column_section,
 )
 

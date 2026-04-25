@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from img2table.tables import cluster_items
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables_v2._model import Whitespace
+from img2table.tables.processing.borderless_tables._model import Whitespace
 
 if TYPE_CHECKING:
-    from img2table.tables.processing.borderless_tables_v2.tables.filter.model import (
+    from img2table.tables.processing.borderless_tables.tables.filter.model import (
         StructuredSection,
     )
 

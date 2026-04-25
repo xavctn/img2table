@@ -9,12 +9,12 @@ import numpy as np
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.borderless_tables_v2._model import (
+from img2table.tables.processing.borderless_tables._model import (
     ColumnSection,
     MergedRow,
     Whitespace,
 )
-from img2table.tables.processing.borderless_tables_v2.tables.filter.metrics import (
+from img2table.tables.processing.borderless_tables.tables.filter.metrics import (
     TableMetrics,
 )
 from img2table.tables.processing.common import compute_row_ranges

@@ -6,7 +6,7 @@ from itertools import pairwise
 from typing import TYPE_CHECKING
 
 from img2table.tables import cluster_items
-from img2table.tables.processing.borderless_tables_v2._model import (
+from img2table.tables.processing.borderless_tables._model import (
     LayoutRegion,
     identify_merged_rows,
 )

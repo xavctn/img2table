@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import cluster_to_table
-from img2table.tables.processing.borderless_tables_v2._model import (
+from img2table.tables.processing.borderless_tables._model import (
     compute_whitespaces,
     identify_merged_rows,
 )

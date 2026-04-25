@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from img2table.tables.processing.borderless_tables_v2.layout.layout import identify_layout
-from img2table.tables.processing.borderless_tables_v2.layout.text_lines import (
+from img2table.tables.processing.borderless_tables.layout.layout import identify_layout
+from img2table.tables.processing.borderless_tables.layout.text_lines import (
     identify_image_contours,
 )
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
     from img2table.tables.objects.line import Line
     from img2table.tables.objects.table import Table
-    from img2table.tables.processing.borderless_tables_v2._model import LayoutRegion
+    from img2table.tables.processing.borderless_tables._model import LayoutRegion
 
 
 def identify_image_layout(

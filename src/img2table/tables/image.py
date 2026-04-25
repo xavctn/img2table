@@ -14,7 +14,7 @@ from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.bordered_tables.tables import get_tables
 from img2table.tables.processing.bordered_tables.tables.consecutive import merge_consecutive_tables
 from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
-from img2table.tables.processing.borderless_tables_v2 import extract_borderless_tables
+from img2table.tables.processing.borderless_tables import extract_borderless_tables
 
 if TYPE_CHECKING:
     import numpy as np
