@@ -143,10 +143,10 @@ class Document:
         :return: dictionary with page number as key and list of extracted tables as values
         """
         # Extract tables from document
-        from img2table.tables.image import TableImage
+        from img2table.tables.extractor import TableExtractor
 
         tables = {
-            idx: TableImage(img=img, min_confidence=min_confidence).extract_tables(
+            idx: TableExtractor(img=img, min_confidence=min_confidence).extract_tables(
                 implicit_rows=implicit_rows,
                 implicit_columns=implicit_columns,
                 borderless_tables=borderless_tables,
