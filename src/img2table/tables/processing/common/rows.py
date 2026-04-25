@@ -82,8 +82,12 @@ def compute_row_ranges(
     cluster_labels = _cluster_values(values=separations, median_gap_multiple=3)
 
     # Find the most common cluster that corresponds to rows to get eligible separations
-    eligible_separations = {float(median_sep)}
-    for cluster_id, _ in Counter(cluster_labels).most_common(2):
+    clusters_counter, eligible_separations = Counter(cluster_labels), {float(median_sep)}
+    for cluster_id, cnt in clusters_counter.most_common(2):
+        if cnt < max(clusters_counter.values()) / 5:
+            # Not enough occurrences to be considered a distinct cluster
+            continue
+
         cluster_separations = [
             sep
             for sep, label in zip(separations, cluster_labels, strict=True)
