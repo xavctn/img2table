@@ -44,7 +44,7 @@ def bridge_small_discrepencies(
         if not max(prv.is_structured(), nxt.is_structured()):
             # Not any structured section
             continue
-        if not all(sec.is_structured() or len(sec.merged_rows) < 3 for sec in [prv, nxt]):
+        if not all(sec.is_structured() or sec.nb_rows < 2 or len(sec.merged_rows) < 3 for sec in [prv, nxt]):
             # Check that all elements are structured or have less than 3 rows
             continue
 

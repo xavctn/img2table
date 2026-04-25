@@ -471,7 +471,7 @@ def compute_median_line_sep(
     # Identify characters that belong to the same word and create merged contours, by closing image and retrieving
     # connected components
     kernel = cv2.getStructuringElement(
-        cv2.MORPH_RECT, (int(char_length // 2 + 1), int(char_length // 3 + 1))
+        cv2.MORPH_RECT, (int(char_length // 2 + 1), 1)
     )
     thresh_chars = cv2.morphologyEx(thresh_chars, cv2.MORPH_CLOSE, kernel)
 

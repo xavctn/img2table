@@ -133,9 +133,12 @@ class StructuredSection:
         if sum(ratio >= 0.5 for ratio in metrics.presence_ratios) < 2:
             # Insufficient column presence
             return 0.0
+        if metrics.spacing_consistency < 0.25:
+            # Insufficient spacing consistency
+            return 0.0
         if (
             metrics.full_text >= 2 / 3
-            and np.mean([it.width for it in self.items]) >= 30 * self.char_length
+            and np.mean([it.width for it in self.items]) >= 25 * self.char_length
         ):
             # Most likely text columns
             return 0.0

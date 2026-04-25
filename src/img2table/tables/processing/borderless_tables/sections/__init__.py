@@ -3,8 +3,10 @@ from img2table.tables.processing.borderless_tables._model import (
     LayoutRegion,
     identify_merged_rows,
 )
+from img2table.tables.processing.borderless_tables.sections.consistency import (
+    ensure_consistent_section,
+)
 from img2table.tables.processing.borderless_tables.sections.merging import (
-    ensure_section_bounds_consistency,
     merge_column_sections,
 )
 from img2table.tables.processing.borderless_tables.sections.segmentation import (
@@ -40,11 +42,11 @@ def identify_column_sections(layout_region: LayoutRegion, min_width: float) -> l
         x_max=layout_region.x2,
     )
 
-    # Check sections top and bottom bounds
+    # Check consistency and relevance of section elements
     return [
         sec
         for section in merged_sections
-        for sec in ensure_section_bounds_consistency(
+        for sec in ensure_consistent_section(
             section=section,
             min_width=min_width,
             x_min=layout_region.x1,
