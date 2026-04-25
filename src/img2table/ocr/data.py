@@ -44,7 +44,7 @@ class OCRDataframe:
 
         # Filter dataframe on relevant page
         df_words = self.df.filter(pl.col("class") == "ocrx_word")
-        if page_number:
+        if page_number is not None:
             df_words = df_words.filter(pl.col("page") == page_number)
         # Filter dataframe on relevant words
         df_words = df_words.filter(
@@ -118,7 +118,7 @@ class OCRDataframe:
         """
         # Filter dataframe on relevant page
         df_words = self.df.filter(pl.col("class") == "ocrx_word")
-        if page_number:
+        if page_number is not None:
             df_words = df_words.filter(pl.col("page") == page_number)
         # Filter dataframe on relevant words
         df_words = df_words.filter(

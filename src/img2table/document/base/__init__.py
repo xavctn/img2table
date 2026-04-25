@@ -159,7 +159,7 @@ class Document:
 
         # If pages have been defined, modify tables keys
         if self.pages:
-            tables = {self.pages[k]: v for k, v in tables.items()}
+            return {self.pages[k]: v for k, v in tables.items()}
 
         return tables
 

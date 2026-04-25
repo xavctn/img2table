@@ -10,7 +10,7 @@ from img2table.tables.processing.borderless_tables.sections.merging import (
     merge_column_sections,
 )
 from img2table.tables.processing.borderless_tables.sections.segmentation import (
-    compute_column_section,
+    compute_column_sections,
 )
 
 
@@ -25,7 +25,7 @@ def identify_column_sections(layout_region: LayoutRegion, min_width: float) -> l
     merged_rows = identify_merged_rows(cnts=layout_region.contours)
 
     # Identify column sections
-    column_sections, max_gap = compute_column_section(
+    column_sections, max_gap = compute_column_sections(
         merged_rows=merged_rows,
         min_width=min_width,
         x_min=layout_region.x1,

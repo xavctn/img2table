@@ -94,7 +94,7 @@ def _row_group_score(
     return count
 
 
-def compute_column_section(
+def compute_column_sections(
     merged_rows: list[MergedRow],
     min_width: float,
     x_min: int,

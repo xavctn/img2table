@@ -11,17 +11,11 @@ from img2table.tables.objects.cell import Cell
 @dataclass
 class Row(TableObject):
     def __init__(self, cells: Cell | list[Cell]) -> None:
-        if cells is None:
-            raise ValueError("cells parameter is null")
         if isinstance(cells, Cell):
-            self._items = [cells]
+            self.items = [cells]
         else:
-            self._items = cells
+            self.items = cells
         self._contours = []
-
-    @property
-    def items(self) -> list[Cell]:
-        return self._items
 
     @property
     def nb_columns(self) -> int:
@@ -58,9 +52,9 @@ class Row(TableObject):
         :return: Row object with cells added
         """
         if isinstance(cells, Cell):
-            self._items += [cells]
+            self.items += [cells]
         else:
-            self._items += cells
+            self.items += cells
 
         return self
 

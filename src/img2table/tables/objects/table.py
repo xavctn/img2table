@@ -21,9 +21,7 @@ if typing.TYPE_CHECKING:
 @dataclass
 class Table(TableObject):
     def __init__(self, rows: Row | list[Row], borderless: bool = False) -> None:
-        if rows is None:
-            self.items = []
-        elif isinstance(rows, Row):
+        if isinstance(rows, Row):
             self.items = [rows]
         else:
             self.items = rows

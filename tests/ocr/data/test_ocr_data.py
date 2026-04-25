@@ -33,7 +33,7 @@ def test_get_text_cell() -> None:
     ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
     cell = Cell(x1=200, x2=800, y1=700, y2=850)
 
-    result = ocr_df.get_text_cell(cell=cell, min_confidence=50, page_number=0)
+    result = ocr_df.get_text_cell(cell=cell, min_confidence=50)
 
     assert (
         result
@@ -47,7 +47,7 @@ def test_get_text_table() -> None:
     with Path("test_data/table.json").open() as f:
         table = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
 
-    result = ocr_df.get_text_table(table=table, page_number=0, min_confidence=50)
+    result = ocr_df.get_text_table(table=table, min_confidence=50)
 
     with Path("test_data/expected_table.json").open() as f:
         expected = Table(rows=[Row(cells=[Cell(**el) for el in row]) for row in json.load(f)])
