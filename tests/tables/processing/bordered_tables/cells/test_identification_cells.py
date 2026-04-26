@@ -1,11 +1,9 @@
 import json
 from pathlib import Path
 
-import polars as pl
-
-from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
 from img2table.tables.processing.bordered_tables.cells.identification import get_cells_dataframe
+from tests.tables.processing.bordered_tables.cells import read_cells
 
 
 def test_get_cells_dataframe() -> None:
@@ -16,11 +14,7 @@ def test_get_cells_dataframe() -> None:
 
     result = get_cells_dataframe(horizontal_lines=h_lines, vertical_lines=v_lines)
 
-    df_expected = pl.read_csv("test_data/expected_ident_cells.csv", separator=";", encoding="utf-8")
-    expected = [
-        Cell(x1=row["x1"], x2=row["x2"], y1=row["y1"], y2=row["y2"])
-        for row in df_expected.to_dicts()
-    ]
+    expected = read_cells("test_data/expected_ident_cells.csv")
 
     assert sorted(result, key=lambda c: (c.x1, c.y1, c.x2, c.y2)) == sorted(
         expected, key=lambda c: (c.x1, c.y1, c.x2, c.y2)

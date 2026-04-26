@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import polars as pl
-
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
     from img2table.document.base import Document, MockDocument
@@ -43,24 +41,21 @@ class EasyOCR(OCRInstance):
 
         self.reader = Reader(**kw)
 
-    def content(self, document: Document | MockDocument) -> list[list[tuple]]:
-        # Get OCR of all images
-        return [self.reader.readtext(image) for image in document.images]
-
-    def to_ocr_dataframe(self, content: list[list]) -> OCRDataframe | None:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
-        Convert hOCR HTML to OCRDataframe object
+        Convert hOCR HTML to OCRData object
         :param content: hOCR HTML string
-        :return: OCRDataframe object corresponding to content
+        :return: OCRData object corresponding to content
         """
-        # Create list of elements
-        list_elements = []
+        # Get OCR of all images
+        content = [self.reader.readtext(image) for image in document.images]
+
+        # Create dict of elements by page
+        records = {}
 
         for page, ocr_result in enumerate(content):
             for idx, word in enumerate(ocr_result):
                 dict_word = {
-                    "page": page,
-                    "class": "ocrx_word",
                     "id": f"word_{page + 1}_{idx + 1}",
                     "parent": f"word_{page + 1}_{idx + 1}",
                     "value": word[1],
@@ -71,6 +66,6 @@ class EasyOCR(OCRInstance):
                     "y2": round(max([edge[1] for edge in word[0]])),
                 }
 
-                list_elements.append(dict_word)
+                records.setdefault(page, []).append(dict_word)
 
-        return OCRDataframe(df=pl.DataFrame(list_elements)) if list_elements else None
+        return OCRData(records=records) if records else None

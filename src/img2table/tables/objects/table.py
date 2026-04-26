@@ -15,7 +15,7 @@ from img2table.tables.objects.line import Line
 from img2table.tables.objects.row import Row
 
 if typing.TYPE_CHECKING:
-    from img2table.ocr.data import OCRDataframe
+    from img2table.ocr.data import OCRData
 
 
 @dataclass
@@ -25,8 +25,12 @@ class Table(TableObject):
             self.items = [rows]
         else:
             self.items = rows
+        self.title_area: Cell | None = None
         self.title: str | None = None
         self.borderless = borderless
+
+    def set_title_area(self, title_area: Cell) -> None:
+        self.title_area = title_area
 
     def set_title(self, title: str | None) -> None:
         self.title = title
@@ -162,15 +166,20 @@ class Table(TableObject):
             for id_row in range(self.nb_rows):
                 self.items[id_row].items.pop(idx)
 
-    def get_content(self, ocr_df: OCRDataframe, min_confidence: int = 50) -> Table:
+    def get_content(
+        self, ocr_data: OCRData, page_number: int | None = None, min_confidence: int = 50
+    ) -> Table:
         """
-        Retrieve text from OCRDataframe object and reprocess table to remove empty rows / columns
-        :param ocr_df: OCRDataframe object
+        Retrieve text from OCRData object and reprocess table to remove empty rows / columns
+        :param ocr_data: OCRData object
+        :param page_number: page number in OCRData object
         :param min_confidence: minimum confidence in order to include a word, from 0 (worst) to 99 (best)
         :return: Table object with data attribute containing dataframe
         """
         # Get content for each cell
-        self = ocr_df.get_text_table(table=self, min_confidence=min_confidence)  # noqa: PLW0642
+        self = ocr_data.get_text_table(  # noqa: PLW0642
+            table=self, page_number=page_number, min_confidence=min_confidence
+        )
 
         # Check for empty rows and remove if necessary
         empty_rows = []

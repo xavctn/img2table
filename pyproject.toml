@@ -18,8 +18,6 @@ classifiers = [
 ]
 
 dependencies = [
-    "polars[pandas]>=1.2",
-    "pyarrow>=7",
     "numpy",
     "pypdfium2>=4.30.0",
     "opencv-contrib-python>=4",
@@ -44,7 +42,7 @@ azure = [
 ]
 paddle = [
     "paddlepaddle; python_version<'3.14'",
-    "paddleocr>=2.0.6; python_version<'3.14'",
+    "paddleocr>=3; python_version<'3.14'",
 ]
 easyocr = [
     "easyocr>=1.7.0",
@@ -56,6 +54,7 @@ surya = [
 
 [dependency-groups]
 dev = [
+    "pandas",
     "python-doctr",
     "torch",
     "torchvision",

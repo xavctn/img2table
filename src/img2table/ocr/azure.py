@@ -6,10 +6,9 @@ from io import BytesIO
 from typing import TYPE_CHECKING
 
 import cv2
-import polars as pl
 
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
     from azure.cognitiveservices.vision.computervision.models import ReadOperationResult
@@ -96,13 +95,16 @@ class AzureOCR(OCRInstance):
 
         return results
 
-    def to_ocr_dataframe(self, content: list[ReadOperationResult]) -> OCRDataframe | None:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
-        Convert list of OCR results by page to OCRDataframe object
+        Convert list of OCR results by page to OCRData object
         :param content: list of OCR results by page
-        :return: OCRDataframe object corresponding to content
+        :return: OCRData object corresponding to content
         """
-        list_dfs = []
+        # Apply OCR
+        content = self.content(document=document)
+
+        records = {}
 
         # Parse all page results
         for page, result in enumerate(content):
@@ -117,8 +119,6 @@ class AzureOCR(OCRInstance):
 
                         bbox = list(map(int, word.bounding_box))
                         d_word = {
-                            "page": page,
-                            "class": "ocrx_word",
                             "id": f"word_{page + 1}_{word_cnt}",
                             "parent": f"word_{page + 1}_{line_cnt}",
                             "value": word.text,
@@ -132,6 +132,6 @@ class AzureOCR(OCRInstance):
                         word_elements.append(d_word)
 
             if word_elements:
-                list_dfs.append(pl.DataFrame(data=word_elements, schema=self.pl_schema))
+                records[page] = word_elements
 
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+        return OCRData(records=records) if records else None

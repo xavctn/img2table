@@ -2,12 +2,40 @@ from collections import defaultdict
 from itertools import pairwise
 
 import numpy as np
-import polars as pl
 
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.common import _cluster_values, is_contained_cell
+from img2table.tables.processing.common import _cluster_values
+
+
+def is_contained_cell(
+    inner_cell: Cell | tuple[int, int, int, int],
+    outer_cell: Cell | tuple[int, int, int, int],
+    percentage: float = 0.9,
+) -> bool:
+    """
+    Assert if the inner cell is contained in outer cell
+    :param inner_cell: inner cell
+    :param outer_cell: Table object
+    :param percentage: percentage of the inner cell that needs to be contained in the outer cell
+    :return: boolean indicating if the inner cell is contained in the outer cell
+    """
+    # If needed, convert inner cell to Cell object
+    inner_cell = Cell(*inner_cell) if not isinstance(inner_cell, Cell) else inner_cell
+    # If needed, convert outer cell to Cell object
+    outer_cell = Cell(*outer_cell) if not isinstance(outer_cell, Cell) else outer_cell
+
+    # Compute common coordinates
+    x_left = max(inner_cell.x1, outer_cell.x1)
+    y_top = max(inner_cell.y1, outer_cell.y1)
+    x_right = min(inner_cell.x2, outer_cell.x2)
+    y_bottom = min(inner_cell.y2, outer_cell.y2)
+
+    # Compute intersection area as well as inner cell area
+    intersection_area = max(0, (x_right - x_left)) * max(0, (y_bottom - y_top))
+
+    return intersection_area / inner_cell.area >= percentage
 
 
 def normalize_table_cells(cluster_cells: list[Cell], char_length: float) -> list[Cell]:
@@ -33,7 +61,9 @@ def normalize_table_cells(cluster_cells: list[Cell], char_length: float) -> list
     v_values = sorted({y_val for cell in cluster_cells for y_val in [cell.y1, cell.y2]})
     cluster_mapping = defaultdict(list)
     for cl_idx, value in zip(
-        _cluster_values(values=v_values, median_gap_multiple=0.1, min_gap=0.5 * char_length), v_values, strict=True
+        _cluster_values(values=v_values, median_gap_multiple=0.1, min_gap=0.5 * char_length),
+        v_values,
+        strict=True,
     ):
         cluster_mapping[cl_idx].append(value)
     # Get vertical delimiters from cluster mapping
@@ -65,73 +95,77 @@ def remove_unwanted_elements(table: Table, elements: list[Cell]) -> Table:
     if len(elements) == 0 or table.nb_rows * table.nb_columns == 0:
         return Table(rows=[])
 
-    # Identify elements corresponding to each cell
-    df_elements = pl.DataFrame(
-        [
-            {"x1_el": el.x1, "y1_el": el.y1, "x2_el": el.x2, "y2_el": el.y2, "area_el": el.area}
-            for el in elements
-        ]
-    )
-    df_cells = pl.DataFrame(
-        [
-            {"id_row": id_row, "id_col": id_col, "x1": c.x1, "y1": c.y1, "x2": c.x2, "y2": c.y2}
-            for id_row, row in enumerate(table.items)
-            for id_col, c in enumerate(row.items)
-        ]
-    ).with_columns(
-        merged_col=pl.col("id_row").n_unique().over(["x1", "y1", "x2", "y2"]) > 1,
-        merged_row=pl.col("id_col").n_unique().over(["x1", "y1", "x2", "y2"]) > 1,
-    )
+    # Create arrays
+    cells = [
+        (id_row, id_col, c.x1, c.y1, c.x2, c.y2)
+        for id_row, row in enumerate(table.items)
+        for id_col, c in enumerate(row.items)
+    ]
+    id_rows = np.array([cell[0] for cell in cells])
+    id_cols = np.array([cell[1] for cell in cells])
+    cell_coords = np.array([cell[2:] for cell in cells])
+    elements_coords = np.array([[el.x1, el.y1, el.x2, el.y2] for el in elements])
+    elements_area = np.array([el.area for el in elements])
 
-    df_cells_elements = (
-        df_cells.join(df_elements, how="cross")
-        .with_columns(
-            x_overlap=pl.min_horizontal(["x2", "x2_el"]) - pl.max_horizontal(["x1", "x1_el"]),
-            y_overlap=pl.min_horizontal(["y2", "y2_el"]) - pl.max_horizontal(["y1", "y1_el"]),
-        )
-        .with_columns(
-            x_overlap=pl.max_horizontal(pl.col("x_overlap"), pl.lit(0)),
-            y_overlap=pl.max_horizontal(pl.col("y_overlap"), pl.lit(0)),
-        )
-        .with_columns(
-            contains=(
-                ((pl.col("x_overlap") * pl.col("y_overlap")) / pl.col("area_el") >= 0.6)
-                & (pl.col("x1_el") >= table.x1)
-                & (pl.col("x2_el") <= table.x2)
-                & (pl.col("y1_el") >= table.y1)
-                & (pl.col("y2_el") <= table.y2)
-            )
-        )
-        .group_by("id_row", "id_col", "merged_row", "merged_col")
-        .agg(pl.col("contains").max())
-    )
+    # Identify cells that are repeated across rows or columns, corresponding to merged cells
+    unique_cells, inverse = np.unique(cell_coords, axis=0, return_inverse=True)
+    merged_rows = np.zeros(cell_coords.shape[0], dtype=bool)
+    merged_cols = np.zeros(cell_coords.shape[0], dtype=bool)
+    for idx in range(unique_cells.shape[0]):
+        mask = inverse == idx
+        merged_rows[mask] = np.unique(id_cols[mask]).shape[0] > 1
+        merged_cols[mask] = np.unique(id_rows[mask]).shape[0] > 1
 
-    # Identify empty rows and empty columns
-    df_empty_rows = df_cells_elements.group_by("id_row").agg(
-        pl.col("contains").max(),
-        pl.when(~pl.col("merged_col")).then(pl.col("contains")).max().alias("single_contains"),
-        pl.col("merged_col").min(),
+    # Compute overlap between each cell and each element
+    x_overlap = np.maximum(
+        np.minimum(cell_coords[:, np.newaxis, 2], elements_coords[np.newaxis, :, 2])
+        - np.maximum(cell_coords[:, np.newaxis, 0], elements_coords[np.newaxis, :, 0]),
+        0,
     )
+    y_overlap = np.maximum(
+        np.minimum(cell_coords[:, np.newaxis, 3], elements_coords[np.newaxis, :, 3])
+        - np.maximum(cell_coords[:, np.newaxis, 1], elements_coords[np.newaxis, :, 1]),
+        0,
+    )
+    table_contains = (
+        (elements_coords[:, 0] >= table.x1)
+        & (elements_coords[:, 2] <= table.x2)
+        & (elements_coords[:, 1] >= table.y1)
+        & (elements_coords[:, 3] <= table.y2)
+        & (elements_area > 0)
+    )
+    overlap_pct = np.divide(
+        x_overlap * y_overlap,
+        elements_area,
+        out=np.zeros_like(x_overlap, dtype=float),
+        where=elements_area > 0,
+    )
+    contains = (overlap_pct >= 0.6) & table_contains
+    cell_contains = contains.any(axis=1)
+
+    # Identify empty rows, ignoring content from cells merged across rows
     empty_rows = sorted(
         [
-            row.get("id_row")
-            for row in df_empty_rows.to_dicts()
-            if not row.get("contains")
-            or (not row.get("merged_col") and not row.get("single_contains"))
+            id_row
+            for id_row in np.unique(id_rows)
+            if not cell_contains[id_rows == id_row].any()
+            or (
+                not merged_cols[id_rows == id_row].min()
+                and not cell_contains[(id_rows == id_row) & ~merged_cols].any()
+            )
         ]
     )
 
-    df_empty_cols = df_cells_elements.group_by("id_col").agg(
-        pl.col("contains").max(),
-        pl.when(~pl.col("merged_row")).then(pl.col("contains")).max().alias("single_contains"),
-        pl.col("merged_row").min(),
-    )
+    # Identify empty columns, ignoring content from cells merged across columns
     empty_cols = sorted(
         [
-            row.get("id_col")
-            for row in df_empty_cols.to_dicts()
-            if not row.get("contains")
-            or (not row.get("merged_row") and not row.get("single_contains"))
+            id_col
+            for id_col in np.unique(id_cols)
+            if not cell_contains[id_cols == id_col].any()
+            or (
+                not merged_rows[id_cols == id_col].min()
+                and not cell_contains[(id_cols == id_col) & ~merged_rows].any()
+            )
         ]
     )
 

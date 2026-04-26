@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import polars as pl
-
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
-    import surya.recognition
-
     from img2table.document.base import Document, MockDocument
 
 
@@ -44,37 +40,30 @@ class SuryaOCR(OCRInstance):
         self.det_predictor = DetectionPredictor()
         self.rec_predictor = RecognitionPredictor(FoundationPredictor())
 
-    def content(
-        self, document: Document | MockDocument
-    ) -> list[surya.recognition.schema.OCRResult]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
+        """
+        Convert docTR Document object to OCRData object
+        :param content: docTR Document object
+        :return: OCRData object corresponding to content
+        """
         from PIL import Image
 
         # Get OCR of all images
-        return self.rec_predictor(
+        content = self.rec_predictor(
             images=[Image.fromarray(img) for img in document.images],
             langs=[self.langs],  # ty:ignore[unknown-argument]
             det_predictor=self.det_predictor,
         )
 
-    def to_ocr_dataframe(
-        self, content: list[surya.recognition.schema.OCRResult]
-    ) -> OCRDataframe | None:
-        """
-        Convert docTR Document object to OCRDataframe object
-        :param content: docTR Document object
-        :return: OCRDataframe object corresponding to content
-        """
-        # Create list of elements
-        list_elements = []
+        # Create dict of elements by page
+        records = {}
 
         for page_id, ocr_result in enumerate(content):
             for idx, text_line in enumerate(ocr_result.text_lines):
                 dict_word = {
-                    "page": page_id,
-                    "class": "ocrx_word",
                     "id": f"word_{page_id + 1}_{idx + 1}_0",
                     "parent": f"word_{page_id + 1}_{idx + 1}",
-                    "value": text_line.text,
+                    "value": text_line.text or None,
                     "confidence": round(100 * (text_line.confidence or 0)),
                     "x1": int(text_line.bbox[0]),
                     "y1": int(text_line.bbox[1]),
@@ -82,6 +71,6 @@ class SuryaOCR(OCRInstance):
                     "y2": int(text_line.bbox[3]),
                 }
 
-                list_elements.append(dict_word)
+                records.setdefault(page_id, []).append(dict_word)
 
-        return OCRDataframe(df=pl.DataFrame(list_elements)) if list_elements else None
+        return OCRData(records=records) if records else None

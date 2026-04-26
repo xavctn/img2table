@@ -10,14 +10,11 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 import cv2
-import polars as pl
 
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     import numpy as np
 
     from img2table.document.base import Document, MockDocument
@@ -109,20 +106,20 @@ class TesseractOCR(OCRInstance):
 
         return hocr.decode("utf-8")
 
-    def content(self, document: Document | MockDocument) -> Iterator[str]:
-        with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
-            return pool.map(self.hocr, document.images)
-
-    def to_ocr_dataframe(self, content: list[str]) -> OCRDataframe | None:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
-        Convert hOCR HTML to OCRDataframe object
+        Convert hOCR HTML to OCRData object
         :param content: hOCR HTML string
-        :return: OCRDataframe object corresponding to content
+        :return: OCRData object corresponding to content
         """
+        # Apply OCR on all pages
+        with ThreadPoolExecutor(max_workers=self.n_threads) as pool:
+            content = pool.map(self.hocr, document.images)
+
         from bs4 import BeautifulSoup
 
-        # Create list of dataframes for each page
-        list_dfs = []
+        # Create dict of OCR elements by page
+        records = {}
 
         for page, hocr in enumerate(content):
             # Instantiate HTML parser
@@ -131,38 +128,38 @@ class TesseractOCR(OCRInstance):
             # Parse all HTML elements
             list_elements = []
             for element in soup.find_all(class_=True):
-                # Get element properties
-                d_el = {
-                    "page": page,
-                    "class": element["class"][0],
-                    "id": element["id"],
-                    "parent": element.parent.get("id") if element.parent else None,
-                    "value": re.sub(r"^(\s|\||L|_|;|\*)*$", "", element.string).strip() or None
-                    if element.string
-                    else None,
-                }
+                if element["class"][0] != "ocrx_word":
+                    continue
 
-                # Get word confidence
+                # Parse properties
                 str_conf = (
                     re.findall(r"x_wconf \d{1,2}", title)
                     if isinstance((title := element["title"]), str)
                     else []
                 )
-                if str_conf:
-                    d_el["confidence"] = int(str_conf[0].split()[1])
-                else:
-                    d_el["confidence"] = None
+                confidence = int(str_conf[0].split()[1]) if str_conf else None
 
-                # Get bbox
                 bbox = re.findall(r"bbox \d{1,4} \d{1,4} \d{1,4} \d{1,4}", element["title"])[0]  # ty:ignore[no-matching-overload]
-                d_el["x1"], d_el["y1"], d_el["x2"], d_el["y2"] = tuple(
-                    int(element) for element in re.sub(r"^bbox\s", "", bbox).split()
-                )
+                x1, y1, x2, y2 = tuple(map(int, re.sub(r"^bbox\s", "", bbox).split()))
 
-                list_elements.append(d_el)
+                # Get element properties
+                list_elements.append(
+                    {
+                        "id": element["id"],
+                        "parent": element.parent.get("id") if element.parent else None,
+                        "value": re.sub(r"^(\s|\||L|_|;|\*)*$", "", element.string).strip() or None
+                        if element.string
+                        else None,
+                        "confidence": confidence,
+                        "x1": x1,
+                        "y1": y1,
+                        "x2": x2,
+                        "y2": y2,
+                    }
+                )
 
             # Create dataframe
             if list_elements:
-                list_dfs.append(pl.DataFrame(data=list_elements, schema=self.pl_schema))
+                records[page] = list_elements
 
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+        return OCRData(records=records) if records else None

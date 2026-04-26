@@ -12,7 +12,7 @@ from img2table._validation import ValidationError, validate_bool, validate_pages
 
 if TYPE_CHECKING:
     from img2table.ocr.base import OCRInstance
-    from img2table.ocr.data import OCRDataframe
+    from img2table.ocr.data import OCRData
     from img2table.tables.objects.extraction import ExtractedTable
     from img2table.tables.objects.table import Table
 
@@ -27,7 +27,7 @@ class Document:
     src: str | Path | io.BytesIO | bytes
     detect_rotation: bool = False
     pages: list[int] | None = None
-    _ocr_df: Any = None
+    _ocr_data: Any = None
 
     def __post_init__(self) -> None:
         validate_src(self.src)
@@ -41,14 +41,14 @@ class Document:
         raise NotImplementedError
 
     @property
-    def ocr_df(self) -> OCRDataframe:
-        if self._ocr_df is None:
-            raise ValueError("ocr_df is not set")
-        return self._ocr_df
+    def ocr_data(self) -> OCRData:
+        if self._ocr_data is None:
+            raise ValueError("ocr_data is not set")
+        return self._ocr_data
 
-    @ocr_df.setter
-    def ocr_df(self, value: OCRDataframe | None) -> None:
-        self._ocr_df = value
+    @ocr_data.setter
+    def ocr_data(self, value: OCRData | None) -> None:
+        self._ocr_data = value
 
     @cached_property
     def file_bytes(self) -> bytes:
@@ -78,25 +78,26 @@ class Document:
         # Get pages where tables have been detected
         table_pages = [k for k, v in tables.items() if len(v) > 0]
 
-        if (self._ocr_df is None and ocr is None) or len(table_pages) == 0:
+        if (self._ocr_data is None and ocr is None) or len(table_pages) == 0:
             return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
 
         # Create document containing only pages
         ocr_doc = MockDocument(images=[self.images[page] for page in table_pages])
 
-        # Get OCRDataFrame object
-        if self._ocr_df is None and ocr is not None:
-            self.ocr_df = ocr.of(document=ocr_doc)
+        # Get OCRData object
+        if self._ocr_data is None and ocr is not None:
+            self.ocr_data = ocr.of(document=ocr_doc)
 
-        if self._ocr_df is None:
+        if self._ocr_data is None:
             return {k: [] for k in tables}
 
         # Retrieve table contents with ocr
         for idx, page in enumerate(table_pages):
-            ocr_df_page = self.ocr_df.page(page_number=idx)
             # Get table content
             tables[page] = [
-                table.get_content(ocr_df=ocr_df_page, min_confidence=min_confidence)
+                table.get_content(
+                    ocr_data=self.ocr_data, min_confidence=min_confidence, page_number=idx
+                )
                 for table in tables[page]
             ]
 
@@ -106,14 +107,19 @@ class Document:
             ]
 
             # Retrieve titles
-            from img2table.tables.processing.text.titles import get_title_tables
-
-            tables[page] = get_title_tables(
-                img=self.images[page], tables=tables[page], ocr_df=ocr_df_page
-            )
+            for table in tables[page]:
+                if table.title_area is not None:
+                    table.set_title(
+                        title=self.ocr_data.get_text_cell(
+                            cell=table.title_area,
+                            margin=5,
+                            page_number=idx,
+                            min_confidence=min_confidence,
+                        )
+                    )
 
         # Reset OCR
-        self.ocr_df = None
+        self.ocr_data = None
 
         return {
             k: [

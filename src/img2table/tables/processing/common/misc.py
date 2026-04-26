@@ -21,7 +21,9 @@ def _cluster_values(
 
     # Compute gaps between consecutive sorted values
     gaps = [nxt - prv for prv, nxt in pairwise(sorted_values)]
-    gap_threshold = median_gap_multiple * (np.median(gaps) if len(gaps) > 2 else min(gaps, default=0))
+    gap_threshold = median_gap_multiple * (
+        np.median(gaps) if len(gaps) > 2 else min(gaps, default=0)
+    )
 
     # Create clusters
     cluster_id, cluster_labels_sorted = 0, [0]

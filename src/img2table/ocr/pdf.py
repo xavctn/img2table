@@ -3,12 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
-import polars as pl
 from pypdfium2 import PdfDocument, PdfTextPage
 
 from img2table.document.base import Document, MockDocument
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 
 @dataclass
@@ -96,8 +95,6 @@ class Word:
 
     def asdict(self, page_idx: int) -> dict:
         return {
-            "page": page_idx,
-            "class": "ocrx_word",
             "id": f"word_{page_idx + 1}_{self.line_idx}_{self.idx}",
             "parent": f"line_{page_idx + 1}_{self.line_idx}",
             "value": "".join([c.value for c in self.chars]),
@@ -163,11 +160,11 @@ def get_all_char_data(
 
 
 class PdfOCR(OCRInstance):
-    def content(self, document: Document | MockDocument) -> list[list[dict]]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         list_pages = []
 
         if isinstance(document, MockDocument) or not document.pages:
-            return list_pages
+            return None
 
         doc = PdfDocument(input=document.file_bytes)
         for idx, page_number in enumerate(document.pages):
@@ -240,7 +237,6 @@ class PdfOCR(OCRInstance):
             elif len([obj for obj in page.get_objects() if obj.type == 3]) == 0:
                 # Check if page is blank
                 page_item = {
-                    "page": idx,
                     "class": "ocr_page",
                     "id": f"page_{idx + 1}",
                     "parent": None,
@@ -256,18 +252,10 @@ class PdfOCR(OCRInstance):
                 list_pages.append([])
 
         doc.close()
-        return list_pages
 
-    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe | None:
-        # Check if any page has words
-        if min(map(len, content)) == 0:
-            return None
+        # Create OCRData
+        records = {
+            page: page_elements for page, page_elements in enumerate(list_pages) if page_elements
+        }
 
-        # Create OCRDataframe
-        list_dfs = [
-            pl.DataFrame(data=page_elements, schema=self.pl_schema)
-            for page_elements in content
-            if page_elements
-        ]
-
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+        return OCRData(records=records) if records else None

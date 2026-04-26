@@ -1,44 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-import polars as pl
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from img2table.document.base import Document, MockDocument
-    from img2table.ocr.data import OCRDataframe
+    from img2table.ocr.data import OCRData
 
 
 class OCRInstance:
     @property
-    def pl_schema(self) -> dict[str, Any]:
-        return {
-            "page": pl.Int64,
-            "class": str,
-            "id": str,
-            "parent": str,
-            "value": str,
-            "confidence": pl.Int64,
-            "x1": pl.Int64,
-            "y1": pl.Int64,
-            "x2": pl.Int64,
-            "y2": pl.Int64,
-        }
+    def ocr_fields(self) -> tuple[str, ...]:
+        return ("id", "parent", "value", "confidence", "x1", "y1", "x2", "y2")
 
-    def content(self, document: Document | MockDocument) -> Any:
-        raise NotImplementedError
-
-    def to_ocr_dataframe(self, content: Any) -> OCRDataframe | None:
-        raise NotImplementedError
-
-    def of(self, document: Document | MockDocument) -> OCRDataframe | None:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
-        Extract text from Document to OCRDataframe object
+        Extract text from Document to OCRData object
         :param document: Document object
-        :return: OCRDataframe object
+        :return: OCRData object
         """
-        # Extract content from document
-        content = self.content(document=document)
-
-        # Create OCRDataframe from content
-        return self.to_ocr_dataframe(content=content)
+        raise NotImplementedError

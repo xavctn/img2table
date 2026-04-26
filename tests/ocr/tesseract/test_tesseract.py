@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import cv2
-import polars as pl
 import pytest
 
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
-from img2table.ocr.data import OCRDataframe
 from tests import MOCK_DIR, TESSERACT_INSTALL
+from tests.ocr_data_utils import read_ocr_data
 
 
 def test_validators() -> None:
@@ -43,35 +42,12 @@ def test_tesseract_hocr(mock_tesseract) -> None:  # noqa: ANN001, ARG001
         assert result == f.read()
 
 
-def test_tesseract_content(mock_tesseract) -> None:  # noqa: ANN001, ARG001
-    instance = TesseractOCR()
-    doc = Image(src="test_data/test.png")
-
-    result = instance.content(document=doc)
-
-    with (Path(MOCK_DIR) / "tesseract_hocr.html").open() as f:
-        assert list(result) == [f.read()]
-
-
-def test_tesseract_ocr_df(mock_tesseract) -> None:  # noqa: ANN001, ARG001
-    instance = TesseractOCR()
-
-    with (Path(MOCK_DIR) / "tesseract_hocr.html").open() as f:
-        content = [f.read()]
-
-    result = instance.to_ocr_dataframe(content=content)
-
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
-
-    assert result == expected
-
-
 def test_tesseract_document(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     instance = TesseractOCR()
     doc = Image(src="test_data/test.png")
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
+    expected = read_ocr_data("test_data/ocr.csv")
 
     assert result == expected

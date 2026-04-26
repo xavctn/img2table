@@ -3,7 +3,6 @@ from itertools import pairwise
 
 import cv2
 import numpy as np
-import polars as pl
 from numba import njit
 
 dixon_q_test_confidence_dict = {
@@ -30,8 +29,8 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
     stats = stats[mask_pixels]
 
     # Compute median width and height
-    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH]) # ty: ignore[no-matching-overload]
-    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT]) # ty: ignore[no-matching-overload]
+    median_width = np.median(stats[:, cv2.CC_STAT_WIDTH])  # ty: ignore[no-matching-overload]
+    median_height = np.median(stats[:, cv2.CC_STAT_HEIGHT])  # ty: ignore[no-matching-overload]
 
     # Compute bbox area bounds
     upper_bound = 4 * median_width * median_height
@@ -107,18 +106,20 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
         return [0]
 
     # Get n most represented angles
-    s = pl.Series("angle", angles).round(2)
-    relevant_angles = (
-        s.value_counts()
-        .sort(by=[pl.col("count"), pl.col("angle").abs()], descending=[True, False])
-        .head(n_max)
-        .filter(pl.col("count") >= pl.col("count").max() * 0.25)
-    )
+    rounded_angles = np.round(np.asarray(angles, dtype=np.float64), 2)
+    unique_angles, counts = np.unique(rounded_angles, return_counts=True)
+    idx = np.lexsort((np.abs(unique_angles), -counts))
+    idx = idx[:n_max]
 
-    if relevant_angles.is_empty() or relevant_angles["angle"][0] == 0:
+    # Keep angles that represent at least 25% of the most represented angle
+    max_count = counts[idx[0]]
+    idx = idx[counts[idx] >= max_count * 0.25]
+    relevant_angles = unique_angles[idx]
+
+    if len(relevant_angles) == 0 or relevant_angles[0] == 0:
         return [0.0]
 
-    return relevant_angles["angle"].sort().to_list()
+    return np.sort(relevant_angles).tolist()
 
 
 def angle_dixon_q_test(angles: list[float], confidence: float = 0.9) -> float:

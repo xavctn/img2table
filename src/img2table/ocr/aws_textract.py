@@ -3,14 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import cv2
-import polars as pl
 
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     import numpy as np
 
     from img2table.document.base import Document, MockDocument
@@ -56,12 +53,11 @@ class TextractOCR(OCRInstance):
             self.client = boto3.client(service_name="textract", region_name=region)
 
     @staticmethod
-    def map_response(response: dict, image: np.ndarray, page: int) -> list[dict]:
+    def map_response(response: dict, image: np.ndarray) -> list[dict]:
         """
         Extract data from API endpoint response dictionary
         :param response: dictionary returned by Textract API
         :param image: image array
-        :param page: page number
         :return: list of OCR elements corresponding to the page
         """
         # Get image dimensions
@@ -86,8 +82,6 @@ class TextractOCR(OCRInstance):
             # If the block is a word, parse characteristics and add to word_elements
             if block.get("BlockType") == "WORD":
                 d_block = {
-                    "page": page,
-                    "class": "ocrx_word",
                     "id": block.get("Id"),
                     "parent": dict_children.get(block.get("Id")),
                     "value": block.get("Text"),
@@ -109,27 +103,16 @@ class TextractOCR(OCRInstance):
 
         return word_elements
 
-    def content(self, document: Document | MockDocument) -> Iterator[list[dict]]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
         Get OCR content corresponding to document
         :param document: Document object
         :return: list of OCR elements by page
         """
+        records = {}
         for page, image in enumerate(document.images):
             _, img = cv2.imencode(".jpg", image)
             content = self.client.detect_document_text(Document={"Bytes": img.tobytes()})
-            yield self.map_response(response=content, image=image, page=page)
+            records[page] = self.map_response(response=content, image=image)
 
-    def to_ocr_dataframe(self, content: Iterator[list[dict]]) -> OCRDataframe | None:
-        """
-        Convert list of OCR elements by page to OCRDataframe object
-        :param content: list of OCR elements by page
-        :return: OCRDataframe object corresponding to content
-        """
-        list_dfs = [
-            pl.DataFrame(data=page_elements, schema=self.pl_schema)
-            for page_elements in content
-            if page_elements
-        ]
-
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+        return OCRData(records=records) if records else None

@@ -8,10 +8,9 @@ from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
-import polars as pl
 
 from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.ocr.data import OCRData
 
 if TYPE_CHECKING:
     from google.cloud import vision_v1
@@ -45,7 +44,7 @@ class VisionEndpointContent(VisionContent):
         self.api_key = api_key
 
     @staticmethod
-    def map_response(response: dict, page: int, width: int, height: int) -> list[dict]:
+    def map_response(response: dict, width: int, height: int) -> list[dict]:
         """
         Extract test_data from API endpoint response
         :param response: json response from Google API endpoint
@@ -80,8 +79,6 @@ class VisionEndpointContent(VisionContent):
                     y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
 
                     d_el = {
-                        "page": page,
-                        "class": "ocrx_word",
                         "id": f"word_{id_block}_{id_par}_{id_line}_{id_word}",
                         "parent": f"line_{id_block}_{id_par}_{id_line}",
                         "value": "".join([sym.get("text") for sym in word.get("symbols")]),
@@ -120,11 +117,10 @@ class VisionEndpointContent(VisionContent):
 
         return elements
 
-    def get_ocr_image(self, img: np.ndarray, page: int) -> list[dict]:
+    def get_ocr_image(self, img: np.ndarray) -> list[dict]:
         """
         Extract OCR from image
         :param img: image array
-        :param page: page number
         :return: list of OCR elements
         """
         import requests
@@ -148,11 +144,9 @@ class VisionEndpointContent(VisionContent):
         )
         response = req.json()
 
-        return self.map_response(
-            response=response, page=page, width=img.shape[1], height=img.shape[0]
-        )
+        return self.map_response(response=response, width=img.shape[1], height=img.shape[0])
 
-    def get_content(self, document: Document | MockDocument) -> list[list[dict]]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -161,11 +155,16 @@ class VisionEndpointContent(VisionContent):
         # Call API for all images of document
         results = []
         with ThreadPoolExecutor(max_workers=20) as pool:
-            args = ((image, idx) for idx, image in enumerate(document.images))
+            args = ((image,) for image in document.images)
             for ocr in pool.map(lambda d: self.get_ocr_image(*d), args):
                 results.append(ocr)  # noqa: PERF402
 
-        return results
+        # Map results to OCRData format
+        records = {
+            page: page_elements for page, page_elements in enumerate(results) if page_elements
+        }
+
+        return OCRData(records=records) if records else None
 
 
 class VisionAPIContent(VisionContent):
@@ -227,8 +226,6 @@ class VisionAPIContent(VisionContent):
                         ]
 
                         d_el = {
-                            "page": id_page,
-                            "class": "ocrx_word",
                             "id": f"word_{id_block}_{id_par}_{id_line}_{id_word}",
                             "parent": f"line_{id_block}_{id_par}_{id_line}",
                             "value": "".join([sym.text for sym in word.symbols]),
@@ -258,7 +255,7 @@ class VisionAPIContent(VisionContent):
 
         return elements
 
-    def get_content(self, document: Document | MockDocument) -> list[list[dict]]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         """
         Get OCR content corresponding to document
         :param document: Document object
@@ -289,7 +286,13 @@ class VisionAPIContent(VisionContent):
         # Call API
         result = self.client.batch_annotate_images(requests=reqs, timeout=self.timeout)
 
-        return self.map_response(response=result, shapes=shapes)
+        content = self.map_response(response=result, shapes=shapes)
+
+        records = {
+            page: page_elements for page, page_elements in enumerate(content) if page_elements
+        }
+
+        return OCRData(records=records) if records else None
 
 
 class VisionOCR(OCRInstance):
@@ -324,19 +327,5 @@ class VisionOCR(OCRInstance):
         else:
             raise ValueError("No credentials or API key provided")
 
-    def content(self, document: Document | MockDocument) -> list[list[dict]]:
-        return self.content_getter.get_content(document=document)
-
-    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe | None:
-        """
-        Convert list of OCR elements by page to OCRDataframe object
-        :param content: list of OCR elements by page
-        :return: OCRDataframe object corresponding to content
-        """
-        list_dfs = [
-            pl.DataFrame(data=page_elements, schema=self.pl_schema)
-            for page_elements in content
-            if page_elements
-        ]
-
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+    def of(self, document: Document | MockDocument) -> OCRData | None:
+        return self.content_getter.of(document=document)

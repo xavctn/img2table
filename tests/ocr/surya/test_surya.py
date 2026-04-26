@@ -1,37 +1,8 @@
-import pickle
-from pathlib import Path
-
-import polars as pl
 import pytest
 
 from img2table.document import Image
 from img2table.ocr import SuryaOCR
-from img2table.ocr.data import OCRDataframe
-from tests import MOCK_DIR
-
-
-def test_content(mock_surya) -> None:  # noqa: ANN001, ARG001
-    img = Image(src="test_data/test.png")
-    ocr = SuryaOCR(langs=["en"])
-
-    result = ocr.content(document=img)
-
-    with (Path(MOCK_DIR) / "surya.pkl").open("rb") as f:
-        expected = pickle.load(f)
-
-    assert result == expected
-
-
-def test_to_ocr_df() -> None:
-    ocr = SuryaOCR(langs=["en"])
-    with (Path(MOCK_DIR) / "surya.pkl").open("rb") as f:
-        content = pickle.load(f)
-
-    result = ocr.to_ocr_dataframe(content=content)
-
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
-
-    assert result == expected
+from tests.ocr_data_utils import read_ocr_data
 
 
 def test_surya_ocr(mock_surya) -> None:  # noqa: ANN001, ARG001
@@ -47,6 +18,6 @@ def test_surya_ocr(mock_surya) -> None:  # noqa: ANN001, ARG001
 
     result = ocr.of(document=img)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
+    expected = read_ocr_data("test_data/ocr.csv")
 
     assert result == expected

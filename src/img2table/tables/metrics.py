@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import polars as pl
 from numba import njit
 
 from img2table.tables.objects.cell import Cell
@@ -145,7 +144,9 @@ def remove_dotted_lines(complete_stats: np.ndarray) -> np.ndarray:
             prev_y_middle, area_count = y_middle, 1
 
     # Check last area
-    width_area = compute_interval_union_length(starts=x_starts, ends=x_ends, interval_count=area_count)
+    width_area = compute_interval_union_length(
+        starts=x_starts, ends=x_ends, interval_count=area_count
+    )
     if area_count >= 5 and width_area / ((x2_area - x1_area) or 1) >= 0.66:
         line_areas.append([float(x1_area), float(y1_area), float(x2_area), float(y2_area)])
 
@@ -470,9 +471,7 @@ def compute_median_line_sep(
     """
     # Identify characters that belong to the same word and create merged contours, by closing image and retrieving
     # connected components
-    kernel = cv2.getStructuringElement(
-        cv2.MORPH_RECT, (int(char_length // 2 + 1), 1)
-    )
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(char_length // 2 + 1), 1))
     thresh_chars = cv2.morphologyEx(thresh_chars, cv2.MORPH_CLOSE, kernel)
 
     _, _, stats, _ = cv2.connectedComponentsWithStats(
@@ -486,17 +485,11 @@ def compute_median_line_sep(
     row_separations = get_row_separations(stats=stats_contours, char_length=char_length)
 
     if row_separations:
-        median_line_sep = (
-            pl.DataFrame(row_separations, schema={"sep": float})
-            .with_columns(sep=2 * pl.col("sep").floordiv(2) + 1)
-            .group_by("sep")
-            .len()
-            .sort(by=["len", "sep"], descending=[True, False])
-            .limit(1)
-            .to_dicts()
-            .pop()
-            .get("sep")
-        )
+        # Bin separations and compute most common separation
+        separations = 2 * np.floor(np.asarray(row_separations, dtype=np.float64) / 2) + 1
+        unique_separations, counts = np.unique(separations, return_counts=True)
+        idx = np.lexsort((unique_separations, -counts))
+        median_line_sep = float(unique_separations[idx][0])
     else:
         median_line_sep = None
 

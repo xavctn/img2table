@@ -69,7 +69,7 @@ class PDF(Document):
                     src=self.file_bytes, pages=table_pages, _images=images, _rotated=self._rotated
                 )
 
-                # Try to get OCRDataframe from PDF
-                self.ocr_df = PdfOCR().of(document=pdf_ocr)
+                # Try to get OCRData from PDF
+                self.ocr_data = PdfOCR().of(document=pdf_ocr)
 
         return super().get_table_content(tables=tables, ocr=ocr, min_confidence=min_confidence)

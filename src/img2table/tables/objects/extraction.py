@@ -177,7 +177,12 @@ class ExtractedTable:
         Create pandas DataFrame representation of the table
         :return: pandas DataFrame containing table data
         """
-        import pandas as pd
+        try:
+            import pandas as pd
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError(
+                "Missing dependencies, please install 'pandas' to export table to dataframe."
+            ) from err
 
         values = [[cell.value for cell in row] for k, row in self.content.items()]
         return pd.DataFrame(values)

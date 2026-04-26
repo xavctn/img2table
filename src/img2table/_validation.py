@@ -1,7 +1,6 @@
 import io
 from pathlib import Path
-
-import polars as pl
+from typing import Any, cast
 
 
 class ValidationError(ValueError):
@@ -33,7 +32,33 @@ def validate_pages(pages: object) -> None:
         raise ValidationError(msg)
 
 
-def validate_polars_dataframe(df: object, field_name: str) -> None:
-    if not isinstance(df, pl.DataFrame):
-        msg = f"{field_name} must be a polars.DataFrame"
+def validate_ocr_records(records: object, field_name: str) -> None:
+    required_fields = {
+        "id",
+        "parent",
+        "value",
+        "confidence",
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+    }
+
+    if not isinstance(records, dict) or len(records) == 0:
+        msg = f"{field_name} must be a dict[int, list[dict]]"
         raise ValidationError(msg)
+
+    for page, page_records in records.items():
+        if (
+            not isinstance(page, int)
+            or isinstance(page, bool)
+            or not isinstance(page_records, list)
+            or any(not isinstance(rec, dict) for rec in page_records)
+        ):
+            msg = f"{field_name} must be a dict[int, list[dict]]"
+            raise ValidationError(msg)
+
+        typed_records = cast("list[dict[str, Any]]", page_records)
+        if any(not required_fields.issubset(rec) for rec in typed_records):
+            msg = f"{field_name} records must contain OCR fields"
+            raise ValidationError(msg)

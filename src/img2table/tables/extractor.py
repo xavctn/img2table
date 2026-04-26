@@ -8,6 +8,7 @@ from img2table.tables.metrics import compute_img_metrics
 from img2table.tables.processing.bordered_tables import extract_bordered_tables
 from img2table.tables.processing.bordered_tables.lines import detect_lines
 from img2table.tables.processing.borderless_tables import extract_borderless_tables
+from img2table.tables.processing.common import get_title_areas
 
 if TYPE_CHECKING:
     import numpy as np
@@ -123,6 +124,9 @@ class TableExtractor:
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :return: list of identified tables
         """
+        if self.characteristics is None:
+            return self.tables
+
         # Extract bordered tables
         self.extract_bordered_tables(implicit_rows=implicit_rows, implicit_columns=implicit_columns)
 
@@ -130,4 +134,9 @@ class TableExtractor:
             # Extract borderless tables
             self.extract_borderless_tables()
 
-        return self.tables
+        # Compute title areas for tables
+        return get_title_areas(
+            contours=self.characteristics.contours,
+            tables=self.tables,
+            median_line_sep=self.characteristics.median_line_sep,
+        )

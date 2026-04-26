@@ -1,12 +1,10 @@
 import json
 from pathlib import Path
 
-import polars as pl
-
-from img2table.ocr.data import OCRDataframe
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
+from tests.ocr_data_utils import read_ocr_data
 
 
 def test_remove_rows() -> None:
@@ -83,9 +81,9 @@ def test_get_table_content() -> None:
         ]
 
     # Load OCR
-    ocr_df = OCRDataframe(df=pl.read_csv("test_data/ocr.csv", separator=";", encoding="utf-8"))
+    ocr_data = read_ocr_data("test_data/ocr.csv")
 
-    result = [table.get_content(ocr_df=ocr_df, min_confidence=50) for table in tables]
+    result = [table.get_content(ocr_data=ocr_data, min_confidence=50) for table in tables]
 
     with Path("test_data/expected_tables.json").open() as f:
         expected = [
