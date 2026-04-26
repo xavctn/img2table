@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NamedTuple
+from html import escape
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections import OrderedDict
@@ -25,10 +26,127 @@ class TableCell:
     value: str | None
 
     def __hash__(self) -> int:
-        return hash(repr(self))
+        return hash((self.bbox.x1, self.bbox.y1, self.bbox.x2, self.bbox.y2, self.value))
 
 
-class CellPosition(NamedTuple):
+@dataclass
+class ExtractedTable:
+    bbox: BBox
+    title: str | None
+    content: OrderedDict[int, list[TableCell]]
+
+    @property
+    def df(self) -> pd.DataFrame:
+        """
+        Create pandas DataFrame representation of the table
+        :return: pandas DataFrame containing table data
+        """
+        try:
+            import pandas as pd
+        except ModuleNotFoundError as err:
+            raise ModuleNotFoundError(
+                "Missing dependencies, please install 'pandas' to export table to dataframe."
+            ) from err
+
+        values = [[cell.value for cell in row] for k, row in self.content.items()]
+        return pd.DataFrame(values)
+
+    @property
+    def html(self) -> str:
+        """
+        Create HTML representation of the table
+        :return: HTML table
+        """
+        from bs4 import BeautifulSoup
+
+        # Get list of cell spans
+        cell_span_list = [
+            cell_span
+            for cells in self._group_cell_positions()
+            for cell_span in create_all_rectangles(cell_positions=cells)
+        ]
+        cell_span_list = [
+            span for cell_span in cell_span_list for span in cell_span.html_cell_span()
+        ]
+
+        # Create HTML rows
+        rows_html = []
+        for row_idx in range(len(self.content)):
+            # Get cells in row
+            row_cells = sorted(
+                [cell_span for cell_span in cell_span_list if cell_span.top_row == row_idx],
+                key=lambda cs: cs.col_left,
+            )
+            html_row = "<tr>" + "".join([cs.html for cs in row_cells]) + "</tr>"
+            rows_html.append(html_row)
+
+        # Create HTML table
+        table_html = "<table>" + "".join(rows_html) + "</table>"
+
+        return BeautifulSoup(table_html, "html.parser").prettify().strip()
+
+    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Format | None = None) -> None:
+        """
+        Populate xlsx worksheet with table data
+        :param sheet: xlsxwriter Worksheet
+        :param cell_fmt: xlsxwriter cell format
+        """
+        # Write all cells to sheet
+        for c in self._group_cell_positions():
+            if len(c) == 1:
+                cell_pos = c[0]
+                sheet.write(cell_pos.row, cell_pos.col, cell_pos.cell.value, cell_fmt)
+            else:
+                # Get all rectangles
+                for cell_span in create_all_rectangles(cell_positions=c):
+                    # Case of merged cells
+                    sheet.merge_range(
+                        first_row=cell_span.top_row,
+                        first_col=cell_span.col_left,
+                        last_row=cell_span.bottom_row,
+                        last_col=cell_span.col_right,
+                        data=cell_span.value,
+                        cell_format=cell_fmt,
+                    )
+
+        # Autofit worksheet
+        sheet.autofit()
+
+    def html_repr(self, title: str | None = None) -> str:
+        """
+        Create HTML representation of the table
+        :param title: title of HTML paragraph
+        :return: HTML string
+        """
+        html = f"""{rf'<h3 style="text-align: center">{title}</h3>' if title else ""}
+                   <p style=\"text-align: center\">
+                       <b>Title:</b> {self.title or "No title detected"}<br>
+                       <b>Bounding box:</b> x1={self.bbox.x1}, y1={self.bbox.y1}, x2={self.bbox.x2}, y2={self.bbox.y2}
+                   </p>
+                   <div align=\"center\">{self.df.to_html().replace("None", "")}</div>
+                   <hr>
+                """
+        return html  # noqa: RET504
+
+    def __repr__(self) -> str:
+        nb_columns = len(next(iter(self.content.values()), []))
+        return (
+            f"ExtractedTable(title={self.title}, bbox=({self.bbox.x1}, {self.bbox.y1}, {self.bbox.x2}, "
+            f"{self.bbox.y2}),shape=({len(self.content)}, {nb_columns}))".strip()
+        )
+
+    def _group_cell_positions(self) -> list[list[CellPosition]]:
+        dict_cells: dict[TableCell, list[CellPosition]] = {}
+        for id_row, row in self.content.items():
+            for id_col, cell in enumerate(row):
+                cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
+                dict_cells[cell] = [*dict_cells.get(cell, []), cell_pos]
+
+        return list(dict_cells.values())
+
+
+@dataclass
+class CellPosition:
     cell: TableCell
     row: int
     col: int
@@ -53,7 +171,7 @@ class CellSpan:
     @property
     def html_value(self) -> str:
         if self.value is not None:
-            return self.value.replace("\n", "<br>")
+            return escape(self.value).replace("\n", "<br>")
         return ""
 
     @property
@@ -138,6 +256,9 @@ def create_all_rectangles(cell_positions: list[CellPosition]) -> list[CellSpan]:
     :param cell_positions: list of cell positions
     :return: list of CellSpan objects representing rectangle coordinates
     """
+    if not cell_positions:
+        return []
+
     # Compute the largest rectangle that covers all cell positions
     col_left, top_row, col_right, bottom_row = _find_largest_rectangle(
         pos_set={(cp.row, cp.col) for cp in cell_positions},
@@ -163,123 +284,3 @@ def create_all_rectangles(cell_positions: list[CellPosition]) -> list[CellSpan]:
     if remaining:
         return [cell_span, *create_all_rectangles(remaining)]
     return [cell_span]
-
-
-@dataclass
-class ExtractedTable:
-    bbox: BBox
-    title: str | None
-    content: OrderedDict[int, list[TableCell]]
-
-    @property
-    def df(self) -> pd.DataFrame:
-        """
-        Create pandas DataFrame representation of the table
-        :return: pandas DataFrame containing table data
-        """
-        try:
-            import pandas as pd
-        except ModuleNotFoundError as err:
-            raise ModuleNotFoundError(
-                "Missing dependencies, please install 'pandas' to export table to dataframe."
-            ) from err
-
-        values = [[cell.value for cell in row] for k, row in self.content.items()]
-        return pd.DataFrame(values)
-
-    @property
-    def html(self) -> str:
-        """
-        Create HTML representation of the table
-        :return: HTML table
-        """
-        from bs4 import BeautifulSoup
-
-        # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
-        dict_cells = {}
-        for id_row, row in self.content.items():
-            for id_col, cell in enumerate(row):
-                cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
-                dict_cells[hash(cell)] = [*dict_cells.get(hash(cell), []), cell_pos]
-
-        # Get list of cell spans
-        cell_span_list = [
-            cell_span
-            for _, cells in dict_cells.items()
-            for cell_span in create_all_rectangles(cell_positions=cells)
-        ]
-        cell_span_list = [
-            span for cell_span in cell_span_list for span in cell_span.html_cell_span()
-        ]
-
-        # Create HTML rows
-        rows_html = []
-        for row_idx in range(len(self.content)):
-            # Get cells in row
-            row_cells = sorted(
-                [cell_span for cell_span in cell_span_list if cell_span.top_row == row_idx],
-                key=lambda cs: cs.col_left,
-            )
-            html_row = "<tr>" + "".join([cs.html for cs in row_cells]) + "</tr>"
-            rows_html.append(html_row)
-
-        # Create HTML table
-        table_html = "<table>" + "".join(rows_html) + "</table>"
-
-        return BeautifulSoup(table_html, "html.parser").prettify().strip()
-
-    def _to_worksheet(self, sheet: Worksheet, cell_fmt: Format | None = None) -> None:
-        """
-        Populate xlsx worksheet with table data
-        :param sheet: xlsxwriter Worksheet
-        :param cell_fmt: xlsxwriter cell format
-        """
-        # Group cells based on hash (merged cells are duplicated over multiple rows/columns in content)
-        dict_cells = {}
-        for id_row, row in self.content.items():
-            for id_col, cell in enumerate(row):
-                cell_pos = CellPosition(cell=cell, row=id_row, col=id_col)
-                dict_cells[hash(cell)] = [*dict_cells.get(hash(cell), []), cell_pos]
-
-        # Write all cells to sheet
-        for c in dict_cells.values():
-            if len(c) == 1:
-                cell_pos = c.pop()
-                sheet.write(cell_pos.row, cell_pos.col, cell_pos.cell.value, cell_fmt)
-            else:
-                # Get all rectangles
-                for cell_span in create_all_rectangles(cell_positions=c):
-                    # Case of merged cells
-                    sheet.merge_range(
-                        first_row=cell_span.top_row,
-                        first_col=cell_span.col_left,
-                        last_row=cell_span.bottom_row,
-                        last_col=cell_span.col_right,
-                        data=cell_span.value,
-                        cell_format=cell_fmt,
-                    )
-
-        # Autofit worksheet
-        sheet.autofit()
-
-    def html_repr(self, title: str | None = None) -> str:
-        """
-        Create HTML representation of the table
-        :param title: title of HTML paragraph
-        :return: HTML string
-        """
-        html = f"""{rf'<h3 style="text-align: center">{title}</h3>' if title else ""}
-                   <p style=\"text-align: center\">
-                       <b>Title:</b> {self.title or "No title detected"}<br>
-                       <b>Bounding box:</b> x1={self.bbox.x1}, y1={self.bbox.y1}, x2={self.bbox.x2}, y2={self.bbox.y2}
-                   </p>
-                   <div align=\"center\">{self.df.to_html().replace("None", "")}</div>
-                   <hr>
-                """
-        return html  # noqa: RET504
-
-    def __repr__(self) -> str:
-        return (
-            f"ExtractedTable(title={self.title}, bbox=({self.bbox.x1}, {self.bbox.y1}, {self.bbox.x2}, "
-            f"{self.bbox.y2}),shape=({len(self.content)}, {len(self.content[0])}))".strip()
-        )
