@@ -93,13 +93,21 @@ def change_test_dir(request, monkeypatch) -> None:  # noqa: ANN001
 
 @pytest.fixture
 def mock_tesseract(monkeypatch) -> None:  # noqa: ANN001
-    def mock_check_output(*args, **kwargs) -> bytes:  # noqa: ANN002, ARG001
-        if "tesseract --list-langs" in args:
+    check_output = subprocess.check_output
+    run = subprocess.run
+
+    def mock_check_output(*args, **kwargs) -> bytes:  # noqa: ANN002
+        if args and "tesseract --list-langs" in args[0]:
             return b"Langs\neng"
+        if not args or not str(args[0]).startswith("tesseract "):
+            return check_output(*args, **kwargs)
         with (Path(MOCK_DIR) / "tesseract_hocr.html").open() as f:
             return f.read().encode("utf-8")
 
-    def mock_run(*args, **kwargs) -> Any:  # noqa: ANN002, ARG001
+    def mock_run(*args, **kwargs) -> Any:  # noqa: ANN002
+        if not args or args[0] != "tesseract --version":
+            return run(*args, **kwargs)
+
         class MResp:
             @property
             def returncode(self) -> int:
