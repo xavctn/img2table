@@ -1,6 +1,6 @@
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.line import Line
-from img2table.tables.processing.bordered_tables.tables.semi_bordered import (
+from img2table.tables.processing.bordered_tables.tables.misc.semi_bordered import (
     add_semi_bordered_cells,
     get_cluster_characteristics,
     get_lines_in_cluster,

@@ -16,21 +16,6 @@ def test_validators() -> None:
         OCRData(records={})  # ty:ignore[invalid-argument-type]
 
 
-def test_pages() -> None:
-    ocr_data = read_ocr_data("test_data/ocr.csv")
-
-    ocr_data_page_0 = ocr_data.page(page_number=0)
-    ocr_data_page_1 = ocr_data.page(page_number=1)
-
-    assert isinstance(ocr_data_page_0, OCRData)
-    assert isinstance(ocr_data_page_1, OCRData)
-
-    assert ocr_data_page_0 != ocr_data_page_1
-    assert len(ocr_data_page_0.records[0]) + len(ocr_data_page_1.records[1]) == sum(
-        len(records) for records in ocr_data.records.values()
-    )
-
-
 def test_get_text_cell() -> None:
     ocr_data = read_ocr_data("test_data/ocr.csv")
     cell = Cell(x1=200, x2=800, y1=700, y2=850)

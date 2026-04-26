@@ -4,7 +4,7 @@ from pathlib import Path
 from img2table.tables.objects.cell import Cell
 from img2table.tables.objects.row import Row
 from img2table.tables.objects.table import Table
-from img2table.tables.processing.bordered_tables.tables.implicit import (
+from img2table.tables.processing.bordered_tables.tables.misc.implicit import (
     implicit_columns_lines,
     implicit_content,
     implicit_rows_lines,

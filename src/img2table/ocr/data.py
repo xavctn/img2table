@@ -23,10 +23,6 @@ class OCRData:
     def __post_init__(self) -> None:
         validate_ocr_records(self.records, "records")
 
-    def page(self, page_number: int = 0) -> OCRData:
-        # Filter dataframe on specific page
-        return OCRData(records={page_number: self.records.get(page_number, [])})
-
     @staticmethod
     def _group_words_by_parent(words: list[OCRRecord]) -> list[str]:
         parent_words: dict[Any, list[OCRRecord]] = defaultdict(list)

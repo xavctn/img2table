@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from img2table.tables.processing.bordered_tables.tables.cell_clustering import (
+from img2table.tables.processing.bordered_tables.tables.creation.cell_clustering import (
     cluster_cells_in_tables,
 )
-from img2table.tables.processing.bordered_tables.tables.semi_bordered import add_semi_bordered_cells
-from img2table.tables.processing.bordered_tables.tables.table_creation import (
-    cluster_to_table,
-    normalize_table_cells,
+from img2table.tables.processing.bordered_tables.tables.creation.creation import cluster_to_table
+from img2table.tables.processing.bordered_tables.tables.misc.semi_bordered import (
+    add_semi_bordered_cells,
 )
+from img2table.tables.processing.bordered_tables.tables.normalization import normalize_table_cells
 
 if TYPE_CHECKING:
     from img2table.tables.objects.cell import Cell

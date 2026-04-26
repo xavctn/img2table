@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from img2table.tables.objects.cell import Cell
-from img2table.tables.processing.bordered_tables.tables.cell_clustering import (
+from img2table.tables.processing.bordered_tables.tables.creation.cell_clustering import (
     cluster_cells_in_tables,
 )
 

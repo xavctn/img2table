@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 
 from img2table.tables.processing.bordered_tables.cells import get_cells
 from img2table.tables.processing.bordered_tables.tables import get_tables
-from img2table.tables.processing.bordered_tables.tables.consecutive import merge_consecutive_tables
-from img2table.tables.processing.bordered_tables.tables.implicit import implicit_content
+from img2table.tables.processing.bordered_tables.tables.misc.implicit import implicit_content
 
 if TYPE_CHECKING:
     from img2table.tables.objects.cell import Cell
@@ -43,7 +42,7 @@ def extract_bordered_tables(
     )
 
     # If necessary, detect implicit rows
-    tables = [
+    return [
         implicit_content(
             table=table,
             contours=contours,
@@ -53,6 +52,3 @@ def extract_bordered_tables(
         )
         for table in tables
     ]
-
-    # Merge consecutive tables
-    return merge_consecutive_tables(tables=tables, contours=contours)
