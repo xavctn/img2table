@@ -1,9 +1,9 @@
-import math
 from itertools import pairwise
 
 import cv2
 import numpy as np
-from numba import njit
+
+from img2table.document.base._rotation import compute_angles  # ty:ignore[unresolved-import]
 
 dixon_q_test_confidence_dict = {
     0.9: {3: 0.941, 4: 0.765, 5: 0.642, 6: 0.56, 7: 0.507, 8: 0.468, 9: 0.437, 10: 0.412},
@@ -56,36 +56,6 @@ def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.nda
     filtered_centroids = np.column_stack([centroids_x, centroids_y])
 
     return filtered_centroids, float(median_height), thresh
-
-
-@njit("List(float64)(float64[:,:],float64)", fastmath=True, cache=True, parallel=False)
-def compute_angles(centroids: np.ndarray, ref_height: float) -> list[float]:
-    # Sort and prepare
-    idx = np.argsort(centroids[:, 1])
-    c_sorted = centroids[idx]
-    n = len(c_sorted)
-
-    angles = []
-    y_threshold = 10.0 * ref_height
-    rad_to_deg = 180.0 / math.pi
-    for i in range(n):
-        xi, yi = c_sorted[i, 0], c_sorted[i, 1]
-        for j in range(i + 1, n):
-            xj, yj = c_sorted[j, 0], c_sorted[j, 1]
-
-            # Continue if both elements are not relevant
-            if yj - yi > y_threshold:
-                break
-            if xi == xj:
-                continue
-
-            # Compute angle
-            angle = math.atan(round((yi - yj) / (xi - xj), 3)) * rad_to_deg
-            if not -45.0 <= angle <= 45.0:
-                angle = -min(angle + 90.0, 90.0 - angle) * (1.0 if angle > 0 else -1.0)
-            angles.append(angle)
-
-    return angles
 
 
 def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5) -> list[float]:

@@ -21,7 +21,7 @@ def _median_absolute_difference(values: list[float]) -> float:
     """
     median = np.median(values)
     abs_diffs = [abs(x - median) for x in values]
-    return (np.median(abs_diffs) + np.mean(abs_diffs)) / 2
+    return float(np.median(abs_diffs) + np.mean(abs_diffs)) / 2
 
 
 def _col_alignment_score(col: list[Cell], char_length: float, width: int) -> float | None:

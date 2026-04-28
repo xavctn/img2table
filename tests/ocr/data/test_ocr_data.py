@@ -13,7 +13,7 @@ from tests.ocr_data_utils import read_ocr_data
 
 def test_validators() -> None:
     with pytest.raises(ValidationError):
-        OCRData(records={})  # ty:ignore[invalid-argument-type]
+        OCRData(records={})
 
 
 def test_get_text_cell() -> None:

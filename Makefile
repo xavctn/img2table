@@ -12,10 +12,10 @@ update:
 
 # Test commands
 test:
-	uv run pytest --cov-report term --cov=src
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term
 
 fast-test:
-	uv run pytest --cov-report term --cov=src --ignore=tests/ocr --ignore=tests/document/base
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term --ignore=tests/ocr --ignore=tests/document/base
 
 lint:
 	uv run ruff check
@@ -24,7 +24,7 @@ type-check:
 	uv run ty check src tests
 
 # Examples commands
-jupyter:
+jupyter: build-ext
 	cd examples && uv run jupyter notebook
 
 update-examples:
@@ -33,7 +33,10 @@ update-examples:
 	done
 
 # Build commands
-build: venv
+build:
 	uv build
 
-.PHONY: venv
+build-ext: venv
+	python setup.py build_ext --inplace
+
+.PHONY: venv build build-ext

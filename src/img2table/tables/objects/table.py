@@ -44,6 +44,10 @@ class Table(TableObject):
         return self.items[0].nb_columns if self.items else 0
 
     @property
+    def nb_cells(self) -> int:
+        return len({cell for row in self.items for cell in row.items})
+
+    @property
     def x1(self) -> int:
         return min((x.x1 for x in self.items), default=0)
 

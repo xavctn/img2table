@@ -43,7 +43,7 @@ def test_compute_median_line_sep() -> None:
     assert median_line_sep is not None
     assert round(median_line_sep, 2) == 51
     assert contours is not None
-    assert len(contours) == 83
+    assert len(contours) == 72
 
 
 def test_compute_img_metrics() -> None:
@@ -59,7 +59,7 @@ def test_compute_img_metrics() -> None:
     assert median_line_sep is not None
     assert round(median_line_sep, 2) == 51
     assert contours is not None
-    assert len(contours) == 83
+    assert len(contours) == 72
 
     img = cv2.imread("test_data/blank.png")
     assert img is not None

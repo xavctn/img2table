@@ -123,7 +123,6 @@ def detect_lines(
     for c in contours:
         edge_img[c.y1 - 1 : c.y2 + 1, c.x1 - 1 : c.x2 + 1] = 0
     binary_img = 255 * (edge_img >= min(2.5 * np.mean(edge_img), np.max(edge_img))).astype(np.uint8) # ty: ignore[no-matching-overload]
-
     # Detect lines
     h_lines = identify_straight_lines(
         thresh=binary_img, min_line_length=min_line_length, char_length=char_length, vertical=False

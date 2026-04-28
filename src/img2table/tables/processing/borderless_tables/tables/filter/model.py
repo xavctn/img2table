@@ -120,9 +120,6 @@ class StructuredSection:
         Compute weighted table confidence score.
         :return: score between 0 and 1
         """
-        # Compute metrics
-        metrics = TableMetrics.from_section(section=self)
-
         # Hard reject rules
         if len(self.merged_rows) < 3:
             # Not enough base rows (before row merging)
@@ -130,6 +127,10 @@ class StructuredSection:
         if self.nb_columns < 2 or self.nb_rows < 2 or max(self.nb_rows, self.nb_columns) < 3:
             # Not enough columns / Not enough rows / At least 3 rows or columns required
             return 0.0
+
+        # Compute metrics
+        metrics = TableMetrics.from_section(section=self)
+
         if sum(ratio >= 0.5 for ratio in metrics.presence_ratios) < 2:
             # Insufficient column presence
             return 0.0
