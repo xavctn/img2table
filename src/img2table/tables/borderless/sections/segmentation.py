@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 import numpy as np
 
 from img2table.tables.borderless.types import (
@@ -18,7 +20,6 @@ def matching_whitespaces(
     :param min_width: minimum column width
     :return: boolean indicating whether two sets of whitespaces match and resultant whitespaces
     """
-
     # Get largest and smallest list of whitespaces and iterate over the shortest list
     ws_short, ws_long = (
         (ws1_list, ws2_list) if len(ws1_list) <= len(ws2_list) else (ws2_list, ws1_list)
@@ -33,7 +34,7 @@ def matching_whitespaces(
 
             # Check overlap is sufficient or if bounds match
             if overlap >= max(
-                0.5 * min(ws_s.width, ws_l.width, 5 * min_width), 0.5 * min_width
+                0.5 * min(ws_s.width, ws_l.width, 3 * min_width), 0.5 * min_width
             ) or ws_s.matching_bound(ws_l):
                 matching_ws.append(
                     Whitespace(
@@ -61,37 +62,36 @@ def matching_whitespaces(
     return True, sorted(matching_ws, key=lambda x: x.start)
 
 
-def _row_group_score(
-    row_data: list[RowCharacteristic], index: int, max_gap: float, min_width: float
-) -> int:
+def score_rows(row_data: list[RowCharacteristic], min_width: float, max_gap: float) -> list[int]:
     """
-    Count consecutive rows above and below `index` that have matching whitespaces.
-    :param row_data: list of all row characteristics
-    :param index: index of the candidate seed row
-    :param max_gap: maximum vertical gap between consecutive rows
+    Score rows based on adjacent matching whitespaces.
+    :param row_data: list of row characteristics
     :param min_width: minimum whitespace width for matching
-    :return: number of consecutive matching neighbors in both directions
+    :param max_gap: maximum vertical gap between consecutive rows
+    :return: list with scores associated to row indices
     """
-    count = 0
-    current_ws = row_data[index].ws
-    for i in range(index + 1, len(row_data)):
-        if abs(row_data[i].row.y_center - row_data[i - 1].row.y_center) > max_gap:
-            break
-        is_match, current_ws = matching_whitespaces(current_ws, row_data[i].ws, min_width)
-        if not is_match:
-            break
-        count += 1
+    # Compute if adjacent rows have matching whitespaces
+    adjacent_matches: list[bool] = []
+    for prv_row, nxt_row in pairwise(row_data):
+        if nxt_row.row.y_center - prv_row.row.y_center > max_gap:
+            adjacent_matches.append(False)
+        else:
+            match, _ = matching_whitespaces(prv_row.ws, nxt_row.ws, min_width)
+            adjacent_matches.append(match)
 
-    current_ws = row_data[index].ws
-    for i in range(index - 1, -1, -1):
-        if abs(row_data[i + 1].row.y_center - row_data[i].row.y_center) > max_gap:
-            break
-        is_match, current_ws = matching_whitespaces(current_ws, row_data[i].ws, min_width)
-        if not is_match:
-            break
-        count += 1
+    # Score rows from top to bottom based on adjacent matches
+    down_scores = [0] * len(row_data)
+    for idx in range(len(row_data) - 2, -1, -1):
+        if adjacent_matches[idx]:
+            down_scores[idx] = down_scores[idx + 1] + 1
 
-    return count
+    # Score rows from bottom to top based on adjacent matches
+    up_scores = [0] * len(row_data)
+    for idx in range(1, len(row_data)):
+        if adjacent_matches[idx - 1]:
+            up_scores[idx] = up_scores[idx - 1] + 1
+
+    return [up_scores[idx] + down_scores[idx] for idx in range(len(row_data))]
 
 
 def compute_column_sections(
@@ -132,8 +132,8 @@ def compute_column_sections(
         for idx, row in enumerate(merged_rows)
     ]
 
-    # Pre-compute group scores: how many consecutive matching rows each row has above/below.
-    group_scores = [_row_group_score(row_data, rd.index, max_gap, min_width) for rd in row_data]
+    # Score rows for seed selection
+    group_scores = score_rows(row_data=row_data, min_width=min_width, max_gap=max_gap)
 
     # Construct column sections by starting with the row with the most whitespaces and expanding upwards/downwards
     used_rows: set[int] = set()

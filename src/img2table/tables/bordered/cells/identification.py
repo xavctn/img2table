@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from img2table.tables.types import Line
 
 
-def get_cells_dataframe(horizontal_lines: list[Line], vertical_lines: list[Line]) -> list[Cell]:
+def get_cells_from_lines(horizontal_lines: list[Line], vertical_lines: list[Line]) -> list[Cell]:
     """
     Create dataframe of all possible cells from horizontal and vertical rows
     :param horizontal_lines: list of horizontal rows

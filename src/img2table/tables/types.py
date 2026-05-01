@@ -55,11 +55,11 @@ class Line(TableObject):
     def length(self) -> float:
         return np.sqrt(self.height**2 + self.width**2)
 
-    @property
+    @cached_property
     def horizontal(self) -> bool:
         return self.angle % 180 == 0
 
-    @property
+    @cached_property
     def vertical(self) -> bool:
         return self.angle % 180 == 90
 

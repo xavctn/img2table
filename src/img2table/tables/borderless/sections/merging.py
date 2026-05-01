@@ -12,6 +12,7 @@ from img2table.tables.borderless.types import (
 def assess_table_whitespace_coherency(
     list_ws_1: list[Whitespace],
     list_ws_2: list[Whitespace],
+    min_width: float,
     vertically_close: bool,
 ) -> bool:
     """
@@ -25,6 +26,13 @@ def assess_table_whitespace_coherency(
     # Single column case
     if min(len(list_ws_1), len(list_ws_2)) < 3:
         return vertically_close & (len(list_ws_1) == len(list_ws_2))
+
+    # Quick same columns check - all matches
+    if len(list_ws_1) == len(list_ws_2) and all(
+        min(ws1.end, ws2.end) - max(ws1.start, ws2.start) >= 0.5 * min_width
+        for ws1, ws2 in zip(list_ws_1, list_ws_2, strict=True)
+    ):
+        return True
 
     ws_short, ws_long = (
         (list_ws_1, list_ws_2) if len(list_ws_1) < len(list_ws_2) else (list_ws_2, list_ws_1)
@@ -248,6 +256,7 @@ def merge_column_sections(
                 coherent = assess_table_whitespace_coherency(
                     list_ws_1=current_group[-1].whitespaces,
                     list_ws_2=section.whitespaces,
+                    min_width=min_width,
                     vertically_close=(
                         section.first_y_center - current_group[-1].last_y_center <= 0.5 * max_gap
                     ),

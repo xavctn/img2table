@@ -15,7 +15,7 @@ test:
 	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term
 
 fast-test:
-	uv run pytest --ignore=tests/ocr --ignore=tests/document/rotation
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term --ignore=tests/ocr --ignore=tests/document/rotation
 
 lint:
 	uv run ruff check
@@ -36,7 +36,12 @@ update-examples:
 build:
 	uv build
 
-build-ext: venv
+build-ext: clean-ext
 	python setup.py build_ext --inplace
 
-.PHONY: venv build build-ext
+clean-ext:
+	find src -type f \( -name "*.pyd" -o -name "*.so" \) -delete
+	find src -type f -name "*.pyx" -exec sh -c 'rm -f "$${1%.pyx}.c"' _ {} \;
+	rm -rf build
+
+.PHONY: venv build build-ext clean-ext

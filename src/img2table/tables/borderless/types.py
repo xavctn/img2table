@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -27,7 +28,7 @@ class ItemHolder:
     def y2(self) -> int:
         return max((it.y2 for it in self.items), default=0)
 
-    @property
+    @cached_property
     def y_center(self) -> float:
         return (self.y1 + self.y2) / 2
 
@@ -71,8 +72,21 @@ class Whitespace:
 class MergedRow(ItemHolder):
     _ws_cache: dict[tuple[float, int, int], list[Whitespace]] = field(default_factory=dict)
 
-    def add(self, item: Cell) -> None:
-        self.items.append(item)
+    @cached_property
+    def x1(self) -> int:
+        return super().x1
+
+    @cached_property
+    def y1(self) -> int:
+        return super().y1
+
+    @cached_property
+    def x2(self) -> int:
+        return super().x2
+
+    @cached_property
+    def y2(self) -> int:
+        return super().y2
 
     def compute_whitespaces(self, min_width: float, x_min: int, x_max: int) -> list[Whitespace]:
         """
@@ -195,21 +209,27 @@ def identify_merged_rows(cnts: list[Cell]) -> list[MergedRow]:
     if not cnts:
         return []
 
-    current_row, merged_rows = None, []
+    current_row_contours, _cur_y1, _cur_y2 = [], 0, 0
+    merged_rows = []
     for cnt in sorted(cnts, key=lambda cnt: (cnt.y1, cnt.x1)):
-        if current_row is None:
-            current_row = MergedRow(items=[cnt])
+        if len(current_row_contours) == 0:
+            current_row_contours, _cur_y1, _cur_y2 = [cnt], cnt.y1, cnt.y2
             continue
 
         # Compute overlap
-        overlap = min(current_row.y2, cnt.y2) - max(current_row.y1, cnt.y1)
-        if overlap <= 0.5 * min(cnt.height, current_row.height):
+        overlap = min(_cur_y2, cnt.y2) - max(_cur_y1, cnt.y1)
+        if overlap <= 0.5 * min(cnt.height, _cur_y2 - _cur_y1):
             # Flush current row
-            merged_rows.append(current_row)
-            current_row = MergedRow()
-        current_row.add(cnt)
+            merged_rows.append(MergedRow(items=current_row_contours))
+            current_row_contours, _cur_y1, _cur_y2 = [cnt], cnt.y1, cnt.y2
+            continue
+
+        # Add to current row
+        current_row_contours.append(cnt)
+        _cur_y1, _cur_y2 = min(_cur_y1, cnt.y1), max(_cur_y2, cnt.y2)
 
     # Add last row
-    merged_rows.append(current_row)
+    if current_row_contours:
+        merged_rows.append(MergedRow(items=current_row_contours))
 
     return merged_rows

@@ -317,24 +317,25 @@ def detect_obstacles(cnp.ndarray[cnp.uint8_t, ndim=2] img, double min_width):
     cdef cnp.uint8_t[:, ::1] img_view = img
     cdef cnp.ndarray[cnp.uint8_t, ndim=2] mask_obstacles = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
     cdef cnp.uint8_t[:, ::1] mask_view = mask_obstacles
+    cdef cnp.ndarray[cnp.int32_t, ndim=2] row_prefix = np.zeros((img.shape[0], img.shape[1] + 1), dtype=np.int32)
+    cdef cnp.int32_t[:, ::1] prefix_view = row_prefix
     cdef Py_ssize_t h, w, col, row, idx, id_row
     cdef long prev_cc_position, length
-    cdef int int_min_width, max_value
+    cdef int int_min_width
 
     int_min_width = _max_long(1, <long> ceil(min_width))
     h = img.shape[0]
     w = img.shape[1]
 
+    for row in range(h):
+        for col in range(w):
+            prefix_view[row, col + 1] = prefix_view[row, col] + (img_view[row, col] > 0)
+
     for col in range(w - int_min_width + 1):
         row, prev_cc_position = 0, -1
         for row in range(h):
-            max_value = 0
-            for idx in range(int_min_width):
-                if img_view[row, col + idx] > max_value:
-                    max_value = img_view[row, col + idx]
-
             # Not a CC
-            if max_value == 0:
+            if prefix_view[row, col + int_min_width] == prefix_view[row, col]:
                 continue
 
             length = row - prev_cc_position - 1
