@@ -38,7 +38,6 @@ The library can be installed via pip:
 
 - Table identification for images and PDF files, including bounding boxes at the table cell level
 - Handling of complex table structures such as merged cells
-- Handling of implicit content - see [example](/examples/Implicit.ipynb)
 - Table content extraction by providing support for OCR services / tools
 - Extracted tables are returned as a simple object, including a Pandas DataFrame representation
 - Export extracted tables to an Excel file, preserving their original structure
@@ -356,7 +355,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 #### Method return
 
-The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L33) class is used to model extracted tables from documents.
+The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L33) class is used to model extracted tables from documents.
 
 > <h4>Attributes</h4>
 > <dl>

@@ -1,15 +1,7 @@
-from itertools import pairwise
-
 import cv2
 import numpy as np
 
 from img2table.document.rotation._rotation import compute_angles  # ty:ignore[unresolved-import]
-
-dixon_q_test_confidence_dict = {
-    0.9: {3: 0.941, 4: 0.765, 5: 0.642, 6: 0.56, 7: 0.507, 8: 0.468, 9: 0.437, 10: 0.412},
-    0.95: {3: 0.970, 4: 0.829, 5: 0.71, 6: 0.625, 7: 0.568, 8: 0.526, 9: 0.493, 10: 0.466},
-    0.99: {3: 0.994, 4: 0.926, 5: 0.821, 6: 0.74, 7: 0.68, 8: 0.634, 9: 0.598, 10: 0.568},
-}
 
 
 def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:
@@ -92,36 +84,6 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     return np.sort(relevant_angles).tolist()
 
 
-def angle_dixon_q_test(angles: list[float], confidence: float = 0.9) -> float:
-    """
-    Compute best angle according to Dixon Q test
-    :param angles: list of possible angles
-    :param confidence: confidence level for outliers (0.9, 0.95, 0.99)
-    :return: estimated angle
-    """
-    # Get dict of Q crit corresponding to confidence level
-    dict_q_crit = dixon_q_test_confidence_dict[confidence]
-
-    while len(angles) >= 3:
-        # Compute range
-        rng = angles[-1] - angles[0]
-
-        # Get outlier and compute diff with closest angle
-        diffs = [abs(nexxt - prev) for prev, nexxt in pairwise(angles)]
-        idx_outlier = 0 if np.argmax(diffs) == 0 else len(angles) - 1
-        gap = np.max(diffs)
-
-        # Compute Qexp and compare to Qcrit
-        q_exp = gap / rng
-
-        if q_exp > dict_q_crit.get(len(angles)):
-            angles.pop(idx_outlier)
-        else:
-            break
-
-    return float(np.mean(angles))
-
-
 def rotate_img(img: np.ndarray, angle: float) -> np.ndarray:
     """
     Rotate image by angle
@@ -160,23 +122,19 @@ def estimate_skew(angles: list[float], thresh: np.ndarray) -> float:
     if len(angles) == 1:
         return angles.pop()
 
-    if angles[-1] - angles[0] <= 0.015:
-        # Get angle by applying Dixon Q test
-        best_angle = angle_dixon_q_test(angles=angles)
-    else:
-        # Evaluate angles by rotation
-        best_angle = None
-        best_evaluation = 0
-        for angle in angles:
-            # Get angle evaluation
-            angle_evaluation = evaluate_angle(img=thresh, angle=angle)
+    # Evaluate angles by rotation
+    best_angle = None
+    best_evaluation = 0
+    for angle in angles:
+        # Get angle evaluation
+        angle_evaluation = evaluate_angle(img=thresh, angle=angle)
 
-            if angle_evaluation > best_evaluation or (
-                angle_evaluation == best_evaluation
-                and (best_angle is None or abs(angle) < abs(best_angle))
-            ):
-                best_angle = angle
-                best_evaluation = angle_evaluation
+        if angle_evaluation > best_evaluation or (
+            angle_evaluation == best_evaluation
+            and (best_angle is None or abs(angle) < abs(best_angle))
+        ):
+            best_angle = angle
+            best_evaluation = angle_evaluation
 
     return best_angle if best_angle is not None else 0.0
 

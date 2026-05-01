@@ -5,25 +5,21 @@ from Cython.Build import cythonize
 from setuptools import Extension, setup
 
 
-def iter_extensions() -> list[Extension]:
-    pyx_files = sorted(Path("src").rglob("*.pyx"))
-    include_dirs = [np.get_include()]
-    define_macros = [("CYTHON_TRACE", "1"), ("CYTHON_TRACE_NOGIL", "1")]
-
+def get_pyx_extensions() -> list[Extension]:
     return [
         Extension(
             name=".".join(pyx_file.with_suffix("").parts[1:]),
             sources=[pyx_file.as_posix()],
-            include_dirs=include_dirs,
-            define_macros=define_macros,
+            include_dirs=[np.get_include()],
+            define_macros=[("CYTHON_TRACE", "1"), ("CYTHON_TRACE_NOGIL", "1")],
         )
-        for pyx_file in pyx_files
+        for pyx_file in sorted(Path("src").rglob("*.pyx"))
     ]
 
 
 setup(
     ext_modules=cythonize(
-        iter_extensions(),
+        get_pyx_extensions(),
         compiler_directives={"language_level": "3", "linetrace": True},
     )
 )
