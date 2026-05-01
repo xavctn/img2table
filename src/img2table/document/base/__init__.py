@@ -4,7 +4,7 @@ import io
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np  # noqa: TC002
 
@@ -27,7 +27,7 @@ class Document:
     src: str | Path | io.BytesIO | bytes
     detect_rotation: bool = False
     pages: list[int] | None = None
-    _ocr_data: Any = None
+    ocr_data: OCRData | None = None
 
     def __post_init__(self) -> None:
         validate_src(self.src)
@@ -39,16 +39,6 @@ class Document:
     @property
     def images(self) -> list[np.ndarray]:
         raise NotImplementedError
-
-    @property
-    def ocr_data(self) -> OCRData:
-        if self._ocr_data is None:
-            raise ValueError("ocr_data is not set")
-        return self._ocr_data
-
-    @ocr_data.setter
-    def ocr_data(self, value: OCRData | None) -> None:
-        self._ocr_data = value
 
     @cached_property
     def file_bytes(self) -> bytes:
@@ -78,17 +68,17 @@ class Document:
         # Get pages where tables have been detected
         table_pages = [k for k, v in tables.items() if len(v) > 0]
 
-        if (self._ocr_data is None and ocr is None) or len(table_pages) == 0:
+        if (self.ocr_data is None and ocr is None) or len(table_pages) == 0:
             return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
 
-        # Create document containing only pages
+        # Create document containing only pages with tables
         ocr_doc = MockDocument(images=[self.images[page] for page in table_pages])
 
         # Get OCRData object
-        if self._ocr_data is None and ocr is not None:
+        if self.ocr_data is None and ocr is not None:
             self.ocr_data = ocr.of(document=ocr_doc)
 
-        if self._ocr_data is None:
+        if self.ocr_data is None:
             return {k: [] for k in tables}
 
         # Retrieve table contents with ocr

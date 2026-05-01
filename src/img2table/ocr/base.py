@@ -8,10 +8,6 @@ if TYPE_CHECKING:
 
 
 class OCRInstance:
-    @property
-    def ocr_fields(self) -> tuple[str, ...]:
-        return ("id", "parent", "value", "confidence", "x1", "y1", "x2", "y2")
-
     def of(self, document: Document | MockDocument) -> OCRData | None:
         """
         Extract text from Document to OCRData object

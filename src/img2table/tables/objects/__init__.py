@@ -14,27 +14,14 @@ class CoordinateProvider(Protocol):
 @dataclass
 class TableObject:
     def bbox(
-        self: CoordinateProvider, margin: int = 0, height_margin: int = 0, width_margin: int = 0
+        self: CoordinateProvider, margin: int = 0
     ) -> tuple[int, int, int, int]:
         """
         Return bounding box corresponding to the object
         :param margin: general margin used for the bounding box
-        :param height_margin: vertical margin used for the bounding box
-        :param width_margin: horizontal margin used for the bounding box
         :return: tuple representing a bounding box
         """
-        # Apply margin on bbox
-        if margin != 0:
-            bbox = (self.x1 - margin, self.y1 - margin, self.x2 + margin, self.y2 + margin)
-        else:
-            bbox = (
-                self.x1 - width_margin,
-                self.y1 - height_margin,
-                self.x2 + width_margin,
-                self.y2 + height_margin,
-            )
-
-        return bbox
+        return (self.x1 - margin, self.y1 - margin, self.x2 + margin, self.y2 + margin)
 
     @property
     def height(self: CoordinateProvider) -> int:
