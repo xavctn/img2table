@@ -355,7 +355,7 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 #### Method return
 
-The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L60) class is used to model extracted tables from documents.
+The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L58) class is used to model extracted tables from documents.
 
 > <h4>Attributes</h4>
 > <dl>

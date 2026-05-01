@@ -1,10 +1,6 @@
 # Table Detection Algorithms
 
-This document describes the table detection approach at a functional level. The detector combines
-image preprocessing, line analysis, text layout analysis, and structural validation to identify both
-bordered and borderless tables.
-
-## Summary
+## TLDR
 
 Table detection starts by building scale-aware document metrics from the foreground content. Those
 metrics guide two complementary detection paths:
