@@ -3,19 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from img2table.tables import threshold_dark_areas
+from img2table.tables.bordered import extract_bordered_tables
+from img2table.tables.bordered.lines import detect_lines
+from img2table.tables.borderless import extract_borderless_tables
+from img2table.tables.common import get_title_areas, threshold_dark_areas
 from img2table.tables.metrics import compute_img_metrics
-from img2table.tables.processing.bordered_tables import extract_bordered_tables
-from img2table.tables.processing.bordered_tables.lines import detect_lines
-from img2table.tables.processing.borderless_tables import extract_borderless_tables
-from img2table.tables.processing.common import get_title_areas
 
 if TYPE_CHECKING:
     import numpy as np
 
-    from img2table.tables.objects.cell import Cell
-    from img2table.tables.objects.line import Line
-    from img2table.tables.objects.table import Table
+    from img2table.tables.types import Cell, Line, Table
 
 
 @dataclass
@@ -100,7 +97,10 @@ class TableExtractor:
             return
 
         # Recompute thresholded image if relevant
-        if max(11, self.characteristics.char_length) / min(11, self.characteristics.char_length) >= 2:
+        if (
+            max(11, self.characteristics.char_length) / min(11, self.characteristics.char_length)
+            >= 2
+        ):
             self.thresh = threshold_dark_areas(
                 img=self.img, char_length=self.characteristics.char_length
             )

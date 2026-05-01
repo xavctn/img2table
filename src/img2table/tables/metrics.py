@@ -9,7 +9,7 @@ from img2table.tables._metrics import (  # ty:ignore[unresolved-import]
     remove_dots,
     remove_dotted_lines,
 )
-from img2table.tables.objects.cell import Cell
+from img2table.tables.types import Cell
 
 
 def compute_char_length(

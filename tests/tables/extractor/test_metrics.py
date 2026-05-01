@@ -1,6 +1,6 @@
 import cv2
 
-from img2table.tables import threshold_dark_areas
+from img2table.tables.common import threshold_dark_areas
 from img2table.tables.metrics import (
     compute_char_length,
     compute_img_metrics,
@@ -36,8 +36,14 @@ def test_compute_median_line_sep() -> None:
     thresh = threshold_dark_areas(img=img, char_length=11)
     char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh)
 
+    assert thresh_chars is not None
+    assert chars_array is not None
+    assert char_length is not None
+
     median_line_sep, contours = compute_median_line_sep(
-        thresh_chars=thresh_chars, chars_array=chars_array, char_length=char_length  # ty:ignore[invalid-argument-type]
+        thresh_chars=thresh_chars,
+        chars_array=chars_array,
+        char_length=char_length,
     )
 
     assert median_line_sep is not None

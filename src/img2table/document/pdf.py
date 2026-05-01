@@ -8,13 +8,13 @@ import numpy as np  # noqa: TC002
 import pypdfium2
 
 from img2table._validation import validate_bool
-from img2table.document.base import Document
+from img2table.document._types import Document
 from img2table.ocr.pdf import PdfOCR
 
 if TYPE_CHECKING:
-    from img2table.ocr.base import OCRInstance
-    from img2table.tables.objects.extraction import ExtractedTable
-    from img2table.tables.objects.table import Table
+    from img2table.ocr._types import OCRInstance
+    from img2table.tables.extraction import ExtractedTable
+    from img2table.tables.types import Table
 
 
 @dataclass
@@ -43,7 +43,7 @@ class PDF(Document):
             # Handle rotation if needed
             if self.detect_rotation:
                 # Inline import to reduce library load time
-                from img2table.document.base.rotation import fix_rotation_image
+                from img2table.document.rotation import fix_rotation_image
 
                 img, rotated_img = fix_rotation_image(img=img)
                 self._rotated = self._rotated or rotated_img

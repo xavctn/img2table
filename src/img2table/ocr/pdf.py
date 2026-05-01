@@ -5,9 +5,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from pypdfium2 import PdfDocument, PdfTextPage
 
-from img2table.document.base import Document, MockDocument
-from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRData
+from img2table.document._types import Document, MockDocument
+from img2table.ocr._types import OCRData, OCRInstance
 
 
 @dataclass

@@ -4,10 +4,8 @@ from pathlib import Path
 import pytest
 
 from img2table._validation import ValidationError
-from img2table.ocr.data import OCRData
-from img2table.tables.objects.cell import Cell
-from img2table.tables.objects.row import Row
-from img2table.tables.objects.table import Table
+from img2table.ocr._types import OCRData
+from img2table.tables.types import Cell, Row, Table
 from tests.ocr_data_utils import read_ocr_data
 
 

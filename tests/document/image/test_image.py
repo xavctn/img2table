@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 from img2table._validation import ValidationError
 from img2table.document.image import Image
 from img2table.ocr import TesseractOCR
-from img2table.tables.objects.extraction import BBox
+from img2table.tables.extraction import BBox
 
 
 def test_validators() -> None:

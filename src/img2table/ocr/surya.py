@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRData
+from img2table.ocr._types import OCRData, OCRInstance
 
 if TYPE_CHECKING:
-    from img2table.document.base import Document, MockDocument
+    from img2table.document._types import Document, MockDocument
 
 
 class SuryaOCR(OCRInstance):

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRData
+from img2table.ocr._types import OCRData, OCRInstance
 
 if TYPE_CHECKING:
-    from img2table.document.base import Document, MockDocument
+    from img2table.document._types import Document, MockDocument
 
 
 class EasyOCR(OCRInstance):
@@ -37,7 +36,7 @@ class EasyOCR(OCRInstance):
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
         # Create kwargs dict for constructor
-        if not isinstance(kw, dict):
+        if kw is not None and not isinstance(kw, dict):
             raise TypeError(f"Invalid type {type(kw)} for kw argument")
         kw = kw or {}
         kw["lang_list"] = self.lang

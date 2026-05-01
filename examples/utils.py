@@ -2,7 +2,7 @@ import cv2  # noqa: INP001
 import numpy as np
 
 from img2table.document import Image
-from img2table.ocr.base import OCRInstance
+from img2table.ocr._types import OCRInstance
 
 
 def display_borderless_tables(img: Image, ocr: OCRInstance) -> np.ndarray:

@@ -15,7 +15,7 @@ test:
 	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term
 
 fast-test:
-	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term --ignore=tests/ocr --ignore=tests/document/base
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term --ignore=tests/ocr --ignore=tests/document/rotation
 
 lint:
 	uv run ruff check

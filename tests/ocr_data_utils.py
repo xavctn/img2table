@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from img2table.ocr.data import OCRData
+from img2table.ocr._types import OCRData
 
 INT_FIELDS = {"page", "x1", "y1", "x2", "y2"}
 
