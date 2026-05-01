@@ -57,6 +57,7 @@ def test_blank_no_ocr() -> None:
 def test_image_tables(mock_tesseract) -> None:  # noqa: ANN001, ARG001
     ocr = TesseractOCR()
     img = Image(src="test_data/test.png", detect_rotation=True)
+    img_height, img_width = img.images[0].shape[:2]
 
     result = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
 
@@ -64,17 +65,26 @@ def test_image_tables(mock_tesseract) -> None:  # noqa: ANN001, ARG001
 
     assert result[0].title is None
     assert result[0].bbox == BBox(x1=36, y1=22, x2=770, y2=328)
+    assert result[0].bbox.relative.x1 == pytest.approx(36 / img_width)
+    assert result[0].bbox.relative.y1 == pytest.approx(22 / img_height)
+    assert result[0].bbox.relative.x2 == pytest.approx(770 / img_width)
+    assert result[0].bbox.relative.y2 == pytest.approx(328 / img_height)
     assert len(result[0].content) == 6
     assert len(result[0].content[0]) == 3
 
     assert result[1].title is None
     assert result[1].bbox == BBox(x1=962, y1=22, x2=1155, y2=124)
+    assert result[1].bbox.relative.x1 == pytest.approx(962 / img_width)
+    assert result[1].bbox.relative.y1 == pytest.approx(22 / img_height)
+    assert result[1].bbox.relative.x2 == pytest.approx(1155 / img_width)
+    assert result[1].bbox.relative.y2 == pytest.approx(124 / img_height)
     assert len(result[1].content) == 2
     assert len(result[1].content[0]) == 2
 
 
 def test_no_ocr() -> None:
     img = Image(src="test_data/dark.png", detect_rotation=True)
+    img_height, img_width = img.images[0].shape[:2]
 
     result = img.extract_tables(implicit_rows=True, min_confidence=50)
 
@@ -82,6 +92,10 @@ def test_no_ocr() -> None:
 
     assert result[0].title is None
     assert result[0].bbox == BBox(x1=40, y1=37, x2=834, y2=526)
+    assert result[0].bbox.relative.x1 == pytest.approx(40 / img_width)
+    assert result[0].bbox.relative.y1 == pytest.approx(37 / img_height)
+    assert result[0].bbox.relative.x2 == pytest.approx(834 / img_width)
+    assert result[0].bbox.relative.y2 == pytest.approx(526 / img_height)
     assert len(result[0].content) == 19
     assert len(result[0].content[0]) == 5
 

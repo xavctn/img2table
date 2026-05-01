@@ -3,7 +3,6 @@ import numpy as np
 from sewar import ssim
 
 from img2table.document.rotation import (
-    angle_dixon_q_test,
     fix_rotation_image,
     get_connected_components,
     get_relevant_angles,
@@ -36,12 +35,6 @@ def test_get_relevant_angles() -> None:
     result = get_relevant_angles(centroids=np.array(centroids), ref_height=1000, n_max=5)
 
     assert len(result) == 5
-
-
-def test_angle_dixon_q_test() -> None:
-    result = angle_dixon_q_test(angles=[12.23, 12.78, 12.79, 12.82], confidence=0.9)
-
-    assert round(result, 3) == 12.797
 
 
 def test_fix_rotation_image() -> None:

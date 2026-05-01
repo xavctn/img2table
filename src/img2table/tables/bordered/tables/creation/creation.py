@@ -96,21 +96,16 @@ def remove_unwanted_elements(table: Table, elements: list[Cell]) -> Table:
     return table
 
 
-def cluster_to_table(
-    cluster_cells: list[Cell], elements: list[Cell], borderless: bool = False
-) -> Table:
+def cluster_to_table(cluster_cells: list[Cell], elements: list[Cell]) -> Table:
     """
     Convert a cell cluster to a Table object
     :param cluster_cells: list of cells that form a table
     :param elements: list of image elements
-    :param borderless: boolean indicating if the created table is borderless
     :return: table with rows inferred from table cells
     """
-    # Get list of vertical delimiters
-    v_delims = sorted({y_val for cell in cluster_cells for y_val in [cell.y1, cell.y2]})
-
-    # Get list of horizontal delimiters
-    h_delims = sorted({x_val for cell in cluster_cells for x_val in [cell.x1, cell.x2]})
+    # Get list of vertical and horizontal delimiters
+    v_delims = sorted({cell.y1 for cell in cluster_cells} | {cell.y2 for cell in cluster_cells})
+    h_delims = sorted({cell.x1 for cell in cluster_cells} | {cell.x2 for cell in cluster_cells})
 
     # Create rows and cells
     list_rows = []
@@ -127,32 +122,29 @@ def cluster_to_table(
             default_cell = Cell(x1=x_left, y1=y_top, x2=x_right, y2=y_bottom)
 
             # Check cells that contain the default cell
-            containing_cells = sorted(
+            containing_cell = min(
                 [
                     c
                     for c in matching_cells
-                    if (
-                        x_overlap := max(0, min(default_cell.x2, c.x2) - max(default_cell.x1, c.x1))
-                    )
+                    if (x_ovrlp := max(0, min(default_cell.x2, c.x2) - max(default_cell.x1, c.x1)))
                     > 0
-                    and (
-                        y_overlap := max(0, min(default_cell.y2, c.y2) - max(default_cell.y1, c.y1))
-                    )
+                    and (y_ovrlp := max(0, min(default_cell.y2, c.y2) - max(default_cell.y1, c.y1)))
                     > 0
-                    and x_overlap * y_overlap >= 0.9 * min(c.area, default_cell.area)
+                    and x_ovrlp * y_ovrlp >= 0.9 * min(c.area, default_cell.area)
                 ],
                 key=lambda c: c.area,
+                default=None,
             )
 
             # Append either a cell that contain the default cell
-            if containing_cells:
-                list_cells.append(containing_cells.pop(0))
+            if containing_cell is not None:
+                list_cells.append(containing_cell)
             elif matching_cells:
                 # Get x value of the closest matching cells
-                x_value = sorted(
+                x_value = min(
                     [x_val for cell in matching_cells for x_val in [cell.x1, cell.x2]],
                     key=lambda x: min(abs(x - x_left), abs(x - x_right)),
-                ).pop(0)
+                )
                 list_cells.append(Cell(x1=x_value, y1=y_top, x2=x_value, y2=y_bottom))
             else:
                 list_cells.append(default_cell)
@@ -160,7 +152,7 @@ def cluster_to_table(
         list_rows.append(Row(cells=list_cells))
 
     # Create table
-    table = Table(rows=list_rows, borderless=borderless)
+    table = Table(rows=list_rows)
 
     # Remove empty/unnecessary rows and columns from the table, based on elements
     return remove_unwanted_elements(table=table, elements=elements)

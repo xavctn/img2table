@@ -84,9 +84,7 @@ class TableExtractor:
         )
 
         # Post filter bordered tables
-        self.tables = [
-            tb for tb in self.tables if min(tb.nb_rows, tb.nb_columns) >= 2 and tb.nb_cells >= 4
-        ]
+        self.tables = [tb for tb in self.tables if tb.has_valid_shape()]
 
     def extract_borderless_tables(self) -> None:
         """
@@ -97,10 +95,7 @@ class TableExtractor:
             return
 
         # Recompute thresholded image if relevant
-        if (
-            max(11, self.characteristics.char_length) / min(11, self.characteristics.char_length)
-            >= 2
-        ):
+        if not 0.5 < self.characteristics.char_length / 11 < 2:
             self.thresh = threshold_dark_areas(
                 img=self.img, char_length=self.characteristics.char_length
             )

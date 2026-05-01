@@ -355,12 +355,12 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 
 #### Method return
 
-The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L33) class is used to model extracted tables from documents.
+The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L60) class is used to model extracted tables from documents.
 
 > <h4>Attributes</h4>
 > <dl>
 >    <dt>bbox : <code>BBox</code></dt>
->    <dd style="font-style: italic;">Table bounding box</dd>
+>    <dd style="font-style: italic;">Table bounding box, with absolute coordinates and normalized coordinates available via <code>bbox.relative</code></dd>
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
@@ -383,6 +383,16 @@ for id_row, row in enumerate(table.content.values()):
         x2 = cell.bbox.x2
         y2 = cell.bbox.y2
         value = cell.value
+```
+
+Normalized coordinates (in percentage of image height / width) are also available on the same object:
+
+```python
+relative_bbox = cell.bbox.relative
+x1 = relative_bbox.x1
+y1 = relative_bbox.y1
+x2 = relative_bbox.x2
+y2 = relative_bbox.y2
 ```
 
 <h5 style="color:grey">Images</h5>

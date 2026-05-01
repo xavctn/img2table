@@ -67,8 +67,20 @@ class Document:
         # Get pages where tables have been detected
         table_pages = [k for k, v in tables.items() if len(v) > 0]
 
+        image_shapes = {page: self.images[page].shape[:2] for page in table_pages}
+
         if (self.ocr_data is None and ocr is None) or len(table_pages) == 0:
-            return {k: [tb.extracted_table for tb in v] for k, v in tables.items()}
+            return {
+                k: [
+                    tb.extracted_table(
+                        image_width=image_shapes[k][1], image_height=image_shapes[k][0]
+                    )
+                    for tb in v
+                ]
+                if k in image_shapes
+                else []
+                for k, v in tables.items()
+            }
 
         # Create document containing only pages with tables
         ocr_doc = MockDocument(images=[self.images[page] for page in table_pages])
@@ -112,10 +124,9 @@ class Document:
 
         return {
             k: [
-                tb.extracted_table
+                tb.extracted_table(image_width=image_shapes[k][1], image_height=image_shapes[k][0])
                 for tb in v
-                if (max(tb.nb_rows, tb.nb_columns) >= 2 and not tb.borderless)
-                or (tb.nb_rows >= 2 and tb.nb_columns >= 3)
+                if tb.has_valid_shape()
             ]
             for k, v in tables.items()
         }

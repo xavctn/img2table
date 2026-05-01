@@ -101,9 +101,15 @@ class Cell(TableObject):
         """
         return (self.x1 - margin, self.y1 - margin, self.x2 + margin, self.y2 + margin)
 
-    @property
-    def table_cell(self) -> TableCell:
-        bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
+    def table_cell(self, image_width: int, image_height: int) -> TableCell:
+        bbox = BBox(
+            x1=self.x1,
+            x2=self.x2,
+            y1=self.y1,
+            y2=self.y2,
+            image_width=image_width,
+            image_height=image_height,
+        )
         return TableCell(bbox=bbox, value=self.content)
 
     def __hash__(self) -> int:
@@ -163,7 +169,6 @@ class Table(TableObject):
     rows: list[Row] = field(default_factory=list)
     title_area: Cell | None = None
     title: str | None = None
-    borderless: bool = False
 
     def set_title_area(self, title_area: Cell) -> None:
         self.title_area = title_area
@@ -360,11 +365,26 @@ class Table(TableObject):
 
         return intersection_area / min(self.area, other.area) >= pct
 
-    @property
-    def extracted_table(self) -> ExtractedTable:
-        bbox = BBox(x1=self.x1, x2=self.x2, y1=self.y1, y2=self.y2)
+    def has_valid_shape(self) -> bool:
+        return min(self.nb_rows, self.nb_columns) >= 2 and self.nb_cells >= 4
+
+    def extracted_table(self, image_width: int, image_height: int) -> ExtractedTable:
+        bbox = BBox(
+            x1=self.x1,
+            x2=self.x2,
+            y1=self.y1,
+            y2=self.y2,
+            image_width=image_width,
+            image_height=image_height,
+        )
         content = OrderedDict(
-            {idx: [cell.table_cell for cell in row.cells] for idx, row in enumerate(self.rows)}
+            {
+                idx: [
+                    cell.table_cell(image_width=image_width, image_height=image_height)
+                    for cell in row.cells
+                ]
+                for idx, row in enumerate(self.rows)
+            }
         )
         return ExtractedTable(bbox=bbox, title=self.title, content=content)
 

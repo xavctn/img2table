@@ -6,6 +6,7 @@ from xlsxwriter import Workbook
 
 from img2table.tables.extraction import (
     BBox,
+    RelativeBBox,
     TableCell,
 )
 from img2table.tables.extraction._utils import CellPosition, CellSpan, create_all_rectangles
@@ -37,6 +38,12 @@ def test_create_all_rectangles() -> None:
     ]
 
 
+def test_bbox_relative() -> None:
+    bbox = BBox(x1=25, y1=20, x2=75, y2=80, image_width=100, image_height=200)
+
+    assert bbox.relative == RelativeBBox(x1=0.25, y1=0.1, x2=0.75, y2=0.4)
+
+
 def test_table_html() -> None:
     with Path("test_data/tables.json").open() as f:
         table = [
@@ -46,7 +53,7 @@ def test_table_html() -> None:
     with Path("test_data/table.html").open() as f:
         expected = f.read()
 
-    assert table.extracted_table.html == expected
+    assert table.extracted_table(image_width=100, image_height=100).html == expected
 
 
 def test_extracted_table_worksheet() -> None:
@@ -58,7 +65,7 @@ def test_extracted_table_worksheet() -> None:
     wb = Workbook(BytesIO())
     for table in tables:
         ws = wb.add_worksheet()
-        extracted_table = table.extracted_table
+        extracted_table = table.extracted_table(image_width=100, image_height=100)
         extracted_table._to_worksheet(sheet=ws)
 
         assert ws.dim_colmax + 1 == table.nb_columns  # ty:ignore[unsupported-operator]

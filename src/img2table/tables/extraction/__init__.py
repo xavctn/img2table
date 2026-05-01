@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from img2table.tables.extraction._utils import build_html, build_worksheet
@@ -19,6 +19,30 @@ class BBox:
     y1: int
     x2: int
     y2: int
+    image_width: int | None = field(default=None, repr=False, compare=False)
+    image_height: int | None = field(default=None, repr=False, compare=False)
+
+    @property
+    def relative(self) -> RelativeBBox:
+        if self.image_width is None or self.image_height is None:
+            raise ValueError(
+                "Relative bounding box is unavailable without source image dimensions."
+            )
+
+        return RelativeBBox(
+            x1=self.x1 / self.image_width,
+            y1=self.y1 / self.image_height,
+            x2=self.x2 / self.image_width,
+            y2=self.y2 / self.image_height,
+        )
+
+
+@dataclass
+class RelativeBBox:
+    x1: float
+    y1: float
+    x2: float
+    y2: float
 
 
 @dataclass

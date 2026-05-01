@@ -57,8 +57,8 @@ def get_cluster_characteristics(cluster: list[Cell], char_length: float) -> Clus
     :param char_length: average character length
     :return: cluster characteristics
     """
-    x_values = sorted({c.x1 for c in cluster}.union({c.x2 for c in cluster}))
-    y_values = sorted({c.y1 for c in cluster}.union({c.y2 for c in cluster}))
+    x_values = sorted({c.x1 for c in cluster} | {c.x2 for c in cluster})
+    y_values = sorted({c.y1 for c in cluster} | {c.y2 for c in cluster})
 
     return ClusterCharacteristics(x_values=x_values, y_values=y_values, char_length=char_length)
 
@@ -232,8 +232,8 @@ def identify_potential_new_cells(
     :return: list of potential cells
     """
     # Build the candidate grid from current delimiters and supported outer bounds
-    x_cluster = sorted({c.x1 for c in cluster}.union({c.x2 for c in cluster}).union({left, right}))
-    y_cluster = sorted({c.y1 for c in cluster}.union({c.y2 for c in cluster}).union({top, bottom}))
+    x_cluster = sorted({c.x1 for c in cluster} | {c.x2 for c in cluster} | {left, right})
+    y_cluster = sorted({c.y1 for c in cluster} | {c.y2 for c in cluster} | {top, bottom})
 
     # Keep only supported empty rectangles from the reconstructed grid
     existing_cells = set(cluster)

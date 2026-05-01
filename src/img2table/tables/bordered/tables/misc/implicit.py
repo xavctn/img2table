@@ -136,4 +136,4 @@ def implicit_content(
     )
 
     # Compute updated table
-    return cluster_to_table(cluster_cells=cells, elements=tb_contours, borderless=False)
+    return cluster_to_table(cluster_cells=cells, elements=tb_contours)
