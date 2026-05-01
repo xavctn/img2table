@@ -28,8 +28,9 @@ class SuryaOCR(OCRInstance):
                 "Missing dependencies, please install 'img2table[surya]' to use this class."
             ) from err
 
+        langs = ["en"] if langs is None else langs
         if isinstance(langs, list):
-            if all(isinstance(lng, str) for lng in langs):
+            if all(isinstance(lng, str) for lng in langs or []):
                 self.langs = langs or ["en"]
             else:
                 raise TypeError("All values should be strings for langs argument")

@@ -27,14 +27,18 @@ class EasyOCR(OCRInstance):
                 "Missing dependencies, please install 'img2table[easyocr]' to use this class."
             ) from err
 
-        lang = lang or ["en"]
+        lang = lang if lang is not None else ["en"]
         if isinstance(lang, list):
             if all(isinstance(lng, str) for lng in lang):
-                self.lang = lang
+                self.lang = lang or ["en"]
+            else:
+                raise TypeError("All values should be strings for lang argument")
         else:
             raise TypeError(f"Invalid type {type(lang)} for lang argument")
 
         # Create kwargs dict for constructor
+        if not isinstance(kw, dict):
+            raise TypeError(f"Invalid type {type(kw)} for kw argument")
         kw = kw or {}
         kw["lang_list"] = self.lang
         kw["verbose"] = kw.get("verbose") or False

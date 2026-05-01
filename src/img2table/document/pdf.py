@@ -39,15 +39,16 @@ class PDF(Document):
         for page_number in self.pages or range(len(doc)):
             page = doc[page_number]
             img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
+
             # Handle rotation if needed
             if self.detect_rotation:
                 # Inline import to reduce library load time
                 from img2table.document.base.rotation import fix_rotation_image
 
-                final, self._rotated = fix_rotation_image(img=img)
-            else:
-                final, self._rotated = img, False
-            images.append(final)
+                img, rotated_img = fix_rotation_image(img=img)
+                self._rotated = self._rotated or rotated_img
+
+            images.append(img)
 
         self._images = images
         doc.close()
@@ -61,12 +62,13 @@ class PDF(Document):
             table_pages = [
                 self.pages[k] if self.pages else k for k, v in tables.items() if len(v) > 0
             ]
-            images = [self.images[k] for k, v in tables.items() if len(v) > 0]
 
             if table_pages:
                 # Create PDF object for OCR
                 pdf_ocr = PDF(
-                    src=self.file_bytes, pages=table_pages, _images=images, _rotated=self._rotated
+                    src=self.file_bytes,
+                    pages=table_pages,
+                    _images=[self.images[k] for k, v in tables.items() if len(v) > 0],
                 )
 
                 # Try to get OCRData from PDF

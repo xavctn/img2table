@@ -203,7 +203,7 @@ class Table(TableObject):
         # Check for uniqueness of content
         unique_cells = {cell for row in self.items for cell in row.items}
         if len(unique_cells) == 1:
-            self._items = [Row(cells=self.items[0].items[0])]
+            self.items = [Row(cells=self.items[0].items[0])]
 
         return self
 
