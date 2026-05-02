@@ -70,7 +70,7 @@ class Whitespace:
 
 @dataclass
 class MergedRow(ItemHolder):
-    _ws_cache: dict[tuple[float, int, int], list[Whitespace]] = field(default_factory=dict)
+    _ws_cache: dict[tuple[float, int, int], list[Whitespace]] = field(default_factory=dict, repr=False)
 
     @cached_property
     def x1(self) -> int:

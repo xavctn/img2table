@@ -3,35 +3,25 @@ from __future__ import annotations
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
-from img2table.tables.borderless.tables.filter.model import StructuredSection
 from img2table.tables.common import find_components
 
 if TYPE_CHECKING:
-    from img2table.tables.borderless.types import ColumnSection
+    from img2table.tables.borderless.tables.filter.model import StructuredSection
 
 
 def bridge_small_discrepencies(
-    column_sections: list[ColumnSection], width: int, height: int, char_length: float
+    structured_sections: list[StructuredSection],
 ) -> list[list[StructuredSection]]:
     """
     Create groups of tables by bridging small discrepencies
-    :param column_sections: list of column sections
+    :param structured_sections: list of structured column sections
     :param width: full page width in pixels
     :param height: full page height in pixels
     :param char_length: Character length in pixels.
-    :return: list of created tables.
+    :return: list of clusters of sections that correspond to the same table.
     """
-    column_sections = sorted(column_sections, key=lambda sec: sec.y1)
-
-    # Map to structured sections
-    structured_sections = [
-        StructuredSection.from_section(
-            section=section, width=width, height=height, char_length=char_length
-        )
-        for section in column_sections
-    ]
-
     # Identify groups of consecutive sections that have small enough discrepencies
+    structured_sections = sorted(structured_sections, key=lambda sec: sec.idx)
     edges = [{idx} for idx, struct in enumerate(structured_sections) if struct.is_structured()]
 
     for idx, (prv, nxt) in enumerate(pairwise(structured_sections)):

@@ -10,7 +10,7 @@ def test_identify_tables(
 
     monkeypatch.setattr(
         "img2table.tables.borderless.tables.bridge_small_discrepencies",
-        lambda column_sections, char_length, height, width: [[column_sections[0]]],  # noqa: ARG005
+        lambda structured_sections: [[structured_sections[0]]],
     )
     monkeypatch.setattr(
         "img2table.tables.borderless.tables.section_group_to_table",

@@ -62,7 +62,7 @@ def test_from_section() -> None:
         whitespaces=whitespaces,
     )
 
-    result = StructuredSection.from_section(section=section, width=120, height=80, char_length=6)
+    result = StructuredSection.from_section(idx=0, section=section, width=120, height=80, char_length=6)
 
     assert result == StructuredSection(
         height=80,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from itertools import pairwise
 
@@ -20,20 +20,22 @@ from img2table.tables.types import Cell, Row, Table
 
 @dataclass
 class StructuredSection:
-    height: int
-    width: int
+    height: int = field(repr=False)
+    width: int = field(repr=False)
     char_length: float
-    items: list[Cell]
-    merged_rows: list[MergedRow]
+    items: list[Cell] = field(repr=False)
+    merged_rows: list[MergedRow] = field(repr=False)
     whitespaces: list[Whitespace]
     _row_ranges: list[tuple[int, int]] | None = None
+    idx: int = field(default=0, repr=False)
 
     @classmethod
     def from_section(
-        cls, section: ColumnSection, width: int, height: int, char_length: float
+        cls, idx: int, section: ColumnSection, width: int, height: int, char_length: float
     ) -> StructuredSection:
         """
         Create a StructuredSection from a ColumnSection.
+        :param idx: index of the column section
         :param section: the column section to convert
         :param width: full page width in pixels
         :param height: full page height in pixels
@@ -41,6 +43,7 @@ class StructuredSection:
         :return: Structured section with normalized coordinates
         """
         return cls(
+            idx=idx,
             height=height,
             width=width,
             char_length=char_length,
