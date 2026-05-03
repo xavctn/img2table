@@ -20,15 +20,24 @@ def matching_whitespaces(
     :param min_width: minimum column width
     :return: boolean indicating whether two sets of whitespaces match and resultant whitespaces
     """
-    # Get largest and smallest list of whitespaces and iterate over the shortest list
     ws_short, ws_long = (
         (ws1_list, ws2_list) if len(ws1_list) <= len(ws2_list) else (ws2_list, ws1_list)
     )
 
-    matching_ws, covered_long_indices = [], set()
+    matching_ws: list[Whitespace] = []
+    covered_long = [False] * len(ws_long)
+    long_idx = 0
+
     for ws_s in ws_short:
+        # Skip whitespaces ending before the current whitespace starts
+        while long_idx < len(ws_long) and ws_long[long_idx].end < ws_s.start:
+            long_idx += 1
+
+        scan_idx = long_idx
         found_matching_ws = False
-        for idx, ws_l in enumerate(ws_long):
+        while scan_idx < len(ws_long) and ws_long[scan_idx].start <= ws_s.end:
+            ws_l = ws_long[scan_idx]
+
             # Compute overlap
             overlap = min(ws_s.end, ws_l.end) - max(ws_s.start, ws_l.start)
 
@@ -44,22 +53,23 @@ def matching_whitespaces(
                         end_bound=ws_s.end_bound and ws_l.end_bound,
                     )
                 )
-                covered_long_indices.add(idx)
+                covered_long[scan_idx] = True
                 found_matching_ws = True
+            scan_idx += 1
 
         if not found_matching_ws:
             return False, []
 
-    if len(covered_long_indices) < len(ws_long):
+    if not all(covered_long):
         return False, []
 
     # Check that content overlaps (based on whitespaces)
-    ws1_min, ws1_max = min(ws.end for ws in ws1_list), max(ws.start for ws in ws1_list)
-    ws2_min, ws2_max = min(ws.end for ws in ws2_list), max(ws.start for ws in ws2_list)
+    ws1_min, ws1_max = ws1_list[0].end, ws1_list[-1].start
+    ws2_min, ws2_max = ws2_list[0].end, ws2_list[-1].start
     if min(ws1_max, ws2_max) - max(ws1_min, ws2_min) < min_width:
-        return False, sorted(matching_ws, key=lambda x: x.start)
+        return False, matching_ws
 
-    return True, sorted(matching_ws, key=lambda x: x.start)
+    return True, matching_ws
 
 
 def score_rows(row_data: list[RowCharacteristic], min_width: float, max_gap: float) -> list[int]:

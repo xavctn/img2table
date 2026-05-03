@@ -97,28 +97,38 @@ def cut_ws_by_lines(
     """
     Enforce rule that vertical whitespaces can not cross an horizontal line
     :param ws: vertical whitespace
-    :param lines: list of image lines
+    :param lines: list of horizontal image lines sorted by y coordinate
     :param min_height: minimum height for an eligible whitespace
     :return: list of updated whitespaces
     """
-    # Get crossing horizontal lines
-    crossing_lines_coords = [
-        line.y1
-        for line in lines
-        if line.horizontal
-        and ws.y1 < line.y1 < ws.y2
-        and min(ws.x2, line.x2) - max(ws.x1, line.x1) >= 0.5 * ws.width
-    ]
+    # Create cut whitespaces
+    cut_whitespaces: list[VerticalWhitespace] = []
+    current_y = ws.y1
 
-    if len(crossing_lines_coords) == 0:
+    for line in lines:
+        # Ignore lines above the current segment
+        if line.y1 <= current_y:
+            continue
+        # Stop once lines are below the whitespace
+        if line.y1 >= ws.y2:
+            break
+        # Ignore lines that do not sufficiently overlap the whitespace
+        if min(ws.x2, line.x2) - max(ws.x1, line.x1) < 0.5 * ws.width:
+            continue
+
+        if line.y1 - current_y >= min_height:
+            cut_whitespaces.append(VerticalWhitespace(x1=ws.x1, y1=current_y, x2=ws.x2, y2=line.y1))
+        current_y = line.y1
+
+    # If no lines cross the whitespace, keep it unchanged
+    if current_y == ws.y1:
         return [ws]
 
-    # Create cut whitespaces
-    return [
-        v_ws
-        for start, end in pairwise(sorted([*crossing_lines_coords, ws.y1, ws.y2]))
-        if (v_ws := VerticalWhitespace(x1=ws.x1, y1=start, x2=ws.x2, y2=end)).height >= min_height
-    ]
+    # Add last whitespace segment if relevant
+    if ws.y2 - current_y >= min_height:
+        cut_whitespaces.append(VerticalWhitespace(x1=ws.x1, y1=current_y, x2=ws.x2, y2=ws.y2))
+
+    return cut_whitespaces
 
 
 def identify_vertical_delimiters(
@@ -137,6 +147,7 @@ def identify_vertical_delimiters(
 
     # Compute minimum height
     min_height = (max(cnt.y2 for cnt in contours) - min(cnt.y1 for cnt in contours)) / 2
+    h_lines = sorted((line for line in lines if line.horizontal), key=lambda line: line.y1)
 
     vertical_ws: list[VerticalWhitespace] = []
     current_ws: list[VerticalWhitespace] = []
@@ -145,12 +156,20 @@ def identify_vertical_delimiters(
         row_ws = row.compute_whitespaces(min_width=min_width, x_min=0, x_max=width)
 
         # Check if row whitespaces correspond to current whitespaces
-        updated_ws, used_ws = [], set()
+        updated_ws: list[VerticalWhitespace] = []
+        used_ws = [False] * len(current_ws)
+        current_idx = 0
         for r_ws in row_ws:
             used_row = False
 
+            # Skip current whitespaces ending before the row whitespace starts
+            while current_idx < len(current_ws) and current_ws[current_idx].x2 < r_ws.start:
+                current_idx += 1
+
             # Identify matching current ws
-            for idx, ws in enumerate(current_ws):
+            scan_idx = current_idx
+            while scan_idx < len(current_ws) and current_ws[scan_idx].x1 <= r_ws.end:
+                ws = current_ws[scan_idx]
                 if min(r_ws.end, ws.x2) - max(r_ws.start, ws.x1) >= min_width:
                     # Add updated vertical ws
                     updated_ws.append(
@@ -158,8 +177,9 @@ def identify_vertical_delimiters(
                             x1=max(r_ws.start, ws.x1), y1=ws.y1, x2=min(r_ws.end, ws.x2), y2=row.y2
                         )
                     )
-                    used_ws.add(idx)
+                    used_ws[scan_idx] = True
                     used_row = True
+                scan_idx += 1
 
             # If the row has not been used, create new vertical whitespace
             if not used_row:
@@ -171,8 +191,8 @@ def identify_vertical_delimiters(
         vertical_ws += [
             cut_ws
             for idx, ws in enumerate(current_ws)
-            for cut_ws in cut_ws_by_lines(ws=ws, lines=lines, min_height=min_height)
-            if idx not in used_ws and ws.x1 > 0 and ws.x2 < width and cut_ws.height >= min_height
+            for cut_ws in cut_ws_by_lines(ws=ws, lines=h_lines, min_height=min_height)
+            if not used_ws[idx] and ws.x1 > 0 and ws.x2 < width and cut_ws.height >= min_height
         ]
 
         # Update current whitespaces
@@ -182,7 +202,7 @@ def identify_vertical_delimiters(
     vertical_ws += [
         cut_ws
         for ws in current_ws
-        for cut_ws in cut_ws_by_lines(ws=ws, lines=lines, min_height=min_height)
+        for cut_ws in cut_ws_by_lines(ws=ws, lines=h_lines, min_height=min_height)
         if ws.x1 > 0 and ws.x2 < width and cut_ws.height >= min_height
     ]
 
