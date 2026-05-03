@@ -18,5 +18,3 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Perform lint / tests
         run: make update lint type-check test
-        env:
-          NUMBA_DISABLE_JIT: 1

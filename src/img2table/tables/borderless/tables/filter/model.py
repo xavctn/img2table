@@ -210,11 +210,11 @@ class StructuredSection:
 
         # Compute relevant column ranges (duplicate multiple times the range if it overlaps with multiple reference ranges)
         column_ranges = [
-            (x_start, x_end)
-            for x_start, x_end in pairwise(x_delimiters)
-            for _ in range(
-                sum(1 for start, end in ref_ranges if min(x_end, end) - max(x_start, start) > 0)
+            max(
+                pairwise(x_delimiters),
+                key=lambda rng: min(rng[1], end) - max(rng[0], start),
             )
+            for start, end in ref_ranges
         ]
 
         # Compute y delimiters
