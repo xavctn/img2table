@@ -107,6 +107,7 @@ class Word:
 
 def get_all_char_data(
     text_page: PdfTextPage,
+    n_chars: int,
     page_width: float,
     page_height: float,
     page_rotation: int,
@@ -116,6 +117,7 @@ def get_all_char_data(
     """
     Compute character coordinates within page
     :param text_page: PdfTextPage object from pypdfium2
+    :param n_chars: number of characters in text page
     :param page_width: page width
     :param page_height: page height
     :param page_rotation: page rotation angle
@@ -123,7 +125,6 @@ def get_all_char_data(
     :param y_offset: page vertical horizontal offset
     :return: tuple of character coordinates within page
     """
-    n_chars = text_page.count_chars()
     # Batch extract boxes
     boxes = np.array([text_page.get_charbox(i, loose=True) for i in range(n_chars)])
 
@@ -189,20 +190,21 @@ class PdfOCR(OCRInstance):
             # Get characters coordinates
             tx1, ty1, tx2, ty2 = get_all_char_data(
                 text_page=text_page,
+                n_chars=char_count,
                 page_width=page_width,
                 page_height=page_height,
                 page_rotation=page_rotation,
                 x_offset=x_offset,
                 y_offset=y_offset,
             )
+            text = text_page.get_text_range(index=0, count=char_count)
 
             word_id, line_id = 1, 1
             current_word = Word(idx=1, line_idx=1)
             words = [current_word]
 
-            for i in range(char_count):
-                val = text_page.get_text_range(index=i, count=1)
-                char = Char(value=val, x1=tx1[i], y1=ty1[i], x2=tx2[i], y2=ty2[i])
+            for val, x1, y1, x2, y2 in zip(text, tx1, ty1, tx2, ty2, strict=True):
+                char = Char(value=val, x1=x1, y1=y1, x2=x2, y2=y2)
 
                 if char.value.strip() == "":
                     word_id += 1

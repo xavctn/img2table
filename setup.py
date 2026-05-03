@@ -16,8 +16,4 @@ def get_pyx_extensions() -> list[Extension]:
     ]
 
 
-setup(
-    ext_modules=cythonize(
-        get_pyx_extensions(), compiler_directives={"language_level": "3"}, force=True
-    )
-)
+setup(ext_modules=cythonize(get_pyx_extensions(), compiler_directives={"language_level": "3"}))
