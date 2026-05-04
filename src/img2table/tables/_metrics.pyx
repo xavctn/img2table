@@ -1,7 +1,7 @@
 cimport cython
 cimport numpy as cnp
 import numpy as np
-from libc.math cimport M_PI
+from libc.math cimport M_PI, ceil
 
 cnp.import_array()
 
@@ -24,6 +24,43 @@ cdef inline long _min_long(long a, long b) noexcept:
 
 cdef inline long _abs_long(long value) noexcept:
     return value if value >= 0 else -value
+
+
+cdef inline Py_ssize_t _find_root(cnp.intp_t[::1] parents, Py_ssize_t idx) noexcept:
+    cdef Py_ssize_t root = idx
+    cdef Py_ssize_t parent
+
+    # Find component root
+    while parents[root] != root:
+        root = parents[root]
+
+    # Compress traversed path
+    while parents[idx] != idx:
+        parent = parents[idx]
+        parents[idx] = root
+        idx = parent
+
+    return root
+
+
+cdef inline void _union_roots(
+    cnp.intp_t[::1] parents,
+    cnp.intp_t[::1] sizes,
+    Py_ssize_t idx1,
+    Py_ssize_t idx2,
+) noexcept:
+    cdef Py_ssize_t root1 = _find_root(parents, idx1)
+    cdef Py_ssize_t root2 = _find_root(parents, idx2)
+
+    if root1 == root2:
+        return
+
+    # Attach smaller component to larger one
+    if sizes[root1] < sizes[root2]:
+        root1, root2 = root2, root1
+
+    parents[root2] = root1
+    sizes[root1] += sizes[root2]
 
 
 @cython.boundscheck(False)
@@ -129,6 +166,7 @@ def compute_interval_union_length(
         sorted_starts_view[idx] = starts[idx]
         sorted_ends_view[idx] = ends[idx]
 
+    # Sort intervals by start coordinate
     for idx in range(1, interval_count):
         start = sorted_starts_view[idx]
         end = sorted_ends_view[idx]
@@ -146,6 +184,7 @@ def compute_interval_union_length(
     current_end = sorted_ends_view[0]
     union_length = 0.0
 
+    # Merge overlapping intervals
     for idx in range(1, interval_count):
         start = sorted_starts_view[idx]
         end = sorted_ends_view[idx]
@@ -528,61 +567,116 @@ def create_character_thresh(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def recompute_contours(
+def identify_obstacles(
     cnp.ndarray[cnp.int32_t, ndim=2] stats,
-    cnp.ndarray[cnp.int32_t, ndim=2] chars_array,
+    double min_width,
+    double min_height,
+    int height,
+    int width,
 ):
     """
-    Recompute contours from CC analysis with original characters
-    :param stats: contours from CC analysis
-    :param chars_array: characters array
-    :return: array of contours with dimensions recomputed
+    Identify areas of at least the requested size where no connected components are present.
+    :param stats: connected components stats array
+    :param min_width: minimum width for obstacle
+    :param min_height: minimum height for obstacle
+    :param height: image height
+    :param width: image width
+    :return: array of image size with ones where an obstacle is present
     """
-    cdef Py_ssize_t idx, id_c, out_count
+    cdef int kernel_width = <int> _max_long(1, <long> ceil(min_width))
+    cdef int kernel_height = <int> _max_long(1, <long> ceil(min_height))
+    cdef cnp.ndarray[cnp.int32_t, ndim=2] occupancy_diff
+    cdef cnp.ndarray[cnp.int32_t, ndim=2] empty_prefix
+    cdef cnp.ndarray[cnp.int32_t, ndim=2] obstacle_diff
+    cdef cnp.ndarray[cnp.uint8_t, ndim=2] obstacles
     cdef cnp.int32_t[:, ::1] stats_view = stats
-    cdef cnp.int32_t[:, ::1] chars_view = chars_array
-    cdef cnp.ndarray[cnp.int64_t, ndim=2] out = np.empty((max(stats.shape[0] - 1, 0), 4), dtype=np.int64)
-    cdef cnp.int64_t[:, ::1] out_view = out
-    cdef long x, y, w, h, xc, yc, wc, hc
-    cdef long x1, y1, x2, y2, nb_chars, x_overlap, y_overlap
+    cdef cnp.int32_t[:, ::1] occupancy_view
+    cdef cnp.int32_t[:, ::1] empty_prefix_view
+    cdef cnp.int32_t[:, ::1] obstacle_diff_view
+    cdef cnp.uint8_t[:, ::1] obstacles_view
+    cdef Py_ssize_t idx, row, col
+    cdef long x1, y1, x2, y2
+    cdef int running
+    cdef int above
+    cdef int occupied_count
+    cdef int empty_count
+    cdef int window_empty
 
-    out_count = 0
+    obstacles = np.zeros((height, width), dtype=np.uint8)
+    if height <= 0 or width <= 0 or stats.shape[0] == 0:
+        return obstacles
+    if kernel_width > width or kernel_height > height:
+        return obstacles
+
+    occupancy_diff = np.zeros((height + 1, width + 1), dtype=np.int32)
+    empty_prefix = np.zeros((height + 1, width + 1), dtype=np.int32)
+    obstacle_diff = np.zeros((height + 1, width + 1), dtype=np.int32)
+
+    occupancy_view = occupancy_diff
+    empty_prefix_view = empty_prefix
+    obstacle_diff_view = obstacle_diff
+    obstacles_view = obstacles
+
+    # Fill occupancy matrix with connected components
     for idx in range(stats.shape[0]):
-        if idx == 0:
+        x1 = _max_long(0, _min_long(width, stats_view[idx, 0]))
+        y1 = _max_long(0, _min_long(height, stats_view[idx, 1]))
+        x2 = _max_long(0, _min_long(width, stats_view[idx, 0] + stats_view[idx, 2]))
+        y2 = _max_long(0, _min_long(height, stats_view[idx, 1] + stats_view[idx, 3]))
+
+        if x1 >= x2 or y1 >= y2:
             continue
-        x = stats_view[idx, 0]
-        y = stats_view[idx, 1]
-        w = stats_view[idx, 2]
-        h = stats_view[idx, 3]
 
-        # Identify contour coordinates by matching included characters
-        x1, y1, x2, y2, nb_chars = 10**6, 10**6, 0, 0, 0
-        for id_c in range(chars_array.shape[0]):
-            xc = chars_view[id_c, 0]
-            yc = chars_view[id_c, 1]
-            wc = chars_view[id_c, 2]
-            hc = chars_view[id_c, 3]
+        occupancy_view[y1, x1] += 1
+        occupancy_view[y1, x2] -= 1
+        occupancy_view[y2, x1] -= 1
+        occupancy_view[y2, x2] += 1
 
-            # Compute overlaps
-            x_overlap = _max_long(0, _min_long(x + w, xc + wc) - _max_long(x, xc))
-            y_overlap = _max_long(0, _min_long(y + h, yc + hc) - _max_long(y, yc))
+    # Build occupied map and prefix sum of empty pixels
+    for row in range(height):
+        running = 0
+        for col in range(width):
+            running += occupancy_view[row, col]
+            above = occupancy_view[row - 1, col] if row > 0 else 0
+            occupied_count = running + above
+            occupancy_view[row, col] = occupied_count
 
-            if x_overlap * y_overlap >= 0.5 * hc * wc:
-                # Update stats
-                x1 = _min_long(x1, xc)
-                y1 = _min_long(y1, yc)
-                x2 = _max_long(x2, xc + wc)
-                y2 = _max_long(y2, yc + hc)
-                nb_chars += 1
+            empty_count = 1 if occupied_count == 0 else 0
+            empty_prefix_view[row + 1, col + 1] = (
+                empty_prefix_view[row, col + 1]
+                + empty_prefix_view[row + 1, col]
+                - empty_prefix_view[row, col]
+                + empty_count
+            )
 
-        if nb_chars > 0:
-            out_view[out_count, 0] = x1
-            out_view[out_count, 1] = y1
-            out_view[out_count, 2] = x2 - x1
-            out_view[out_count, 3] = y2 - y1
-            out_count += 1
+    # Mark empty windows matching minimum obstacle size
+    window_empty = kernel_width * kernel_height
+    for row in range(height - kernel_height + 1):
+        for col in range(width - kernel_width + 1):
+            empty_count = (
+                empty_prefix_view[row + kernel_height, col + kernel_width]
+                - empty_prefix_view[row, col + kernel_width]
+                - empty_prefix_view[row + kernel_height, col]
+                + empty_prefix_view[row, col]
+            )
+            if empty_count != window_empty:
+                continue
 
-    return out[:out_count]
+            obstacle_diff_view[row, col] += 1
+            obstacle_diff_view[row, col + kernel_width] -= 1
+            obstacle_diff_view[row + kernel_height, col] -= 1
+            obstacle_diff_view[row + kernel_height, col + kernel_width] += 1
+
+    # Expand obstacle windows back to pixel mask
+    for row in range(height):
+        running = 0
+        for col in range(width):
+            running += obstacle_diff_view[row, col]
+            above = obstacle_diff_view[row - 1, col] if row > 0 else 0
+            obstacle_diff_view[row, col] = running + above
+            obstacles_view[row, col] = 1 if obstacle_diff_view[row, col] > 0 else 0
+
+    return obstacles
 
 
 @cython.boundscheck(False)
@@ -637,3 +731,203 @@ def get_row_separations(cnp.ndarray[cnp.int64_t, ndim=2] stats, double char_leng
             out_count += 1
 
     return out[:out_count]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def identify_close_contours(
+    cnp.ndarray[cnp.int32_t, ndim=2] chars_array,
+    cnp.ndarray[cnp.uint8_t, ndim=2] obstacles,
+    double char_length,
+):
+    """
+    Identify groups of contours that are close enough to be merged into a single contour
+    :param chars_array: array of characters
+    :param obstacles: array of obstacles
+    :param char_length: average character length
+    :return: connected contour labels
+    """
+    cdef Py_ssize_t count = chars_array.shape[0]
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] order
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] parents
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] sizes
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] labels
+    cdef cnp.ndarray[cnp.int32_t, ndim=2] obstacle_prefix
+    cdef cnp.int32_t[:, ::1] chars_view = chars_array
+    cdef cnp.uint8_t[:, ::1] obstacle_view = obstacles
+    cdef cnp.int32_t[:, ::1] prefix_view
+    cdef cnp.intp_t[::1] order_view
+    cdef cnp.intp_t[::1] parents_view
+    cdef cnp.intp_t[::1] sizes_view
+    cdef cnp.intp_t[::1] labels_view
+    cdef Py_ssize_t i, j, pos_i, pos_j
+    cdef long xi, yi, wi, hi, xj, yj, wj, hj
+    cdef long x_overlap, y_overlap, x1, y1, x2, y2
+    cdef long min_width, min_height
+    cdef int row_sum
+    cdef int obstacle_sum
+
+    if count == 0:
+        return np.empty(0, dtype=np.intp)
+
+    order = np.argsort(chars_array[:, 0], kind="stable")
+    parents = np.arange(count, dtype=np.intp)
+    sizes = np.ones(count, dtype=np.intp)
+    labels = np.empty(count, dtype=np.intp)
+    obstacle_prefix = np.zeros((obstacles.shape[0] + 1, obstacles.shape[1] + 1), dtype=np.int32)
+
+    order_view = order
+    parents_view = parents
+    sizes_view = sizes
+    labels_view = labels
+    prefix_view = obstacle_prefix
+
+    # Build prefix sum over obstacle mask
+    for i in range(obstacles.shape[0]):
+        row_sum = 0
+        for j in range(obstacles.shape[1]):
+            row_sum += obstacle_view[i, j]
+            prefix_view[i + 1, j + 1] = prefix_view[i, j + 1] + row_sum
+
+    # Merge contours that overlap or are close without a blocking obstacle
+    for pos_i in range(count):
+        i = order_view[pos_i]
+        xi = chars_view[i, 0]
+        yi = chars_view[i, 1]
+        wi = chars_view[i, 2]
+        hi = chars_view[i, 3]
+
+        for pos_j in range(pos_i + 1, count):
+            j = order_view[pos_j]
+            xj = chars_view[j, 0]
+            if xj > xi + wi + char_length:
+                break
+
+            yj = chars_view[j, 1]
+            wj = chars_view[j, 2]
+            hj = chars_view[j, 3]
+
+            x_overlap = _min_long(xi + wi, xj + wj) - _max_long(xi, xj)
+            y_overlap = _min_long(yi + hi, yj + hj) - _max_long(yi, yj)
+
+            min_width = _min_long(wi, wj)
+            min_height = _min_long(hi, hj)
+
+            if x_overlap > 0 and y_overlap > 0:
+                _union_roots(parents_view, sizes_view, i, j)
+            elif 2 * y_overlap >= min_height and x_overlap > -char_length:
+                x1 = _min_long(xi + wi, xj + wj)
+                y1 = _max_long(yi, yj)
+                x2 = _max_long(xi, xj)
+                y2 = _min_long(yi + hi, yj + hj)
+
+                obstacle_sum = (
+                    prefix_view[y2, x2]
+                    - prefix_view[y1, x2]
+                    - prefix_view[y2, x1]
+                    + prefix_view[y1, x1]
+                )
+                if obstacle_sum * 10 < (x2 - x1) * (y2 - y1):
+                    _union_roots(parents_view, sizes_view, i, j)
+            elif 2 * x_overlap >= min_width and y_overlap > -char_length:
+                x1 = _max_long(xi, xj)
+                y1 = _min_long(yi + hi, yj + hj)
+                x2 = _min_long(xi + wi, xj + wj)
+                y2 = _max_long(yi, yj)
+
+                obstacle_sum = (
+                    prefix_view[y2, x2]
+                    - prefix_view[y1, x2]
+                    - prefix_view[y2, x1]
+                    + prefix_view[y1, x1]
+                )
+
+                if obstacle_sum * 10 < (x2 - x1) * (y2 - y1):
+                    _union_roots(parents_view, sizes_view, i, j)
+
+    # Map each contour to its connected component root
+    for i in range(count):
+        labels_view[i] = _find_root(parents_view, i)
+
+    return labels
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def compute_contours(
+    cnp.ndarray[cnp.int32_t, ndim=2] chars_array,
+    cnp.ndarray[cnp.uint8_t, ndim=2] obstacles,
+    double char_length,
+):
+    """
+    Identify text contours from the image
+    :param chars_array: array of characters
+    :param obstacles: array of obstacles
+    :param char_length: average character length
+    :return: array of contours
+    """
+    cdef Py_ssize_t count = chars_array.shape[0]
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] labels = identify_close_contours(
+        chars_array=chars_array,
+        obstacles=obstacles,
+        char_length=char_length,
+    )
+    cdef cnp.ndarray[cnp.intp_t, ndim=1] component_index
+    cdef cnp.ndarray[cnp.int64_t, ndim=2] bounds
+    cdef cnp.ndarray[cnp.int64_t, ndim=2] out
+    cdef cnp.int32_t[:, ::1] chars_view = chars_array
+    cdef cnp.intp_t[::1] labels_view = labels
+    cdef cnp.intp_t[::1] component_view
+    cdef cnp.int64_t[:, ::1] bounds_view
+    cdef cnp.int64_t[:, ::1] out_view
+    cdef Py_ssize_t idx, component_count, component_id
+    cdef long x1, y1, x2, y2
+
+    if count == 0:
+        return np.empty((0, 4), dtype=np.int64)
+
+    component_index = np.full(count, -1, dtype=np.intp)
+    bounds = np.empty((count, 4), dtype=np.int64)
+    component_view = component_index
+    bounds_view = bounds
+    component_count = 0
+
+    # Aggregate contour bounds by component label
+    for idx in range(count):
+        component_id = labels_view[idx]
+        if component_view[component_id] < 0:
+            component_view[component_id] = component_count
+            bounds_view[component_count, 0] = chars_view[idx, 0]
+            bounds_view[component_count, 1] = chars_view[idx, 1]
+            bounds_view[component_count, 2] = chars_view[idx, 0] + chars_view[idx, 2]
+            bounds_view[component_count, 3] = chars_view[idx, 1] + chars_view[idx, 3]
+            component_count += 1
+            continue
+
+        component_id = component_view[component_id]
+        x1 = chars_view[idx, 0]
+        y1 = chars_view[idx, 1]
+        x2 = x1 + chars_view[idx, 2]
+        y2 = y1 + chars_view[idx, 3]
+
+        if x1 < bounds_view[component_id, 0]:
+            bounds_view[component_id, 0] = x1
+        if y1 < bounds_view[component_id, 1]:
+            bounds_view[component_id, 1] = y1
+        if x2 > bounds_view[component_id, 2]:
+            bounds_view[component_id, 2] = x2
+        if y2 > bounds_view[component_id, 3]:
+            bounds_view[component_id, 3] = y2
+
+    # Convert bounds to x, y, w, h format
+    out = np.empty((component_count, 4), dtype=np.int64)
+    out_view = out
+    for idx in range(component_count):
+        out_view[idx, 0] = bounds_view[idx, 0]
+        out_view[idx, 1] = bounds_view[idx, 1]
+        out_view[idx, 2] = bounds_view[idx, 2] - bounds_view[idx, 0]
+        out_view[idx, 3] = bounds_view[idx, 3] - bounds_view[idx, 1]
+
+    return out

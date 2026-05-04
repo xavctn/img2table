@@ -2,10 +2,11 @@ import cv2
 import numpy as np
 
 from img2table.tables._metrics import (  # ty:ignore[unresolved-import]
+    compute_contours,
     create_character_thresh,
     filter_cc,
     get_row_separations,
-    recompute_contours,
+    identify_obstacles,
     remove_dots,
     remove_dotted_lines,
 )
@@ -14,7 +15,7 @@ from img2table.tables.types import Cell
 
 def compute_char_length(
     thresh: np.ndarray,
-) -> tuple[float | None, np.ndarray | None, np.ndarray | None]:
+) -> tuple[float | None, np.ndarray | None]:
     """
     Compute average character length based on connected components' analysis
     :param thresh: threshold image array
@@ -33,7 +34,7 @@ def compute_char_length(
     stats = stats[mask_pixels]
 
     if len(stats) == 0:
-        return None, None, None
+        return None, None
 
     # Remove dotted lines
     complete_stats = np.c_[
@@ -42,7 +43,7 @@ def compute_char_length(
     stats = remove_dotted_lines(complete_stats=complete_stats)
 
     if len(stats) == 0:
-        return None, None, None
+        return None, None
 
     # Filter relevant connected components
     relevant_stats, discarded_stats = filter_cc(stats=stats)
@@ -56,37 +57,48 @@ def compute_char_length(
         )
 
         # Create thresholded image with characters
-        characters_thresh, chars_array = create_character_thresh(
+        _, chars_array = create_character_thresh(
             thresh=thresh,
             stats=relevant_stats,
             discarded_stats=discarded_stats,
             char_length=char_length,
         )
 
-        return char_length, characters_thresh, chars_array
-    return None, None, None
-
+        return char_length, chars_array
+    return None, None
 
 def compute_median_line_sep(
-    thresh_chars: np.ndarray, chars_array: np.ndarray, char_length: float
+    chars_array: np.ndarray, char_length: float, height: int, width: int
 ) -> tuple[float | None, list[Cell] | None]:
     """
     Compute median separation between rows
-    :param thresh_chars: thresholded image of characters
+    :param chars_array: array of characters
     :param char_length: average character length
+    :param height: image height
+    :param width: image width
     :return: median separation between rows
     """
-    # Identify characters that belong to the same word and create merged contours, by closing image and retrieving
-    # connected components
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(char_length // 2 + 1), 1))
-    thresh_chars = cv2.morphologyEx(thresh_chars, cv2.MORPH_CLOSE, kernel)
-
-    _, _, stats, _ = cv2.connectedComponentsWithStats(
-        image=thresh_chars, connectivity=8, ltype=cv2.CV_32S
+    # Identify obstacles
+    vertical_obstacles = identify_obstacles(
+        stats=chars_array,
+        min_width=char_length / 3,
+        min_height=height / 5,
+        height=height,
+        width=width,
     )
+    horizontal_obstacles = identify_obstacles(
+        stats=chars_array,
+        min_width=width / 5,
+        min_height=char_length / 4,
+        height=height,
+        width=width,
+    )
+    obstacles = np.maximum(vertical_obstacles, horizontal_obstacles)
 
-    # Recompute contours
-    stats_contours = recompute_contours(stats=stats, chars_array=chars_array)
+    # Identify merged contours
+    stats_contours = compute_contours(
+        chars_array=chars_array, obstacles=obstacles, char_length=char_length
+    )
 
     # Compute median line sep
     row_separations = get_row_separations(stats=stats_contours, char_length=char_length)
@@ -115,14 +127,17 @@ def compute_img_metrics(
     :return: average character length, median line separation and image contours
     """
     # Compute average character length based on connected components analysis
-    char_length, thresh_chars, chars_array = compute_char_length(thresh=thresh)
+    char_length, chars_array = compute_char_length(thresh=thresh)
 
-    if char_length is None or thresh_chars is None or chars_array is None:
+    if char_length is None or chars_array is None:
         return None, None, None
 
     # Compute median separation between rows
     median_line_sep, contours = compute_median_line_sep(
-        thresh_chars=thresh_chars, chars_array=chars_array, char_length=char_length
+        chars_array=chars_array,
+        char_length=char_length,
+        height=thresh.shape[0],
+        width=thresh.shape[1],
     )
 
     return char_length, median_line_sep, contours
