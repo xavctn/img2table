@@ -4,7 +4,7 @@ import io
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import numpy as np  # noqa: TC002
 
@@ -168,6 +168,27 @@ class Document:
             return {self.pages[k]: v for k, v in tables.items()}
 
         return tables
+
+    @overload
+    def to_xlsx(
+        self,
+        dest: str | Path,
+        ocr: OCRInstance | None = None,
+        implicit_rows: bool = False,
+        implicit_columns: bool = False,
+        borderless_tables: bool = False,
+        min_confidence: int = 50,
+    ) -> None: ...
+    @overload
+    def to_xlsx(
+        self,
+        dest: io.BytesIO,
+        ocr: OCRInstance | None = None,
+        implicit_rows: bool = False,
+        implicit_columns: bool = False,
+        borderless_tables: bool = False,
+        min_confidence: int = 50,
+    ) -> io.BytesIO: ...
 
     def to_xlsx(
         self,
