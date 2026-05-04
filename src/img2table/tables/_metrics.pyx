@@ -204,7 +204,7 @@ def remove_dotted_lines(cnp.ndarray[cnp.float64_t, ndim=2] complete_stats):
         x_middle = stats_view[idx, 5]
         y_middle = stats_view[idx, 6]
 
-        if w / h < 2.0:
+        if w / h < 2.0 or h > 5:
             continue
 
         if y_middle - prev_y_middle <= 2.0:
@@ -261,7 +261,7 @@ def remove_dotted_lines(cnp.ndarray[cnp.float64_t, ndim=2] complete_stats):
         x_middle = stats_view[idx, 5]
         y_middle = stats_view[idx, 6]
 
-        if h / w < 2.0:
+        if h / w < 2.0 or w > 5:
             continue
 
         if x_middle - prev_x_middle <= 2.0:
