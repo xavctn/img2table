@@ -53,6 +53,11 @@ surya = [
 doctr = [
     "python-doctr",
 ]
+rapidocr = [
+    "rapidocr",
+    "onnxruntime",
+    "onnxruntime<1.24; python_version<'3.11'"
+]
 
 [dependency-groups]
 dev = [

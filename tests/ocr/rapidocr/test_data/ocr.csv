@@ -1,0 +1,19 @@
+page;id;parent;value;confidence;x1;y1;x2;y2
+0;word_1_1;word_1_1;Title;99;382;36;426;59
+0;word_1_2;word_1_2;Test 1;98;963;37;1020;59
+0;word_1_3;word_1_3;Test 2;99;1060;37;1116;59
+0;word_1_4;word_1_4;Line 1 - Col 1;95;39;90;154;109
+0;word_1_5;word_1_5;Line 1 - Col 2;99;280;90;395;109
+0;word_1_6;word_1_6;Line 1 - Col 3;98;498;89;613;108
+0;word_1_7;word_1_7;Test 3;99;964;90;1019;109
+0;word_1_8;word_1_8;Test 4;99;1059;88;1116;109
+0;word_1_9;word_1_9;Line 2 - Col 1;95;39;139;154;160
+0;word_1_10;word_1_10;Line 2 - Col 3;99;498;140;613;159
+0;word_1_11;word_1_11;Line 3 - Col 1;99;39;191;153;210
+0;word_1_12;word_1_12;Merged Cells;97;328;191;445;212
+0;word_1_13;word_1_13;Line 3 - Col 3;98;499;191;614;210
+0;word_1_14;word_1_14;Line 4 - Col 1;96;39;242;154;262
+0;word_1_15;word_1_15;Line 4 - Col 3;98;498;242;614;262
+0;word_1_16;word_1_16;Line 5 - Col 1;98;39;293;154;313
+0;word_1_17;word_1_17;Line 5 - Col 2;99;280;293;395;313
+0;word_1_18;word_1_18;Line 5 - Col 3;99;499;293;614;313

@@ -20,6 +20,15 @@ class PaddleOCR(OCRInstance):
         :param lang: lang parameter used in Paddle
         :param kw: dictionary containing kwargs for PaddleOCR constructor
         """
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                from paddleocr import PaddleOCR as Ocr
+            except ModuleNotFoundError as err:
+                raise ModuleNotFoundError(
+                    "Missing dependencies, please install 'img2table[paddle]' to use this class."
+                ) from err
+
         if isinstance(lang, str):
             self.lang = lang
         else:
@@ -29,10 +38,6 @@ class PaddleOCR(OCRInstance):
         kw = kw or {}
         kw["lang"] = self.lang
         kw["use_doc_unwarping"] = kw.get("use_doc_unwarping") or False
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            from paddleocr import PaddleOCR as Ocr
 
         self.ocr = Ocr(**kw)
 

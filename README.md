@@ -23,16 +23,17 @@ Thanks to its design, it provides a practical and lighter alternative to Neural 
 
 The library can be installed via pip:
 
-| Command                          | Description                                 |
-| -------------------------------- | ------------------------------------------- |
-| `pip install img2table`          | Standard installation, supporting Tesseract |
-| `pip install img2table[paddle]`  | For usage with Paddle OCR                   |
-| `pip install img2table[easyocr]` | For usage with EasyOCR                      |
-| `pip install img2table[surya]`   | For usage with Surya OCR                    |
-| `pip install img2table[gcp]`     | For usage with Google Vision OCR            |
-| `pip install img2table[aws]`     | For usage with AWS Textract OCR             |
-| `pip install img2table[azure]`   | For usage with Azure Cognitive Services OCR |
-| `pip install img2table[doctr]`   | For usage with docTR                        |
+| Command                           | Description                                 |
+| --------------------------------- | ------------------------------------------- |
+| `pip install img2table`           | Standard installation, supporting Tesseract |
+| `pip install img2table[paddle]`   | For usage with Paddle OCR                   |
+| `pip install img2table[easyocr]`  | For usage with EasyOCR                      |
+| `pip install img2table[doctr]`    | For usage with docTR                        |
+| `pip install img2table[surya]`    | For usage with Surya OCR                    |
+| `pip install img2table[rapidocr]` | For usage with RapidOCR                     |
+| `pip install img2table[gcp]`      | For usage with Google Vision OCR            |
+| `pip install img2table[aws]`      | For usage with AWS Textract OCR             |
+| `pip install img2table[azure]`    | For usage with Azure Cognitive Services OCR |
 
 ## Features <a name="features"></a>
 
@@ -133,8 +134,6 @@ _Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires p
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions._
 <br>
 _For Windows users getting environment variable errors, you can check this [tutorial](https://linuxhint.com/install-tesseract-windows/)_
-<br>
-
 </details>
 
 <details>
@@ -158,8 +157,6 @@ ocr = PaddleOCR(lang="en",
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the PaddleOCR constructor.</dd>
 > </dl>
-
-<br>
 </details>
 
 <details>
@@ -183,8 +180,6 @@ ocr = EasyOCR(lang=["en"],
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the EasyOCR <code>Reader</code> constructor.</dd>
 > </dl>
-
-<br>
 </details>
 
 <details>
@@ -207,8 +202,25 @@ ocr = DocTR(detect_language=False,
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the docTR <code>ocr_predictor</code> method.</dd>
 > </dl>
+</details>
 
+<details>
+<summary>RapidOCR<a name="rapidocr"></a></summary>
 <br>
+
+<a href="https://github.com/RapidAI/RapidOCR">RapidOCR</a> is an open-source OCR based on ONNX Runtime.<br>
+
+```python
+from img2table.ocr import RapidOCR
+
+ocr = RapidOCR(params={"Rec.lang_type": ..., "kwarg": kw_value, ...})
+```
+
+> <h4>Parameters</h4>
+> <dl>
+>    <dt>params : dict, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Dictionary containing configuration values passed to the RapidOCR constructor. If <code>Rec.lang_type</code> is not provided, English is used by default.</dd>
+> </dl>
 </details>
 
 <details>
@@ -253,8 +265,7 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dt>timeout : int, optional, default <code>15</code></dt>
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 > </dl>
-> <br>
-
+>
 </details>
 
 <details>
@@ -287,8 +298,6 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
 > </dl>
-> <br>
-
 </details>
 
 <details>
@@ -309,8 +318,6 @@ ocr = AzureOCR(endpoint="abc.azure.com",
 >    <dt>subscription_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
 > </dl>
-> <br>
-
 </details>
 
 ---
