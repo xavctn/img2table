@@ -6,8 +6,8 @@ from img2table.tables.borderless.tables.filter.model import StructuredSection
 from img2table.tables.borderless.tables.structure.convert import (
     section_group_to_table,
 )
-from img2table.tables.borderless.tables.structure.discrepency import (
-    bridge_small_discrepencies,
+from img2table.tables.borderless.tables.structure.discrepancy import (
+    bridge_small_discrepancies,
 )
 from img2table.tables.borderless.tables.structure.headers import identify_potentials_headers
 
@@ -36,7 +36,7 @@ def identify_tables(
     ]
 
     # Create groups of sections that are likely to be part of the same table
-    table_groups = bridge_small_discrepencies(
+    table_groups = bridge_small_discrepancies(
         structured_sections=structured_sections,
     )
 

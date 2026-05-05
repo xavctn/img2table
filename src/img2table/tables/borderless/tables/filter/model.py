@@ -203,9 +203,9 @@ class StructuredSection:
 
         # Get created horizontal delimiters
         x_delimiters = [
-            x_min or kept_ws[0].end,
+            x_min if x_min is not None else kept_ws[0].end,
             *[(ws.start + ws.end) // 2 for ws in kept_ws[1:-1]],
-            x_max or kept_ws[-1].start,
+            x_max if x_max is not None else kept_ws[-1].start,
         ]
 
         # Compute relevant column ranges (duplicate multiple times the range if it overlaps with multiple reference ranges)
@@ -219,7 +219,11 @@ class StructuredSection:
 
         # Compute y delimiters
         row_delimiters = sorted({y for rng in self.row_ranges() for y in rng})
-        y_delimiters = [y_min or self.y_min, *row_delimiters[1:-1], y_max or self.y_max]
+        y_delimiters = [
+            y_min if y_min is not None else self.y_min,
+            *row_delimiters[1:-1],
+            y_max if y_max is not None else self.y_max,
+        ]
 
         # Create rows
         rows = [

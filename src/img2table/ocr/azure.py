@@ -46,7 +46,7 @@ class AzureOCR(OCRInstance):
 
         # Validation on subscription_key variable
         if not (isinstance(subscription_key, str) or subscription_key is None):
-            raise TypeError(f"Invalid type {type(subscription_key)} for endpoint argument")
+            raise TypeError(f"Invalid type {type(subscription_key)} for subscription_key argument")
 
         subscription_key = subscription_key or os.getenv("COMPUTER_VISION_SUBSCRIPTION_KEY")
         if subscription_key is None:

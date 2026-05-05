@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class SuryaOCR(OCRInstance):
     """
-    DocTR instance
+    Surya OCR instance
     """
 
     def __init__(self, langs: list[str] | None = None) -> None:
@@ -51,7 +51,7 @@ class SuryaOCR(OCRInstance):
         # Get OCR of all images
         content = self.rec_predictor(
             images=[Image.fromarray(img) for img in document.images],
-            langs=[self.langs],  # ty:ignore[unknown-argument]
+            langs=self.langs,  # ty:ignore[unknown-argument]
             det_predictor=self.det_predictor,
         )
 

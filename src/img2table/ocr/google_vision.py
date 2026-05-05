@@ -64,7 +64,7 @@ class VisionEndpointContent(VisionContent):
                         [
                             el.get("x")
                             for el in word.get("boundingBox").get("vertices")
-                            if el.get("x")
+                            if el.get("x") is not None
                         ]
                     )
                     x_repl = sorted([0, width], key=lambda val: abs(val - x_avg)).pop(0)
@@ -72,7 +72,7 @@ class VisionEndpointContent(VisionContent):
                         [
                             el.get("y")
                             for el in word.get("boundingBox").get("vertices")
-                            if el.get("y")
+                            if el.get("y") is not None
                         ]
                     )
                     y_repl = sorted([0, height], key=lambda val: abs(val - y_avg)).pop(0)
@@ -216,11 +216,15 @@ class VisionAPIContent(VisionContent):
 
                         # Compute x and y values in bounding box
                         x_vals = [
-                            vertex.x or x_repl if hasattr(vertex, "x") else x_repl
+                            vertex_x
+                            if (vertex_x := getattr(vertex, "x", None)) is not None
+                            else x_repl
                             for vertex in word.bounding_box.vertices
                         ]
                         y_vals = [
-                            vertex.y or y_repl if hasattr(vertex, "y") else y_repl
+                            vertex_y
+                            if (vertex_y := getattr(vertex, "y", None)) is not None
+                            else y_repl
                             for vertex in word.bounding_box.vertices
                         ]
 

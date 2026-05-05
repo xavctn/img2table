@@ -1,6 +1,6 @@
 from img2table.tables.borderless.tables.filter.model import StructuredSection
-from img2table.tables.borderless.tables.structure.discrepency import (
-    bridge_small_discrepencies,
+from img2table.tables.borderless.tables.structure.discrepancy import (
+    bridge_small_discrepancies,
 )
 from img2table.tables.borderless.types import MergedRow
 from img2table.tables.types import Cell
@@ -30,7 +30,7 @@ def _structured_section(y1: int, y2: int, idx: int, columns: int = 3) -> Structu
     )
 
 
-def test_bridge_small_discrepencies_groups_matching_sections(
+def test_bridge_small_discrepancies_groups_matching_sections(
     monkeypatch,  # noqa: ANN001
 ) -> None:
     first = _structured_section(y1=10, y2=30, idx=0)
@@ -42,7 +42,7 @@ def test_bridge_small_discrepencies_groups_matching_sections(
         lambda self: self.y_min < 100,
     )
 
-    result = bridge_small_discrepencies(
+    result = bridge_small_discrepancies(
         structured_sections=[third, second, first],
     )
 

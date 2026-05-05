@@ -29,7 +29,6 @@ class ImgCharacteristics:
 @dataclass
 class TableExtractor:
     img: np.ndarray
-    min_confidence: int = 50
     characteristics: ImgCharacteristics | None = None
     lines: list[Line] = field(default_factory=list)
     tables: list[Table] = field(default_factory=list)

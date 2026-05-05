@@ -8,7 +8,7 @@ def test_table_extractor() -> None:
     assert img is not None
     img = 255 - cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
 
-    extractor = TableExtractor(img=img, min_confidence=50)
+    extractor = TableExtractor(img=img)
 
     result = extractor.extract_tables(implicit_rows=True)
     result = sorted(result, key=lambda tb: tb.x1 + tb.x2)
@@ -25,7 +25,7 @@ def test_table_extractor_borderless() -> None:
     assert img is not None
     img = 255 - cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
 
-    extractor = TableExtractor(img=img, min_confidence=50)
+    extractor = TableExtractor(img=img)
 
     result = extractor.extract_tables(borderless_tables=True)
     result = sorted(result, key=lambda tb: tb.x1 + tb.x2)

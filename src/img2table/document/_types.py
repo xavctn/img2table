@@ -152,7 +152,7 @@ class Document:
         from img2table.tables.extractor import TableExtractor
 
         tables = {
-            idx: TableExtractor(img=img, min_confidence=min_confidence).extract_tables(
+            idx: TableExtractor(img=img).extract_tables(
                 implicit_rows=implicit_rows,
                 implicit_columns=implicit_columns,
                 borderless_tables=borderless_tables,

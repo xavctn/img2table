@@ -9,7 +9,7 @@ def test_identify_tables(
     expected = Table(rows=[Row(cells=[Cell(x1=0, y1=0, x2=10, y2=10)])])
 
     monkeypatch.setattr(
-        "img2table.tables.borderless.tables.bridge_small_discrepencies",
+        "img2table.tables.borderless.tables.bridge_small_discrepancies",
         lambda structured_sections: [[structured_sections[0]]],
     )
     monkeypatch.setattr(

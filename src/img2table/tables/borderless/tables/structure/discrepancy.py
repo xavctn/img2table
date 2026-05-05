@@ -9,18 +9,15 @@ if TYPE_CHECKING:
     from img2table.tables.borderless.tables.filter.model import StructuredSection
 
 
-def bridge_small_discrepencies(
+def bridge_small_discrepancies(
     structured_sections: list[StructuredSection],
 ) -> list[list[StructuredSection]]:
     """
-    Create groups of tables by bridging small discrepencies
+    Create groups of tables by bridging small discrepancies
     :param structured_sections: list of structured column sections
-    :param width: full page width in pixels
-    :param height: full page height in pixels
-    :param char_length: Character length in pixels.
     :return: list of clusters of sections that correspond to the same table.
     """
-    # Identify groups of consecutive sections that have small enough discrepencies
+    # Identify groups of consecutive sections that have small enough discrepancies
     structured_sections = sorted(structured_sections, key=lambda sec: sec.idx)
     edges = [{idx} for idx, struct in enumerate(structured_sections) if struct.is_structured()]
 
@@ -29,7 +26,7 @@ def bridge_small_discrepencies(
             # Too few columns
             continue
         if max(prv.nb_columns, nxt.nb_columns) - min(prv.nb_columns, nxt.nb_columns) > 1:
-            # Discrepency in column numbers
+            # Discrepancy in column numbers
             continue
         if not max(prv.is_structured(), nxt.is_structured()):
             # Not any structured section
@@ -46,7 +43,7 @@ def bridge_small_discrepencies(
             # Too far away from each other
             continue
 
-        # Check correspondance between whitespaces
+        # Check correspondence between whitespaces
         ws_small, ws_large = (
             (prv.whitespaces, nxt.whitespaces)
             if prv.nb_columns < nxt.nb_columns
