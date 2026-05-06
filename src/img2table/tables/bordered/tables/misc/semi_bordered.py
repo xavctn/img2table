@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from img2table.tables.bordered.tables.normalization import normalize_table_cells
 from img2table.tables.types import Cell
 
@@ -231,6 +233,9 @@ def identify_potential_new_cells(
     :param tolerance: tolerance for distances
     :return: list of potential cells
     """
+    # Cells array
+    cells_arr = np.array([[c.x1, c.y1, c.x2, c.y2, c.area] for c in cluster])
+
     # Build the candidate grid from current delimiters and supported outer bounds
     x_cluster = sorted({c.x1 for c in cluster} | {c.x2 for c in cluster} | {left, right})
     y_cluster = sorted({c.y1 for c in cluster} | {c.y2 for c in cluster} | {top, bottom})
@@ -243,14 +248,23 @@ def identify_potential_new_cells(
             candidate = Cell(x1=x1, y1=y1, x2=x2, y2=y2)
             if candidate.area == 0 or candidate in existing_cells:
                 continue
+
             # Check overlap with existing cells
-            if any(
-                max(0, min(cell.x2, candidate.x2) - max(cell.x1, candidate.x1))
-                * max(0, min(cell.y2, candidate.y2) - max(cell.y1, candidate.y1))
-                >= 0.2 * min(cell.area, candidate.area)
-                for cell in cluster
-            ):
+            overlaps = np.multiply(
+                np.maximum(
+                    0,
+                    np.minimum(cells_arr[:, 2], candidate.x2)
+                    - np.maximum(cells_arr[:, 0], candidate.x1),
+                ),
+                np.maximum(
+                    0,
+                    np.minimum(cells_arr[:, 3], candidate.y2)
+                    - np.maximum(cells_arr[:, 1], candidate.y1),
+                ),
+            )
+            if np.sum(overlaps >= 0.2 * np.minimum(cells_arr[:, 4], candidate.area)) > 0:
                 continue
+
             if not has_line_support(
                 candidate=candidate,
                 h_lines_cl=h_lines_cl,

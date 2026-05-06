@@ -22,16 +22,17 @@ class CoordinateProvider(Protocol):
     y2: int
 
 
+@dataclass
 class TableObject:
-    @property
+    @cached_property
     def height(self: CoordinateProvider) -> int:
         return self.y2 - self.y1
 
-    @property
+    @cached_property
     def width(self: CoordinateProvider) -> int:
         return self.x2 - self.x1
 
-    @property
+    @cached_property
     def area(self) -> int:
         return self.height * self.width
 
@@ -366,7 +367,35 @@ class Table(TableObject):
         return intersection_area / min(self.area, other.area) >= pct
 
     def has_valid_shape(self) -> bool:
-        return min(self.nb_rows, self.nb_columns) >= 2 and self.nb_cells >= 4
+        if min(self.nb_rows, self.nb_columns) < 2 or self.nb_cells < 4:
+            return False
+
+        # Check coherency of structure
+        cells = sorted(
+            {cell for row in self.rows for cell in row.cells},
+            key=lambda cell: cell.area,
+            reverse=True,
+        )
+        if len({c.x1 for c in cells} | {c.x2 for c in cells}) > self.nb_columns + 1:
+            return False
+        if len({c.y1 for c in cells} | {c.y2 for c in cells}) > self.nb_rows + 1:
+            return False
+
+        # Check overlap between cells
+        cells_array = np.array([[cell.x1, cell.y1, cell.x2, cell.y2] for cell in cells])
+        x_overlap = np.maximum(
+            0,
+            np.minimum(cells_array[:, 2], cells_array[:, 2][:, None])
+            - np.maximum(cells_array[:, 0], cells_array[:, 0][:, None]),
+        )
+        y_overlap = np.maximum(
+            0,
+            np.minimum(cells_array[:, 3], cells_array[:, 3][:, None])
+            - np.maximum(cells_array[:, 1], cells_array[:, 1][:, None]),
+        )
+        overlap_area = np.sum(np.multiply(x_overlap, y_overlap)) - sum(cell.area for cell in cells)
+
+        return overlap_area < 0.2 * self.area
 
     def extracted_table(self, image_width: int, image_height: int) -> ExtractedTable:
         bbox = BBox(

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 from itertools import pairwise
-from typing import TYPE_CHECKING
 
 from img2table.tables.borderless.tables.filter.model import StructuredSection
 from img2table.tables.borderless.tables.structure.convert import _reference_column_separators
-
-if TYPE_CHECKING:
-    from img2table.tables.borderless.types import Whitespace
+from img2table.tables.borderless.types import Whitespace
 
 
 def header_ws_matches(header_ws: list[Whitespace], ref_ws: list[Whitespace]) -> bool:
@@ -50,8 +47,16 @@ def update_header_whitespaces(
     :return: section with updated whitespaces
     """
     # Replace left and right whitespaces
-    left_ws = [ws for ws in ref_ws if ws.end <= header_section.x_min] or header_section.whitespaces[:1]
-    right_ws = [ws for ws in ref_ws if ws.start >= header_section.x_max] or header_section.whitespaces[-1:]
+    left_ws = [
+        Whitespace(start=ws.start, end=min(ws.end, header_section.x_min))
+        for ws in ref_ws
+        if ws.start < header_section.x_min
+    ] or header_section.whitespaces[:1]
+    right_ws = [
+        Whitespace(start=max(ws.start, header_section.x_max), end=ws.end)
+        for ws in ref_ws
+        if ws.end > header_section.x_max
+    ] or header_section.whitespaces[-1:]
     updated_ws = [*left_ws, *header_section.whitespaces[1:-1], *right_ws]
 
     return StructuredSection(
