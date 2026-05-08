@@ -44,12 +44,14 @@ def _render_and_detect_tables(
     borderless_tables: bool,
 ) -> tuple[np.ndarray, list[Table], bool]:
     with pdfium_lock:
-        page_doc = pypdfium2.PdfDocument(input=file_bytes)
+        page_doc = None
         try:
+            page_doc = pypdfium2.PdfDocument(input=file_bytes)
             page = page_doc[page_number]
             img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
         finally:
-            page_doc.close()
+            if page_doc is not None:
+                page_doc.close()
 
     rotated_img = False
     if detect_rotation:
@@ -73,23 +75,28 @@ class PDF(Document):
     _images: list[np.ndarray] | None = None
 
     def __post_init__(self) -> None:
-        # Get number of pages in document
+        validate_bool(self.pdf_text_extraction, "pdf_text_extraction")
+        super().__post_init__()
+
+    def _ensure_pages(self) -> None:
         if self.pages is None:
+            doc = None
             try:
                 doc = pypdfium2.PdfDocument(input=self.file_bytes)
                 self.pages = list(range(len(doc)))
             finally:
-                doc.close()
-
-        validate_bool(self.pdf_text_extraction, "pdf_text_extraction")
-        super().__post_init__()
+                if doc is not None:
+                    doc.close()
 
     @property
     def images(self) -> list[np.ndarray]:
         if self._images is None:
+            self._ensure_pages()
+
             # Assertion for type checking
             assert self.pages is not None
 
+            doc = None
             try:
                 doc = pypdfium2.PdfDocument(input=self.file_bytes)
 
@@ -109,7 +116,8 @@ class PDF(Document):
 
                     images.append(img)
             finally:
-                doc.close()
+                if doc is not None:
+                    doc.close()
 
             self._images = images
 
@@ -118,6 +126,8 @@ class PDF(Document):
     def get_table_content(
         self, tables: dict[int, list[Table]], ocr: OCRInstance | None, min_confidence: int
     ) -> dict[int, list[ExtractedTable]]:
+        self._ensure_pages()
+
         # Assertion for type checking
         assert self.pages is not None
 
@@ -163,6 +173,8 @@ class PDF(Document):
         validate_bool(borderless_tables, "borderless_tables")
         validate_positive_int(max_workers, "max_workers")
         validate_positive_int(min_confidence, "min_confidence")
+
+        self._ensure_pages()
 
         # Assertion for type checking
         assert self.pages is not None

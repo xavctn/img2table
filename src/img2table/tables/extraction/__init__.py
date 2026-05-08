@@ -63,8 +63,7 @@ class ExtractedTable:
     @property
     def df(self) -> pd.DataFrame:
         """
-        Create pandas DataFrame representation of the table
-        :return: pandas DataFrame containing table data
+        pandas DataFrame representation of the table
         """
         try:
             import pandas as pd
@@ -79,8 +78,7 @@ class ExtractedTable:
     @property
     def html(self) -> str:
         """
-        Create HTML representation of the table
-        :return: HTML table
+        HTML representation of the table
         """
         return build_html(self)
 

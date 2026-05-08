@@ -331,7 +331,7 @@ from img2table.ocr import TesseractOCR
 from img2table.document import Image
 
 # Instantiation of OCR
-ocr = TesseractOCR(n_threads=1, lang="eng")
+ocr = TesseractOCR()
 
 # Instantiation of document, either an image or a PDF
 doc = Image(src)
@@ -360,8 +360,6 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>max_workers : int, optional, default <code>1</code></dt>
 >    <dd style="font-style: italic;">Number of concurrent workers used for table extraction. Mainly useful for multi-page PDFs.</dd>
 > </dl>
-
-<b>NB</b>: Borderless table extraction can, by design, only extract tables with 3 or more columns.
 
 #### Method return
 
