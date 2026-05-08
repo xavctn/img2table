@@ -19,6 +19,12 @@ def validate_bool(value: object, field_name: str) -> None:
         raise ValidationError(msg)
 
 
+def validate_positive_int(value: object, field_name: str) -> None:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        msg = f"{field_name} must be a positive int"
+        raise ValidationError(msg)
+
+
 def validate_pages(pages: object) -> None:
     if pages is None:
         return

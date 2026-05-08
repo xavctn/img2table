@@ -341,7 +341,8 @@ extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=False,
                                       implicit_columns=False,
                                       borderless_tables=False,
-                                      min_confidence=50)
+                                      min_confidence=50,
+                                      max_workers=1)
 ```
 
 > <h4>Parameters</h4>
@@ -356,6 +357,8 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
+>    <dt>max_workers : int, optional, default <code>1</code></dt>
+>    <dd style="font-style: italic;">Number of concurrent workers used for table extraction. Mainly useful for multi-page PDFs.</dd>
 > </dl>
 
 <b>NB</b>: Borderless table extraction can, by design, only extract tables with 3 or more columns.
@@ -444,7 +447,8 @@ doc.to_xlsx(dest=dest,
             implicit_rows=False,
             implicit_columns=False,
             borderless_tables=False,
-            min_confidence=50)
+            min_confidence=50,
+            max_workers=1)
 ```
 
 > <h4>Parameters</h4>
@@ -461,6 +465,8 @@ doc.to_xlsx(dest=dest,
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
+>    <dt>max_workers : int, optional, default <code>1</code></dt>
+>    <dd style="font-style: italic;">Number of concurrent workers used for table extraction. Mainly useful for multi-page PDFs.</dd>
 > </dl>
 > <h4>Returns</h4>
 > If a <code>io.BytesIO</code> buffer is passed as dest arg, it is returned containing xlsx data

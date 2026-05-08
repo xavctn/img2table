@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np  # noqa: TC002
 
-from img2table._validation import ValidationError, validate_bool, validate_pages, validate_src
+from img2table._validation import (
+    ValidationError,
+    validate_bool,
+    validate_pages,
+    validate_positive_int,
+    validate_src,
+)
 
 if TYPE_CHECKING:
     from img2table.ocr._types import OCRData, OCRInstance
@@ -138,6 +144,7 @@ class Document:
         implicit_columns: bool = False,
         borderless_tables: bool = False,
         min_confidence: int = 50,
+        max_workers: int = 1,
     ) -> dict[int, list[ExtractedTable]]:
         """
         Extract tables from document
@@ -146,8 +153,16 @@ class Document:
         :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
+        :param max_workers: number of concurrent workers used for table extraction
         :return: dictionary with page number as key and list of extracted tables as values
         """
+        # Arguments validation
+        validate_bool(implicit_rows, "implicit_rows")
+        validate_bool(implicit_columns, "implicit_columns")
+        validate_bool(borderless_tables, "borderless_tables")
+        validate_positive_int(max_workers, "max_workers")
+        validate_positive_int(min_confidence, "min_confidence")
+
         # Extract tables from document
         from img2table.tables.extractor import TableExtractor
 
@@ -177,6 +192,7 @@ class Document:
         implicit_columns: bool = False,
         borderless_tables: bool = False,
         min_confidence: int = 50,
+        max_workers: int = 1,
     ) -> io.BytesIO | None:
         """
         Create xlsx file containing all extracted tables from document
@@ -186,6 +202,7 @@ class Document:
         :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
+        :param max_workers: number of concurrent workers used for table extraction
         :return: if a buffer is passed as dest arg, it is returned containing xlsx data
         """
         import xlsxwriter
@@ -197,6 +214,7 @@ class Document:
             implicit_columns=implicit_columns,
             borderless_tables=borderless_tables,
             min_confidence=min_confidence,
+            max_workers=max_workers,
         )
         extracted_tables = (
             {0: extracted_tables} if isinstance(extracted_tables, list) else extracted_tables

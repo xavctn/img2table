@@ -46,6 +46,7 @@ class Image(Document):
         implicit_columns: bool = False,
         borderless_tables: bool = False,
         min_confidence: int = 50,
+        max_workers: int = 1,
     ) -> list[ExtractedTable]:  # ty:ignore[invalid-method-override]
         """
         Extract tables from document
@@ -54,6 +55,7 @@ class Image(Document):
         :param implicit_columns: boolean indicating if implicit columns are splitted
         :param borderless_tables: boolean indicating if borderless tables should be detected
         :param min_confidence: minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)
+        :param max_workers: number of concurrent workers used for table extraction
         :return: list of extracted tables
         """
         extracted_tables = super().extract_tables(
@@ -62,6 +64,7 @@ class Image(Document):
             implicit_columns=implicit_columns,
             borderless_tables=borderless_tables,
             min_confidence=min_confidence,
+            max_workers=max_workers,
         )
 
         return extracted_tables.get(0, [])

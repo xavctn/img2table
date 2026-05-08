@@ -30,6 +30,12 @@ def test_validators() -> None:
     with pytest.raises(ValidationError):
         PDF(src="img", pdf_text_extraction="a")  # ty:ignore[invalid-argument-type]
 
+    with pytest.raises(ValidationError):
+        PDF(src="img").extract_tables(max_workers=0)
+
+    with pytest.raises(ValidationError):
+        PDF(src="img").extract_tables(max_workers=True)  # ty:ignore[invalid-argument-type]
+
 
 def test_load_pdf() -> None:
     # Load from path
@@ -73,3 +79,27 @@ def test_pdf_tables() -> None:
     assert result[1][1].title == "Example of Data Table 4"
     assert result[1][1].bbox == BBox(x1=236, y1=672, x2=1452, y2=972)
     assert (len(result[1][1].content), len(result[1][1].content[0])) == (5, 4)
+
+
+def test_pdf_tables_parallel() -> None:
+    serial_result = PDF(src="test_data/test.pdf").extract_tables(
+        implicit_rows=True,
+        min_confidence=50,
+        max_workers=1,
+    )
+    parallel_result = PDF(src="test_data/test.pdf").extract_tables(
+        implicit_rows=True,
+        min_confidence=50,
+        max_workers=2,
+    )
+
+    assert serial_result.keys() == parallel_result.keys()
+
+    for page in serial_result:
+        assert len(serial_result[page]) == len(parallel_result[page])
+        for serial_table, parallel_table in zip(
+            serial_result[page], parallel_result[page], strict=True
+        ):
+            assert serial_table.title == parallel_table.title
+            assert serial_table.bbox == parallel_table.bbox
+            assert serial_table.html == parallel_table.html
