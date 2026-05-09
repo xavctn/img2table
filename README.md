@@ -434,7 +434,7 @@ from img2table.ocr import TesseractOCR
 from img2table.document import Image
 
 # Instantiation of OCR
-ocr = TesseractOCR(n_threads=1, lang="eng")
+ocr = TesseractOCR()
 
 # Instantiation of document, either an image or a PDF
 doc = Image(src)
