@@ -99,6 +99,9 @@ name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

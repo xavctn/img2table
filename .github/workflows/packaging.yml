@@ -8,20 +8,6 @@ on:
   release:
     types:
       - published
-  workflow_dispatch:
-    inputs:
-      publish_to:
-        description: "Publish target for this run"
-        required: true
-        type: choice
-        default: testpypi
-        options:
-          - testpypi
-          - pypi
-      ref:
-        description: "Git ref to build and optionally publish (tag, branch, or SHA)"
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -42,9 +28,9 @@ jobs:
           - name: windows-amd64
             runner: windows-latest
             arch: AMD64
-          - name: windows-arm64
-            runner: windows-11-arm
-            arch: ARM64
+          - name: windows-x86
+            runner: windows-latest
+            arch: x86
           - name: macos-x86_64
             runner: macos-15-intel
             arch: x86_64
@@ -59,7 +45,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Build and test wheels
         uses: pypa/cibuildwheel@v3.4.1
@@ -68,7 +54,7 @@ jobs:
           CIBW_ARCHS: ${{ matrix.platform.arch }}
           CIBW_BUILD_FRONTEND: build
           CIBW_TEST_COMMAND: python {project}/.github/scripts/wheel_test.py
-          CIBW_SKIP: pp*
+          CIBW_SKIP: "*-musllinux*"
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
@@ -86,7 +72,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Set up Python 3.14
         uses: actions/setup-python@v5
@@ -144,31 +130,11 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-  publish_testpypi:
-    name: Publish to TestPyPI
-    runs-on: ubuntu-latest
-    needs: validate_artifacts
-    if: >
-      github.event_name == 'release' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to == 'testpypi')
-    steps:
-      - name: Download distributions
-        uses: actions/download-artifact@v5
-        with:
-          name: packaged-artifacts
-          path: dist
-
-      - name: Publish distributions
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
-
   publish_pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: validate_artifacts
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to == 'pypi'
+    if: github.event_name == 'release'
     steps:
       - name: Download distributions
         uses: actions/download-artifact@v5

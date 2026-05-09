@@ -18,21 +18,24 @@ def assert_xlsx_buffer(buffer: BytesIO) -> None:
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parent
 
-    image_path = project_root / "tests" / "document" / "image" / "test_data" / "dark.png"
-    pdf_path = project_root / "tests" / "document" / "pdf" / "test_data" / "test.pdf"
-
-    image = Image(src=image_path, detect_rotation=True)
-    image_tables = image.extract_tables(implicit_rows=True, min_confidence=50)
+    image = Image(src=root / "test.bmp", detect_rotation=True)
+    image_tables = image.extract_tables(
+        borderless_tables=True, implicit_rows=True, min_confidence=50
+    )
     assert image_tables
-    assert_xlsx_buffer(image.to_xlsx(dest=BytesIO(), implicit_rows=True, min_confidence=50))
+    assert_xlsx_buffer(
+        image.to_xlsx(dest=BytesIO(), borderless_tables=True, implicit_rows=True, min_confidence=50)
+    )
 
-    pdf = PDF(src=pdf_path, detect_rotation=True)
-    pdf_tables = pdf.extract_tables(implicit_rows=True, min_confidence=50)
+    pdf = PDF(src=root / "test.pdf", detect_rotation=True)
+    pdf_tables = pdf.extract_tables(borderless_tables=True, implicit_rows=True, min_confidence=50)
     assert pdf_tables
     assert all(tables for tables in pdf_tables.values())
-    assert_xlsx_buffer(pdf.to_xlsx(dest=BytesIO(), implicit_rows=True, min_confidence=50))
+    assert_xlsx_buffer(
+        pdf.to_xlsx(dest=BytesIO(), borderless_tables=True, implicit_rows=True, min_confidence=50)
+    )
 
 
 if __name__ == "__main__":
