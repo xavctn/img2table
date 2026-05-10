@@ -30,7 +30,7 @@ def compute_char_length(
     stats = remove_dots(cc_labels=cc_labels, stats=stats)
 
     # Remove connected components with less than 10 pixels
-    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 10
+    mask_pixels = stats[:, cv2.CC_STAT_AREA] > 5
     stats = stats[mask_pixels]
 
     if len(stats) == 0:

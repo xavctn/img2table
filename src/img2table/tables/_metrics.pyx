@@ -76,7 +76,7 @@ def remove_dots(
     :param stats: connected components' stats array
     :return: list of non-dot connected components' indexes
     """
-    cdef Py_ssize_t idx, row, col, out_count, cc_width, row_offset
+    cdef Py_ssize_t idx, row, col, out_count
     cdef cnp.int32_t[:, ::1] cc_view = cc_labels
     cdef cnp.int32_t[:, ::1] stats_view = stats
     cdef cnp.ndarray[cnp.int32_t, ndim=2] out = np.empty((max(stats.shape[0] - 1, 0), 5), dtype=np.int32)
@@ -86,7 +86,6 @@ def remove_dots(
     cdef double roundness
 
     out_count = 0
-    cc_width = cc_labels.shape[1]
 
     for idx in range(stats.shape[0]):
         if idx == 0:
@@ -102,7 +101,6 @@ def remove_dots(
         inner_pixels = 0
         for row in range(y, y + h):
             prev_position = -1
-            row_offset = row * cc_width
             for col in range(x, x + w):
                 if cc_view[row, col] == idx:
                     if prev_position >= 0:
@@ -121,7 +119,7 @@ def remove_dots(
         max_dim = h if h >= w else w
         roundness = 4.0 * area / (M_PI * max_dim * max_dim)
 
-        if not (inner_pixels / (2.0 * area) <= 0.1 and roundness >= 0.7):
+        if not (inner_pixels / (2.0 * area) <= 0.05 and roundness >= 0.7):
             out_view[out_count, 0] = <cnp.int32_t> x
             out_view[out_count, 1] = <cnp.int32_t> y
             out_view[out_count, 2] = <cnp.int32_t> w
