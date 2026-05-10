@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=80", "setuptools-scm[simple]>=8"]
+requires = ["setuptools>=80", "setuptools-scm[simple]>=8", "cython>=3.2.4", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,20 +11,16 @@ authors = [
     { name = "Xavier Canton" },
 ]
 license = "MIT"
-requires-python = ">=3.10, <3.14"
+requires-python = ">=3.10, <3.15"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Operating System :: OS Independent",
 ]
 
-# Dépendances de base du projet (contenu de requirements.txt).
 dependencies = [
-    "polars[pandas]>=1.2",
-    "pyarrow>=7",
     "numpy",
     "pypdfium2>=4.30.0",
     "opencv-contrib-python>=4",
-    "numba",
     "beautifulsoup4",
     "xlsxwriter>=3.0.6",
 ]
@@ -44,8 +40,8 @@ azure = [
     "azure-cognitiveservices-vision-computervision",
 ]
 paddle = [
-    "paddlepaddle",
-    "paddleocr>=2.0.6",
+    "paddlepaddle; python_version<'3.14'",
+    "paddleocr>=3; python_version<'3.14'",
 ]
 easyocr = [
     "easyocr>=1.7.0",
@@ -54,14 +50,23 @@ easyocr = [
 surya = [
     "surya-ocr>=0.15.0; python_version>='3.10'",
 ]
+doctr = [
+    "python-doctr",
+]
+rapidocr = [
+    "rapidocr",
+    "onnxruntime",
+    "onnxruntime<1.24; python_version<'3.11'"
+]
 
 [dependency-groups]
 dev = [
-    "python-doctr",
+    "pandas",
     "torch",
     "torchvision",
     "ruff",
     "pytest >= 6",
+    "coverage[toml]",
     "pytest-cov",
     "pytest-xdist",
     "openpyxl",
@@ -72,7 +77,10 @@ dev = [
     "ipython-autotime",
     "wheel",
     "setuptools-scm",
-    "twine"
+    "twine",
+    "ty>=0.0.19",
+    "colordict>=1.2.6",
+    "cython>=3.2.4",
 ]
 
 [tool.uv]
@@ -81,10 +89,10 @@ override-dependencies = [
     "opencv-python ; sys_platform == 'never'",
     "opencv-python-headless ; sys_platform == 'never'",
     "opencv-contrib-python-headless ; sys_platform == 'never'",
-    "torch<2.9",
-    "torchvision<0.24",
-    "paddleocr>=3.0",
-    "paddlepaddle>=3.0"
+    "paddleocr>=3.0; python_version<'3.14'",
+    "paddlepaddle>=3.0,<3.3; python_version<'3.14'",
+    "transformers<5",
+    "pillow>=12",
 ]
 
 [tool.uv.sources]
@@ -95,6 +103,9 @@ torchvision = { index = "pytorch" }
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -109,8 +120,24 @@ filterwarnings = [
     "ignore::UserWarning",
 ]
 
+[tool.coverage.run]
+plugins = ["Cython.Coverage"]
+source = ["src"]
+
+[tool.ruff]
+exclude = ["**/*.ipynb"]
+line-length = 100
+
 [tool.ruff.lint]
-select = ["ANN", "B", "A", "C4", "ICN", "INP", "PIE", "PYI", "RSE", "RET", "SLF", "SIM", "TID", "TC", "ARG", "PTH",
-    "NPY", "E", "W", "PL", "F", "UP", "RUF"]
-ignore = ["ANN401", "ANN003", "C417", "SLF001", "SIM105", "SIM300", "E501", "PLR2004", "PLR0912", "PLR0913", "PLR0915",
-    "PLC0415", "UP007", "UP035", "UP045", "RUF059", "RUF007", "B905"]
+select = ["ALL"]
+ignore = ["PLR2004", "SLF001", "ANN401", "PLC0415", "E501", "ANN003", "PLR0913", "S101", "S106",
+    "D", "FBT", "COM812", "PT011", "S301", "N806", "EM101", "EM102", "TRY003", "TRY300",
+    "C901", "PLR0912", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ty.rules]
+unused-ignore-comment = "ignore"
+unresolved-import = "warn"
+all = "error"

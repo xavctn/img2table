@@ -1,73 +1,24 @@
-# coding: utf-8
-
-import json
-import sys
-from typing import Any
-
-import numpy as np
-import polars as pl
 import pytest
 
 from img2table.document.image import Image
 from img2table.ocr import EasyOCR
-from img2table.ocr.data import OCRDataframe
+from tests.ocr_data_utils import drop_record_fields, read_ocr_data
 
 
-def convert_np_types(obj: Any):
-    if isinstance(obj, list):
-        return [convert_np_types(element) for element in obj]
-    elif isinstance(obj, dict):
-        return {convert_np_types(k): convert_np_types(v) for k, v in obj.values()}
-    elif isinstance(obj, tuple):
-        return list(convert_np_types(element) for element in obj)
-    elif isinstance(obj, np.int32):
-        return int(obj)
-    elif isinstance(obj, (np.float64, float)):
-        return None
-    else:
-        return obj
+def test_validators() -> None:
+    with pytest.raises(TypeError):
+        EasyOCR(lang=12)  # ty:ignore[invalid-argument-type]
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
-def test_validators():
-    with pytest.raises(TypeError) as e_info:
-        ocr = EasyOCR(lang=12)
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
-def test_easyocr_content():
-    instance = EasyOCR()
-    doc = Image(src="test_data/test.png")
-
-    result = instance.content(document=doc)
-
-    with open("test_data/ocr.json", "r") as f:
-        expected = json.load(f)
-
-    assert convert_np_types(result) == convert_np_types(expected)
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
-def test_easyocr_ocr_df():
-    instance = EasyOCR()
-
-    with open("test_data/ocr.json", "r") as f:
-        content = json.load(f)
-
-    result = instance.to_ocr_dataframe(content=content)
-
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
-
-    assert result == expected
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 14), reason="Error building with 3.12")
-def test_easyocr_document():
+def test_easyocr_document() -> None:
     instance = EasyOCR()
     doc = Image(src="test_data/test.png")
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
+    expected = read_ocr_data("test_data/ocr.csv")
 
-    assert result.df.drop("confidence").equals(expected.df.drop("confidence"))
+    assert result is not None
+    assert drop_record_fields(result.records, {"confidence"}) == drop_record_fields(
+        expected.records, {"confidence"}
+    )

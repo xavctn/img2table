@@ -1,9 +1,7 @@
-# coding: utf-8
-
-import os
 import subprocess
+from pathlib import Path
 
-CWD = os.path.dirname(__file__)
-MOCK_DIR = os.path.join(CWD, "_mock_data")
+CWD = Path(__file__).parent
+MOCK_DIR = CWD / "_mock_data"
 
-TESSERACT_INSTALL = subprocess.run("tesseract --version", shell=True).returncode == 0
+TESSERACT_INSTALL = subprocess.run("tesseract --version", shell=True, check=False).returncode == 0  # noqa: S602, S607

@@ -1,120 +1,91 @@
 # img2table
 
-`img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image 
+`img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image
 processing that supports most common image file formats as well as PDF files.
 
 Thanks to its design, it provides a practical and lighter alternative to Neural Networks based solutions, especially for usage on CPU.
 
 ## Table of contents
-* [Installation](#installation)
-* [Features](#features)
-* [Supported file formats](#supported-file-formats)
-* [Usage](#usage)
-   * [Documents](#documents)
-      * [Images](#images-doc)
-      * [PDF](#pdf-doc)
-   * [Supported OCRs](#ocr)
-   * [Table extraction](#table-extract)
-   * [Excel export](#xlsx)
-* [Examples](#examples)
-* [Caveats / FYI](#fyi)
 
+- [Installation](#installation)
+- [Features](#features)
+- [Usage](#usage)
+  - [Documents](#documents)
+    - [Images](#images-doc)
+    - [PDF](#pdf-doc)
+  - [Supported OCRs](#ocr)
+  - [Table extraction](#table-extract)
+  - [Excel export](#xlsx)
+- [Examples](#examples)
+- [FYI / Caveats](#fyi)
 
 ## Installation <a name="installation"></a>
+
 The library can be installed via pip:
 
-> <code>pip install img2table</code>: Standard installation, supporting Tesseract<br>
-> <code>pip install img2table[paddle]</code>: For usage with Paddle OCR<br>
-> <code>pip install img2table[easyocr]</code>: For usage with EasyOCR<br>
-> <code>pip install img2table[surya]</code>: For usage with Surya OCR<br>
-> <code>pip install img2table[gcp]</code>: For usage with Google Vision OCR<br>
-> <code>pip install img2table[aws]</code>: For usage with AWS Textract OCR<br>
-> <code>pip install img2table[azure]</code>: For usage with Azure Cognitive Services OCR
+| Command                           | Description                                 |
+| --------------------------------- | ------------------------------------------- |
+| `pip install img2table`           | Standard installation, supporting Tesseract |
+| `pip install img2table[paddle]`   | For usage with Paddle OCR                   |
+| `pip install img2table[easyocr]`  | For usage with EasyOCR                      |
+| `pip install img2table[doctr]`    | For usage with docTR                        |
+| `pip install img2table[surya]`    | For usage with Surya OCR                    |
+| `pip install img2table[rapidocr]` | For usage with RapidOCR                     |
+| `pip install img2table[gcp]`      | For usage with Google Vision OCR            |
+| `pip install img2table[aws]`      | For usage with AWS Textract OCR             |
+| `pip install img2table[azure]`    | For usage with Azure Cognitive Services OCR |
 
 ## Features <a name="features"></a>
 
-* Table identification for images and PDF files, including bounding boxes at the table cell level
-* Handling of complex table structures such as merged cells
-* Handling of implicit content - see [example](/examples/Implicit.ipynb)
-* Table content extraction by providing support for OCR services / tools
-* Extracted tables are returned as a simple object, including a Pandas DataFrame representation
-* Export extracted tables to an Excel file, preserving their original structure
-
-## Supported file formats <a name="supported-file-formats"></a>
-
-### Images <a name="images-formats"></a>
-
-Images are loaded using the `opencv-python` library, supported formats are listed below.
-
-<details>
-<summary>Supported image formats</summary>
-<br>
-
-<blockquote>
-<ul>
-<li>Windows bitmaps - <em>.bmp, </em>.dib</li>
-<li>JPEG files - <em>.jpeg, </em>.jpg, *.jpe</li>
-<li>JPEG 2000 files - *.jp2</li>
-<li>Portable Network Graphics - *.png</li>
-<li>WebP - *.webp</li>
-<li>Portable image format - <em>.pbm, </em>.pgm, <em>.ppm </em>.pxm, *.pnm</li>
-<li>PFM files - *.pfm</li>
-<li>Sun rasters - <em>.sr, </em>.ras</li>
-<li>TIFF files - <em>.tiff, </em>.tif</li>
-<li>OpenEXR Image files - *.exr</li>
-<li>Radiance HDR - <em>.hdr, </em>.pic</li>
-<li>Raster and Vector geospatial data supported by GDAL<br>
-<cite><a href="https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56">OpenCV: Image file reading and writing</a></cite></li>
-</ul>
-</blockquote>
-</details>
-Multi-page images are not supported.
-
----
-
-### PDF <a name="pdf-formats"></a>
-
-Both native and scanned PDF files are supported.
+- Table identification for images and PDF files, including bounding boxes at the table cell level
+- Handling of complex table structures such as merged cells
+- Table content extraction by providing support for OCR services / tools
+- Extracted tables are returned as a simple object, including a Pandas DataFrame representation
+- Export extracted tables to an Excel file, preserving their original structure
 
 ## Usage <a name="usage"></a>
 
 ### Documents <a name="documents"></a>
 
 #### Images <a name="images-doc"></a>
+
 Images are instantiated as follows :
+
 ```python
 from img2table.document import Image
 
-image = Image(src, 
+image = Image(src,
               detect_rotation=False)
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">Image source</dd>
 >    <dt>detect_rotation : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Detect and correct skew/rotation of the image</dd>
-></dl>
-<br>
-The implemented method to handle skewed/rotated images supports skew angles up to 45° and is
-based on the publication by <a href="https://www.mdpi.com/2079-9292/9/1/55">Huang, 2020</a>.<br>
-Setting the <code>detect_rotation</code> parameter to <code>True</code>, image coordinates and bounding boxes returned by other 
-methods might not correspond to the original image.
+> </dl>
+> <br>
+> The implemented method to handle skewed/rotated images supports skew angles up to 45° and is
+> based on the publication by <a href="https://www.mdpi.com/2079-9292/9/1/55">Huang, 2020</a>.<br>
+> Setting the <code>detect_rotation</code> parameter to <code>True</code>, image coordinates and bounding boxes returned by other 
+> methods might not correspond to the original image.
 
 #### PDF <a name="pdf-doc"></a>
+
 PDF files are instantiated as follows :
+
 ```python
 from img2table.document import PDF
 
-pdf = PDF(src, 
+pdf = PDF(src,
           pages=[0, 2],
           detect_rotation=False,
           pdf_text_extraction=True)
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>src : str, <code>pathlib.Path</code>, bytes or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">PDF source</dd>
 >    <dt>pages : list, optional, default <code>None</code></dt>
@@ -123,7 +94,7 @@ pdf = PDF(src,
 >    <dd style="font-style: italic;">Detect and correct skew/rotation of extracted images from the PDF</dd>
 >    <dt>pdf_text_extraction : bool, optional, default <code>True</code></dt>
 >    <dd style="font-style: italic;">Extract text from the PDF file for native PDFs</dd>
-></dl>
+> </dl>
 
 PDF pages are converted to images with a 200 DPI for table identification.
 
@@ -141,14 +112,14 @@ If possible (i.e for native PDF), PDF text will be extracted directly from the f
 ```python
 from img2table.ocr import TesseractOCR
 
-ocr = TesseractOCR(n_threads=1, 
-                   lang="eng", 
+ocr = TesseractOCR(n_threads=1,
+                   lang="eng",
                    psm=11,
                    tessdata_dir="...")
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>n_threads : int, optional, default <code>1</code></dt>
 >    <dd style="font-style: italic;">Number of concurrent threads used to call Tesseract</dd>
 >    <dt>lang : str, optional, default <code>"eng"</code></dt>
@@ -157,14 +128,12 @@ ocr = TesseractOCR(n_threads=1,
 >    <dd style="font-style: italic;">PSM parameter used in Tesseract, run <code>tesseract --help-psm</code> for details</dd>
 >    <dt>tessdata_dir : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Directory containing Tesseract traineddata files. If None, the <code>TESSDATA_PREFIX</code> env variable is used.</dd>
-></dl>
+> </dl>
 
-
-*Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation. 
-Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions.*
+_Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires prior installation.
+Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions._
 <br>
-*For Windows users getting environment variable errors, you can check this [tutorial](https://linuxhint.com/install-tesseract-windows/)*
-<br>
+_For Windows users getting environment variable errors, you can check this [tutorial](https://linuxhint.com/install-tesseract-windows/)_
 </details>
 
 <details>
@@ -182,29 +151,13 @@ ocr = PaddleOCR(lang="en",
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>lang : str, optional, default <code>"en"</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Paddle for text extraction, check <a href="https://github.com/Mushroomcat9998/PaddleOCR/blob/main/doc/doc_en/multi_languages_en.md#5-support-languages-and-abbreviations">documentation for available languages</a></dd>
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the PaddleOCR constructor.</dd>
-></dl>
-
-<br>
-<b>NB:</b> For usage of PaddleOCR with GPU, the CUDA specific version of paddlepaddle-gpu has to be installed by the user manually 
-as stated in this <a href="https://github.com/PaddlePaddle/PaddleOCR/issues/7993">issue</a>.
-
-```bash
-# Example of installation with CUDA 11.8
-pip install paddlepaddle-gpu==2.5.0rc1.post118 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
-pip install paddleocr img2table
-```
-
-If you get an error trying to run PaddleOCR on Ubuntu,
-please check this <a href="https://github.com/PaddlePaddle/PaddleOCR/discussions/9989#discussioncomment-6642037">issue</a> for a working solution.
-
-<br>
+> </dl>
 </details>
-
 
 <details>
 <summary>EasyOCR<a name="easyocr"></a></summary>
@@ -221,14 +174,12 @@ ocr = EasyOCR(lang=["en"],
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>lang : list, optional, default <code>["en"]</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in EasyOCR for text extraction, check <a href="https://www.jaided.ai/easyocr">documentation for available languages</a></dd>
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the EasyOCR <code>Reader</code> constructor.</dd>
-></dl>
-
-<br>
+> </dl>
 </details>
 
 <details>
@@ -236,8 +187,6 @@ ocr = EasyOCR(lang=["en"],
 <br>
 
 <a href="https://github.com/mindee/doctr">docTR</a> is an open-source OCR based on Deep Learning models.<br>
-*In order to be used, docTR has to be installed by the user beforehand. Installation procedures are detailed in
-the package documentation*
 
 ```python
 from img2table.ocr import DocTR
@@ -247,22 +196,37 @@ ocr = DocTR(detect_language=False,
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>detect_language : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Parameter indicating if language prediction is run on the document</dd>
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the docTR <code>ocr_predictor</code> method.</dd>
-></dl>
-
-<br>
+> </dl>
 </details>
 
+<details>
+<summary>RapidOCR<a name="rapidocr"></a></summary>
+<br>
+
+<a href="https://github.com/RapidAI/RapidOCR">RapidOCR</a> is an open-source OCR based on ONNX Runtime.<br>
+
+```python
+from img2table.ocr import RapidOCR
+
+ocr = RapidOCR(params={"Rec.lang_type": ..., "kwarg": kw_value, ...})
+```
+
+> <h4>Parameters</h4>
+> <dl>
+>    <dt>params : dict, optional, default <code>None</code></dt>
+>    <dd style="font-style: italic;">Dictionary containing configuration values passed to the RapidOCR constructor. If <code>Rec.lang_type</code> is not provided, English is used by default.</dd>
+> </dl>
+</details>
 
 <details>
 <summary>Surya OCR<a name="surya"></a></summary>
 <br>
 
-<b><i>Only available for <code>python >= 3.10</code></i></b><br>
 <a href="https://github.com/VikParuchuri/surya">Surya</a> is an open-source OCR based on Deep Learning models.<br>
 At first use, relevant models will be downloaded.
 
@@ -273,14 +237,13 @@ ocr = SuryaOCR(langs=["en"])
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>langs : list, optional, default <code>["en"]</code></dt>
 >    <dd style="font-style: italic;">Lang parameter used in Surya OCR for text extraction</dd>
-></dl>
+> </dl>
 
 <br>
 </details>
-
 
 <details>
 <summary>Google Vision<a name="vision"></a></summary>
@@ -296,13 +259,13 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>api_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Google Vision API key</dd>
 >    <dt>timeout : int, optional, default <code>15</code></dt>
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
-></dl>
-<br>
+> </dl>
+>
 </details>
 
 <details>
@@ -312,7 +275,7 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 When using AWS Textract, the DetectDocumentText API is exclusively called.
 
 Authentication to AWS can be done by passing credentials to the `TextractOCR` class.<br>
-If credentials are not provided, authentication is done using environment variables or configuration files. 
+If credentials are not provided, authentication is done using environment variables or configuration files.
 Check `boto3` [documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) for more details.
 
 ```python
@@ -325,7 +288,7 @@ ocr = TextractOCR(aws_access_key_id="***",
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>aws_access_key_id : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS access key id</dd>
 >    <dt>aws_secret_access_key : str, optional, default <code>None</code></dt>
@@ -334,8 +297,7 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dd style="font-style: italic;">AWS temporary session token</dd>
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
-></dl>
-<br>
+> </dl>
 </details>
 
 <details>
@@ -350,13 +312,12 @@ ocr = AzureOCR(endpoint="abc.azure.com",
 ```
 
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>endpoint : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services endpoint. If None, inferred from the <code>COMPUTER_VISION_ENDPOINT</code> environment variable.</dd>
 >    <dt>subscription_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
-></dl>
-<br>
+> </dl>
 </details>
 
 ---
@@ -370,7 +331,7 @@ from img2table.ocr import TesseractOCR
 from img2table.document import Image
 
 # Instantiation of OCR
-ocr = TesseractOCR(n_threads=1, lang="eng")
+ocr = TesseractOCR()
 
 # Instantiation of document, either an image or a PDF
 doc = Image(src)
@@ -380,10 +341,12 @@ extracted_tables = doc.extract_tables(ocr=ocr,
                                       implicit_rows=False,
                                       implicit_columns=False,
                                       borderless_tables=False,
-                                      min_confidence=50)
+                                      min_confidence=50,
+                                      max_workers=1)
 ```
+
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
@@ -394,18 +357,18 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
-></dl>
-
-<b>NB</b>: Borderless table extraction can, by design, only extract tables with 3 or more columns.
+>    <dt>max_workers : int, optional, default <code>1</code></dt>
+>    <dd style="font-style: italic;">Number of concurrent workers used for table extraction. Mainly useful for multi-page PDFs.</dd>
+> </dl>
 
 #### Method return
 
-The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is used to model extracted tables from documents.
+The [`ExtractedTable`](/src/img2table/tables/extraction/__init__.py#L58) class is used to model extracted tables from documents.
 
 > <h4>Attributes</h4>
-><dl>
+> <dl>
 >    <dt>bbox : <code>BBox</code></dt>
->    <dd style="font-style: italic;">Table bounding box</dd>
+>    <dd style="font-style: italic;">Table bounding box, with absolute coordinates and normalized coordinates available via <code>bbox.relative</code></dd>
 >    <dt>title : str</dt>
 >    <dd style="font-style: italic;">Extracted title of the table</dd>
 >    <dt>content : <code>OrderedDict</code></dt>
@@ -414,11 +377,12 @@ The [`ExtractedTable`](/src/img2table/tables/objects/extraction.py#L35) class is
 >    <dd style="font-style: italic;">Pandas DataFrame representation of the table</dd>
 >    <dt>html : <code>str</code></dt>
 >    <dd style="font-style: italic;">HTML representation of the table</dd>
-></dl>
+> </dl>
 
 <br>
 
 In order to access bounding boxes at the cell level, you can use the following code snippet :
+
 ```python
 for id_row, row in enumerate(table.content.values()):
     for id_col, cell in enumerate(row):
@@ -429,16 +393,28 @@ for id_row, row in enumerate(table.content.values()):
         value = cell.value
 ```
 
+Normalized coordinates (in percentage of image height / width) are also available on the same object:
+
+```python
+relative_bbox = cell.bbox.relative
+x1 = relative_bbox.x1
+y1 = relative_bbox.y1
+x2 = relative_bbox.x2
+y2 = relative_bbox.y2
+```
+
 <h5 style="color:grey">Images</h5>
 
-`extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects. 
+`extract_tables` method from the `Image` class returns a list of `ExtractedTable` objects.
+
 ```Python
 output = [ExtractedTable(...), ExtractedTable(...), ...]
 ```
 
 <h5 style="color:grey">PDF</h5>
 
-`extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects. 
+`extract_tables` method from the `PDF` class returns an `OrderedDict` object with page indexes as keys and lists of `ExtractedTable` objects.
+
 ```Python
 output = {
     0: [ExtractedTable(...), ...],
@@ -447,7 +423,6 @@ output = {
     last_page: [ExtractedTable(...), ...]
 }
 ```
-
 
 ### Excel export <a name="xlsx"></a>
 
@@ -459,7 +434,7 @@ from img2table.ocr import TesseractOCR
 from img2table.document import Image
 
 # Instantiation of OCR
-ocr = TesseractOCR(n_threads=1, lang="eng")
+ocr = TesseractOCR()
 
 # Instantiation of document, either an image or a PDF
 doc = Image(src)
@@ -470,31 +445,34 @@ doc.to_xlsx(dest=dest,
             implicit_rows=False,
             implicit_columns=False,
             borderless_tables=False,
-            min_confidence=50)
+            min_confidence=50,
+            max_workers=1)
 ```
+
 > <h4>Parameters</h4>
-><dl>
+> <dl>
 >    <dt>dest : str, <code>pathlib.Path</code> or <code>io.BytesIO</code>, required</dt>
 >    <dd style="font-style: italic;">Destination for xlsx file</dd>
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
->    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
+>    <dt>implicit_columns : bool, optional, default <code>False</code></dt>
 >    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted. It requires to provide an OCR to the method in order to be performed - <b>feature in alpha version</b></dd>
+>    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
-></dl>
+>    <dt>max_workers : int, optional, default <code>1</code></dt>
+>    <dd style="font-style: italic;">Number of concurrent workers used for table extraction. Mainly useful for multi-page PDFs.</dd>
+> </dl>
 > <h4>Returns</h4>
 > If a <code>io.BytesIO</code> buffer is passed as dest arg, it is returned containing xlsx data
-
-
 
 ## Examples <a name="examples"></a>
 
 Several Jupyter notebooks with examples are available :
+
 <ul>
 <li>
 <a href="/examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
@@ -508,9 +486,14 @@ of the parameter <code>implicit_rows</code>/<code>implicit_columns</code> of the
 </li>
 </ul>
 
-## Caveats / FYI <a name="fyi"></a>
+## FYI / Caveats <a name="fyi"></a>
 
 <ul>
+<li>
+For a high-level description of the implemented bordered and borderless table detection algorithms,
+see the <a href="/docs/table-detection-algorithms.md" target="_self">table detection algorithms</a>
+documentation.
+</li>
 <li>
 For table extraction, results are highly dependent on OCR quality. By design, tables where no OCR data 
 can be found are not returned.
@@ -521,6 +504,6 @@ Effectiveness can not be guaranteed on other type of documents.
 </li>
 <li>
 Table detection using only OpenCV processing can have some limitations. If the library fails to detect tables, 
-you may check CNN based solutions.
+you may check CNN / LLM based solutions.
 </li>
 </ul>

@@ -1,52 +1,23 @@
-# coding: utf-8
+import sys
 
-import json
-
-import polars as pl
 import pytest
 
 from img2table.document.image import Image
-from img2table.ocr.data import OCRDataframe
-from tests.conftest import nested_approx
+from tests.ocr_data_utils import read_ocr_data
+
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14), reason="Paddle unsupported on Python 3.14+"
+)
 
 
-def test_validators():
+def test_validators() -> None:
     from img2table.ocr import PaddleOCR
 
-    with pytest.raises(TypeError) as e_info:
-        ocr = PaddleOCR(lang=12)
+    with pytest.raises(TypeError):
+        PaddleOCR(lang=12)  # ty:ignore[invalid-argument-type]
 
 
-def test_paddle_content():
-    from img2table.ocr import PaddleOCR
-
-    instance = PaddleOCR()
-    doc = Image(src="test_data/test.png")
-
-    result = instance.content(document=doc)
-
-    with open("test_data/hocr.json", "r") as f:
-        expected = json.load(f)
-
-    assert result == nested_approx(expected, abs=1e-3)
-
-
-def test_paddle_ocr_df():
-    from img2table.ocr import PaddleOCR
-
-    instance = PaddleOCR()
-
-    with open("test_data/hocr.json", "r") as f:
-        content = json.load(f)
-
-    result = instance.to_ocr_dataframe(content=content)
-
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
-
-    assert result == expected
-
-
-def test_paddle_document():
+def test_paddle_document() -> None:
     from img2table.ocr import PaddleOCR
 
     instance = PaddleOCR()
@@ -54,6 +25,6 @@ def test_paddle_document():
 
     result = instance.of(document=doc)
 
-    expected = OCRDataframe(df=pl.read_csv("test_data/ocr_df.csv", separator=";"))
+    expected = read_ocr_data("test_data/ocr.csv")
 
     assert result == expected

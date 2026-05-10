@@ -1,13 +1,12 @@
-from dataclasses import dataclass
-from typing import Optional
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 import numpy as np
-import polars as pl
 from pypdfium2 import PdfDocument, PdfTextPage
 
-from img2table.document.base import Document
-from img2table.ocr.base import OCRInstance
-from img2table.ocr.data import OCRDataframe
+from img2table.document._types import Document, MockDocument
+from img2table.ocr._types import OCRData, OCRInstance
 
 
 @dataclass
@@ -26,103 +25,99 @@ class Char:
     def height(self) -> int:
         return (self.y2 - self.y1) or 1
 
-    def distance(self, char: "Char") -> float:
-        return (((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2 + (
-                    (self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2) ** 0.5
+    def distance(self, char: Char) -> float:
+        return (
+            ((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2
+            + ((self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2
+        ) ** 0.5
 
 
-@dataclass
+@dataclass(slots=True)
 class Word:
     idx: int
     line_idx: int
-    chars: list[Char]
+    chars: list[Char] = field(default_factory=list)
+    x1: int = 999999
+    y1: int = 999999
+    x2: int = 0
+    y2: int = 0
+    direction: str = "unknown"
+    sum_size: float = 0.0
+
+    def add_char(self, char: Char) -> None:
+        self.chars.append(char)
+        self.x1, self.y1 = min(self.x1, char.x1), min(self.y1, char.y1)
+        self.x2, self.y2 = max(self.x2, char.x2), max(self.y2, char.y2)
+
+        # Update direction
+        w, h = (self.x2 - self.x1) or 1, (self.y2 - self.y1) or 1
+        if len(self.chars) >= 3:
+            if w / h >= 2:
+                self.direction = "horizontal"
+            elif h / w >= 2:
+                self.direction = "vertical"
+
+        # Update size for distance thresholding
+        if self.direction == "horizontal":
+            self.sum_size += char.width
+        elif self.direction == "vertical":
+            self.sum_size += char.height
+        else:
+            self.sum_size += max(char.width, char.height)
 
     @property
-    def x1(self) -> int:
-        return min([c.x1 for c in self.chars]) if self.chars else 0
+    def avg_size(self) -> float:
+        return self.sum_size / len(self.chars) if self.chars else 0
 
-    @property
-    def y1(self) -> int:
-        return min([c.y1 for c in self.chars]) if self.chars else 0
+    def distance(self, char: Char) -> float:
+        if not self.chars:
+            return 0.0
+        last = self.chars[-1]
+        return (
+            ((last.x1 + last.x2 - char.x1 - char.x2) / 2) ** 2
+            + ((last.y1 + last.y2 - char.y1 - char.y2) / 2) ** 2
+        ) ** 0.5
 
-    @property
-    def x2(self) -> int:
-        return max([c.x2 for c in self.chars]) if self.chars else 0
+    def corresponds(self, char: Char) -> bool:
+        if not self.chars:
+            return True
+        w, h = (self.x2 - self.x1) or 1, (self.y2 - self.y1) or 1
 
-    @property
-    def y2(self) -> int:
-        return max([c.y2 for c in self.chars]) if self.chars else 0
+        if self.direction == "horizontal":
+            overlap = min(self.y2, char.y2) - max(self.y1, char.y1)
+            return overlap >= 0.5 * min(h, char.height)
+        if self.direction == "vertical":
+            overlap = min(self.x2, char.x2) - max(self.x1, char.x1)
+            return overlap >= 0.5 * min(w, char.width)
 
-    @property
-    def width(self) -> int:
-        return (self.x2 - self.x1) or 1
+        return self.distance(char) <= 3 * self.avg_size
 
-    @property
-    def height(self) -> int:
-        return (self.y2 - self.y1) or 1
-
-    @property
-    def value(self) -> Optional[str]:
-        return "".join([c.value for c in self.chars]) if self.chars else None
-
-    def dict(self, page_idx: int) -> dict:
+    def asdict(self, page_idx: int) -> dict:
         return {
-            "page": page_idx,
-            "class": "ocrx_word",
             "id": f"word_{page_idx + 1}_{self.line_idx}_{self.idx}",
             "parent": f"line_{page_idx + 1}_{self.line_idx}",
-            "value": self.value,
+            "value": "".join([c.value for c in self.chars]),
             "confidence": 99,
             "x1": self.x1,
             "y1": self.y1,
             "x2": self.x2,
-            "y2": self.y2
+            "y2": self.y2,
         }
 
-    @property
-    def direction(self) -> str:
-        if len(self.chars) >= 3:
-            if self.width / self.height >= 2:
-                return "horizontal"
-            if self.height / self.width >= 2:
-                return "vertical"
-        return "unknown"
 
-    @property
-    def size(self) -> float:
-        if self.chars:
-            if self.direction == "horizontal":
-                return np.mean([c.width for c in self.chars])
-            if self.direction == "vertical":
-                return np.mean([c.height for c in self.chars])
-            return np.mean([max(c.height, c.width) for c in self.chars])
-        return 0
-
-    def distance(self, char: Char) -> float:
-        if self.chars:
-            return self.chars[-1].distance(char=char)
-        return 0
-
-    def corresponds(self, char: Char) -> bool:
-        if self.chars:
-            if self.direction == "horizontal":
-                return min(self.y2, char.y2) - max(self.y1, char.y1) >= 0.5 * min(self.height, char.height)
-            if self.direction == "vertical":
-                return min(self.x2, char.x2) - max(self.x1, char.x1) >= 0.5 * min(self.width, char.width)
-            return self.distance(char=char) <= 3 * self.size
-        return True
-
-    def add_char(self, char: Char) -> None:
-        self.chars.append(char)
-
-
-def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: float,
-                         page_height: float, page_rotation: int, x_offset: float,
-                         y_offset: float) -> tuple[int, int, int, int]:
+def get_all_char_data(
+    text_page: PdfTextPage,
+    n_chars: int,
+    page_width: float,
+    page_height: float,
+    page_rotation: int,
+    x_offset: float,
+    y_offset: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute character coordinates within page
     :param text_page: PdfTextPage object from pypdfium2
-    :param idx_char: index of character
+    :param n_chars: number of characters in text page
     :param page_width: page width
     :param page_height: page height
     :param page_rotation: page rotation angle
@@ -130,74 +125,112 @@ def get_char_coordinates(text_page: PdfTextPage, idx_char: int, page_width: floa
     :param y_offset: page vertical horizontal offset
     :return: tuple of character coordinates within page
     """
-    # Get character coordinates
-    _x1, _y1, _x2, _y2 = text_page.get_charbox(index=idx_char, loose=True)
-    if _x1 == _x2 and _y1 == _y2:
-        _x1, _y1, _x2, _y2 = text_page.get_charbox(index=idx_char, loose=False)
+    # Batch extract boxes
+    boxes = np.array([text_page.get_charbox(i, loose=True) for i in range(n_chars)])
 
-    # Apply corrections on coordinates if page is rotated
+    # Check for empty boxes (loose vs strict)
+    mask = (boxes[:, 0] == boxes[:, 2]) & (boxes[:, 1] == boxes[:, 3])
+    if np.any(mask):
+        for i in np.where(mask)[0]:
+            boxes[i] = text_page.get_charbox(int(i), loose=False)
+
+    _x1, _y1, _x2, _y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+
+    # Rotation logic
     if page_rotation == 90:
         _x1, _y1, _x2, _y2 = _y1, page_height - _x2, _y2, page_height - _x1
     elif page_rotation == 180:
-        _x1, _y1, _x2, _y2 = page_width - _x1, page_height - _y2, page_width - _x2, page_height - _y1
+        _x1, _y1, _x2, _y2 = (
+            page_width - _x1,
+            page_height - _y2,
+            page_width - _x2,
+            page_height - _y1,
+        )
     elif page_rotation == 270:
-        _x1, _y1, _x2, _y2 = page_height - _y2, _x1, page_height - _y2, _x2
+        _x1, _y1, _x2, _y2 = page_height - _y2, _x1, page_height - _y1, _x2
 
-    # Recompute coordinates with scale factor
-    x1 = int((_x1 - x_offset) * 200 / 72)
-    y1 = int((page_height - _y2 + y_offset) * 200 / 72)
-    x2 = int((_x2 - x_offset) * 200 / 72)
-    y2 = int((page_height - _y1 + y_offset) * 200 / 72)
+    # Scale and finalize
+    scale = 200 / 72
+    tx1 = ((np.minimum(_x1, _x2) - x_offset) * scale).astype(int)
+    ty1 = ((page_height - np.maximum(_y1, _y2) + y_offset) * scale).astype(int)
+    tx2 = ((np.maximum(_x1, _x2) - x_offset) * scale).astype(int)
+    ty2 = ((page_height - np.minimum(_y1, _y2) + y_offset) * scale).astype(int)
 
-    return min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)
+    return tx1, ty1, tx2, ty2
 
 
 class PdfOCR(OCRInstance):
-    def content(self, document: Document) -> list[list[dict]]:
+    def of(self, document: Document | MockDocument) -> OCRData | None:
         list_pages = []
 
-        doc = PdfDocument(input=document.bytes)
+        if isinstance(document, MockDocument) or not document.pages:
+            return None
+
+        doc = PdfDocument(input=document.file_bytes)
         for idx, page_number in enumerate(document.pages):
             # Get page
             page = doc.get_page(index=page_number)
 
             # Get page characteristics
-            page_height, page_width, page_rotation = page.get_height(), page.get_width(), page.get_cropbox()
+            page_height, page_width, page_rotation = (
+                page.get_height(),
+                page.get_width(),
+                page.get_rotation(),
+            )
             x_offset, y_offset, _, _ = page.get_cropbox()
 
             # Get text page
             text_page = page.get_textpage()
+            char_count = text_page.count_chars()
 
-            # Extract words
-            word_id, line_id, words = 1, 1, [Word(idx=1, line_idx=1, chars=[])]
-            for idx_char in range(text_page.count_chars()):
-                # Get character
-                value = text_page.get_text_range(index=idx_char, count=1)
-                x1, y1, x2, y2 = get_char_coordinates(text_page=text_page,
-                                                      idx_char=idx_char,
-                                                      page_width=page_width,
-                                                      page_height=page_height,
-                                                      page_rotation=page_rotation,
-                                                      x_offset=x_offset,
-                                                      y_offset=y_offset)
-                char = Char(value=value, x1=x1, y1=y1, x2=x2, y2=y2)
+            if char_count <= 1:
+                list_pages.append([])
+                continue
 
-                # Check coherency of character with previous characters / words
+            # Get characters coordinates
+            tx1, ty1, tx2, ty2 = get_all_char_data(
+                text_page=text_page,
+                n_chars=char_count,
+                page_width=page_width,
+                page_height=page_height,
+                page_rotation=page_rotation,
+                x_offset=x_offset,
+                y_offset=y_offset,
+            )
+            text = text_page.get_text_range(index=0, count=char_count)
+
+            word_id, line_id = 1, 1
+            current_word = Word(idx=1, line_idx=1)
+            words = [current_word]
+
+            for val, x1, y1, x2, y2 in zip(text, tx1, ty1, tx2, ty2, strict=True):
+                char = Char(value=val, x1=x1, y1=y1, x2=x2, y2=y2)
+
                 if char.value.strip() == "":
                     word_id += 1
-                elif words[-1].corresponds(char=char):
-                    if words[-1].distance(char=char) <= 2 * words[-1].size and word_id == words[-1].idx:
-                        words[-1].add_char(char=char)
+                    continue
+
+                # Logic to decide if char belongs to the current word
+                if current_word.corresponds(char):
+                    if (
+                        current_word.distance(char) <= 2 * current_word.avg_size
+                        and word_id == current_word.idx
+                    ):
+                        current_word.add_char(char)
                     else:
                         word_id += 1
-                        words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
+                        current_word = Word(idx=word_id, line_idx=line_id)
+                        current_word.add_char(char)
+                        words.append(current_word)
                 else:
                     word_id += 1
                     line_id += 1
-                    words.append(Word(idx=word_id, line_idx=line_id, chars=[char]))
+                    current_word = Word(idx=word_id, line_idx=line_id)
+                    current_word.add_char(char)
+                    words.append(current_word)
 
-            # Get only words that hold values
-            list_words = [w.dict(page_idx=idx) for w in words if w.value]
+            # Filtering out words that ended up empty
+            list_words = [w.asdict(page_idx=idx) for w in words if w.chars]
 
             if list_words:
                 # Append to list of pages
@@ -205,7 +238,6 @@ class PdfOCR(OCRInstance):
             elif len([obj for obj in page.get_objects() if obj.type == 3]) == 0:
                 # Check if page is blank
                 page_item = {
-                    "page": idx,
                     "class": "ocr_page",
                     "id": f"page_{idx + 1}",
                     "parent": None,
@@ -214,22 +246,17 @@ class PdfOCR(OCRInstance):
                     "x1": 0,
                     "y1": 0,
                     "x2": int(page_width * 200 / 72),
-                    "y2": int(page_height * 200 / 72)
+                    "y2": int(page_height * 200 / 72),
                 }
                 list_pages.append([page_item])
             else:
                 list_pages.append([])
 
         doc.close()
-        return list_pages
 
-    def to_ocr_dataframe(self, content: list[list[dict]]) -> OCRDataframe:
-        # Check if any page has words
-        if min(map(len, content)) == 0:
-            return None
+        # Create OCRData
+        records = {
+            page: page_elements for page, page_elements in enumerate(list_pages) if page_elements
+        }
 
-        # Create OCRDataframe
-        list_dfs = [pl.DataFrame(data=page_elements, schema=self.pl_schema)
-                    for page_elements in content if page_elements]
-
-        return OCRDataframe(df=pl.concat(list_dfs)) if list_dfs else None
+        return OCRData(records=records) if records else None

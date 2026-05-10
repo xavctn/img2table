@@ -12,16 +12,19 @@ update:
 
 # Test commands
 test:
-	uv run pytest --cov-report term --cov=src
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term
 
 fast-test:
-	uv run pytest --cov-report term --cov=src --ignore=tests/ocr --ignore=tests/document/base
+	uv run pytest --cov --cov-config=pyproject.toml --cov-report=term --ignore=tests/ocr --ignore=tests/document/rotation
 
 lint:
-	uv run ruff check src
+	uv run ruff check
+
+type-check:
+	uv run ty check src tests
 
 # Examples commands
-jupyter-examples:
+jupyter: build-ext
 	cd examples && uv run jupyter notebook
 
 update-examples:
@@ -30,7 +33,15 @@ update-examples:
 	done
 
 # Build commands
-build: venv
+build:
 	uv build
 
-.PHONY: venv
+build-ext:
+	python setup.py build_ext --inplace
+
+clean-ext:
+	find src -type f \( -name "*.pyd" -o -name "*.so" \) -delete
+	find src -type f -name "*.pyx" -exec sh -c 'rm -f "$${1%.pyx}.c"' _ {} \;
+	rm -rf build
+
+.PHONY: venv build build-ext clean-ext

@@ -1,3 +1,4 @@
+AGENTS.md
 .idea
 .ipynb_checkpoints
 __pycache__
@@ -12,4 +13,7 @@ certs
 venv
 profiling*
 examples/testing
-.python_version
+.python-version
+*.c
+*.pyd
+*.so
