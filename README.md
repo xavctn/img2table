@@ -38,7 +38,6 @@ The library can be installed via pip:
 ## Features <a name="features"></a>
 
 - Plug-and-play table extraction from heterogeneous documents, including native PDFs, scanned PDFs and images, with minimal configuration
-- Table identification for images and PDF files, including bounding boxes at the table cell level
 - Handling of complex table structures such as merged cells
 - Table content extraction by providing support for OCR services / tools
 - Extracted tables are returned as a simple object, including a Pandas DataFrame representation
