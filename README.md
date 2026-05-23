@@ -37,7 +37,7 @@ The library can be installed via pip:
 
 ## Features <a name="features"></a>
 
-- Plug-and-play table extraction from heterogeneous documents, including native PDFs, scanned PDFs and images, with minimal configuration
+- Plug-and-play table identification from heterogeneous documents, including native PDFs, scanned PDFs and images, with minimal configuration
 - Handling of complex table structures such as merged cells
 - Table content extraction by providing support for OCR services / tools
 - Extracted tables are returned as a simple object, including a Pandas DataFrame representation
@@ -134,6 +134,7 @@ _Usage of [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract) requires p
 Check [documentation](https://tesseract-ocr.github.io/tessdoc/) for instructions._
 <br>
 _For Windows users getting environment variable errors, you can check this [tutorial](https://linuxhint.com/install-tesseract-windows/)_
+
 </details>
 
 <details>
@@ -157,6 +158,7 @@ ocr = PaddleOCR(lang="en",
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the PaddleOCR constructor.</dd>
 > </dl>
+
 </details>
 
 <details>
@@ -180,6 +182,7 @@ ocr = EasyOCR(lang=["en"],
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the EasyOCR <code>Reader</code> constructor.</dd>
 > </dl>
+
 </details>
 
 <details>
@@ -202,6 +205,7 @@ ocr = DocTR(detect_language=False,
 >    <dt>kw : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing additional keyword arguments passed to the docTR <code>ocr_predictor</code> method.</dd>
 > </dl>
+
 </details>
 
 <details>
@@ -221,6 +225,7 @@ ocr = RapidOCR(params={"Rec.lang_type": ..., "kwarg": kw_value, ...})
 >    <dt>params : dict, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Dictionary containing configuration values passed to the RapidOCR constructor. If <code>Rec.lang_type</code> is not provided, English is used by default.</dd>
 > </dl>
+
 </details>
 
 <details>
@@ -265,7 +270,7 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 >    <dt>timeout : int, optional, default <code>15</code></dt>
 >    <dd style="font-style: italic;">API requests timeout, in seconds</dd>
 > </dl>
->
+
 </details>
 
 <details>
@@ -298,6 +303,7 @@ ocr = TextractOCR(aws_access_key_id="***",
 >    <dt>region : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">AWS server region</dd>
 > </dl>
+
 </details>
 
 <details>
@@ -318,13 +324,16 @@ ocr = AzureOCR(endpoint="abc.azure.com",
 >    <dt>subscription_key : str, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">Azure Cognitive Services subscription key. If None, inferred from the <code>COMPUTER_VISION_SUBSCRIPTION_KEY</code> environment variable.</dd>
 > </dl>
+
 </details>
 
 ---
 
 ### Table extraction <a name="table-extract"></a>
 
-Multiple tables can be extracted at once from a PDF page/ an image using the `extract_tables` method of a document.
+`img2table` can identify tables without OCR. OCR is only required when you want to extract the text content of table cells.
+
+Multiple tables can be extracted at once from a PDF page / an image using the `extract_tables` method of a document.
 
 ```python
 from img2table.ocr import TesseractOCR
