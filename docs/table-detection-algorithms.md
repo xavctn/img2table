@@ -29,6 +29,7 @@ flowchart TD
     threshold --> metrics[Compute document metrics]
     metrics --> lines[Detect graphical lines]
     lines --> bordered[Bordered table path]
+    threshold --> borderless[Optional borderless table path]
     lines --> borderless[Optional borderless table path]
     bordered --> grid[Grid reconstruction]
     borderless --> layout[Text-layout reconstruction]
@@ -126,13 +127,19 @@ The reconstructed grid is then compared with the foreground content. Rows or col
 meaningful content are removed when they appear to be artifacts of the line geometry rather than
 real table structure.
 
+The example below follows this path from the original ruled table through foreground thresholding
+and line detection to the reconstructed grid. Horizontal lines are red and vertical lines are blue.
+
+![Bordered-table pipeline: input, foreground mask, line detection, and grid reconstruction](images/table-detection/bordered-pipeline.png)
+
 ### Semi-Bordered and Implicit Structure
 
 Some tables are only partially ruled. The detector can infer missing cells from the surrounding
-line structure when enough evidence exists. It can also infer additional row or column separators
-from the content layout inside an already detected table:
+line structure when enough evidence exists. When the `implicit_rows` or `implicit_columns` option
+is enabled, it can also infer additional row or column separators from the content layout inside an
+already detected table:
 
-- row separators can be inferred from repeated text baselines;
+- row separators can be inferred from grouped text-row ranges;
 - column separators can be inferred from persistent vertical whitespace.
 
 This allows the bordered path to handle tables that combine explicit borders with whitespace-based
@@ -145,8 +152,8 @@ structure is visible through repeated rows and columns rather than drawn borders
 
 ### Text Layout Mask
 
-The detector first builds a cleaner text mask. Graphical lines are removed, noise is filtered, and
-punctuation is handled separately so it does not distort text-line grouping.
+The detector first builds a cleaner text mask. Noise is filtered, and punctuation is handled
+separately so it does not distort text-line grouping.
 
 The cleaned text is processed with adaptive run-length smoothing, following the ARLSA approach from
 Nikolaou et al., "A segmentation framework for historical machine-printed documents", Image and
@@ -204,6 +211,11 @@ compatible and the vertical gap between them is small.
 
 This handles common borderless-table patterns such as headers, subtotal rows, or rows with one
 missing or merged column.
+
+The example below shows the complete borderless path: the text-layout mask, the layout region used
+for analysis, and the grid reconstructed from repeated whitespace.
+
+![Borderless-table pipeline: input, cleaned text layout, layout regions, and reconstructed grid](images/table-detection/borderless-pipeline.png)
 
 ```mermaid
 flowchart LR

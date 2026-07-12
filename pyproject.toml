@@ -92,6 +92,7 @@ override-dependencies = [
     "paddleocr>=3.0; python_version<'3.14'",
     "paddlepaddle>=3.0,<3.3; python_version<'3.14'",
     "transformers<5",
+    "tokenizers>0.13",
     "pillow>=12",
 ]
 

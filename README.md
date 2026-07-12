@@ -1,13 +1,13 @@
 # img2table
 
-`img2table` is a simple, easy to use, table identification and extraction Python Library based on [OpenCV](https://opencv.org/) image
-processing that supports most common image file formats as well as PDF files.
+`img2table` extracts structured tables from images and PDFs using [OpenCV](https://opencv.org/) image processing. It detects bordered and borderless tables, optionally extracts cell text with OCR, and provides results as HTML, Excel files, or Pandas DataFrames.
 
-Thanks to its design, it provides a practical and lighter alternative to Neural Networks based solutions, especially for usage on CPU.
+It is a practical, lightweight alternative to neural-network-based solutions, especially for CPU workloads.
 
 ## Table of contents
 
 - [Installation](#installation)
+- [Quick start](#quick-start)
 - [Features](#features)
 - [Usage](#usage)
   - [Documents](#documents)
@@ -21,19 +21,46 @@ Thanks to its design, it provides a practical and lighter alternative to Neural 
 
 ## Installation <a name="installation"></a>
 
-The library can be installed via pip:
+Install the core package:
 
-| Command                           | Description                                 |
-| --------------------------------- | ------------------------------------------- |
-| `pip install img2table`           | Standard installation, supporting Tesseract |
-| `pip install img2table[paddle]`   | For usage with Paddle OCR                   |
-| `pip install img2table[easyocr]`  | For usage with EasyOCR                      |
-| `pip install img2table[doctr]`    | For usage with docTR                        |
-| `pip install img2table[surya]`    | For usage with Surya OCR                    |
-| `pip install img2table[rapidocr]` | For usage with RapidOCR                     |
-| `pip install img2table[gcp]`      | For usage with Google Vision OCR            |
-| `pip install img2table[aws]`      | For usage with AWS Textract OCR             |
-| `pip install img2table[azure]`    | For usage with Azure Cognitive Services OCR |
+```bash
+pip install img2table
+```
+
+Table detection itself does not require OCR. To extract cell text, choose and install a [supported OCR backend](#ocr). The default `TesseractOCR` backend also requires the [Tesseract executable](https://tesseract-ocr.github.io/tessdoc/Installation.html) to be installed separately.
+
+## Quick start
+
+Extract a table from an image and access it as a Pandas DataFrame:
+
+```python
+from img2table.document import Image
+from img2table.ocr import TesseractOCR
+
+document = Image("table.png")
+tables = document.extract_tables(ocr=TesseractOCR())
+
+print(tables[0].df)
+```
+
+To detect table structure without extracting text, omit the `ocr` argument:
+
+```python
+tables = Image("table.png").extract_tables()
+```
+
+Access the bounding box of every detected cell when OCR is not used:
+
+```python
+for table in tables:
+    for row in table.content.values():
+        for cell in row:
+            print(cell.bbox.x1, cell.bbox.y1, cell.bbox.x2, cell.bbox.y2)
+```
+
+Without OCR, `cell.value` is `None`; use `cell.bbox` for each detected cell's coordinates.
+
+For PDF files, use `PDF` instead of `Image`. See the [basic usage notebook](examples/Basic_usage.ipynb) for complete image, PDF, and OCR examples.
 
 ## Features <a name="features"></a>
 
@@ -106,7 +133,7 @@ PDF pages are converted to images with a 200 DPI for table identification.
 If possible (i.e for native PDF), PDF text will be extracted directly from the file and the OCR service/tool will not be called.
 
 <details>
-<summary>Tesseract<a name="tesseract"></a></summary>
+<summary>Tesseract - included with <code>pip install img2table</code><a name="tesseract"></a></summary>
 <br>
 
 ```python
@@ -138,7 +165,7 @@ _For Windows users getting environment variable errors, you can check this [tuto
 </details>
 
 <details>
-<summary>PaddleOCR<a name="paddle"></a></summary>
+<summary>PaddleOCR - <code>pip install img2table[paddle]</code><a name="paddle"></a></summary>
 <br>
 
 <a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> is an open-source OCR based on Deep Learning models.<br>
@@ -162,7 +189,7 @@ ocr = PaddleOCR(lang="en",
 </details>
 
 <details>
-<summary>EasyOCR<a name="easyocr"></a></summary>
+<summary>EasyOCR - <code>pip install img2table[easyocr]</code><a name="easyocr"></a></summary>
 <br>
 
 <a href="https://github.com/JaidedAI/EasyOCR">EasyOCR</a> is an open-source OCR based on Deep Learning models.<br>
@@ -186,7 +213,7 @@ ocr = EasyOCR(lang=["en"],
 </details>
 
 <details>
-<summary>docTR<a name="docTR"></a></summary>
+<summary>docTR - <code>pip install img2table[doctr]</code><a name="docTR"></a></summary>
 <br>
 
 <a href="https://github.com/mindee/doctr">docTR</a> is an open-source OCR based on Deep Learning models.<br>
@@ -209,7 +236,7 @@ ocr = DocTR(detect_language=False,
 </details>
 
 <details>
-<summary>RapidOCR<a name="rapidocr"></a></summary>
+<summary>RapidOCR - <code>pip install img2table[rapidocr]</code><a name="rapidocr"></a></summary>
 <br>
 
 <a href="https://github.com/RapidAI/RapidOCR">RapidOCR</a> is an open-source OCR based on ONNX Runtime.<br>
@@ -229,7 +256,7 @@ ocr = RapidOCR(params={"Rec.lang_type": ..., "kwarg": kw_value, ...})
 </details>
 
 <details>
-<summary>Surya OCR<a name="surya"></a></summary>
+<summary>Surya OCR (<code>pip install img2table[surya]</code>)<a name="surya"></a></summary>
 <br>
 
 <a href="https://github.com/VikParuchuri/surya">Surya</a> is an open-source OCR based on Deep Learning models.<br>
@@ -251,7 +278,7 @@ ocr = SuryaOCR(langs=["en"])
 </details>
 
 <details>
-<summary>Google Vision<a name="vision"></a></summary>
+<summary>Google Vision - <code>pip install img2table[gcp]</code><a name="vision"></a></summary>
 <br>
 
 Authentication to GCP can be done by setting the standard `GOOGLE_APPLICATION_CREDENTIALS` environment variable.<br>
@@ -274,7 +301,7 @@ ocr = VisionOCR(api_key="api_key", timeout=15)
 </details>
 
 <details>
-<summary>AWS Textract<a name="textract"></a></summary>
+<summary>AWS Textract - <code>pip install img2table[aws]</code><a name="textract"></a></summary>
 <br>
 
 When using AWS Textract, the DetectDocumentText API is exclusively called.
@@ -307,7 +334,7 @@ ocr = TextractOCR(aws_access_key_id="***",
 </details>
 
 <details>
-<summary>Azure Cognitive Services<a name="azure"></a></summary>
+<summary>Azure Cognitive Services - <code>pip install img2table[azure]</code><a name="azure"></a></summary>
 <br>
 
 ```python
@@ -359,11 +386,11 @@ extracted_tables = doc.extract_tables(ocr=ocr,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>implicit_columns : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
+>    <dd style="font-style: italic;">Boolean indicating if <a href="examples/borderless.ipynb" target="_self">borderless tables</a> are extracted <b>on top of</b> bordered tables.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 >    <dt>max_workers : int, optional, default <code>1</code></dt>
@@ -465,11 +492,11 @@ doc.to_xlsx(dest=dest,
 >    <dt>ocr : OCRInstance, optional, default <code>None</code></dt>
 >    <dd style="font-style: italic;">OCR instance used to parse document text. If None, cells content will not be extracted</dd>
 >    <dt>implicit_rows : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit rows should be identified - check related <a href="examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>implicit_columns : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="/examples/Implicit.ipynb" target="_self">example</a></dd>
+>    <dd style="font-style: italic;">Boolean indicating if implicit columns should be identified - check related <a href="examples/Implicit.ipynb" target="_self">example</a></dd>
 >    <dt>borderless_tables : bool, optional, default <code>False</code></dt>
->    <dd style="font-style: italic;">Boolean indicating if <a href="/examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
+>    <dd style="font-style: italic;">Boolean indicating if <a href="examples/borderless.ipynb" target="_self">borderless tables</a> are extracted.</dd>
 >    <dt>min_confidence : int, optional, default <code>50</code></dt>
 >    <dd style="font-style: italic;">Minimum confidence level from OCR in order to process text, from 0 (worst) to 99 (best)</dd>
 >    <dt>max_workers : int, optional, default <code>1</code></dt>
@@ -484,13 +511,13 @@ Several Jupyter notebooks with examples are available :
 
 <ul>
 <li>
-<a href="/examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
+<a href="examples/Basic_usage.ipynb" target="_self">Basic usage</a>: generic library usage, including examples with images, PDF and OCRs
 </li>
 <li>
-<a href="/examples/borderless.ipynb" target="_self">Borderless tables</a>: specific examples dedicated to the extraction of borderless tables
+<a href="examples/borderless.ipynb" target="_self">Borderless tables</a>: specific examples dedicated to the extraction of borderless tables
 </li>
 <li>
-<a href="/examples/Implicit.ipynb" target="_self">Implicit content</a>: illustrated effect 
+<a href="examples/Implicit.ipynb" target="_self">Implicit content</a>: illustrated effect
 of the parameter <code>implicit_rows</code>/<code>implicit_columns</code> of the <code>extract_tables</code> method
 </li>
 </ul>
@@ -500,7 +527,7 @@ of the parameter <code>implicit_rows</code>/<code>implicit_columns</code> of the
 <ul>
 <li>
 For a high-level description of the implemented bordered and borderless table detection algorithms,
-see the <a href="/docs/table-detection-algorithms.md" target="_self">table detection algorithms</a>
+see the <a href="docs/table-detection-algorithms.md" target="_self">table detection algorithms</a>
 documentation.
 </li>
 <li>
