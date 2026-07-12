@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cv2
 
@@ -52,7 +52,7 @@ class TextractOCR(OCRInstance):
             self.client = boto3.client(service_name="textract", region_name=region)
 
     @staticmethod
-    def map_response(response: dict, image: np.ndarray) -> list[dict]:
+    def map_response(response: dict[str, Any], image: np.ndarray) -> list[dict[str, Any]]:
         """
         Extract data from API endpoint response dictionary
         :param response: dictionary returned by Textract API

@@ -4,7 +4,7 @@ import base64
 import binascii
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cv2
 import numpy as np
@@ -43,7 +43,7 @@ class VisionEndpointContent(VisionContent):
         self.api_key = api_key
 
     @staticmethod
-    def map_response(response: dict, width: int, height: int) -> list[dict]:
+    def map_response(response: dict[str, Any], width: int, height: int) -> list[dict[str, Any]]:
         """
         Extract test_data from API endpoint response
         :param response: json response from Google API endpoint
@@ -116,7 +116,7 @@ class VisionEndpointContent(VisionContent):
 
         return elements
 
-    def get_ocr_image(self, img: np.ndarray) -> list[dict]:
+    def get_ocr_image(self, img: np.ndarray) -> list[dict[str, Any]]:
         """
         Extract OCR from image
         :param img: image array
@@ -185,7 +185,7 @@ class VisionAPIContent(VisionContent):
     @staticmethod
     def map_response(
         response: vision_v1.types.BatchAnnotateImagesResponse, shapes: list[tuple[int, int]]
-    ) -> list[list[dict]]:
+    ) -> list[list[dict[str, Any]]]:
         """
         Extract data from API endpoint response object
         :param response: API endpoint response object

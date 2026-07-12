@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from img2table.ocr._types import OCRData, OCRInstance
 
@@ -14,7 +14,7 @@ class PaddleOCR(OCRInstance):
     Paddle-OCR instance
     """
 
-    def __init__(self, lang: str = "en", kw: dict | None = None) -> None:
+    def __init__(self, lang: str = "en", kw: dict[str, Any] | None = None) -> None:
         """
         Initialization of Paddle OCR instance
         :param lang: lang parameter used in Paddle

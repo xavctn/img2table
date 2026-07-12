@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 from pypdfium2 import PdfDocument, PdfTextPage
@@ -92,7 +93,7 @@ class Word:
 
         return self.distance(char) <= 3 * self.avg_size
 
-    def asdict(self, page_idx: int) -> dict:
+    def asdict(self, page_idx: int) -> dict[str, Any]:
         return {
             "id": f"word_{page_idx + 1}_{self.line_idx}_{self.idx}",
             "parent": f"line_{page_idx + 1}_{self.line_idx}",

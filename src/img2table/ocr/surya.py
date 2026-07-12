@@ -18,8 +18,7 @@ class SuryaOCR(OCRInstance):
         Initialization of SuryaOCR instance
         """
         try:
-            from surya.detection import DetectionPredictor
-            from surya.foundation import FoundationPredictor
+            from surya.inference import SuryaInferenceManager
             from surya.recognition import RecognitionPredictor
 
         except ModuleNotFoundError as err:
@@ -36,9 +35,7 @@ class SuryaOCR(OCRInstance):
         else:
             raise TypeError(f"Invalid type {type(langs)} for langs argument")
 
-        # Initialize model
-        self.det_predictor = DetectionPredictor()
-        self.rec_predictor = RecognitionPredictor(FoundationPredictor())
+        self.rec_predictor = RecognitionPredictor(SuryaInferenceManager())
 
     def of(self, document: Document | MockDocument) -> OCRData | None:
         """
@@ -46,29 +43,27 @@ class SuryaOCR(OCRInstance):
         :param content: docTR Document object
         :return: OCRData object corresponding to content
         """
+        from bs4 import BeautifulSoup
         from PIL import Image
 
         # Get OCR of all images
-        content = self.rec_predictor(
-            images=[Image.fromarray(img) for img in document.images],
-            langs=self.langs,  # ty:ignore[unknown-argument]
-            det_predictor=self.det_predictor,
-        )
+        content = self.rec_predictor(images=[Image.fromarray(img) for img in document.images])
 
         # Create dict of elements by page
         records = {}
 
         for page_id, ocr_result in enumerate(content):
-            for idx, text_line in enumerate(ocr_result.text_lines):
+            for idx, block in enumerate(ocr_result.blocks):
+                value = BeautifulSoup(block.html, features="html.parser").get_text(" ", strip=True)
                 dict_word = {
                     "id": f"word_{page_id + 1}_{idx + 1}_0",
                     "parent": f"word_{page_id + 1}_{idx + 1}",
-                    "value": text_line.text or None,
-                    "confidence": round(100 * (text_line.confidence or 0)),
-                    "x1": int(text_line.bbox[0]),
-                    "y1": int(text_line.bbox[1]),
-                    "x2": int(text_line.bbox[2]),
-                    "y2": int(text_line.bbox[3]),
+                    "value": value or None,
+                    "confidence": round(100 * (block.confidence or 0)),
+                    "x1": int(block.bbox[0]),
+                    "y1": int(block.bbox[1]),
+                    "x2": int(block.bbox[2]),
+                    "y2": int(block.bbox[3]),
                 }
 
                 records.setdefault(page_id, []).append(dict_word)

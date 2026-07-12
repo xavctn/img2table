@@ -122,7 +122,7 @@ def mock_tesseract(monkeypatch) -> None:  # noqa: ANN001
 @pytest.fixture
 def mock_vision(monkeypatch) -> None:  # noqa: ANN001
     class MockPost:
-        def json(self, *args, **kwargs) -> dict:  # noqa: ANN002, ARG002
+        def json(self, *args, **kwargs) -> dict[str, Any]:  # noqa: ANN002, ARG002
             with (Path(MOCK_DIR) / "vision.json").open() as f:
                 return json.load(f)
 
@@ -150,7 +150,7 @@ def mock_textract(monkeypatch) -> None:  # noqa: ANN001
         def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002
             pass
 
-        def detect_document_text(*args, **kwargs) -> dict:  # noqa: ANN002, ARG002
+        def detect_document_text(*args, **kwargs) -> dict[str, Any]:  # noqa: ANN002, ARG002
             with (Path(MOCK_DIR) / "textract.json").open() as f:
                 return json.load(f)
 
@@ -161,7 +161,7 @@ def mock_textract(monkeypatch) -> None:  # noqa: ANN001
 @pytest.fixture
 def mock_azure(monkeypatch) -> None:  # noqa: ANN001
     class MockRead(NamedTuple):
-        headers: dict
+        headers: dict[str, str]
 
     def mock_read_in_stream(*args, **kwargs) -> MockRead:  # noqa: ANN002, ARG001
         return MockRead(headers={"Operation-Location": "zz/zz"})

@@ -18,7 +18,7 @@ def _evaluate_key_separation_value(
     y_min: int,
     y_max: int,
     enforce_gap: bool = True,
-) -> tuple[float, list]:
+) -> tuple[float, list[tuple[int, int]]]:
     """
     Evaluate pertinence of separation value based on created rows consistency
     :param rows: list of merged rows

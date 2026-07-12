@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from img2table.ocr._types import OCRData, OCRInstance
 
@@ -13,7 +13,7 @@ class EasyOCR(OCRInstance):
     EAsyOCR instance
     """
 
-    def __init__(self, lang: list[str] | None = None, kw: dict | None = None) -> None:
+    def __init__(self, lang: list[str] | None = None, kw: dict[str, Any] | None = None) -> None:
         """
         Initialization of EasyOCR instance
         :param lang: lang parameter used in EasyOCR

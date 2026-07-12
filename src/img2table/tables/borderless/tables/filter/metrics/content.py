@@ -7,9 +7,10 @@ if TYPE_CHECKING:
     from img2table.tables.borderless.tables.filter.model import (
         StructuredSection,
     )
+    from img2table.tables.types import Cell
 
 
-def _cell_content_map(section: StructuredSection) -> list[list[list]]:
+def _cell_content_map(section: StructuredSection) -> list[list[list[Cell]]]:
     """
     Assign each row item to the column containing its x-center.
     :param section: The structured section to compute the metric for.
@@ -42,7 +43,7 @@ def _cell_content_map(section: StructuredSection) -> list[list[list]]:
     return matrix
 
 
-def _occupancy_matrix(cell_content_map: list[list[list]]) -> list[list[bool]]:
+def _occupancy_matrix(cell_content_map: list[list[list[Cell]]]) -> list[list[bool]]:
     """
     Convert inferred cell contents into an occupancy matrix.
     :param cell_content_map: row/column inferred cell contents

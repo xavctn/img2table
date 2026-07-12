@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from img2table.ocr._types import OCRData, OCRInstance
 
@@ -16,7 +16,7 @@ class RapidOCR(OCRInstance):
     Rapid-OCR instance
     """
 
-    def __init__(self, params: dict | None = None) -> None:
+    def __init__(self, params: dict[str, Any] | None = None) -> None:
         """
         Initialization of Paddle OCR instance
         :param params: parameters dictionary passed as config to RapidOCR constructor

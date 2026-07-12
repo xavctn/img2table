@@ -48,7 +48,7 @@ easyocr = [
     "pillow>=10.0.1",
 ]
 surya = [
-    "surya-ocr>=0.15.0; python_version>='3.10'",
+    "surya-ocr>=0.21.1; python_version>='3.10'",
 ]
 doctr = [
     "python-doctr",
@@ -141,4 +141,5 @@ max-complexity = 10
 [tool.ty.rules]
 unused-ignore-comment = "ignore"
 unresolved-import = "warn"
+missing-override-decorator = "ignore"
 all = "error"
