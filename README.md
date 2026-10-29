@@ -81,7 +81,8 @@ from img2table.document import PDF
 pdf = PDF(src,
           pages=[0, 2],
           detect_rotation=False,
-          pdf_text_extraction=True)
+          pdf_text_extraction=True,
+          dpi=200)
 ```
 
 > <h4>Parameters</h4>
@@ -94,6 +95,8 @@ pdf = PDF(src,
 >    <dd style="font-style: italic;">Detect and correct skew/rotation of extracted images from the PDF</dd>
 >    <dt>pdf_text_extraction : bool, optional, default <code>True</code></dt>
 >    <dd style="font-style: italic;">Extract text from the PDF file for native PDFs</dd>
+>    <dt>dpi: int, optional, default <code>200</code></dt>
+>    <dd style="font-style: italic;">Resolution (in Dots Per Inch) used when rendering the PDF pages into images</dd>
 > </dl>
 
 PDF pages are converted to images with a 200 DPI for table identification.
