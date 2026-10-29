@@ -42,13 +42,14 @@ def _render_and_detect_tables(
     implicit_rows: bool,
     implicit_columns: bool,
     borderless_tables: bool,
+    dpi: int,
 ) -> tuple[np.ndarray, list[Table], bool]:
     with pdfium_lock:
         page_doc = None
         try:
             page_doc = pypdfium2.PdfDocument(input=file_bytes)
             page = page_doc[page_number]
-            img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
+            img = cv2.cvtColor(page.render(scale=dpi / 72).to_numpy(), cv2.COLOR_BGR2RGB)
         finally:
             if page_doc is not None:
                 page_doc.close()
@@ -71,11 +72,13 @@ def _render_and_detect_tables(
 @dataclass
 class PDF(Document):
     pdf_text_extraction: bool = True
+    dpi: int = 200
     _rotated: bool = False
     _images: list[np.ndarray] | None = None
 
     def __post_init__(self) -> None:
         validate_bool(self.pdf_text_extraction, "pdf_text_extraction")
+        validate_positive_int(self.dpi, "dpi")
         super().__post_init__()
 
     def _ensure_pages(self) -> None:
@@ -104,7 +107,9 @@ class PDF(Document):
                 images = []
                 for page_number in self.pages:
                     page = doc[page_number]
-                    img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
+                    img = cv2.cvtColor(
+                        page.render(scale=self.dpi / 72).to_numpy(), cv2.COLOR_BGR2RGB
+                    )
 
                     # Handle rotation if needed
                     if self.detect_rotation:
@@ -217,6 +222,7 @@ class PDF(Document):
                         repeat(implicit_rows),
                         repeat(implicit_columns),
                         repeat(borderless_tables),
+                        repeat(self.dpi),
                     )
                 ):
                     self._images.append(img)
