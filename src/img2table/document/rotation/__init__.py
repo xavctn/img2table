@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from img2table.document.rotation._rotation import compute_angles  # ty:ignore[unresolved-import]
+from img2table.document.rotation._rotation import compute_angles  # ty: ignore[import-not-found]
 
 
 def get_connected_components(img: np.ndarray) -> tuple[np.ndarray, float, np.ndarray]:

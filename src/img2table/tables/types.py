@@ -54,7 +54,7 @@ class Line(TableObject):
 
     @property
     def length(self) -> float:
-        return np.sqrt(self.height**2 + self.width**2)
+        return math.sqrt(self.height**2 + self.width**2)
 
     @cached_property
     def horizontal(self) -> bool:
@@ -395,7 +395,9 @@ class Table(TableObject):
         )
         overlap_area = np.sum(np.multiply(x_overlap, y_overlap)) - sum(cell.area for cell in cells)
 
-        return overlap_area < 0.2 * self.area
+        valid = overlap_area < 0.2 * self.area
+        assert isinstance(valid, bool)
+        return valid
 
     def extracted_table(self, image_width: int, image_height: int) -> ExtractedTable:
         bbox = BBox(

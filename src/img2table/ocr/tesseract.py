@@ -55,7 +55,7 @@ class TesseractOCR(OCRInstance):
 
         # Create custom environment
         env = os.environ.copy()
-        if tessdata_dir:
+        if tessdata_dir is not None:
             env["TESSDATA_PREFIX"] = tessdata_dir
         self.env = env
 
@@ -145,9 +145,9 @@ class TesseractOCR(OCRInstance):
                 list_elements.append(
                     {
                         "id": element["id"],
-                        "parent": element.parent.get("id") if element.parent else None,
+                        "parent": element.parent.get("id") if element.parent is not None else None,
                         "value": re.sub(r"^(\s|\||L|_|;|\*)*$", "", element.string).strip() or None
-                        if element.string
+                        if element.string is not None
                         else None,
                         "confidence": confidence,
                         "x1": x1,

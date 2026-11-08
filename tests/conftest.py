@@ -9,7 +9,7 @@ import azure.cognitiveservices.vision.computervision
 import boto3
 import pytest
 import requests
-from _pytest.python_api import ApproxBase, ApproxMapping, ApproxSequenceLike
+from _pytest.python_api import ApproxBase, ApproxMapping, ApproxSequenceLike  # ty: ignore[import-not-found]
 from google.cloud import vision
 
 from tests import MOCK_DIR
@@ -100,7 +100,7 @@ def mock_tesseract(monkeypatch) -> None:  # noqa: ANN001
         if args and "tesseract --list-langs" in args[0]:
             return b"Langs\neng"
         if not args or not str(args[0]).startswith("tesseract "):
-            return check_output(*args, **kwargs)
+            return check_output(*args, **kwargs)  # ty: ignore[unsound-return-statement]
         with (Path(MOCK_DIR) / "tesseract_hocr.html").open() as f:
             return f.read().encode("utf-8")
 

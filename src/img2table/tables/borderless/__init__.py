@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from img2table.tables.borderless.layout import identify_image_layout
 from img2table.tables.borderless.sections import identify_column_sections
 from img2table.tables.borderless.tables import identify_tables
+from img2table.tables.borderless.tables.filter.graphics import is_graphic_region
 
 if TYPE_CHECKING:
     import numpy as np
@@ -29,7 +30,7 @@ def extract_borderless_tables(
 
     # Identify layout from the thresholded image
     layout_regions = identify_image_layout(
-        thresh=thresh, lines=lines, char_length=char_length, existing_tables=existing_tables
+        thresh=thresh.copy(), lines=lines, char_length=char_length, existing_tables=existing_tables
     )
 
     tables = []
@@ -50,4 +51,5 @@ def extract_borderless_tables(
         tb
         for tb in tables
         if not any(tb.overlaps(existing_tb, pct=0.2) for existing_tb in existing_tables or [])
+        and not is_graphic_region(thresh=thresh, table=tb, char_length=char_length, lines=lines)
     ]

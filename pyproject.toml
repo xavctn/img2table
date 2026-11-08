@@ -1,5 +1,10 @@
 [build-system]
-requires = ["setuptools>=80", "setuptools-scm[simple]>=8", "cython>=3.2.4", "numpy"]
+requires = [
+    "setuptools>=80",
+    "setuptools-scm[simple]>=8",
+    "cython>=3.2.4",
+    "numpy",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,9 +12,7 @@ name = "img2table"
 dynamic = ["version"]
 description = "img2table is a table identification and extraction Python Library for PDF and images, based on OpenCV image processing"
 readme = "README.md"
-authors = [
-    { name = "Xavier Canton" },
-]
+authors = [{ name = "Xavier Canton" }]
 license = "MIT"
 requires-python = ">=3.10, <3.15"
 classifiers = [
@@ -29,34 +32,20 @@ dependencies = [
 Homepage = "https://github.com/xavctn/img2table"
 
 [project.optional-dependencies]
-gcp = [
-    "google-cloud-vision",
-    "requests",
-]
-aws = [
-    "boto3",
-]
-azure = [
-    "azure-cognitiveservices-vision-computervision",
-]
+gcp = ["google-cloud-vision", "requests"]
+aws = ["boto3"]
+azure = ["azure-cognitiveservices-vision-computervision"]
 paddle = [
     "paddlepaddle; python_version<'3.14'",
     "paddleocr>=3; python_version<'3.14'",
 ]
-easyocr = [
-    "easyocr>=1.7.0",
-    "pillow>=10.0.1",
-]
-surya = [
-    "surya-ocr>=0.21.1; python_version>='3.10'",
-]
-doctr = [
-    "python-doctr",
-]
+easyocr = ["easyocr>=1.7.0", "pillow>=10.0.1"]
+surya = ["surya-ocr>=0.21.1; python_version>='3.10'"]
+doctr = ["python-doctr"]
 rapidocr = [
     "rapidocr",
     "onnxruntime",
-    "onnxruntime<1.24; python_version<'3.11'"
+    "onnxruntime<1.24; python_version<'3.11'",
 ]
 
 [dependency-groups]
@@ -117,9 +106,7 @@ pythonpath = [".", "src"]
 testpaths = ["tests"]
 log_level = "INFO"
 python_files = "test_*.py"
-filterwarnings = [
-    "ignore::UserWarning",
-]
+filterwarnings = ["ignore::UserWarning"]
 
 [tool.coverage.run]
 plugins = ["Cython.Coverage"]
@@ -131,15 +118,41 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["PLR2004", "SLF001", "ANN401", "PLC0415", "E501", "ANN003", "PLR0913", "S101", "S106",
-    "D", "FBT", "COM812", "PT011", "S301", "N806", "EM101", "EM102", "TRY003", "TRY300",
-    "C901", "PLR0912", "PLR0915"]
+ignore = [
+    "CPY001",
+    "PLR2004",
+    "PLR0917",
+    "SLF001",
+    "ANN401",
+    "PLC0415",
+    "E501",
+    "ANN003",
+    "PLR0913",
+    "S101",
+    "S106",
+    "D",
+    "FBT",
+    "COM812",
+    "PT011",
+    "S301",
+    "N806",
+    "EM101",
+    "EM102",
+    "TRY003",
+    "TRY300",
+    "C901",
+    "PLR0912",
+    "PLR0915",
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
 
 [tool.ty.rules]
 unused-ignore-comment = "ignore"
-unresolved-import = "warn"
+import-not-found = "warn"
 missing-override-decorator = "ignore"
 all = "error"
+
+[tool.ty.environment]
+python-version = "3.11"

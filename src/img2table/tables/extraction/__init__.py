@@ -96,7 +96,7 @@ class ExtractedTable:
         :param title: title of HTML paragraph
         :return: HTML string
         """
-        html = f"""{rf'<h3 style="text-align: center">{title}</h3>' if title else ""}
+        html = f"""{rf'<h3 style="text-align: center">{title}</h3>' if title is not None else ""}
                    <p style=\"text-align: center\">
                        <b>Title:</b> {self.title or "No title detected"}<br>
                        <b>Bounding box:</b> x1={self.bbox.x1}, y1={self.bbox.y1}, x2={self.bbox.x2}, y2={self.bbox.y2}

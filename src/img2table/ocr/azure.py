@@ -87,10 +87,14 @@ class AzureOCR(OCRInstance):
         ]
 
         # Retrieve results
-        results = [self.client.get_read_result(operation_id) for operation_id in operations_ids]
+        results: list[ReadOperationResult] = [
+            self.client.get_read_result(operation_id) for operation_id in operations_ids
+        ]
         while not all(r.status == OperationStatusCodes.succeeded for r in results):
             time.sleep(0.1)
-            results = [self.client.get_read_result(operation_id) for operation_id in operations_ids]
+            results: list[ReadOperationResult] = [
+                self.client.get_read_result(operation_id) for operation_id in operations_ids
+            ]
 
         return results
 

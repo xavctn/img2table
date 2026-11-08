@@ -73,9 +73,21 @@ def test_extracted_table_worksheet() -> None:
 
         str_map = {v: k for k, v in ws.str_table.string_table.items()}  # ty:ignore[unresolved-attribute]
         ws_values = sorted(
-            [str_map.get(c.string) for row in ws.table.values() for c in row.values()]
+            [
+                val
+                for row in ws.table.values()
+                for c in row.values()
+                if (val := str_map.get(c.string)) is not None
+            ]
         )
-        table_values = sorted({c.value for row in extracted_table.content.values() for c in row})
+        table_values = sorted(
+            {
+                c.value
+                for row in extracted_table.content.values()
+                for c in row
+                if c.value is not None
+            }
+        )
         assert ws_values == table_values
 
     wb.close()

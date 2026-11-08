@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from img2table.tables.bordered.cells._identification import (  # ty:ignore[unresolved-import]
+from img2table.tables.bordered.cells._identification import (  # ty:ignore[import-not-found]
     identify_cells,
 )
 from img2table.tables.types import Cell

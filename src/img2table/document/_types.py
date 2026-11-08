@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, overload
 import numpy as np  # noqa: TC002
 
 from img2table._validation import (
-    ValidationError,
     validate_bool,
     validate_pages,
     validate_positive_int,
@@ -55,10 +54,8 @@ class Document:
         if isinstance(self.src, str):
             with Path(self.src).open("rb") as f:
                 return f.read()
-        if isinstance(self.src, Path):
-            with self.src.open("rb") as f:
-                return f.read()
-        raise ValidationError(f"Unsupported source type: {type(self.src)}")
+        with self.src.open("rb") as f:
+            return f.read()
 
     def get_table_content(
         self, tables: dict[int, list[Table]], ocr: OCRInstance | None, min_confidence: int
@@ -179,7 +176,7 @@ class Document:
         tables = self.get_table_content(tables=tables, ocr=ocr, min_confidence=min_confidence)
 
         # If pages have been defined, modify tables keys
-        if self.pages:
+        if self.pages is not None:
             return {self.pages[k]: v for k, v in tables.items()}
 
         return tables

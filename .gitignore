@@ -17,3 +17,4 @@ examples/testing
 *.c
 *.pyd
 *.so
+/findings/

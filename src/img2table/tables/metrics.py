@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from img2table.tables._metrics import (  # ty:ignore[unresolved-import]
+from img2table.tables._metrics import (  # ty:ignore[import-not-found]
     compute_contours,
     create_character_thresh,
     filter_cc,

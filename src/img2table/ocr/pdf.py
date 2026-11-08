@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -27,10 +28,10 @@ class Char:
         return (self.y2 - self.y1) or 1
 
     def distance(self, char: Char) -> float:
-        return (
+        return math.sqrt(
             ((self.x2 + self.x1 - char.x2 - char.x1) / 2) ** 2
             + ((self.y2 + self.y1 - char.y2 - char.y1) / 2) ** 2
-        ) ** 0.5
+        )
 
 
 @dataclass(slots=True)
@@ -74,10 +75,10 @@ class Word:
         if not self.chars:
             return 0.0
         last = self.chars[-1]
-        return (
+        return math.sqrt(
             ((last.x1 + last.x2 - char.x1 - char.x2) / 2) ** 2
             + ((last.y1 + last.y2 - char.y1 - char.y2) / 2) ** 2
-        ) ** 0.5
+        )
 
     def corresponds(self, char: Char) -> bool:
         if not self.chars:
@@ -164,7 +165,7 @@ class PdfOCR(OCRInstance):
     def of(self, document: Document | MockDocument) -> OCRData | None:
         list_pages = []
 
-        if isinstance(document, MockDocument) or not document.pages:
+        if isinstance(document, MockDocument) or document.pages is None:
             return None
 
         doc = PdfDocument(input=document.file_bytes)

@@ -37,7 +37,7 @@ class RapidOCR(OCRInstance):
         self.engine = Ocr(params=params)
 
     def of(self, document: Document | MockDocument) -> OCRData | None:
-        ocrs = cast("list[RapidOCROutput]", [self.engine(img) for img in document.images])
+        ocrs = cast("list[RapidOCROutput]", [self.engine(img) for img in document.images])  # ty: ignore[disjoint-cast]
         content = [
             {
                 "texts": res.txts,

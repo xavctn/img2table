@@ -323,9 +323,9 @@ class VisionOCR(OCRInstance):
             )
 
         # Instantiate content_getter
-        if gcp_credentials:
+        if gcp_credentials is not None:
             self.content_getter = VisionAPIContent(timeout=timeout)
-        elif api_key:
+        elif api_key is not None:
             self.content_getter = VisionEndpointContent(api_key=api_key, timeout=timeout)
         else:
             raise ValueError("No credentials or API key provided")

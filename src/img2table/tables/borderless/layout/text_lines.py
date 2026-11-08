@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import cv2
 import numpy as np
 
-from img2table.tables.borderless.layout._text_lines import (  # ty:ignore[unresolved-import]
+from img2table.tables.borderless.layout._text_lines import (  # ty:ignore[import-not-found]
     _remove_punctuation_marks,
     adaptive_rlsa,
     detect_obstacles,

@@ -27,7 +27,7 @@ def implicit_rows_lines(table: Table, contours: list[Cell]) -> list[Line]:
     merged_rows = identify_merged_rows(cnts=contours)
 
     # Identify new lines
-    new_lines = []
+    new_lines: list[Line] = []
     for tb_row in table.rows:
         if not tb_row.v_consistent:
             # Skip rows containing merged cells

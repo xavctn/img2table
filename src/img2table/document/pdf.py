@@ -50,8 +50,7 @@ def _render_and_detect_tables(
             page = page_doc[page_number]
             img = cv2.cvtColor(page.render(scale=200 / 72).to_numpy(), cv2.COLOR_BGR2RGB)
         finally:
-            if page_doc is not None:
-                page_doc.close()
+            page_doc.close()
 
     rotated_img = False
     if detect_rotation:
@@ -85,8 +84,7 @@ class PDF(Document):
                 doc = pypdfium2.PdfDocument(input=self.file_bytes)
                 self.pages = list(range(len(doc)))
             finally:
-                if doc is not None:
-                    doc.close()
+                doc.close()
 
     @property
     def images(self) -> list[np.ndarray]:
@@ -116,8 +114,7 @@ class PDF(Document):
 
                     images.append(img)
             finally:
-                if doc is not None:
-                    doc.close()
+                doc.close()
 
             self._images = images
 
