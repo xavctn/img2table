@@ -190,8 +190,8 @@ def _merge_section_whitespaces(
         )
 
     # Create merged sections
-    result = []
-    current_group = []
+    result: list[ColumnSection] = []
+    current_group: list[ColumnSection] = []
     for section in sections:
         if shares_majority(section):
             # Add to current group for merging

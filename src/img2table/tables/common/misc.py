@@ -6,11 +6,12 @@ from typing import TypeVar
 import numpy as np
 
 T = TypeVar("T", bound=Hashable)
+U = TypeVar("U")
 
 
 def find_components(edges: Sequence[Collection[T]]) -> list[list[T]]:
     # Construct adjacency mapping
-    adjacency_mapping = defaultdict(set)
+    adjacency_mapping: dict[T, set[T]] = defaultdict(set)
     for edge in map(list, edges):
         for cmp in edge:
             adjacency_mapping[cmp].add(cmp)
@@ -20,12 +21,14 @@ def find_components(edges: Sequence[Collection[T]]) -> list[list[T]]:
             adjacency_mapping[cmp2].add(cmp1)
 
     # DFS
-    visited, components = set(), []
+    visited: set[T] = set()
+    components: list[list[T]] = []
     for node in adjacency_mapping:
         if node in visited:
             continue
 
-        stack, component = [node], []
+        stack: list[T] = [node]
+        component: list[T] = []
         visited.add(node)
         while stack:
             current = stack.pop()
@@ -40,7 +43,7 @@ def find_components(edges: Sequence[Collection[T]]) -> list[list[T]]:
     return components
 
 
-def cluster_items(items: list[T], clustering_func: Callable[[T, T], bool]) -> list[list[T]]:
+def cluster_items(items: list[U], clustering_func: Callable[[U, U], bool]) -> list[list[U]]:
     """
     Cluster items based on a function
     :param items: list of items

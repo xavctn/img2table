@@ -29,7 +29,7 @@ def _evaluate_key_separation_value(
     :return: key consistency score and created ranges
     """
     # Create sections
-    sections = [[rows[0]]]
+    sections: list[list[MergedRow]] = [[rows[0]]]
     for row in rows[1:]:
         prev_row = sections[-1][-1]
         separation = row.y_center - prev_row.y_center
@@ -42,7 +42,7 @@ def _evaluate_key_separation_value(
             sections[-1].append(row)
 
     # Define ranges
-    ranges = []
+    ranges: list[tuple[int, int]] = []
     current_y = y_min
     for prev_section, nxt_section in pairwise(sections):
         # Get middle point to compute separator between sections
@@ -56,7 +56,8 @@ def _evaluate_key_separation_value(
     # Compute range heights
     range_heights = [rng[1] - rng[0] for rng in ranges]
 
-    return 1 - np.std(range_heights) / (y_max - y_min) if len(ranges) > 1 else 0, ranges
+    score = float(1 - np.std(range_heights) / (y_max - y_min)) if len(ranges) > 1 else 0.0
+    return score, ranges
 
 
 def compute_row_ranges(
@@ -97,7 +98,8 @@ def compute_row_ranges(
             eligible_separations.add(float(cluster_median_sep))
 
     # Evaluate best separation value
-    best_score, best_ranges = 0, []
+    best_score = 0.0
+    best_ranges: list[tuple[int, int]] = []
     for ref_sep in eligible_separations:
         score, ranges = _evaluate_key_separation_value(
             rows=rows, ref_separation=ref_sep, y_min=y_min, y_max=y_max, enforce_gap=enforce_gap

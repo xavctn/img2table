@@ -81,7 +81,7 @@ def get_relevant_angles(centroids: np.ndarray, ref_height: float, n_max: int = 5
     if len(relevant_angles) == 0 or relevant_angles[0] == 0:
         return [0.0]
 
-    return np.sort(relevant_angles).tolist()
+    return [float(angle) for angle in np.sort(relevant_angles)]
 
 
 def rotate_img(img: np.ndarray, angle: float) -> np.ndarray:
@@ -108,7 +108,7 @@ def evaluate_angle(img: np.ndarray, angle: float) -> int:
     # Apply horizontal projection
     proj = np.sum(rotated_img, 1)
     # Count number of empty rows
-    return np.sum((proj[1:] - proj[:-1]) ** 2)
+    return int(np.sum((proj[1:] - proj[:-1]) ** 2))
 
 
 def estimate_skew(angles: list[float], thresh: np.ndarray) -> float:

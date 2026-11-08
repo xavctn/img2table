@@ -184,7 +184,8 @@ def compute_whitespaces(
     :param x_max: end of span
     :return: list of whitespaces
     """
-    current_x, whitespaces = x_min, []
+    current_x = x_min
+    whitespaces: list[Whitespace] = []
     for item in sorted(items, key=lambda it: it.x1):
         # Check gap width
         gap = item.x1 - current_x

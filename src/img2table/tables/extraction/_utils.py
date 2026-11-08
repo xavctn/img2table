@@ -224,12 +224,12 @@ def build_worksheet(
             for cell_span in create_all_rectangles(cell_positions=c):
                 # Case of merged cells
                 sheet.merge_range(
-                    first_row=cell_span.top_row,
-                    first_col=cell_span.col_left,
-                    last_row=cell_span.bottom_row,
-                    last_col=cell_span.col_right,
-                    data=cell_span.value,
-                    cell_format=cell_fmt,
+                    cell_span.top_row,
+                    cell_span.col_left,
+                    cell_span.bottom_row,
+                    cell_span.col_right,
+                    cell_span.value,
+                    cell_fmt,
                 )
 
     # Autofit worksheet

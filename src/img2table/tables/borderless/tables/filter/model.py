@@ -112,7 +112,7 @@ class StructuredSection:
     @property
     def row_height(self) -> float:
         if self.is_structured():
-            return np.mean([y_end - y_start for y_start, y_end in self.row_ranges()])
+            return float(np.mean([y_end - y_start for y_start, y_end in self.row_ranges()]))
         return 0.0
 
     @cached_property

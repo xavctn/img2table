@@ -17,12 +17,14 @@ def _cell_content_map(section: StructuredSection) -> list[list[list[Cell]]]:
     :return: row/column inferred cell contents
     """
     # Initialize matrix
-    matrix = [[[] for _ in range(section.nb_columns)] for _ in section.row_ranges()]
+    matrix: list[list[list[Cell]]] = [
+        [[] for _ in range(section.nb_columns)] for _ in section.row_ranges()
+    ]
     if section.nb_columns == 0:
         return matrix
 
     # Identify cells by rows
-    row_cells = []
+    row_cells: list[list[Cell]] = []
     for y_start, y_end in section.row_ranges():
         row_items = [
             cell
