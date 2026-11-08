@@ -71,7 +71,7 @@ def test_extracted_table_worksheet() -> None:
         assert ws.dim_colmax + 1 == table.nb_columns  # ty:ignore[unsupported-operator]
         assert ws.dim_rowmax + 1 == table.nb_rows  # ty:ignore[unsupported-operator]
 
-        str_map = {v: k for k, v in ws.str_table.string_table.items()}  # ty:ignore[unresolved-attribute]
+        str_map = {v: k for k, v in ws.str_table.string_table.items()}  # ty:ignore[missing-attribute, missing-union-attribute]
         ws_values = sorted(
             [
                 val

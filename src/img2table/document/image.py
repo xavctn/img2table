@@ -47,7 +47,7 @@ class Image(Document):
         borderless_tables: bool = False,
         min_confidence: int = 50,
         max_workers: int = 1,
-    ) -> list[ExtractedTable]:  # ty:ignore[invalid-method-override]
+    ) -> list[ExtractedTable]:  # ty:ignore[incompatible-method-override]
         """
         Extract tables from document
         :param ocr: OCRInstance object used to extract table content

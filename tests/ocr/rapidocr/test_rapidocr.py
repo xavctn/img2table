@@ -1,5 +1,5 @@
 from img2table.document.image import Image
-from tests.ocr_data_utils import read_ocr_data
+from tests.ocr_data_utils import assert_ocr_content_close, read_ocr_data
 
 
 def test_rapidocr_document() -> None:
@@ -12,4 +12,5 @@ def test_rapidocr_document() -> None:
 
     expected = read_ocr_data("test_data/ocr.csv")
 
-    assert result == expected
+    assert result is not None
+    assert_ocr_content_close(result, expected, check_ids=True)

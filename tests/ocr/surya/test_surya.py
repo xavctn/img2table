@@ -2,7 +2,7 @@ import pytest
 
 from img2table.document import Image
 from img2table.ocr import SuryaOCR
-from tests.ocr_data_utils import read_ocr_data
+from img2table.ocr._types import OCRData
 
 
 def test_surya_ocr(mock_surya) -> None:  # noqa: ANN001, ARG001
@@ -18,6 +18,19 @@ def test_surya_ocr(mock_surya) -> None:  # noqa: ANN001, ARG001
 
     result = ocr.of(document=img)
 
-    expected = read_ocr_data("test_data/ocr.csv")
+    expected = OCRData(
+        records={
+            0: [
+                {
+                    "id": "word_1_1_0", "parent": "word_1_1", "value": "Title",
+                    "confidence": 100, "x1": 10, "y1": 20, "x2": 50, "y2": 40,
+                },
+                {
+                    "id": "word_1_2_0", "parent": "word_1_2", "value": "Line 1",
+                    "confidence": 95, "x1": 60, "y1": 20, "x2": 120, "y2": 40,
+                },
+            ]
+        }
+    )
 
     assert result == expected

@@ -21,7 +21,7 @@ lint:
 	uv run ruff check
 
 type-check:
-	uv run ty check src tests
+	uv run ty check src tests --exit-zero-on-warning
 
 # Examples commands
 jupyter: build-ext

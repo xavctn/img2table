@@ -395,9 +395,7 @@ class Table(TableObject):
         )
         overlap_area = np.sum(np.multiply(x_overlap, y_overlap)) - sum(cell.area for cell in cells)
 
-        valid = overlap_area < 0.2 * self.area
-        assert isinstance(valid, bool)
-        return valid
+        return bool(overlap_area < 0.2 * self.area)
 
     def extracted_table(self, image_width: int, image_height: int) -> ExtractedTable:
         bbox = BBox(

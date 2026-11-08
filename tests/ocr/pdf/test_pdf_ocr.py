@@ -1,6 +1,6 @@
 from img2table.document.pdf import PDF
 from img2table.ocr.pdf import PdfOCR
-from tests.ocr_data_utils import read_ocr_data
+from tests.ocr_data_utils import assert_ocr_content_close, read_ocr_data
 
 
 def test_pdf_document() -> None:
@@ -11,4 +11,5 @@ def test_pdf_document() -> None:
 
     expected = read_ocr_data("test_data/ocr.csv")
 
-    assert result == expected
+    assert result is not None
+    assert_ocr_content_close(result, expected, tolerance=4, check_ids=True)

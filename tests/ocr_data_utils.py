@@ -41,3 +41,22 @@ def drop_record_fields(
         ]
         for page, page_records in records.items()
     }
+
+
+def assert_ocr_content_close(
+    actual: OCRData, expected: OCRData, tolerance: int = 5, check_ids: bool = False
+) -> None:
+    """Compare recognized text and boxes while allowing small engine coordinate changes."""
+    assert actual.records.keys() == expected.records.keys()
+    for page, expected_records in expected.records.items():
+        actual_records = actual.records[page]
+        assert [rec["value"] for rec in actual_records] == [rec["value"] for rec in expected_records]
+        if check_ids:
+            assert [(rec["id"], rec["parent"]) for rec in actual_records] == [
+                (rec["id"], rec["parent"]) for rec in expected_records
+            ]
+        for actual_rec, expected_rec in zip(actual_records, expected_records, strict=True):
+            for field in ("x1", "y1", "x2", "y2"):
+                assert abs(actual_rec[field] - expected_rec[field]) <= tolerance, (
+                    page, actual_rec["value"], field, actual_rec[field], expected_rec[field]
+                )

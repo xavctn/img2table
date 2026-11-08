@@ -114,7 +114,7 @@ class AzureOCR(OCRInstance):
             word_elements = []
             line_cnt = 0
             word_cnt = 0
-            for r in result.analyze_result.read_results:  # ty:ignore[unresolved-attribute]
+            for r in result.analyze_result.read_results:  # ty:ignore[missing-attribute, missing-union-attribute]
                 for line in r.lines:
                     line_cnt += 1
                     for word in line.words:

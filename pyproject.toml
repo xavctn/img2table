@@ -14,7 +14,7 @@ description = "img2table is a table identification and extraction Python Library
 readme = "README.md"
 authors = [{ name = "Xavier Canton" }]
 license = "MIT"
-requires-python = ">=3.10, <3.15"
+requires-python = ">=3.11, <3.15"
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Operating System :: OS Independent",
@@ -35,18 +35,11 @@ Homepage = "https://github.com/xavctn/img2table"
 gcp = ["google-cloud-vision", "requests"]
 aws = ["boto3"]
 azure = ["azure-cognitiveservices-vision-computervision"]
-paddle = [
-    "paddlepaddle; python_version<'3.14'",
-    "paddleocr>=3; python_version<'3.14'",
-]
+paddle = ["paddlepaddle", "paddleocr>=3"]
 easyocr = ["easyocr>=1.7.0", "pillow>=10.0.1"]
-surya = ["surya-ocr>=0.21.1; python_version>='3.10'"]
+surya = ["surya-ocr>=0.21.1"]
 doctr = ["python-doctr"]
-rapidocr = [
-    "rapidocr",
-    "onnxruntime",
-    "onnxruntime<1.24; python_version<'3.11'",
-]
+rapidocr = ["rapidocr", "onnxruntime"]
 
 [dependency-groups]
 dev = [
@@ -73,17 +66,20 @@ dev = [
 ]
 
 [tool.uv]
-allow-insecure-host = ["download.pytorch.org"]
 override-dependencies = [
     "opencv-python ; sys_platform == 'never'",
     "opencv-python-headless ; sys_platform == 'never'",
     "opencv-contrib-python-headless ; sys_platform == 'never'",
-    "paddleocr>=3.0; python_version<'3.14'",
-    "paddlepaddle>=3.0,<3.3; python_version<'3.14'",
+    "paddleocr>=3.0 ; python_version < '3.14'",
+    "paddlepaddle>=3,<3.3 ; python_version < '3.14'",
     "transformers<5",
     "tokenizers>0.13",
-    "pillow>=12",
+    "pillow>=13",
+    "virtualenv>=21.14.9",
+    "jupyterlab>=4.5.11",
+    "tornado>=6.6",
 ]
+allow-insecure-host = ["download.pytorch.org"]
 
 [tool.uv.sources]
 torch = { index = "pytorch" }

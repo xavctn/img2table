@@ -3,19 +3,20 @@ import pickle
 import subprocess
 from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import Any, NamedTuple
+from types import SimpleNamespace
+from typing import Any, NamedTuple, cast
 
 import azure.cognitiveservices.vision.computervision
 import boto3
 import pytest
 import requests
-from _pytest.python_api import ApproxBase, ApproxMapping, ApproxSequenceLike  # ty: ignore[import-not-found]
+from _pytest.approx import Approx, ApproxMapping, ApproxSequenceLike  # ty: ignore[import-not-found]
 from google.cloud import vision
 
 from tests import MOCK_DIR
 
 
-class ApproxBaseReprMixin(ApproxBase):
+class ApproxBaseReprMixin(Approx[Any]):
     def __repr__(self) -> str:
         def recur_repr_helper(obj: Any) -> Any:
             if isinstance(obj, dict):
@@ -52,7 +53,8 @@ class ApproxNestedSequenceLike(ApproxBaseReprMixin, ApproxSequenceLike):
 
 
 class ApproxNestedMapping(ApproxBaseReprMixin, ApproxMapping):
-    def _yield_comparisons(self, actual: Mapping[object, Any]) -> Iterator[tuple[Any, Any]]:
+    def _yield_comparisons(self, actual: object) -> Iterator[tuple[Any, Any]]:
+        actual = cast("Mapping[object, Any]", actual)
         for k in self.expected:
             if isinstance(self.expected[k], dict):
                 mapping = ApproxNestedMapping(
@@ -78,7 +80,7 @@ def nested_approx(
     rel: float | None = None,
     abs: float | None = None,  # noqa: A002
     nan_ok: bool = False,
-) -> ApproxBase:
+) -> Approx[Any]:
     if isinstance(expected, dict):
         return ApproxNestedMapping(expected, rel, abs, nan_ok)
     if isinstance(expected, (tuple, list)):
@@ -186,8 +188,16 @@ def mock_azure(monkeypatch) -> None:  # noqa: ANN001
 @pytest.fixture
 def mock_surya(monkeypatch) -> None:  # noqa: ANN001
     def mock_run_ocr(*args, **kwargs) -> Any:  # noqa: ANN002, ARG001
-        with (Path(MOCK_DIR) / "surya.pkl").open("rb") as f:
-            return pickle.load(f)
+        return [
+            SimpleNamespace(
+                blocks=[
+                    SimpleNamespace(html="<p>Title</p>", confidence=0.995, bbox=[10, 20, 50, 40]),
+                    SimpleNamespace(
+                        html="<p>Line <b>1</b></p>", confidence=0.946, bbox=[60, 20, 120, 40]
+                    ),
+                ]
+            )
+        ]
 
     import surya.recognition
 

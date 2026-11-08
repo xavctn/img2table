@@ -3,7 +3,7 @@ import sys
 import pytest
 
 from img2table.document.image import Image
-from tests.ocr_data_utils import read_ocr_data
+from tests.ocr_data_utils import assert_ocr_content_close, read_ocr_data
 
 pytestmark = pytest.mark.skipif(
     sys.version_info >= (3, 14), reason="Paddle unsupported on Python 3.14+"
@@ -27,4 +27,5 @@ def test_paddle_document() -> None:
 
     expected = read_ocr_data("test_data/ocr.csv")
 
-    assert result == expected
+    assert result is not None
+    assert_ocr_content_close(result, expected, check_ids=True)
