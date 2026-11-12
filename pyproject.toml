@@ -78,6 +78,7 @@ override-dependencies = [
     "virtualenv>=21.14.9",
     "jupyterlab>=4.5.11",
     "tornado>=6.6",
+    "filelock>=4.2.1",
 ]
 allow-insecure-host = ["download.pytorch.org"]
 
@@ -152,3 +153,6 @@ all = "error"
 
 [tool.ty.environment]
 python-version = "3.11"
+
+[tool.uv.audit]
+malware-check = true
